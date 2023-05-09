@@ -1,0 +1,26 @@
+[versions]
+gcp-bom = "26.0.0"
+jackson = "2.15"
+kotlin = "1.8.21"
+ktor = "2.3.3"
+ktlint = "0.48.2"
+
+[libraries]
+dp-biblioteker-oauth2-klient = { group = "com.github.navikt.dp-biblioteker", name = "oauth2-klient", version = "2023.04.27-09.33.fcf0798bf943" }
+dp-biblioteker-image-utils = { group = "com.github.navikt.dp-biblioteker", name = "image-utils", version = "2023.04.27-09.33.fcf0798bf943" }
+konfig = { group = "com.natpryce", name = "konfig", version = "1.6.10.0" }
+kotlin-bom = { group = "org.jetbrains.kotlin", name = "kotlin-bom", version.ref = "kotlin" }
+ktor-client-auth-jvm = { group = "io.ktor", name = "ktor-client-auth-jvm", version.ref = "ktor" }
+ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
+ktor-client-jackson = { group = "io.ktor", name = "ktor-client-jackson", version.ref = "ktor" }
+ktor-client-logging-jvm = { group = "io.ktor", name = "ktor-client-logging-jvm", version.ref = "ktor" }
+ktor-server = { group = "io.ktor", name = "ktor-server", version.ref = "ktor" }
+urnlib = { group = "de.slub-dresden", name = "urnlib", version = "2.0.1" }
+rapids-and-rivers = { group = "com.github.navikt", name = "rapids-and-rivers", version = "2023050308441683096263.f5a276d7bd28" }
+kotlin-logging = { group = "io.github.microutils", name = "kotlin-logging", version = "3.0.5" }
+
+[plugins]
+kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+spotless = { id = "com.diffplug.spotless", version = "6.18.0" }
+shadow = { id = "com.github.johnrengelman.shadow", version = "7.1.2" }
+

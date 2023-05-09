@@ -1,0 +1,4 @@
+kafka_pool: nav-prod
+ingresses: |
+  ingresses:
+    - https://dp-rapportering.intern.nav.no
