@@ -1,0 +1,15 @@
+{
+  "periodeId": "UUID",
+  "dager": [
+    {
+      "dato": "2017-01-10",
+      "fravær": false,
+      "timer": 4.2
+    },
+    {
+      "dato": "2017-01-11",
+      "fravær": false,
+      "timer": 4.2
+    }
+  ]
+}
