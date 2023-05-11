@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - openapi/*
+  workflow_dispatch:
+
 
 concurrency:
   group: "pages"
