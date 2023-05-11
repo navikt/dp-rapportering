@@ -26,15 +26,24 @@ internal class Aktivitetstidslinje(dager: List<Aktivitet> = emptyList()) {
 sealed class Aktivitet(
     private val dato: LocalDate,
     private val antall: Duration,
+    private val type: AktivitetType,
 ) {
+    enum class AktivitetType {
+        Arbeid, Syk, TiltakType, FerieType
+    }
+
     companion object {
         fun perDag(aktiviteter: List<Aktivitet>) = aktiviteter.associateBy { it.dato }
     }
 
     fun dekkesAv(periode: ClosedRange<LocalDate>) = dato in periode
 
-    class Arbeid(dato: LocalDate, arbeidstimer: Number) : Aktivitet(dato, arbeidstimer.toDouble().hours)
-    class Syk(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE)
-    class Tiltak(dato: LocalDate, timer: Number) : Aktivitet(dato, timer.toDouble().hours)
-    class Ferie(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE)
+    class Arbeid(dato: LocalDate, arbeidstimer: Number) :
+        Aktivitet(dato, arbeidstimer.toDouble().hours, AktivitetType.Arbeid)
+
+    class Syk(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE, AktivitetType.Syk)
+
+    class Tiltak(dato: LocalDate, timer: Number) : Aktivitet(dato, timer.toDouble().hours, AktivitetType.TiltakType)
+
+    class Ferie(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE, AktivitetType.FerieType)
 }

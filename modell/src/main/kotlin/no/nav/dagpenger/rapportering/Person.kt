@@ -19,6 +19,7 @@ class Person private constructor(
 
     constructor(ident: String) : this(ident, Aktivitetstidslinje(), mutableListOf(), Aktivitetslogg())
 
+    // TODO: Fjern denne etter testen kan bruke f.eks. en visitor
     fun __TEST_rapporteringId() = rapporteringsperioder.first().rapporteringsperiodeId
 
     fun behandle(hendelse: SøknadInnsendtHendelse) {

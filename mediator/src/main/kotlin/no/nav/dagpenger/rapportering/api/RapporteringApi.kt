@@ -10,6 +10,7 @@ import io.ktor.server.routing.route
 import no.nav.dagpenger.rapportering.api.dto.DagDTO
 
 fun Application.rapporteringApi() {
+    konfigurasjon()
     install(Routing) {
         route("/rapportering") {
             get {
