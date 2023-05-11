@@ -11,6 +11,7 @@ repositories {
 dependencies {
     implementation(libs.konfig)
     implementation(libs.kotlin.logging)
+    implementation(libs.bundles.ktor.server)
     implementation(libs.rapids.and.rivers)
     implementation(project(mapOf("path" to ":modell")))
     testImplementation(kotlin("test"))
