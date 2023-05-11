@@ -1,8 +1,8 @@
 package no.nav.dagpenger.rapportering
 
 import mu.KotlinLogging
-import no.nav.dagpenger.rapportering.api.Konfigurasjon
-import no.nav.dagpenger.rapportering.api.Rapportering
+import no.nav.dagpenger.rapportering.api.konfigurasjon
+import no.nav.dagpenger.rapportering.api.rapporteringApi
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
 
@@ -10,8 +10,8 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
     private val rapidsConnection: RapidsConnection =
         RapidApplication.Builder(RapidApplication.RapidApplicationConfig.fromEnv(configuration))
             .withKtorModule {
-                Konfigurasjon()
-                Rapportering()
+                konfigurasjon()
+                rapporteringApi()
             }.build()
     private val mediator = Mediator(rapidsConnection = rapidsConnection)
 

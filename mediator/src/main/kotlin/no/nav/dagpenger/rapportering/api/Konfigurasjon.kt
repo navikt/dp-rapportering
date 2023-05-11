@@ -7,7 +7,7 @@ import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import org.slf4j.event.Level
 
-fun Application.Konfigurasjon() {
+fun Application.konfigurasjon() {
     install(CallLogging) {
         level = Level.INFO
     }
