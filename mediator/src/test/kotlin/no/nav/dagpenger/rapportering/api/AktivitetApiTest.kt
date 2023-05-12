@@ -34,6 +34,7 @@ class AktivitetApiTest {
     ) {
         testApplication {
             application {
+                konfigurasjon()
                 aktivitetApi()
             }
             test()

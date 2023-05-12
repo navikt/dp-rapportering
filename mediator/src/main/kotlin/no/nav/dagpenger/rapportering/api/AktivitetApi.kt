@@ -13,7 +13,6 @@ import no.nav.dagpenger.rapportering.Aktivitet
 import no.nav.dagpenger.rapportering.api.dto.DagDTO
 
 fun Application.aktivitetApi() {
-    konfigurasjon()
     install(Routing) {
         route("/aktivitet") {
             get {
