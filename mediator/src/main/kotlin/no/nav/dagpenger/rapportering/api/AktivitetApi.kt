@@ -9,11 +9,12 @@ import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.Aktivitet
 import no.nav.dagpenger.rapportering.api.dto.DagDTO
 
 fun Application.aktivitetApi() {
-    install(Routing) {
+    routing {
         route("/aktivitet") {
             get {
                 val dager = listOf<DagDTO>()

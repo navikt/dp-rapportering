@@ -7,16 +7,18 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.api.dto.DagDTO
 
 fun Application.rapporteringApi() {
-    install(Routing) {
+    routing {
         route("/rapportering") {
             get {
                 val dager = listOf<DagDTO>()
                 call.respond(dager)
             }
         }
+
     }
 }
 
