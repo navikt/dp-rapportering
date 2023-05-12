@@ -114,4 +114,3 @@ sealed class Aktivitet(
         interface Behovtype
     }
 }
-

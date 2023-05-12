@@ -3,7 +3,6 @@ plugins {
     application
 }
 
-
 dependencies {
     implementation(libs.konfig)
     implementation(libs.kotlin.logging)
@@ -15,8 +14,6 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-json-jvm:${libs.versions.kotest.get()}")
 }
 
-
 application {
     mainClass.set("no.nav.dagpenger.rapportering.AppKt")
 }
-
