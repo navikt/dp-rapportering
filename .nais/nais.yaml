@@ -15,7 +15,7 @@ spec:
   port: 8080
   prometheus:
     enabled: true
-    path: /metrics
+    path: /internal/metrics
   replicas:
     min: 1
     max: 1
