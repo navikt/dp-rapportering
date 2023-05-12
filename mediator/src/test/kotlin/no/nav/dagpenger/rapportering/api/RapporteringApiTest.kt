@@ -25,7 +25,6 @@ class RapporteringApiTest {
     ) {
         testApplication {
             application {
-                konfigurasjon()
                 rapporteringApi()
             }
             test()
