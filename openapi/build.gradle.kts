@@ -15,7 +15,7 @@ tasks.named("spotlessKotlin").configure {
 sourceSets {
     main {
         java {
-            setSrcDirs(listOf("src/main/kotlin", "$buildDir/generated/src/main/"))
+            setSrcDirs(listOf("src/main/kotlin", "$buildDir/generated/src/main/kotlin"))
         }
     }
 }
@@ -33,7 +33,7 @@ dependencies {
 openApiGenerate {
     generatorName.set("kotlin")
     inputSpec.set("$projectDir/src/main/resources/rapportering-api.json")
-    outputDir.set("$buildDir/generated/src/")
+    outputDir.set("$buildDir/generated/")
     packageName.set("no.nav.dagpenger.rapportering.api")
     globalProperties.set(
         mapOf(
