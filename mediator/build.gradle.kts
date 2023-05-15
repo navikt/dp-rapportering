@@ -8,7 +8,7 @@ dependencies {
     implementation(libs.kotlin.logging)
     implementation(libs.bundles.ktor.server)
     implementation(libs.rapids.and.rivers)
-    implementation(project(mapOf("path" to ":modell")))
+    implementation(project(path = ":modell"))
     implementation(project(path = ":openapi"))
     testImplementation("io.ktor:ktor-server-test-host-jvm:${libs.versions.ktor.get()}")
     testImplementation("io.kotest:kotest-assertions-core-jvm:${libs.versions.kotest.get()}")
