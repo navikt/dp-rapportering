@@ -28,7 +28,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Aktivitet"
+                    "$ref": "#/components/schemas/AktivitetDTO"
                   }
                 }
               }
@@ -59,7 +59,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Aktivitet"
+                  "$ref": "#/components/schemas/AktivitetDTO"
                 }
               }
             },
@@ -81,7 +81,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Aktivitet"
+                  "$ref": "#/components/schemas/AktivitetDTO"
                 }
               }
             },
@@ -114,7 +114,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Aktivitet"
+                  "$ref": "#/components/schemas/AktivitetDTO"
                 }
               }
             },
@@ -250,7 +250,7 @@
   },
   "components": {
     "schemas": {
-      "Aktivitet": {
+      "AktivitetDTO": {
         "required": [
           "type",
           "date"

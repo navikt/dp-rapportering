@@ -20,12 +20,6 @@ fun Application.aktivitetApi() {
             }
             post {
                 val nyDag = call.receive<NyDag>()
-                when (nyDag.aktivitet) {
-                    Aktivitet.AktivitetType.Arbeid -> println("arbeid")
-                    Aktivitet.AktivitetType.Syk -> println("syk")
-                    Aktivitet.AktivitetType.Ferie -> println("fbar")
-                }
-
                 call.respond(201)
             }
         }

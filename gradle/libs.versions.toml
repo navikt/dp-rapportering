@@ -1,6 +1,6 @@
 [versions]
 gcp-bom = "26.0.0"
-jackson = "2.15"
+jackson = "2.15.0"
 kotlin = "1.8.21"
 ktor = "2.3.0"
 ktlint = "0.48.2"
@@ -20,7 +20,9 @@ ktor-server-auth-jvm = { group = "io.ktor", name = "ktor-server-auth-jvm", versi
 ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-serialization-jackson = { group = "io.ktor", name = "ktor-serialization-jackson", version.ref = "ktor" }
 ktor-server-logging-jvm = { group = "io.ktor", name = "ktor-server-call-logging-jvm", version.ref = "ktor" }
-jackson-datatype-jsr310 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310", version = "2.15.0" }
+jackson-datatype-jsr310 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310", version.ref = "jackson" }
+jackson-annotation = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jackson" }
+jackson-core = { group = "com.fasterxml.jackson.core", name = "jackson-core", version.ref = "jackson" }
 urnlib = { group = "de.slub-dresden", name = "urnlib", version = "2.0.1" }
 rapids-and-rivers = { group = "com.github.navikt", name = "rapids-and-rivers", version = "2023050308441683096263.f5a276d7bd28" }
 kotlin-logging = { group = "io.github.microutils", name = "kotlin-logging", version = "3.0.5" }
@@ -32,4 +34,5 @@ shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
 
 [bundles]
 ktor-server = ["ktor-server", "ktor-server-auth-jvm", "ktor-server-content-negotiation", "ktor-serialization-jackson", "ktor-server-logging-jvm", "jackson-datatype-jsr310"]
+jackson = ["jackson-core", "jackson-datatype-jsr310", "jackson-annotation"]
 
