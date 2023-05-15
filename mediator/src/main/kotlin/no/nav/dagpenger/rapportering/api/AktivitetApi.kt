@@ -23,8 +23,7 @@ fun Application.aktivitetApi() {
                 when (nyDag.aktivitet) {
                     Aktivitet.AktivitetType.Arbeid -> println("arbeid")
                     Aktivitet.AktivitetType.Syk -> println("syk")
-                    Aktivitet.AktivitetType.TiltakType -> println("foo")
-                    Aktivitet.AktivitetType.FerieType -> println("fbar")
+                    Aktivitet.AktivitetType.Ferie -> println("fbar")
                 }
 
                 call.respond(201)

@@ -29,7 +29,7 @@ sealed class Aktivitet(
     private val type: AktivitetType,
 ) {
     enum class AktivitetType {
-        Arbeid, Syk, TiltakType, FerieType
+        Arbeid, Syk, Ferie
     }
 
     companion object {
@@ -43,7 +43,5 @@ sealed class Aktivitet(
 
     class Syk(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE, AktivitetType.Syk)
 
-    class Tiltak(dato: LocalDate, timer: Number) : Aktivitet(dato, timer.toDouble().hours, AktivitetType.TiltakType)
-
-    class Ferie(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE, AktivitetType.FerieType)
+    class Ferie(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE, AktivitetType.Ferie)
 }
