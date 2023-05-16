@@ -253,7 +253,7 @@
       "AktivitetDTO": {
         "required": [
           "type",
-          "date"
+          "dato"
         ],
         "type": "object",
         "properties": {
@@ -262,25 +262,25 @@
           },
           "type": {
             "enum": [
-              "work",
-              "sick",
-              "vacation"
+              "Arbeid",
+              "Syk",
+              "Ferie"
             ],
             "type": "string"
           },
-          "hours": {
+          "timer": {
             "type": "integer"
           },
-          "date": {
+          "dato": {
             "format": "date",
             "type": "string"
           }
         },
         "example": {
           "id": 123,
-          "type": "work",
-          "hours": 8,
-          "date": "2023-05-05"
+          "type": "Arbeid",
+          "timer": 8,
+          "dato": "2023-05-05"
         }
       },
       "AktivitetInput": {
@@ -298,10 +298,10 @@
             ],
             "type": "string"
           },
-          "hours": {
+          "timer": {
             "type": "integer"
           },
-          "date": {
+          "dato": {
             "format": "date",
             "type": "string"
           }
