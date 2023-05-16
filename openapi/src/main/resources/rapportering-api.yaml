@@ -1,0 +1,255 @@
+openapi: 3.0.0
+info:
+  title: Rapporteringsperiode API
+  version: 1.0.0
+  description: API for å registrere aktiviteter og rapporteringsperioder
+  contact:
+    name: '#team-dagpenger'
+servers:
+  - url: https://dagpenger.intern.dev.nav.no/v1
+    description: dev
+  - url: https://dagpenger.intern.nav.no/v1
+    description: prod
+paths:
+  /aktivitet:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AktivitetDTO'
+          description: OK
+      summary: Hent all aktivitet
+      description: Henter ut alle registrerte aktiviteter
+      operationId: get-aktiviteter
+      tags:
+        - Aktivitet
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AktivitetInput'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AktivitetDTO'
+          description: Created
+      summary: Lagrer en aktivitet
+      description: Legger en ny aktivitet til i tidslinjen
+      operationId: post-aktiviteter
+      tags:
+        - Aktivitet
+  /aktivitet/{id}:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AktivitetDTO'
+          description: OK
+        '404':
+          description: Not Found
+      summary: Hent en bestemt aktivitet etter ID
+      description: ''
+      operationId: get-aktivitet-id
+      tags:
+        - Aktivitet
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AktivitetInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AktivitetDTO'
+          description: OK
+      summary: Gjør endringer på en eksisterende aktivitet
+      description: Kan vel bare endre timetall
+      operationId: put-aktivitet-id
+      tags:
+        - Aktivitet
+    delete:
+      responses:
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+      summary: Slett en aktivitet
+      description: ''
+      operationId: delete-aktivitet-id
+      tags:
+        - Aktivitet
+    parameters:
+      - name: id
+        description: ID of the activity record to update or delete
+        schema:
+          type: integer
+        in: path
+        required: true
+  /rapporteringsperioder:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rapporteringsperiode'
+          description: OK
+      summary: Hent alle rapporteringsperioder
+      description: Lister ut alle rapporteringsperioder, både aktive og historiske
+      operationId: get-rapporteringsperiode
+      tags:
+        - Rapporteringsperiode
+  /rapporteringsperioder/{id}:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rapporteringsperiode'
+          description: OK
+        '404':
+          description: Not Found
+      summary: Hent en bestemt rapporteringsperiode
+      description: Henter ut en rapporteringsperiod
+      operationId: get-rapporteringsperiode-id
+      tags:
+        - Rapporteringsperiode
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PeriodeKorreksjonsInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rapporteringsperiode'
+          description: OK
+      summary: Send inn korrigering av en rapporteringsperiode
+      description: Send inn korrigering for en rapporteringsperiod
+      operationId: post-rapporteringsperiode-korrigering
+      tags:
+        - Rapporteringsperiode
+    parameters:
+      - name: id
+        description: ID of the reporting period to get or correct
+        schema:
+          type: integer
+        in: path
+        required: true
+components:
+  schemas:
+    AktivitetDTO:
+      required:
+        - type
+        - date
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          enum:
+            - work
+            - sick
+            - vacation
+          type: string
+        hours:
+          type: integer
+        date:
+          format: date
+          type: string
+      example:
+        id: 123
+        type: work
+        hours: 8
+        date: '2023-05-05'
+    AktivitetInput:
+      required:
+        - type
+        - date
+      type: object
+      properties:
+        type:
+          enum:
+            - work
+            - sick
+            - vacation
+          type: string
+        hours:
+          type: integer
+        date:
+          format: date
+          type: string
+    Rapporteringsperiode:
+      type: object
+      properties:
+        id:
+          type: integer
+        start_date:
+          format: date
+          type: string
+        end_date:
+          format: date
+          type: string
+        status:
+          type: string
+    PeriodeKorreksjonsInput:
+      required:
+        - start_date
+        - end_date
+      type: object
+      properties:
+        start_date:
+          format: date
+          type: string
+        end_date:
+          format: date
+          type: string
+      example:
+        start_date: '2023-05-01'
+        end_date: '2023-05-15'
+  securitySchemes:
+    idporten-prod:
+      type: openIdConnect
+      openIdConnectUrl: https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration
+      description: Bruker IDporten via Wonderwall for produksjon
+    idporten-dev:
+      type: openIdConnect
+      openIdConnectUrl: https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration
+      description: Bruker IDporten via Wonderwall for utvikling og test
+    idporten:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  headers: {}
+  responses: {}
+  parameters: {}
+tags:
+  - name: Aktivitet
+    description: Lager en tidslinje med all aktivitet bruker har utført i en periode med rapporteringsplikt
+  - name: Rapporteringsperiode
+    description: Rapporteringsperioder representerer hvilke perioder man må eller har meldt seg for
+security:
+  - idporten: []
+    idporten-dev: []
+    idporten-prod: []
