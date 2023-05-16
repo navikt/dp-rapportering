@@ -229,27 +229,17 @@ components:
         start_date: '2023-05-01'
         end_date: '2023-05-15'
   securitySchemes:
-    idporten-prod:
-      type: openIdConnect
-      openIdConnectUrl: https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration
-      description: Bruker IDporten via Wonderwall for produksjon
-    idporten-dev:
-      type: openIdConnect
-      openIdConnectUrl: https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration
-      description: Bruker IDporten via Wonderwall for utvikling og test
     idporten:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  headers: {}
-  responses: {}
-  parameters: {}
+  headers: { }
+  responses: { }
+  parameters: { }
 tags:
   - name: Aktivitet
     description: Lager en tidslinje med all aktivitet bruker har utført i en periode med rapporteringsplikt
   - name: Rapporteringsperiode
     description: Rapporteringsperioder representerer hvilke perioder man må eller har meldt seg for
 security:
-  - idporten: []
-    idporten-dev: []
-    idporten-prod: []
+  - idporten: [ ]
