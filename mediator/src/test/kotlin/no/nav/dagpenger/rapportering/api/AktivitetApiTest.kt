@@ -14,16 +14,16 @@ import org.junit.jupiter.api.Test
 
 class AktivitetApiTest {
     @Test
-    fun `skal hente en liste med mulige rapportinger`() {
+    fun `Skal kunne lage en aktivitet`() {
         withAktivitetApi {
             client.post("/aktivitet") {
                 contentType(ContentType.Application.Json)
                 setBody(
                     //language=JSON
-                    """{"aktivitet": "Arbeid"}""",
+                    """{"type": "Arbeid", "dato": "2023-05-16", "timer": "7.5" }""",
                 )
             }.also { response ->
-                response.status shouldBe HttpStatusCode.OK
+                response.status shouldBe HttpStatusCode.Created
                 "${response.contentType()}" shouldContain "application/json"
             }
         }

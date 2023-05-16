@@ -258,7 +258,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer"
+            "type": "string"
           },
           "type": {
             "enum": [
@@ -269,7 +269,7 @@
             "type": "string"
           },
           "timer": {
-            "type": "integer"
+            "type": "number"
           },
           "dato": {
             "format": "date",
