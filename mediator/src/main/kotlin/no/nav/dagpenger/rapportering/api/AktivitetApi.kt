@@ -28,7 +28,7 @@ fun Application.aktivitetApi() {
                 val aktivitetInput = call.receive<AktivitetInput>()
 
                 val aktivitetDTO = AktivitetDTO(
-                    type = AktivitetDTO.Type.ARBEID, // TODO: AktivitetDTO.Type.valueOf(aktivitetInput.type)
+                    type = AktivitetDTO.Type.valueOf(aktivitetInput.type.toString()),
                     dato = aktivitetInput.dato ?: LocalDate.now(), // TODO
                     id = UUID.randomUUID().toString(),
                     timer = aktivitetInput.timer?.toBigDecimal(),
@@ -47,7 +47,7 @@ fun Application.aktivitetApi() {
                     val aktivitetInput = call.receive<AktivitetInput>()
 
                     val aktivitetDTO = AktivitetDTO(
-                        type = AktivitetDTO.Type.ARBEID, // TODO: AktivitetDTO.Type.valueOf(aktivitetInput.type)
+                        type = AktivitetDTO.Type.valueOf(aktivitetInput.type.toString()),
                         dato = aktivitetInput.dato ?: LocalDate.now(), // TODO
                         id = UUID.randomUUID().toString(),
                         timer = aktivitetInput.timer?.toBigDecimal(),

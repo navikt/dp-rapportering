@@ -34,7 +34,7 @@ class AktivitetApiTest {
                 contentType(ContentType.Application.Json)
                 setBody(
                     //language=JSON
-                    """{"type": "work", "dato": "2023-05-16", "timer": "7" }""",
+                    """{"type": "Arbeid", "dato": "2023-05-16", "timer": "7" }""",
                 )
             }.also { response ->
                 response.status shouldBe HttpStatusCode.Created
@@ -61,7 +61,7 @@ class AktivitetApiTest {
                 contentType(ContentType.Application.Json)
                 setBody(
                     //language=JSON
-                    """{"type": "work", "dato": "2023-05-16", "timer": "5"}""",
+                    """{"type": "Arbeid", "dato": "2023-05-16", "timer": "5"}""",
                 )
             }.also { response ->
                 response.status shouldBe HttpStatusCode.OK

@@ -292,9 +292,9 @@
         "properties": {
           "type": {
             "enum": [
-              "work",
-              "sick",
-              "vacation"
+              "Arbeid",
+              "Syk",
+              "Ferie"
             ],
             "type": "string"
           },
