@@ -8,11 +8,6 @@ metadata:
     domene: behandling
 spec:
   image: {{ image }}
-  accessPolicy:
-    inbound:
-      rules:
-        - application: dp-saksbehandling-frontend
-        - application: dp-rapportering-frontend
   port: 8080
   prometheus:
     enabled: true
@@ -32,3 +27,10 @@ spec:
     enabled: true
   kafka:
     pool: {{ kafka_pool }}
+  tokenx:
+    enabled: true
+  accessPolicy:
+    inbound:
+      rules:
+        - application: dp-saksbehandling-frontend
+        - application: dp-rapportering-frontend
