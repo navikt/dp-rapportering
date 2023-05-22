@@ -251,20 +251,16 @@ components:
         fraOgMed: '2023-05-01'
         tilOgMed: '2023-05-15'
   securitySchemes:
-    tokenx-prod:
-      type: openIdConnect
-      openIdConnectUrl: https://tokendings.prod-gcp.nais.io/.well-known/oauth-authorization-server
-      description: Bruker TokenX til autentisering.
-    tokenx-dev:
-      type: openIdConnect
-      openIdConnectUrl: https://tokendings.dev-gcp.nais.io/.well-known/oauth-authorization-server
-      description: |
-        Bruker TokenX til autentisering. Du kan lage et gyldig OBO-token ved å besøke
-        https://wonderwalled-idporten.intern.dev.nav.no/api/obo?aud=<audience>
     tokenx:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: |
+        Bruker [TokenX](https://docs.nais.io/security/auth/tokenx/) til autentisering. Du må utveksle IDporten-token
+        til et TokenX-token hvor `audience` er satt til `[cluster]:teamdagpenger:dp-rapportering`.
+        
+        For å teste APIet kan du lage et gyldig OBO-token ved å bruke wonderwalled:
+        - [dev-gcp](https://wonderwalled-idporten.intern.dev.nav.no/api/obo?aud=dev-gcp:teamdagpenger:dp-rapportering)
   headers: { }
   responses: { }
   parameters: { }
@@ -278,6 +274,4 @@ tags:
       Rapporteringsperioder representerer hvilke perioder man må eller har meldt
       seg for
 security:
-  - idporten: [ ]
-    idporten-dev: [ ]
-    idporten-prod: [ ]
+  - tokenx: [ ]
