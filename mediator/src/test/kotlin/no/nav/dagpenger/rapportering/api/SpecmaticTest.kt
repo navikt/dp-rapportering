@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.api
 import `in`.specmatic.test.SpecmaticJUnitSupport
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.ApplicationEngine
+import io.mockk.mockk
 import no.nav.helse.rapids_rivers.KtorBuilder
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -22,7 +23,7 @@ object SpecmaticTest : SpecmaticJUnitSupport() {
         System.setProperty("SPECMATIC_GENERATIVE_TESTS", "true")
         server = KtorBuilder().port(8081).module {
             konfigurasjon()
-            aktivitetApi()
+            aktivitetApi(mockk())
         }.build(CIO).start()
     }
 

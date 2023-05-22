@@ -12,6 +12,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
+import io.mockk.mockk
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
@@ -85,7 +86,7 @@ class AktivitetApiTest {
         testApplication {
             application {
                 konfigurasjon()
-                aktivitetApi()
+                aktivitetApi(mockk(relaxed = true))
             }
             test()
         }

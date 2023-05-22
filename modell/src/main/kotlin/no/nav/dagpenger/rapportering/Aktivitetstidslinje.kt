@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering
 
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import java.time.LocalDate
+import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 
@@ -24,9 +25,10 @@ internal class Aktivitetstidslinje(dager: List<Aktivitet> = emptyList()) {
 }
 
 sealed class Aktivitet(
-    private val dato: LocalDate,
-    private val antall: Duration,
-    private val type: AktivitetType,
+    val dato: LocalDate,
+    val antall: Duration,
+    val type: AktivitetType,
+    val uuid: UUID = UUID.randomUUID(),
 ) {
     enum class AktivitetType {
         Arbeid, Syk, Ferie

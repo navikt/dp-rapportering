@@ -26,6 +26,7 @@ jackson-core = { group = "com.fasterxml.jackson.core", name = "jackson-core", ve
 urnlib = { group = "de.slub-dresden", name = "urnlib", version = "2.0.1" }
 rapids-and-rivers = { group = "com.github.navikt", name = "rapids-and-rivers", version = "2023050308441683096263.f5a276d7bd28" }
 kotlin-logging = { group = "io.github.microutils", name = "kotlin-logging", version = "3.0.5" }
+mockk = { group = "io.mockk", name = "mockk", version = "1.13.5" }
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

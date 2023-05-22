@@ -192,13 +192,13 @@ components:
     AktivitetInput:
       required:
         - type
-        - date
+        - dato
       type: object
       properties:
         type:
           $ref: '#/components/schemas/AktivitetType'
         timer:
-          type: integer
+          type: number
         dato:
           format: date
           type: string

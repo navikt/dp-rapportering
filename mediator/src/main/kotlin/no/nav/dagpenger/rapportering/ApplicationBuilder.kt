@@ -12,7 +12,7 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
         RapidApplication.Builder(RapidApplication.RapidApplicationConfig.fromEnv(configuration))
             .withKtorModule {
                 konfigurasjon()
-                aktivitetApi()
+                aktivitetApi(mediator)
                 rapporteringApi()
             }.build()
     private val mediator = Mediator(rapidsConnection = rapidsConnection)
