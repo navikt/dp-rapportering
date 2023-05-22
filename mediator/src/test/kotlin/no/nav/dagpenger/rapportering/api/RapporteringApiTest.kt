@@ -4,7 +4,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.ktor.client.request.get
 import io.ktor.client.request.post
-import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -36,17 +35,13 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `Skal kunne korrigere en periode`() {
+    fun `Skal kunne ferdigstille en rapporteringsperiode`() {
         val id = UUID.randomUUID().toString()
         withRapporteringApi {
-            client.post("/rapporteringsperioder/$id") {
+            client.post("/rapporteringsperioder/$id/innsending") {
                 contentType(ContentType.Application.Json)
-                setBody(
-                    //language=JSON
-                    """{"start_date": "2023-02-01", "end_date": "2023-02-15"}""",
-                )
             }.also { response ->
-                response.status shouldBe HttpStatusCode.OK
+                response.status shouldBe HttpStatusCode.Created
                 "${response.contentType()}" shouldContain "application/json"
             }
         }

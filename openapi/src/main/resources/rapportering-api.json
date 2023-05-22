@@ -220,16 +220,6 @@
     },
     "/rapporteringsperioder/{id}/innsending": {
       "post": {
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PeriodeKorreksjonsInput"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "content": {
