@@ -1,3 +1,9 @@
-kafka_pool: nav-dev
+kafka:
+  pool: nav-dev
 ingresses:
   - https://dp-rapportering.intern.dev.nav.no
+accessPolicy:
+  inbound:
+    rules:
+      - application: wonderwalled-idporten
+        namespace: aura

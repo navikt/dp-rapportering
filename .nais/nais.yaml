@@ -23,13 +23,13 @@ spec:
       cpu: 200m
       memory: 256Mi
   ingresses:
-  {{#each ingresses as |url|}}
+    {{#each ingresses as |url|}}
      - {{url}}
-  {{/each}}
+    {{/each}}
   secureLogs:
     enabled: true
   kafka:
-    pool: {{ kafka_pool }}
+    pool: {{ kafka.pool }}
   tokenx:
     enabled: true
   accessPolicy:
@@ -37,3 +37,5 @@ spec:
       rules:
         - application: dp-saksbehandling-frontend
         - application: dp-rapportering-frontend
+        - application: wonderwalled-idporten
+          namespace: aura
