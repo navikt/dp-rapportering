@@ -32,7 +32,7 @@ dependencies {
 
 openApiGenerate {
     generatorName.set("kotlin")
-    inputSpec.set("$projectDir/src/main/resources/rapportering-api.json")
+    inputSpec.set("$projectDir/src/main/resources/rapportering-api.yaml")
     outputDir.set("$buildDir/generated/")
     packageName.set("no.nav.dagpenger.rapportering.api")
     globalProperties.set(

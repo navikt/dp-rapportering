@@ -15,13 +15,13 @@ paths:
     get:
       responses:
         '200':
-          description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/AktivitetDTO'
+                  $ref: '#/components/schemas/Aktivitet'
+          description: OK
       summary: Hent all aktivitet
       description: Henter ut alle registrerte aktiviteter
       operationId: get-aktiviteter
@@ -39,7 +39,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AktivitetDTO'
+                $ref: '#/components/schemas/Aktivitet'
           description: Created
       summary: Lagrer en aktivitet
       description: Legger en ny aktivitet til i tidslinjen
@@ -48,19 +48,12 @@ paths:
         - Aktivitet
   /aktivitet/{id}:
     get:
-      parameters:
-        - schema:
-            type: string
-            format: uuid
-          name: id
-          in: path
-          required: true
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AktivitetDTO'
+                $ref: '#/components/schemas/Aktivitet'
           description: OK
         '404':
           description: Not Found
@@ -81,7 +74,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AktivitetDTO'
+                $ref: '#/components/schemas/Aktivitet'
           description: OK
       summary: Gjør endringer på en eksisterende aktivitet
       description: Kan vel bare endre timetall
@@ -101,7 +94,7 @@ paths:
         - Aktivitet
     parameters:
       - name: id
-        description: ID of the activity record to update or delete
+        description: ID til aktiviteten som skal oppdateres eller slettes
         schema:
           type: integer
         in: path
@@ -138,13 +131,16 @@ paths:
       operationId: get-rapporteringsperiode-id
       tags:
         - Rapporteringsperiode
-    post:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PeriodeKorreksjonsInput'
+    parameters:
+      - name: id
+        description: ID til rapporteringsperioden
+        schema:
+          type: string
+          format: uuid
+        in: path
         required: true
+  /rapporteringsperioder/{id}/innsending:
+    post:
       responses:
         '200':
           content:
@@ -152,9 +148,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Rapporteringsperiode'
           description: OK
-      summary: Send inn korrigering av en rapporteringsperiode
-      description: Send inn korrigering for en rapporteringsperiod
-      operationId: post-rapporteringsperiode-korrigering
+      summary: Send inn en rapporteringsperiode
+      description: Send inn en rapporteringsperiode
+      operationId: post-rapporteringsperiode-ferdigstill
       tags:
         - Rapporteringsperiode
     parameters:
@@ -166,7 +162,13 @@ paths:
         required: true
 components:
   schemas:
-    AktivitetDTO:
+    AktivitetType:
+      type: string
+      enum:
+        - Arbeid
+        - Syk
+        - Ferie
+    Aktivitet:
       required:
         - type
         - dato
@@ -176,80 +178,106 @@ components:
           type: string
           format: uuid
         type:
-          enum:
-            - Arbeid
-            - Syk
-            - Ferie
-          type: string
+          $ref: '#/components/schemas/AktivitetType'
         timer:
-          type: integer
-          nullable: true
+          type: number
         dato:
           format: date
           type: string
       example:
-        id: 123
-        type: arbeid
-        hours: 8
-        date: '2023-05-05'
+        id: 4a49e571-6384-4eab-9c2e-3f4d48d30b9a
+        type: Arbeid
+        timer: 8
+        dato: '2023-05-05'
     AktivitetInput:
       required:
         - type
-        - dato
+        - date
       type: object
       properties:
         type:
-          enum:
-            - arbeid
-            - sick
-            - vacation
-          type: string
-        hours:
+          $ref: '#/components/schemas/AktivitetType'
+        timer:
           type: integer
         dato:
-          # format: date-time
+          format: date
           type: string
-          example: "2020-01-01"
     Rapporteringsperiode:
       type: object
       properties:
         id:
-          type: integer
-        start_date:
+          type: string
+          format: uuid
+        fraOgMed:
           format: date
           type: string
-        end_date:
+        tilOgMed:
           format: date
           type: string
         status:
           type: string
+          example: TilUtfylling
+        dager:
+          type: array
+          items:
+            type: object
+            properties:
+              dagIndex:
+                type: number
+              dato:
+                type: string
+                format: date
+              muligeAktiviteter:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AktivitetType'
+        aktiviteter:
+          type: array
+          items:
+            $ref: '#/components/schemas/Aktivitet'
     PeriodeKorreksjonsInput:
       required:
-        - start_date
-        - end_date
+        - fraOgMed
+        - tilOgMed
       type: object
       properties:
-        start_date:
+        fraOgMed:
           format: date
           type: string
-        end_date:
+        tilOgMed:
           format: date
           type: string
       example:
-        start_date: '2023-05-01'
-        end_date: '2023-05-15'
+        fraOgMed: '2023-05-01'
+        tilOgMed: '2023-05-15'
   securitySchemes:
+    idporten-prod:
+      type: openIdConnect
+      openIdConnectUrl: >-
+        https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration
+      description: Bruker IDporten via Wonderwall for produksjon
+    idporten-dev:
+      type: openIdConnect
+      openIdConnectUrl: >-
+        https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration
+      description: Bruker IDporten via Wonderwall for utvikling og test
     idporten:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  headers: { }
-  responses: { }
-  parameters: { }
+  headers: {}
+  responses: {}
+  parameters: {}
 tags:
   - name: Aktivitet
-    description: Lager en tidslinje med all aktivitet bruker har utført i en periode med rapporteringsplikt
+    description: >-
+      Lager en tidslinje med all aktivitet bruker har utført i en periode med
+      rapporteringsplikt
   - name: Rapporteringsperiode
-    description: Rapporteringsperioder representerer hvilke perioder man må eller har meldt seg for
+    description: >-
+      Rapporteringsperioder representerer hvilke perioder man må eller har meldt
+      seg for
 security:
-  - idporten: [ ]
+  - idporten: []
+    idporten-dev: []
+    idporten-prod: []
