@@ -12,6 +12,7 @@ spec:
     inbound:
       rules:
         - application: dp-saksbehandling-frontend
+        - application: dp-rapportering-frontend
   port: 8080
   prometheus:
     enabled: true
