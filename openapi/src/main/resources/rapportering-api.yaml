@@ -251,23 +251,23 @@ components:
         fraOgMed: '2023-05-01'
         tilOgMed: '2023-05-15'
   securitySchemes:
-    idporten-prod:
+    tokenx-prod:
       type: openIdConnect
-      openIdConnectUrl: >-
-        https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration
-      description: Bruker IDporten via Wonderwall for produksjon
-    idporten-dev:
+      openIdConnectUrl: https://tokendings.prod-gcp.nais.io/.well-known/oauth-authorization-server
+      description: Bruker TokenX til autentisering.
+    tokenx-dev:
       type: openIdConnect
-      openIdConnectUrl: >-
-        https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration
-      description: Bruker IDporten via Wonderwall for utvikling og test
-    idporten:
+      openIdConnectUrl: https://tokendings.dev-gcp.nais.io/.well-known/oauth-authorization-server
+      description: |
+        Bruker TokenX til autentisering. Du kan lage et gyldig OBO-token ved å besøke
+        https://wonderwalled-idporten.intern.dev.nav.no/api/obo?aud=<audience>
+    tokenx:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  headers: {}
-  responses: {}
-  parameters: {}
+  headers: { }
+  responses: { }
+  parameters: { }
 tags:
   - name: Aktivitet
     description: >-
@@ -278,6 +278,6 @@ tags:
       Rapporteringsperioder representerer hvilke perioder man må eller har meldt
       seg for
 security:
-  - idporten: []
-    idporten-dev: []
-    idporten-prod: []
+  - idporten: [ ]
+    idporten-dev: [ ]
+    idporten-prod: [ ]
