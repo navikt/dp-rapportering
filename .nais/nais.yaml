@@ -22,7 +22,10 @@ spec:
     requests:
       cpu: 200m
       memory: 256Mi
-  {{ ingresses }}
+  ingresses:
+  {{#each ingresses as |url|}}
+     - {{url}}
+  {{/each}}
   secureLogs:
     enabled: true
   kafka:
