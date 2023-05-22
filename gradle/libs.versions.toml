@@ -15,8 +15,10 @@ ktor-client-auth-jvm = { group = "io.ktor", name = "ktor-client-auth-jvm", versi
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
 ktor-client-jackson = { group = "io.ktor", name = "ktor-client-jackson", version.ref = "ktor" }
 ktor-client-logging-jvm = { group = "io.ktor", name = "ktor-client-logging-jvm", version.ref = "ktor" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-server = { group = "io.ktor", name = "ktor-server", version.ref = "ktor" }
-ktor-server-auth-jvm = { group = "io.ktor", name = "ktor-server-auth-jvm", version.ref = "ktor" }
+ktor-server-auth-jwt = { group = "io.ktor", name = "ktor-server-auth-jwt", version.ref = "ktor" }
+ktor-server-auth = { group = "io.ktor", name = "ktor-server-auth", version.ref = "ktor" }
 ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-serialization-jackson = { group = "io.ktor", name = "ktor-serialization-jackson", version.ref = "ktor" }
 ktor-server-logging-jvm = { group = "io.ktor", name = "ktor-server-call-logging-jvm", version.ref = "ktor" }
@@ -27,6 +29,7 @@ urnlib = { group = "de.slub-dresden", name = "urnlib", version = "2.0.1" }
 rapids-and-rivers = { group = "com.github.navikt", name = "rapids-and-rivers", version = "2023050308441683096263.f5a276d7bd28" }
 kotlin-logging = { group = "io.github.microutils", name = "kotlin-logging", version = "3.0.5" }
 mockk = { group = "io.mockk", name = "mockk", version = "1.13.5" }
+mock-oauth2-server = { group = "no.nav.security", name = "mock-oauth2-server", version = "0.5.8" }
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -34,6 +37,7 @@ spotless = { id = "com.diffplug.spotless", version = "6.18.0" }
 shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
 
 [bundles]
-ktor-server = ["ktor-server", "ktor-server-auth-jvm", "ktor-server-content-negotiation", "ktor-serialization-jackson", "ktor-server-logging-jvm", "jackson-datatype-jsr310"]
+ktor-server = ["ktor-server", "ktor-server-auth", "ktor-server-auth-jwt", "ktor-server-content-negotiation", "ktor-serialization-jackson", "ktor-server-logging-jvm", "jackson-datatype-jsr310"]
+ktor-client = ["ktor-client-auth-jvm", "ktor-client-cio", "ktor-serialization-jackson", "ktor-client-logging-jvm", "ktor-client-content-negotiation"]
 jackson = ["jackson-core", "jackson-datatype-jsr310", "jackson-annotation"]
 
