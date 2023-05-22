@@ -28,7 +28,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AktivitetDTO"
+                    "$ref": "#/components/schemas/Aktivitet"
                   }
                 }
               }
@@ -59,7 +59,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AktivitetDTO"
+                  "$ref": "#/components/schemas/Aktivitet"
                 }
               }
             },
@@ -81,7 +81,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AktivitetDTO"
+                  "$ref": "#/components/schemas/Aktivitet"
                 }
               }
             },
@@ -114,7 +114,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AktivitetDTO"
+                  "$ref": "#/components/schemas/Aktivitet"
                 }
               }
             },
@@ -147,7 +147,7 @@
       "parameters": [
         {
           "name": "id",
-          "description": "ID of the activity record to update or delete",
+          "description": "ID til aktiviteten som skal oppdateres eller slettes",
           "schema": {
             "type": "integer"
           },
@@ -205,6 +205,20 @@
           "Rapporteringsperiode"
         ]
       },
+      "parameters": [
+        {
+          "name": "id",
+          "description": "ID til rapporteringsperioden",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "in": "path",
+          "required": true
+        }
+      ]
+    },
+    "/rapporteringsperioder/{id}/innsending": {
       "post": {
         "requestBody": {
           "content": {
@@ -228,9 +242,9 @@
             "description": "OK"
           }
         },
-        "summary": "Send inn korrigering av en rapporteringsperiode",
-        "description": "Send inn korrigering for en rapporteringsperiod",
-        "operationId": "post-rapporteringsperiode-korrigering",
+        "summary": "Send inn en rapporteringsperiode",
+        "description": "Send inn en rapporteringsperiode",
+        "operationId": "post-rapporteringsperiode-ferdigstill",
         "tags": [
           "Rapporteringsperiode"
         ]
@@ -250,7 +264,15 @@
   },
   "components": {
     "schemas": {
-      "AktivitetDTO": {
+      "AktivitetType": {
+        "type": "string",
+        "enum": [
+          "Arbeid",
+          "Syk",
+          "Ferie"
+        ]
+      },
+      "Aktivitet": {
         "required": [
           "type",
           "dato"
@@ -258,15 +280,11 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid"
           },
           "type": {
-            "enum": [
-              "Arbeid",
-              "Syk",
-              "Ferie"
-            ],
-            "type": "string"
+            "$ref": "#/components/schemas/AktivitetType"
           },
           "timer": {
             "type": "number"
@@ -277,7 +295,7 @@
           }
         },
         "example": {
-          "id": 123,
+          "id": "4a49e571-6384-4eab-9c2e-3f4d48d30b9a",
           "type": "Arbeid",
           "timer": 8,
           "dato": "2023-05-05"
@@ -291,12 +309,7 @@
         "type": "object",
         "properties": {
           "type": {
-            "enum": [
-              "Arbeid",
-              "Syk",
-              "Ferie"
-            ],
-            "type": "string"
+            "$ref": "#/components/schemas/AktivitetType"
           },
           "timer": {
             "type": "integer"
@@ -311,40 +324,69 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer"
+            "type": "string",
+            "format": "uuid"
           },
-          "start_date": {
+          "fraOgMed": {
             "format": "date",
             "type": "string"
           },
-          "end_date": {
+          "tilOgMed": {
             "format": "date",
             "type": "string"
           },
           "status": {
-            "type": "string"
+            "type": "string",
+            "example": "TilUtfylling"
+          },
+          "dager": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "dagIndex": {
+                  "type": "number"
+                },
+                "dato": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "muligeAktiviteter": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AktivitetType"
+                  }
+                }
+              }
+            }
+          },
+          "aktiviteter": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Aktivitet"
+            }
           }
         }
       },
       "PeriodeKorreksjonsInput": {
         "required": [
-          "start_date",
-          "end_date"
+          "fraOgMed",
+          "tilOgMed"
         ],
         "type": "object",
         "properties": {
-          "start_date": {
+          "fraOgMed": {
             "format": "date",
             "type": "string"
           },
-          "end_date": {
+          "tilOgMed": {
             "format": "date",
             "type": "string"
           }
         },
         "example": {
-          "start_date": "2023-05-01",
-          "end_date": "2023-05-15"
+          "fraOgMed": "2023-05-01",
+          "tilOgMed": "2023-05-15"
         }
       }
     },

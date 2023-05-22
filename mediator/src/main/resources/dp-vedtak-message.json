@@ -1,6 +1,6 @@
 {
   "periodeId": "UUID",
-  "dager": [
+  "aktiviteter": [
     {
       "dato": "2017-01-10",
       "fravær": false,
