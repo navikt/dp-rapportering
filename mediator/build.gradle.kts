@@ -13,6 +13,8 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host-jvm:${libs.versions.ktor.get()}")
     testImplementation("io.kotest:kotest-assertions-core-jvm:${libs.versions.kotest.get()}")
     testImplementation("io.kotest:kotest-assertions-json-jvm:${libs.versions.kotest.get()}")
+
+    testImplementation("in.specmatic:junit5-support:0.65.1")
 }
 
 application {

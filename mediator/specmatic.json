@@ -1,0 +1,10 @@
+{
+  "sources": [
+    {
+      "provider": "git",
+      "test": [
+        "../openapi/src/main/resources/rapportering-api.yaml"
+      ]
+    }
+  ]
+}

@@ -23,7 +23,6 @@ fun Application.aktivitetApi() {
                 val aktiviteter = listOf<AktivitetDTO>()
                 call.respond(HttpStatusCode.OK, aktiviteter)
             }
-
             post {
                 val aktivitetInput = call.receive<AktivitetInput>()
 

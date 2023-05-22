@@ -15,13 +15,13 @@ paths:
     get:
       responses:
         '200':
+          description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/AktivitetDTO'
-          description: OK
       summary: Hent all aktivitet
       description: Henter ut alle registrerte aktiviteter
       operationId: get-aktiviteter
@@ -48,6 +48,13 @@ paths:
         - Aktivitet
   /aktivitet/{id}:
     get:
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+          name: id
+          in: path
+          required: true
       responses:
         '200':
           content:
@@ -162,44 +169,47 @@ components:
     AktivitetDTO:
       required:
         - type
-        - date
+        - dato
       type: object
       properties:
         id:
-          type: integer
+          type: string
+          format: uuid
         type:
           enum:
-            - work
-            - sick
-            - vacation
+            - Arbeid
+            - Syk
+            - Ferie
           type: string
-        hours:
+        timer:
           type: integer
-        date:
+          nullable: true
+        dato:
           format: date
           type: string
       example:
         id: 123
-        type: work
+        type: arbeid
         hours: 8
         date: '2023-05-05'
     AktivitetInput:
       required:
         - type
-        - date
+        - dato
       type: object
       properties:
         type:
           enum:
-            - work
+            - arbeid
             - sick
             - vacation
           type: string
         hours:
           type: integer
-        date:
-          format: date
+        dato:
+          # format: date-time
           type: string
+          example: "2020-01-01"
     Rapporteringsperiode:
       type: object
       properties:
