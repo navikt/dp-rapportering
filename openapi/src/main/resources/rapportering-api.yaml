@@ -216,6 +216,9 @@ components:
           type: string
         status:
           type: string
+          enum:
+            - TilUtfylling
+            - Innsendt
           example: TilUtfylling
         dager:
           type: array
