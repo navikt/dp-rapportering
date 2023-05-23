@@ -203,6 +203,13 @@ components:
           format: date
           type: string
     Rapporteringsperiode:
+      required:
+        - id
+        - fraOgMed
+        - tilOgMed
+        - status
+        - dager
+        - aktiviteter
       type: object
       properties:
         id:
