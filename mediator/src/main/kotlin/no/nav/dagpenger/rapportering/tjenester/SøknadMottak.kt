@@ -20,6 +20,8 @@ internal class SøknadMottak(
         private val logger = KotlinLogging.logger {}
     }
 
+//    internal val id: UUID = UUID.fromString(packet["@id"].asText())
+//    protected val opprettet = packet["@opprettet"].asLocalDateTime()
     init {
         River(rapidsConnection).apply {
             validate { it.demandValue("@event_name", "innsending_ferdigstilt") }
@@ -30,6 +32,7 @@ internal class SøknadMottak(
                     data["søknad_uuid"].asUUID()
                 }
             }
+            validate { it.interestedIn("@id", "@opprettet") }
         }.register(this)
     }
 
