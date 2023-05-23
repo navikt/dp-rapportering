@@ -8,7 +8,11 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import no.nav.dagpenger.rapportering.api.models.AktivitetType
 import no.nav.dagpenger.rapportering.api.models.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.api.models.Rapporteringsperiode.Status.TIL_UTFYLLING
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDagerInner
+import java.time.LocalDate
 import java.util.UUID
 
 fun Application.rapporteringApi() {
@@ -21,7 +25,14 @@ fun Application.rapporteringApi() {
 
             route("{id}") {
                 get {
-                    val rapporteringsperiode = Rapporteringsperiode()
+                    val rapporteringsperiode = Rapporteringsperiode(
+                        id = UUID.randomUUID(),
+                        fraOgMed = LocalDate.of(2023, 5, 23),
+                        tilOgMed = LocalDate.of(2023, 6, 6),
+                        status = TIL_UTFYLLING,
+                        dager = lagNoe(),
+                        aktiviteter = listOf()
+                    )
                     call.respond(HttpStatusCode.OK, rapporteringsperiode)
                 }
 
@@ -33,11 +44,32 @@ fun Application.rapporteringApi() {
 
                         call.respond(
                             HttpStatusCode.Created,
-                            Rapporteringsperiode(id = id),
+                            Rapporteringsperiode(
+                                id = UUID.randomUUID(),
+                                fraOgMed = LocalDate.of(2023, 5, 23),
+                                tilOgMed = LocalDate.of(2023, 6, 6),
+                                status = TIL_UTFYLLING,
+                                dager = lagNoe(),
+                                aktiviteter = listOf()
+                            ),
                         )
                     }
                 }
             }
         }
+    }
+}
+
+private fun lagNoe(): List<RapporteringsperiodeDagerInner> {
+    val date = LocalDate.of(2023, 5, 23)
+
+    return (0..13).map { index ->
+        RapporteringsperiodeDagerInner(
+            dagIndex = index,
+            dato = date.plusDays(index.toLong()),
+            muligeAktiviteter = listOf(
+                AktivitetType.ARBEID, AktivitetType.FERIE, AktivitetType.SYK
+            )
+        )
     }
 }

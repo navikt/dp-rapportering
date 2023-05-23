@@ -231,9 +231,13 @@ components:
           type: array
           items:
             type: object
+            required:
+              - dagIndex
+              - dato
+              - muligeAktiviteter
             properties:
               dagIndex:
-                type: number
+                type: integer
               dato:
                 type: string
                 format: date
