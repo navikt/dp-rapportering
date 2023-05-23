@@ -17,7 +17,6 @@ import no.nav.security.mock.oauth2.MockOAuth2Server
 object TestApplication {
     private const val TOKENX_ISSUER_ID = "tokenx"
     private const val CLIENT_ID = "dp-soknad"
-    private const val AZURE_ISSUER_ID = "azuread"
     const val defaultDummyFodselsnummer = "12345"
 
     private val mockOAuth2Server: MockOAuth2Server by lazy {
@@ -48,8 +47,6 @@ object TestApplication {
     ) {
         System.setProperty("token-x.client-id", CLIENT_ID)
         System.setProperty("token-x.well-known-url", "${mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID)}")
-        System.setProperty("azure-app.client-id", CLIENT_ID)
-        System.setProperty("azure-app.well-known-url", "${mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID)}")
 
         return testApplication {
             application(moduleFunction)
