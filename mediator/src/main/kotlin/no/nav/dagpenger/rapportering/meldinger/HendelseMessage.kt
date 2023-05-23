@@ -12,7 +12,7 @@ internal abstract class HendelseMessage(private val packet: JsonMessage) {
     private val navn = packet["@event_name"].asText()
     protected val opprettet = packet["@opprettet"].asLocalDateTime()
     internal open val skalDuplikatsjekkes = true
-    protected abstract val ident: String
+    internal abstract val ident: String
 
     internal abstract fun behandle(mediator: IHendelseMediator, context: MessageContext)
 

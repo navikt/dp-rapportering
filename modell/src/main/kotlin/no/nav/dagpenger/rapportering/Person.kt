@@ -10,7 +10,7 @@ import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import java.time.LocalDate
 
 class Person private constructor(
-    private val ident: String,
+    val ident: String,
     private val aktivitetstidslinje: Aktivitetstidslinje,
     private val rapporteringsperioder: MutableList<Rapporteringsperiode>,
     override val aktivitetslogg: Aktivitetslogg,
@@ -74,4 +74,8 @@ class Person private constructor(
         observers.forEach { it.rapporteringsperiodeEndret(event) }
     }
     override fun toSpesifikkKontekst() = SpesifikkKontekst("person", mapOf("ident" to ident))
+
+    override fun equals(other: Any?) = other is Person && this.ident == other.ident
+
+    override fun hashCode() = this.ident.hashCode()
 }
