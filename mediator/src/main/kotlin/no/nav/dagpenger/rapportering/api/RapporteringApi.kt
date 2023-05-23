@@ -31,7 +31,7 @@ fun Application.rapporteringApi() {
                         tilOgMed = LocalDate.of(2023, 6, 6),
                         status = TIL_UTFYLLING,
                         dager = lagNoe(),
-                        aktiviteter = listOf()
+                        aktiviteter = listOf(),
                     )
                     call.respond(HttpStatusCode.OK, rapporteringsperiode)
                 }
@@ -50,7 +50,7 @@ fun Application.rapporteringApi() {
                                 tilOgMed = LocalDate.of(2023, 6, 6),
                                 status = TIL_UTFYLLING,
                                 dager = lagNoe(),
-                                aktiviteter = listOf()
+                                aktiviteter = listOf(),
                             ),
                         )
                     }
@@ -68,8 +68,10 @@ private fun lagNoe(): List<RapporteringsperiodeDagerInner> {
             dagIndex = index,
             dato = date.plusDays(index.toLong()),
             muligeAktiviteter = listOf(
-                AktivitetType.ARBEID, AktivitetType.FERIE, AktivitetType.SYK
-            )
+                AktivitetType.ARBEID,
+                AktivitetType.FERIE,
+                AktivitetType.SYK,
+            ),
         )
     }
 }
