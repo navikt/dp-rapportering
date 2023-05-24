@@ -17,7 +17,7 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-json-jvm:${libs.versions.kotest.get()}")
     testImplementation(libs.mockk)
     testImplementation(libs.mock.oauth2.server)
-    testImplementation("in.specmatic:junit5-support:0.66.0")
+    testImplementation("in.specmatic:junit5-support:0.67.0")
 }
 
 application {
