@@ -18,6 +18,7 @@ import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.models.Aktivitet
 import no.nav.dagpenger.rapportering.api.models.AktivitetInput
 import no.nav.dagpenger.rapportering.api.models.AktivitetType
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType as InternType
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Arbeid
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Ferie
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Syk
@@ -31,10 +32,15 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
             route("/aktivitet") {
                 get {
                     val aktiviteter = repository.hentAktiviteter(call.ident()).map {
+                        // TODO: Dette er veldig gnøkka.
                         Aktivitet(
                             id = it.uuid,
                             dato = it.dato,
-                            type = AktivitetType.valueOf(it.type.name),
+                            type = when (it.type) {
+                                InternType.Arbeid -> AktivitetType.ARBEID
+                                InternType.Syk -> AktivitetType.SYK
+                                InternType.Ferie -> AktivitetType.FERIE
+                            },
                             timer = it.tid.toDouble(DurationUnit.HOURS).toBigDecimal(),
                         )
                     }
