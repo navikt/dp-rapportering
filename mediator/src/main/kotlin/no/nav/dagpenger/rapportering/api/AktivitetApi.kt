@@ -29,8 +29,7 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
         authenticate("tokenX") {
             route("/aktivitet") {
                 get {
-                    val aktiviteter = listOf<Aktivitet>()
-                    repository.hentAktiviteter(call.ident())
+                    val aktiviteter = repository.hentAktiviteter(call.ident())
                     call.respond(HttpStatusCode.OK, aktiviteter)
                 }
                 post {
