@@ -6,9 +6,9 @@ info:
   contact:
     name: '#team-dagpenger'
 servers:
-  - url: https://dagpenger.intern.dev.nav.no/v1
+  - url: https://dp-rapportering.intern.dev.nav.no/
     description: dev
-  - url: https://dagpenger.intern.nav.no/v1
+  - url: https://dp-rapportering.intern.nav.no/
     description: prod
 paths:
   /aktivitet:
