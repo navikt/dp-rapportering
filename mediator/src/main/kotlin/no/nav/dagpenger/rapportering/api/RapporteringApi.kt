@@ -28,7 +28,7 @@ fun Application.rapporteringApi() {
                     val rapporteringsperiode = Rapporteringsperiode(
                         id = UUID.randomUUID(),
                         fraOgMed = LocalDate.of(2023, 5, 22),
-                        tilOgMed = LocalDate.of(2023, 6, 6),
+                        tilOgMed = LocalDate.of(2023, 6, 4),
                         status = TIL_UTFYLLING,
                         dager = lagNoe(),
                         aktiviteter = listOf(),
@@ -46,8 +46,8 @@ fun Application.rapporteringApi() {
                             HttpStatusCode.Created,
                             Rapporteringsperiode(
                                 id = UUID.randomUUID(),
-                                fraOgMed = LocalDate.of(2023, 5, 23),
-                                tilOgMed = LocalDate.of(2023, 6, 6),
+                                fraOgMed = LocalDate.of(2023, 5, 22),
+                                tilOgMed = LocalDate.of(2023, 6, 4),
                                 status = TIL_UTFYLLING,
                                 dager = lagNoe(),
                                 aktiviteter = listOf(),
