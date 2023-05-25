@@ -12,14 +12,14 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import no.nav.dagpenger.rapportering.Aktivitet.Arbeid
-import no.nav.dagpenger.rapportering.Aktivitet.Ferie
-import no.nav.dagpenger.rapportering.Aktivitet.Syk
 import no.nav.dagpenger.rapportering.IHendelseMediator
 import no.nav.dagpenger.rapportering.api.models.Aktivitet
 import no.nav.dagpenger.rapportering.api.models.AktivitetInput
 import no.nav.dagpenger.rapportering.api.models.AktivitetType
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Arbeid
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Ferie
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Syk
 import java.time.LocalDate
 import java.util.UUID
 
@@ -34,7 +34,7 @@ internal fun Application.aktivitetApi(mediator: IHendelseMediator) {
                 post {
                     val aktivitetInput = call.receive<AktivitetInput>()
 
-                    val aktivitet: no.nav.dagpenger.rapportering.Aktivitet = when (aktivitetInput.type) {
+                    val aktivitet: no.nav.dagpenger.rapportering.tidslinje.Aktivitet = when (aktivitetInput.type) {
                         AktivitetType.ARBEID -> Arbeid(
                             dato = aktivitetInput.dato,
                             arbeidstimer = aktivitetInput.timer
@@ -89,7 +89,7 @@ internal fun Application.aktivitetApi(mediator: IHendelseMediator) {
     }
 }
 
-internal fun no.nav.dagpenger.rapportering.Aktivitet.toAktivitetDTO(): Aktivitet {
+internal fun no.nav.dagpenger.rapportering.tidslinje.Aktivitet.toAktivitetDTO(): Aktivitet {
     val aktivitetType = when (this) {
         is Arbeid -> AktivitetType.ARBEID
         is Ferie -> AktivitetType.FERIE

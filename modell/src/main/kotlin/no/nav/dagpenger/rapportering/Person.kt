@@ -7,6 +7,7 @@ import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import java.time.LocalDate
 
 class Person private constructor(
@@ -30,6 +31,7 @@ class Person private constructor(
             this,
             LocalDate.now(),
             LocalDate.now().plusDays(14),
+            aktivitetstidslinje,
         ).also {
             rapporteringsperioder.add(it)
             it.behandle(hendelse)
@@ -51,6 +53,7 @@ class Person private constructor(
             this,
             hendelse.fom,
             hendelse.tom,
+            aktivitetstidslinje,
         ).also {
             rapporteringsperioder.add(it)
             it.behandle(hendelse)
@@ -73,6 +76,7 @@ class Person private constructor(
     override fun rapporteringsperiodeEndret(event: RapporteringsperiodeObserver.RapporteringsperiodeEndret) {
         observers.forEach { it.rapporteringsperiodeEndret(event) }
     }
+
     override fun toSpesifikkKontekst() = SpesifikkKontekst("person", mapOf("ident" to ident))
 
     override fun equals(other: Any?) = other is Person && this.ident == other.ident

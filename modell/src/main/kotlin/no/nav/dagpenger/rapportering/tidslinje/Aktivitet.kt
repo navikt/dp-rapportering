@@ -1,34 +1,17 @@
-package no.nav.dagpenger.rapportering
+package no.nav.dagpenger.rapportering.tidslinje
 
-import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
+import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
-
-internal class Aktivitetstidslinje(dager: List<Aktivitet> = emptyList()) {
-    private var dager = dager.toMutableList()
-
-    // TODO: Kun brukt i tester - må fjernes
-    internal fun håndter(aktivitet: Aktivitet) {
-        dager.add(aktivitet)
-    }
-
-    fun håndter(hendelse: NyAktivitetHendelse) {
-        dager.addAll(hendelse.aktiviteter)
-    }
-
-    fun antallAktiviteter() = dager.size
-    fun antallDager() = Aktivitet.perDag(dager).size
-
-    fun forPeriode(periode: ClosedRange<LocalDate>) = Aktivitetstidslinje(dager.filter { it.dekkesAv(periode) })
-}
 
 sealed class Aktivitet(
     val dato: LocalDate,
     val antall: Duration,
     val type: AktivitetType,
     val uuid: UUID = UUID.randomUUID(),
+    private var tilstand: Tilstand = Ny,
 ) {
     enum class AktivitetType {
         Arbeid, Syk, Ferie
@@ -39,6 +22,24 @@ sealed class Aktivitet(
     }
 
     fun dekkesAv(periode: ClosedRange<LocalDate>) = dato in periode
+
+    fun håndter(hendelse: NyRapporteringHendelse) {
+        tilstand.behandle(hendelse, this)
+    }
+
+    private interface Tilstand {
+        fun behandle(hendelse: NyRapporteringHendelse, aktivitet: Aktivitet) {
+            throw IllegalStateException("Kan ikke håndtere ${hendelse::class.java.simpleName} i denne tilstanden")
+        }
+    }
+
+    private object Ny : Tilstand {
+        override fun behandle(hendelse: NyRapporteringHendelse, aktivitet: Aktivitet) {
+            aktivitet.tilstand = Innsendt
+        }
+    }
+
+    private object Innsendt : Tilstand
 
     class Arbeid(dato: LocalDate, arbeidstimer: Number) :
         Aktivitet(dato, arbeidstimer.toDouble().hours, AktivitetType.Arbeid)

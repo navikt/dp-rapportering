@@ -1,7 +1,7 @@
 package no.nav.dagpenger.rapportering.hendelser
 
 import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
-import no.nav.dagpenger.rapportering.Aktivitet
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import java.util.UUID
 
 class NyAktivitetHendelse(

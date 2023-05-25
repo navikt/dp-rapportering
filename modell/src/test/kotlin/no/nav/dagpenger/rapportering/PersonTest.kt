@@ -7,6 +7,7 @@ import no.nav.dagpenger.rapportering.helpers.TestData.søknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.testIdent
 import no.nav.dagpenger.rapportering.helpers.TestData.testPerson
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -38,19 +39,19 @@ class PersonTest {
         // Bruker melder inn aktiviteter
         person.behandle(
             nyAktivitetHendelse(
-                Aktivitet.Arbeid(LocalDate.now().minusDays(5), 3.2),
+                Aktivitet.Arbeid(LocalDate.now().plusDays(5), 3.2),
             ),
         )
         person.behandle(
             nyAktivitetHendelse(
-                Aktivitet.Syk(LocalDate.now().minusDays(4)),
-                Aktivitet.Syk(LocalDate.now().minusDays(3)),
+                Aktivitet.Syk(LocalDate.now().plusDays(4)),
+                Aktivitet.Syk(LocalDate.now().plusDays(3)),
             ),
         )
         person.behandle(
             nyAktivitetHendelse(
-                Aktivitet.Syk(LocalDate.now().minusDays(2)),
-                Aktivitet.Syk(LocalDate.now().minusDays(1)),
+                Aktivitet.Syk(LocalDate.now().plusDays(2)),
+                Aktivitet.Syk(LocalDate.now().plusDays(1)),
             ),
         )
         // Det utløses en ny rapporteringsperiode (enten som konsekvens av søknad eller ny periode)
