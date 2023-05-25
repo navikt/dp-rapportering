@@ -8,7 +8,7 @@ import kotlin.time.Duration.Companion.hours
 
 sealed class Aktivitet(
     val dato: LocalDate,
-    val antall: Duration,
+    val tid: Duration,
     val type: AktivitetType,
     val uuid: UUID = UUID.randomUUID(),
     private var tilstand: Tilstand = Ny,

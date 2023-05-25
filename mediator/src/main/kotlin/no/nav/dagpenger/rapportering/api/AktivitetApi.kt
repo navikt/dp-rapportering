@@ -23,18 +23,26 @@ import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Ferie
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Syk
 import java.time.LocalDate
 import java.util.UUID
+import kotlin.time.DurationUnit
 
 internal fun Application.aktivitetApi(repository: AktivitetRepository) {
     routing {
         authenticate("tokenX") {
             route("/aktivitet") {
                 get {
-                    val aktiviteter = repository.hentAktiviteter(call.ident())
+                    val aktiviteter = repository.hentAktiviteter(call.ident()).map {
+                        Aktivitet(
+                            id = it.uuid,
+                            dato = it.dato,
+                            type = AktivitetType.valueOf(it.type.toString()),
+                            timer = it.tid.toDouble(DurationUnit.HOURS).toBigDecimal(),
+                        )
+                    }
                     call.respond(HttpStatusCode.OK, aktiviteter)
                 }
                 post {
                     val aktivitetInput = call.receive<AktivitetInput>()
-                    val aktivitet: no.nav.dagpenger.rapportering.tidslinje.Aktivitet = when (aktivitetInput.type) {
+                    val aktivitet = when (aktivitetInput.type) {
                         AktivitetType.ARBEID -> Arbeid(
                             dato = aktivitetInput.dato,
                             arbeidstimer = aktivitetInput.timer?.toDouble()
@@ -93,7 +101,7 @@ internal fun no.nav.dagpenger.rapportering.tidslinje.Aktivitet.toAktivitetDTO():
         type = aktivitetType,
         dato = this.dato,
         id = this.uuid,
-        timer = this.antall.inWholeHours.toBigDecimal(),
+        timer = this.tid.inWholeHours.toBigDecimal(),
     )
 }
 
