@@ -61,7 +61,7 @@ fun Application.rapporteringApi() {
 }
 
 private fun lagNoe(): List<RapporteringsperiodeDagerInner> {
-    val date = LocalDate.of(2023, 5, 23)
+    val date = LocalDate.of(2023, 5, 22)
 
     return (0..13).map { index ->
         RapporteringsperiodeDagerInner(
