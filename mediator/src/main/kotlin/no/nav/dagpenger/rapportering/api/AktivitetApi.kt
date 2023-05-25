@@ -37,7 +37,7 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
                     val aktivitet: no.nav.dagpenger.rapportering.tidslinje.Aktivitet = when (aktivitetInput.type) {
                         AktivitetType.ARBEID -> Arbeid(
                             dato = aktivitetInput.dato,
-                            arbeidstimer = aktivitetInput.timer
+                            arbeidstimer = aktivitetInput.timer?.toDouble()
                                 ?: throw IllegalArgumentException("Må ha antall arbeidstimer"),
                         )
 
