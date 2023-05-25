@@ -1,6 +1,5 @@
 package no.nav.dagpenger.rapportering
 
-import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.meldinger.SøknadInnsendtMelding
 import no.nav.dagpenger.rapportering.repository.PersonRepository
@@ -11,14 +10,7 @@ internal class Mediator(
     rapidsConnection: RapidsConnection,
     private val personRepository: PersonRepository,
     private val aktivitetRepository: AktivitetRepository,
-) : IHendelseMediator, PersonRepository by personRepository, AktivitetRepository by aktivitetRepository {
-    override fun behandle(nyAktivitetHendelse: NyAktivitetHendelse) {
-        /*val person = hentPerson(nyAktivitetHendelse.ident())
-            ?: throw IllegalStateException("Kan ikke behandle ny aktivitet for person som ikke er registrert")
-        person.behandle(nyAktivitetHendelse)*/
-        aktivitetRepository.leggTilAktiviteter(nyAktivitetHendelse.ident(), nyAktivitetHendelse.aktiviteter)
-    }
-
+) : IHendelseMediator, PersonRepository by personRepository {
     private fun hentEllerOpprettPerson(ident: String) = hentPerson(ident) ?: Person(ident)
 
     override fun behandle(melding: SøknadInnsendtMelding, hendelse: SøknadInnsendtHendelse, context: MessageContext) {

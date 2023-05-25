@@ -10,17 +10,18 @@ import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
 
 internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsConnection.StatusListener {
+    private val aktivitetRepository = InMemoryAktivitetRepository()
     private val rapidsConnection: RapidsConnection =
         RapidApplication.Builder(RapidApplication.RapidApplicationConfig.fromEnv(configuration))
             .withKtorModule {
                 konfigurasjon()
-                aktivitetApi(mediator)
+                aktivitetApi(aktivitetRepository)
                 rapporteringApi()
             }.build()
     private val mediator = Mediator(
         rapidsConnection = rapidsConnection,
         InMemoryPersonRepository(),
-        InMemoryAktivitetRepository(),
+        aktivitetRepository,
     )
 
     init {

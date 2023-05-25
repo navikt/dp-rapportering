@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.api
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receive
@@ -12,25 +13,24 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import no.nav.dagpenger.rapportering.IHendelseMediator
+import no.nav.dagpenger.rapportering.AktivitetRepository
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.models.Aktivitet
 import no.nav.dagpenger.rapportering.api.models.AktivitetInput
 import no.nav.dagpenger.rapportering.api.models.AktivitetType
-import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Arbeid
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Ferie
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Syk
 import java.time.LocalDate
 import java.util.UUID
 
-internal fun Application.aktivitetApi(mediator: IHendelseMediator) {
+internal fun Application.aktivitetApi(repository: AktivitetRepository) {
     routing {
         authenticate("tokenX") {
             route("/aktivitet") {
                 get {
                     val aktiviteter = listOf<Aktivitet>()
-                    mediator.hentAktiviteter(call.ident())
+                    repository.hentAktiviteter(call.ident())
                     call.respond(HttpStatusCode.OK, aktiviteter)
                 }
                 post {
@@ -51,20 +51,14 @@ internal fun Application.aktivitetApi(mediator: IHendelseMediator) {
                         )
                     }
 
-                    mediator.behandle(
-                        NyAktivitetHendelse(
-                            meldingsreferanseId = UUID.randomUUID(),
-                            ident = call.ident(),
-                            aktivitet,
-                        ),
-                    )
+                    repository.leggTilAktivitet(call.ident(), aktivitet)
 
                     call.respond(HttpStatusCode.Created, aktivitet.toAktivitetDTO())
                 }
 
                 route("{id}") {
                     get {
-                        val aktivitet = Aktivitet(type = AktivitetType.ARBEID, dato = LocalDate.now())
+                        val aktivitet = repository.hentAktivitet(call.ident(), call.finnUUID("id"))
                         call.respond(HttpStatusCode.OK, aktivitet)
                     }
 
@@ -81,6 +75,7 @@ internal fun Application.aktivitetApi(mediator: IHendelseMediator) {
                     }
 
                     delete {
+                        repository.slettAktivitet(call.ident(), call.finnUUID("id"))
                         call.respond(HttpStatusCode.NoContent)
                     }
                 }
@@ -102,3 +97,7 @@ internal fun no.nav.dagpenger.rapportering.tidslinje.Aktivitet.toAktivitetDTO():
         timer = this.antall.inWholeHours.toBigDecimal(),
     )
 }
+
+internal fun ApplicationCall.finnUUID(pathParam: String): UUID = parameters[pathParam]?.let {
+    UUID.fromString(it)
+} ?: throw IllegalArgumentException("Kunne ikke finne oppgaveId i path")
