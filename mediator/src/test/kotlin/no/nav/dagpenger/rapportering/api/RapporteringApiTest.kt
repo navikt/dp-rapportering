@@ -8,7 +8,10 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.testing.ApplicationTestBuilder
-import io.ktor.server.testing.testApplication
+import no.nav.dagpenger.rapportering.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
+import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
+import no.nav.dagpenger.rapportering.repository.InMemoryRapporteringsperiodeRepository
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
@@ -16,7 +19,9 @@ class RapporteringApiTest {
     @Test
     fun `skal hente en liste med mulige rapportinger`() {
         withRapporteringApi {
-            client.get("/rapporteringsperioder").also { response ->
+            client.get("/rapporteringsperioder") {
+                autentisert()
+            }.also { response ->
                 response.status shouldBe HttpStatusCode.OK
                 "${response.contentType()}" shouldContain "application/json"
             }
@@ -27,7 +32,9 @@ class RapporteringApiTest {
     fun `Skal kunne hente ut en rapporteringsperiode med en gitt id`() {
         val id = UUID.randomUUID().toString()
         withRapporteringApi {
-            client.get("/rapporteringsperioder/$id").let { response ->
+            client.get("/rapporteringsperioder/$id") {
+                autentisert()
+            }.let { response ->
                 response.status shouldBe HttpStatusCode.OK
                 "${response.contentType()}" shouldContain "application/json"
             }
@@ -39,6 +46,7 @@ class RapporteringApiTest {
         val id = UUID.randomUUID().toString()
         withRapporteringApi {
             client.post("/rapporteringsperioder/$id/innsending") {
+                autentisert()
                 contentType(ContentType.Application.Json)
             }.also { response ->
                 response.status shouldBe HttpStatusCode.Created
@@ -48,14 +56,21 @@ class RapporteringApiTest {
     }
 
     private fun withRapporteringApi(
+        rapporteringsperioder: List<Rapporteringsperiode> = emptyList(),
         test: suspend ApplicationTestBuilder.() -> Unit,
     ) {
-        testApplication {
-            application {
+        TestApplication.withMockAuthServerAndTestApplication(
+            moduleFunction = {
                 konfigurasjon()
-                rapporteringApi()
-            }
-            test()
-        }
+                rapporteringApi(
+                    InMemoryRapporteringsperiodeRepository().apply {
+                        rapporteringsperioder.forEach {
+                            lagreRapporteringsperiode(defaultDummyFodselsnummer, it)
+                        }
+                    },
+                )
+            },
+            test = test,
+        )
     }
 }

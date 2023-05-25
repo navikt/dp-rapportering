@@ -1,4 +1,4 @@
-package no.nav.dagpenger.rapportering
+package no.nav.dagpenger.rapportering.repository
 
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import java.util.UUID

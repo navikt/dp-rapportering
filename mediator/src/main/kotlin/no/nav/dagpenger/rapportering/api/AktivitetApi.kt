@@ -2,7 +2,6 @@ package no.nav.dagpenger.rapportering.api
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receive
@@ -13,18 +12,18 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import no.nav.dagpenger.rapportering.AktivitetRepository
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.models.Aktivitet
 import no.nav.dagpenger.rapportering.api.models.AktivitetInput
 import no.nav.dagpenger.rapportering.api.models.AktivitetType
-import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType as InternType
+import no.nav.dagpenger.rapportering.repository.AktivitetRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Arbeid
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Ferie
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Syk
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.time.DurationUnit
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType as InternType
 
 internal fun Application.aktivitetApi(repository: AktivitetRepository) {
     routing {
@@ -110,7 +109,3 @@ internal fun no.nav.dagpenger.rapportering.tidslinje.Aktivitet.toAktivitetDTO():
         timer = this.tid.inWholeHours.toBigDecimal(),
     )
 }
-
-internal fun ApplicationCall.finnUUID(pathParam: String): UUID = parameters[pathParam]?.let {
-    UUID.fromString(it)
-} ?: throw IllegalArgumentException("Kunne ikke finne oppgaveId i path")
