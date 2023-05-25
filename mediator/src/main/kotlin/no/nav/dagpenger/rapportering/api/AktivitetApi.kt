@@ -13,6 +13,7 @@ import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.IHendelseMediator
+import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.models.Aktivitet
 import no.nav.dagpenger.rapportering.api.models.AktivitetInput
 import no.nav.dagpenger.rapportering.api.models.AktivitetType
@@ -29,11 +30,11 @@ internal fun Application.aktivitetApi(mediator: IHendelseMediator) {
             route("/aktivitet") {
                 get {
                     val aktiviteter = listOf<Aktivitet>()
+                    mediator.hentAktiviteter(call.ident())
                     call.respond(HttpStatusCode.OK, aktiviteter)
                 }
                 post {
                     val aktivitetInput = call.receive<AktivitetInput>()
-
                     val aktivitet: no.nav.dagpenger.rapportering.tidslinje.Aktivitet = when (aktivitetInput.type) {
                         AktivitetType.ARBEID -> Arbeid(
                             dato = aktivitetInput.dato,
@@ -53,7 +54,7 @@ internal fun Application.aktivitetApi(mediator: IHendelseMediator) {
                     mediator.behandle(
                         NyAktivitetHendelse(
                             meldingsreferanseId = UUID.randomUUID(),
-                            ident = "",
+                            ident = call.ident(),
                             aktivitet,
                         ),
                     )
@@ -69,7 +70,6 @@ internal fun Application.aktivitetApi(mediator: IHendelseMediator) {
 
                     put {
                         val aktivitetInput = call.receive<AktivitetInput>()
-
                         val aktivitet = Aktivitet(
                             type = aktivitetInput.type,
                             dato = aktivitetInput.dato ?: LocalDate.now(), // TODO

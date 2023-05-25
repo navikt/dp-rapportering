@@ -4,7 +4,7 @@ import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.api.aktivitetApi
 import no.nav.dagpenger.rapportering.api.konfigurasjon
 import no.nav.dagpenger.rapportering.api.rapporteringApi
-import no.nav.dagpenger.rapportering.repository.InMemoryRepository
+import no.nav.dagpenger.rapportering.repository.InMemoryPersonRepository
 import no.nav.dagpenger.rapportering.tjenester.SøknadMottak
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
@@ -17,8 +17,11 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
                 aktivitetApi(mediator)
                 rapporteringApi()
             }.build()
-
-    private val mediator = Mediator(rapidsConnection = rapidsConnection, InMemoryRepository)
+    private val mediator = Mediator(
+        rapidsConnection = rapidsConnection,
+        InMemoryPersonRepository(),
+        InMemoryAktivitetRepository(),
+    )
 
     init {
         rapidsConnection.register(this)
