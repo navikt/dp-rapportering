@@ -27,7 +27,7 @@ fun Application.rapporteringApi() {
                 get {
                     val rapporteringsperiode = Rapporteringsperiode(
                         id = UUID.randomUUID(),
-                        fraOgMed = LocalDate.of(2023, 5, 23),
+                        fraOgMed = LocalDate.of(2023, 5, 22),
                         tilOgMed = LocalDate.of(2023, 6, 6),
                         status = TIL_UTFYLLING,
                         dager = lagNoe(),
