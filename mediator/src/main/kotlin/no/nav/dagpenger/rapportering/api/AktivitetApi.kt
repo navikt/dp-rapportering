@@ -34,7 +34,7 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
                         Aktivitet(
                             id = it.uuid,
                             dato = it.dato,
-                            type = AktivitetType.valueOf(it.type.toString()),
+                            type = AktivitetType.valueOf(it.type.name),
                             timer = it.tid.toDouble(DurationUnit.HOURS).toBigDecimal(),
                         )
                     }
