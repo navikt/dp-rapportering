@@ -14,11 +14,6 @@ internal class Mediator(
     private val aktivitetRepository: AktivitetRepository,
     private val rapporteringsperiodeRepository: RapporteringsperiodeRepository,
 ) : IHendelseMediator, PersonRepository by personRepository {
-    private fun hentEllerOpprettPerson(ident: String) = hentPerson(ident) ?: Person(
-        ident,
-        rapporteringsperiodeRepository.hentRapporteringsperioder(ident).toMutableList(),
-    )
-
     override fun behandle(melding: SøknadInnsendtMelding, hendelse: SøknadInnsendtHendelse, context: MessageContext) {
         // hente ØnskerDagpengerFraDato
         // hente SøknadsTidspunkt
