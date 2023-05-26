@@ -23,7 +23,8 @@ import java.util.concurrent.TimeUnit
 private val logger = KotlinLogging.logger {}
 
 object AuthFactory {
-    private object token_x : PropertyGroup() {
+
+    private object token_x : PropertyGroup() { // ktlint-disable standard:class-naming
         val well_known_url by stringType
         val client_id by stringType
     }
