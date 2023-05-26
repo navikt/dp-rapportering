@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering
 
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.meldinger.SøknadInnsendtMelding
+import no.nav.dagpenger.rapportering.repository.AktivitetRepository
 import no.nav.dagpenger.rapportering.repository.PersonRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.helse.rapids_rivers.MessageContext
@@ -10,6 +11,7 @@ import no.nav.helse.rapids_rivers.RapidsConnection
 internal class Mediator(
     rapidsConnection: RapidsConnection,
     private val personRepository: PersonRepository,
+    private val aktivitetRepository: AktivitetRepository,
     private val rapporteringsperiodeRepository: RapporteringsperiodeRepository,
 ) : IHendelseMediator, PersonRepository by personRepository {
     private fun hentEllerOpprettPerson(ident: String) = hentPerson(ident) ?: Person(

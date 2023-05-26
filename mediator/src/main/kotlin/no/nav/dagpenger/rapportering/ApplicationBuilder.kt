@@ -25,6 +25,7 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
         rapidsConnection = rapidsConnection,
         InMemoryPersonRepository(),
         aktivitetRepository,
+        rapporteringsperiodeRepository,
     )
 
     init {
