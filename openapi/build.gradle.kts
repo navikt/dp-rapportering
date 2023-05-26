@@ -31,7 +31,7 @@ dependencies {
 }
 
 openApiGenerate {
-    generatorName.set("kotlin")
+    generatorName.set("kotlin-server")
     inputSpec.set("$projectDir/src/main/resources/rapportering-api.yaml")
     outputDir.set("$buildDir/generated/")
     packageName.set("no.nav.dagpenger.rapportering.api")
@@ -39,13 +39,12 @@ openApiGenerate {
         mapOf(
             "apis" to "none",
             "models" to "",
-            "modelDocs" to "false",
         ),
     )
     configOptions.set(
         mapOf(
             "serializationLibrary" to "jackson",
-            "enumPropertyNaming" to "UPPERCASE",
+            "enumPropertyNaming" to "original",
         ),
     )
 }

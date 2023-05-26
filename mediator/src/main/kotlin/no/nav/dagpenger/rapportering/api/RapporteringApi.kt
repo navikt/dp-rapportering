@@ -12,7 +12,7 @@ import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.models.AktivitetType
 import no.nav.dagpenger.rapportering.api.models.Rapporteringsperiode
-import no.nav.dagpenger.rapportering.api.models.Rapporteringsperiode.Status.TIL_UTFYLLING
+import no.nav.dagpenger.rapportering.api.models.Rapporteringsperiode.Status.TilUtfylling
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDagerInner
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import java.time.LocalDate
@@ -35,7 +35,7 @@ fun Application.rapporteringApi(rapporteringsperiodeRepository: Rapporteringsper
                                     id = UUID.randomUUID(),
                                     fraOgMed = LocalDate.of(2023, 5, 22),
                                     tilOgMed = LocalDate.of(2023, 6, 4),
-                                    status = TIL_UTFYLLING,
+                                    status = TilUtfylling,
                                     dager = lagNoe(),
                                     aktiviteter = listOf(),
                                 )
@@ -54,7 +54,7 @@ fun Application.rapporteringApi(rapporteringsperiodeRepository: Rapporteringsper
                                     id = UUID.randomUUID(),
                                     fraOgMed = LocalDate.of(2023, 5, 22),
                                     tilOgMed = LocalDate.of(2023, 6, 4),
-                                    status = TIL_UTFYLLING,
+                                    status = TilUtfylling,
                                     dager = lagNoe(),
                                     aktiviteter = listOf(),
                                 ),
@@ -75,9 +75,9 @@ private fun lagNoe(): List<RapporteringsperiodeDagerInner> {
             dagIndex = index,
             dato = date.plusDays(index.toLong()),
             muligeAktiviteter = listOf(
-                AktivitetType.ARBEID,
-                AktivitetType.FERIE,
-                AktivitetType.SYK,
+                AktivitetType.Arbeid,
+                AktivitetType.Ferie,
+                AktivitetType.Syk,
             ).shuffled().subList(0, 2),
         )
     }

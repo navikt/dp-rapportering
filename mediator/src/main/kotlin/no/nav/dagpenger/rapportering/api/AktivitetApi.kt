@@ -22,7 +22,6 @@ import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Ferie
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Syk
 import java.util.UUID
 import kotlin.time.DurationUnit
-import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType as InternType
 
 internal fun Application.aktivitetApi(repository: AktivitetRepository) {
     routing {
@@ -34,11 +33,7 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
                         Aktivitet(
                             id = it.uuid,
                             dato = it.dato,
-                            type = when (it.type) {
-                                InternType.Arbeid -> AktivitetType.ARBEID
-                                InternType.Syk -> AktivitetType.SYK
-                                InternType.Ferie -> AktivitetType.FERIE
-                            },
+                            type = AktivitetType.valueOf(it.type.name),
                             timer = it.tid.toDouble(DurationUnit.HOURS).toBigDecimal(),
                         )
                     }
@@ -47,17 +42,17 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
                 post {
                     val aktivitetInput = call.receive<AktivitetInput>()
                     val aktivitet = when (aktivitetInput.type) {
-                        AktivitetType.ARBEID -> Arbeid(
+                        AktivitetType.Arbeid -> Arbeid(
                             dato = aktivitetInput.dato,
                             arbeidstimer = aktivitetInput.timer?.toDouble()
                                 ?: throw IllegalArgumentException("Må ha antall arbeidstimer"),
                         )
 
-                        AktivitetType.SYK -> Syk(
+                        AktivitetType.Syk -> Syk(
                             dato = aktivitetInput.dato,
                         )
 
-                        AktivitetType.FERIE -> Ferie(
+                        AktivitetType.Ferie -> Ferie(
                             dato = aktivitetInput.dato,
                         )
                     }
@@ -97,9 +92,9 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
 
 internal fun no.nav.dagpenger.rapportering.tidslinje.Aktivitet.toAktivitetDTO(): Aktivitet {
     val aktivitetType = when (this) {
-        is Arbeid -> AktivitetType.ARBEID
-        is Ferie -> AktivitetType.FERIE
-        is Syk -> AktivitetType.SYK
+        is Arbeid -> AktivitetType.Arbeid
+        is Ferie -> AktivitetType.Ferie
+        is Syk -> AktivitetType.Syk
     }
     return Aktivitet(
         type = aktivitetType,
