@@ -13,9 +13,9 @@ import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.api.auth.ident
-import no.nav.dagpenger.rapportering.api.models.Aktivitet
-import no.nav.dagpenger.rapportering.api.models.AktivitetInput
-import no.nav.dagpenger.rapportering.api.models.AktivitetType
+import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
+import no.nav.dagpenger.rapportering.api.models.AktivitetInputDTO
+import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
 import no.nav.dagpenger.rapportering.repository.AktivitetRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Arbeid
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Ferie
@@ -30,29 +30,29 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
                 get {
                     val aktiviteter = repository.hentAktiviteter(call.ident()).map {
                         // TODO: Dette er veldig gnøkka.
-                        Aktivitet(
+                        AktivitetDTO(
                             id = it.uuid,
                             dato = it.dato,
-                            type = AktivitetType.valueOf(it.type.name),
+                            type = AktivitetTypeDTO.valueOf(it.type.name),
                             timer = it.tid.toDouble(DurationUnit.HOURS).toBigDecimal(),
                         )
                     }
                     call.respond(HttpStatusCode.OK, aktiviteter)
                 }
                 post {
-                    val aktivitetInput = call.receive<AktivitetInput>()
+                    val aktivitetInput = call.receive<AktivitetInputDTO>()
                     val aktivitet = when (aktivitetInput.type) {
-                        AktivitetType.Arbeid -> Arbeid(
+                        AktivitetTypeDTO.Arbeid -> Arbeid(
                             dato = aktivitetInput.dato,
                             arbeidstimer = aktivitetInput.timer?.toDouble()
                                 ?: throw IllegalArgumentException("Må ha antall arbeidstimer"),
                         )
 
-                        AktivitetType.Syk -> Syk(
+                        AktivitetTypeDTO.Syk -> Syk(
                             dato = aktivitetInput.dato,
                         )
 
-                        AktivitetType.Ferie -> Ferie(
+                        AktivitetTypeDTO.Ferie -> Ferie(
                             dato = aktivitetInput.dato,
                         )
                     }
@@ -69,8 +69,8 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
                     }
 
                     put {
-                        val aktivitetInput = call.receive<AktivitetInput>()
-                        val aktivitet = Aktivitet(
+                        val aktivitetInput = call.receive<AktivitetInputDTO>()
+                        val aktivitet = AktivitetDTO(
                             type = aktivitetInput.type,
                             dato = aktivitetInput.dato,
                             id = UUID.randomUUID(),
@@ -90,13 +90,13 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
     }
 }
 
-internal fun no.nav.dagpenger.rapportering.tidslinje.Aktivitet.toAktivitetDTO(): Aktivitet {
+internal fun no.nav.dagpenger.rapportering.tidslinje.Aktivitet.toAktivitetDTO(): AktivitetDTO {
     val aktivitetType = when (this) {
-        is Arbeid -> AktivitetType.Arbeid
-        is Ferie -> AktivitetType.Ferie
-        is Syk -> AktivitetType.Syk
+        is Arbeid -> AktivitetTypeDTO.Arbeid
+        is Ferie -> AktivitetTypeDTO.Ferie
+        is Syk -> AktivitetTypeDTO.Syk
     }
-    return Aktivitet(
+    return AktivitetDTO(
         type = aktivitetType,
         dato = this.dato,
         id = this.uuid,

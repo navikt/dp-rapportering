@@ -10,10 +10,9 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.api.auth.ident
-import no.nav.dagpenger.rapportering.api.models.AktivitetType
-import no.nav.dagpenger.rapportering.api.models.Rapporteringsperiode
-import no.nav.dagpenger.rapportering.api.models.Rapporteringsperiode.Status.TilUtfylling
-import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDagerInner
+import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDTO
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDagerInnerDTO
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import java.time.LocalDate
 import java.util.UUID
@@ -31,11 +30,11 @@ fun Application.rapporteringApi(rapporteringsperiodeRepository: Rapporteringsper
                     get {
                         val rapporteringsperiode =
                             rapporteringsperiodeRepository.hentRapporteringsperiode(call.ident(), call.finnUUID("id"))
-                                ?: Rapporteringsperiode(
+                                ?: RapporteringsperiodeDTO(
                                     id = UUID.randomUUID(),
                                     fraOgMed = LocalDate.of(2023, 5, 22),
                                     tilOgMed = LocalDate.of(2023, 6, 4),
-                                    status = TilUtfylling,
+                                    status = RapporteringsperiodeDTO.Status.TilUtfylling,
                                     dager = lagNoe(),
                                     aktiviteter = listOf(),
                                 )
@@ -50,11 +49,11 @@ fun Application.rapporteringApi(rapporteringsperiodeRepository: Rapporteringsper
 
                             call.respond(
                                 HttpStatusCode.Created,
-                                Rapporteringsperiode(
+                                RapporteringsperiodeDTO(
                                     id = UUID.randomUUID(),
                                     fraOgMed = LocalDate.of(2023, 5, 22),
                                     tilOgMed = LocalDate.of(2023, 6, 4),
-                                    status = TilUtfylling,
+                                    status = RapporteringsperiodeDTO.Status.TilUtfylling,
                                     dager = lagNoe(),
                                     aktiviteter = listOf(),
                                 ),
@@ -67,17 +66,17 @@ fun Application.rapporteringApi(rapporteringsperiodeRepository: Rapporteringsper
     }
 }
 
-private fun lagNoe(): List<RapporteringsperiodeDagerInner> {
+private fun lagNoe(): List<RapporteringsperiodeDagerInnerDTO> {
     val date = LocalDate.of(2023, 5, 22)
 
     return (0..13).map { index ->
-        RapporteringsperiodeDagerInner(
+        RapporteringsperiodeDagerInnerDTO(
             dagIndex = index,
             dato = date.plusDays(index.toLong()),
             muligeAktiviteter = listOf(
-                AktivitetType.Arbeid,
-                AktivitetType.Ferie,
-                AktivitetType.Syk,
+                AktivitetTypeDTO.Arbeid,
+                AktivitetTypeDTO.Ferie,
+                AktivitetTypeDTO.Syk,
             ).shuffled().subList(0, 2),
         )
     }

@@ -41,6 +41,7 @@ openApiGenerate {
             "models" to "",
         ),
     )
+    modelNameSuffix.set("DTO")
     configOptions.set(
         mapOf(
             "serializationLibrary" to "jackson",
