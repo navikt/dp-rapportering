@@ -18,7 +18,24 @@ class Person private constructor(
 ) : Subaktivitetskontekst, RapporteringsperiodeObserver {
     private val observers = mutableListOf<PersonObserver>()
 
-    constructor(ident: String) : this(ident, Aktivitetstidslinje(), mutableListOf(), Aktivitetslogg())
+    constructor(
+        ident: String,
+    ) : this(
+        ident,
+        Aktivitetstidslinje(),
+        mutableListOf(),
+        Aktivitetslogg(),
+    )
+
+    constructor(
+        ident: String,
+        rapporteringsperioder: MutableList<Rapporteringsperiode>,
+    ) : this(
+        ident,
+        Aktivitetstidslinje(),
+        rapporteringsperioder,
+        Aktivitetslogg(),
+    )
 
     // TODO: Fjern denne etter testen kan bruke f.eks. en visitor
     fun __TEST_rapporteringId() = rapporteringsperioder.first().rapporteringsperiodeId

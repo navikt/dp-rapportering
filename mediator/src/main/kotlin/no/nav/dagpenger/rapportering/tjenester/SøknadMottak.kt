@@ -16,12 +16,11 @@ internal class SøknadMottak(
     rapidsConnection: RapidsConnection,
     private val mediator: IHendelseMediator,
 ) : River.PacketListener {
-    companion object {
+    private companion object {
         private val logger = KotlinLogging.logger {}
+        private val sikkerlogg = KotlinLogging.logger("tjenestekall.SøknadMottak")
     }
 
-//    internal val id: UUID = UUID.fromString(packet["@id"].asText())
-//    protected val opprettet = packet["@opprettet"].asLocalDateTime()
     init {
         River(rapidsConnection).apply {
             validate { it.demandValue("@event_name", "innsending_ferdigstilt") }
@@ -38,7 +37,6 @@ internal class SøknadMottak(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val ident = packet["fødselsnummer"].asText()
-
         val søknadID = packet["søknadsData"]["søknad_uuid"].asUUID()
         withLoggingContext(
             "søknadId" to søknadID.toString(),
@@ -47,6 +45,7 @@ internal class SøknadMottak(
             søknadInnsendtMelding.behandle(mediator, context)
 
             logger.info { "Fått SøknadInnsendtHendelse for $søknadID" }
+            sikkerlogg.info { "Fått SøknadInnsendtHendelse for $søknadID. Packet: ${packet.toJson()}" }
         }
     }
 
