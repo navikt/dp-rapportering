@@ -19,7 +19,7 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
             .withKtorModule {
                 konfigurasjon()
                 aktivitetApi(aktivitetRepository)
-                rapporteringApi(rapporteringsperiodeRepository)
+                rapporteringApi(rapporteringsperiodeRepository, aktivitetRepository)
             }.build()
     private val mediator = Mediator(
         rapidsConnection = rapidsConnection,

@@ -31,6 +31,13 @@ class Rapporteringsperiode private constructor(
     private val opprettet: LocalDateTime,
     private var oppdatert: LocalDateTime = opprettet,
 ) : Aktivitetskontekst {
+
+    constructor(
+        person: Person,
+        fom: LocalDate,
+        tom: LocalDate,
+    ) : this(person, fom, tom, Aktivitetstidslinje())
+
     internal constructor(
         person: Person,
         fom: LocalDate,
@@ -45,6 +52,11 @@ class Rapporteringsperiode private constructor(
         tilstand = Opprettet,
         opprettet = LocalDateTime.now(),
     )
+
+    fun accept(visitor: RapporteringsperiodVisitor) {
+        visitor.visit(rapporteringsperiodeId, periode, this.tilstand.type)
+        aktivitetstidslinje.accept(visitor)
+    }
 
     fun behandle(hendelse: SøknadInnsendtHendelse) {
         hendelse.kontekst(this)

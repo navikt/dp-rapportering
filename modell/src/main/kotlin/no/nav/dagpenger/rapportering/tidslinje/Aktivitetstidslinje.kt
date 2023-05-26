@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.tidslinje
 
+import no.nav.dagpenger.rapportering.AktivitetstidslinjeVisitor
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
 import java.time.LocalDate
@@ -23,5 +24,9 @@ internal class Aktivitetstidslinje(dager: List<Aktivitet> = emptyList()) {
 
     fun håndter(hendelse: NyRapporteringHendelse) {
         aktiviteter.forEach { it.håndter(hendelse) }
+    }
+
+    fun accept(visitor: AktivitetstidslinjeVisitor) {
+        visitor.visit(aktiviteter.toList())
     }
 }

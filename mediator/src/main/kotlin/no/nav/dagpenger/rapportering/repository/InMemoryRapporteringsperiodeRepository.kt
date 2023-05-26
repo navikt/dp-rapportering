@@ -4,6 +4,15 @@ import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import java.util.UUID
 
 class InMemoryRapporteringsperiodeRepository : RapporteringsperiodeRepository {
+
+//    ?: RapporteringsperiodeDTO(
+//    id = UUID.randomUUID(),
+//    fraOgMed = LocalDate.of(2023, 5, 22),
+//    tilOgMed = LocalDate.of(2023, 6, 4),
+//    status = RapporteringsperiodeDTO.Status.TilUtfylling,
+//    dager = lagNoe(),
+//    aktiviteter = listOf(),
+//    )
     private val rapporteringsperioder = PersonCollection<Rapporteringsperiode>()
     override fun hentRapporteringsperiode(ident: String, uuid: UUID) =
         rapporteringsperioder.hent(ident).find { it.rapporteringsperiodeId == uuid }

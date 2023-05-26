@@ -8,11 +8,14 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.testing.ApplicationTestBuilder
+import no.nav.dagpenger.rapportering.Person
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
 import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
+import no.nav.dagpenger.rapportering.repository.InMemoryAktivitetRepository
 import no.nav.dagpenger.rapportering.repository.InMemoryRapporteringsperiodeRepository
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 import java.util.UUID
 
 class RapporteringApiTest {
@@ -30,13 +33,21 @@ class RapporteringApiTest {
 
     @Test
     fun `Skal kunne hente ut en rapporteringsperiode med en gitt id`() {
-        val id = UUID.randomUUID().toString()
-        withRapporteringApi {
+        val periode1 = Rapporteringsperiode(
+            person = Person(defaultDummyFodselsnummer),
+            fom = LocalDate.now().minusDays(1),
+            tom = LocalDate.now().plusDays(1),
+        )
+        val id = periode1.rapporteringsperiodeId
+        withRapporteringApi(
+            rapporteringsperioder = listOf(periode1),
+        ) {
             client.get("/rapporteringsperioder/$id") {
                 autentisert()
             }.let { response ->
                 response.status shouldBe HttpStatusCode.OK
                 "${response.contentType()}" shouldContain "application/json"
+                // todo sjekke json
             }
         }
     }
@@ -68,6 +79,7 @@ class RapporteringApiTest {
                             lagreRapporteringsperiode(defaultDummyFodselsnummer, it)
                         }
                     },
+                    InMemoryAktivitetRepository(),
                 )
             },
             test = test,

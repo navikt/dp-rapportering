@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.tidslinje
 
+import no.nav.dagpenger.rapportering.AktivitetVisitor
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
 import java.time.LocalDate
 import java.util.UUID
@@ -13,6 +14,11 @@ sealed class Aktivitet(
     val uuid: UUID = UUID.randomUUID(),
     private var tilstand: Tilstand = Ny,
 ) {
+
+    fun accept(visitor: AktivitetVisitor) {
+        visitor.visit(dato, tid, type, uuid)
+    }
+
     enum class AktivitetType {
         Arbeid, Syk, Ferie
     }
