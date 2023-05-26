@@ -3,6 +3,10 @@ package no.nav.dagpenger.rapportering.api
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.put
+import io.ktor.client.request.request
+import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -17,10 +21,22 @@ import java.util.UUID
 
 class AktivitetApiTest {
     @Test
-    fun `uautentiserte kall feiler`() {
+    fun `uautentiserte get kall feiler`() {
         withAktivitetApi {
-            client.get("/aktivitet").let { response ->
-                response.status shouldBe HttpStatusCode.Unauthorized
+            client.get("/aktivitet").status shouldBe HttpStatusCode.Unauthorized
+            client.get("/aktivitet/id").status shouldBe HttpStatusCode.Unauthorized
+        }
+    }
+
+    @Test
+    fun `uautentiserte PUT eller POST kall feiler`() {
+        withAktivitetApi {
+            listOf(HttpMethod.Post, HttpMethod.Get).forEach { httpMethod ->
+                client.request("/aktivitet") {
+                    this.method = httpMethod
+                    this.header("Content-Type", "application/json")
+                    this.setBody("""{"type": "Arbeid", "dato": "2023-05-16", "timer": "7" }""")
+                }.status shouldBe HttpStatusCode.Unauthorized
             }
         }
     }
