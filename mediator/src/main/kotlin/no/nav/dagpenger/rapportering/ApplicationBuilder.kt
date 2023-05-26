@@ -23,7 +23,7 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
             }.build()
     private val mediator = Mediator(
         rapidsConnection = rapidsConnection,
-        InMemoryPersonRepository(),
+        InMemoryPersonRepository(rapporteringsperiodeRepository),
         aktivitetRepository,
         rapporteringsperiodeRepository,
     )

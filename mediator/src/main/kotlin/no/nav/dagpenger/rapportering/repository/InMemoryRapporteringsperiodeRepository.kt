@@ -9,7 +9,7 @@ class InMemoryRapporteringsperiodeRepository : RapporteringsperiodeRepository {
         rapporteringsperioder.hent(ident).find { it.rapporteringsperiodeId == uuid }
 
     override fun hentRapporteringsperioder(ident: String) =
-        rapporteringsperioder.hent(ident).toList()
+        rapporteringsperioder.hent(ident)
 
     override fun lagreRapporteringsperiode(ident: String, rapporteringsperiode: Rapporteringsperiode) =
         rapporteringsperioder.hent(ident).add(rapporteringsperiode)
