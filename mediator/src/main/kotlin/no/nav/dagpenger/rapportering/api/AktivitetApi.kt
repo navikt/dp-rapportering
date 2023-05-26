@@ -20,7 +20,6 @@ import no.nav.dagpenger.rapportering.repository.AktivitetRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Arbeid
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Ferie
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Syk
-import java.time.LocalDate
 import java.util.UUID
 import kotlin.time.DurationUnit
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType as InternType
@@ -78,7 +77,7 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
                         val aktivitetInput = call.receive<AktivitetInput>()
                         val aktivitet = Aktivitet(
                             type = aktivitetInput.type,
-                            dato = aktivitetInput.dato ?: LocalDate.now(), // TODO
+                            dato = aktivitetInput.dato,
                             id = UUID.randomUUID(),
                             timer = aktivitetInput.timer,
                         )
