@@ -24,7 +24,8 @@ private val logger = KotlinLogging.logger {}
 
 object AuthFactory {
 
-    private object token_x : PropertyGroup() { // ktlint-disable standard:class-naming
+    @Suppress("ClassName")
+    private object token_x : PropertyGroup() {
         val well_known_url by stringType
         val client_id by stringType
     }
