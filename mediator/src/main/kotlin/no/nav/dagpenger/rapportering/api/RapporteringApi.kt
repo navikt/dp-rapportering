@@ -35,6 +35,8 @@ fun Application.rapporteringApi(
             route("/rapporteringsperioder") {
                 get {
                     val rapporteringsperioder = rapporteringsperiodeRepository.hentRapporteringsperioder(call.ident())
+                        .map { RapporteringsperiodeMapper(it).dto }
+
                     call.respond(HttpStatusCode.OK, rapporteringsperioder)
                 }
 
@@ -43,7 +45,7 @@ fun Application.rapporteringApi(
                         val dto =
                             rapporteringsperiodeRepository.hentRapporteringsperiode(call.ident(), call.finnUUID("id"))
                                 ?.let {
-                                    RapporteringsPeriodeMapper(it).dto
+                                    RapporteringsperiodeMapper(it).dto
                                 } ?: RapporteringsperiodeDTO(
                                 id = UUID.randomUUID(),
                                 fraOgMed = LocalDate.of(2023, 5, 22),
@@ -51,7 +53,7 @@ fun Application.rapporteringApi(
                                 status = RapporteringsperiodeDTO.Status.TilUtfylling,
                                 dager = lagNoe(),
                                 aktiviteter = aktivitetRepository.hentAktiviteter(call.ident()).map {
-                                    RapporteringsPeriodeMapper.AktivitetMapper(it).aktivitetDTO
+                                    RapporteringsperiodeMapper.AktivitetMapper(it).aktivitetDTO
                                 },
                             )
                         call.respond(HttpStatusCode.OK, dto)
@@ -82,12 +84,11 @@ fun Application.rapporteringApi(
     }
 }
 
-private class RapporteringsPeriodeMapper(rapporteringsperiode: Rapporteringsperiode) : RapporteringsperiodVisitor {
+private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperiode) : RapporteringsperiodVisitor {
     lateinit var id: UUID
     lateinit var periode: ClosedRange<LocalDate>
     lateinit var tilstand: Rapporteringsperiode.TilstandType
     lateinit var aktiviteter: List<Aktivitet>
-
     val dto: RapporteringsperiodeDTO
         get() {
             return RapporteringsperiodeDTO(
