@@ -78,7 +78,7 @@ private fun lagNoe(): List<RapporteringsperiodeDagerInner> {
                 AktivitetType.ARBEID,
                 AktivitetType.FERIE,
                 AktivitetType.SYK,
-            ),
+            ).shuffled().subList(0, 2),
         )
     }
 }
