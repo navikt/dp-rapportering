@@ -9,7 +9,6 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
-import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.api.auth.ident
@@ -20,7 +19,6 @@ import no.nav.dagpenger.rapportering.repository.AktivitetRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Arbeid
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Ferie
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Syk
-import java.util.UUID
 import kotlin.time.DurationUnit
 
 internal fun Application.aktivitetApi(repository: AktivitetRepository) {
@@ -64,18 +62,6 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
                 route("{id}") {
                     get {
                         val aktivitet = repository.hentAktivitet(call.ident(), call.finnUUID("id"))
-                        call.respond(HttpStatusCode.OK, aktivitet)
-                    }
-
-                    put {
-                        val aktivitetInput = call.receive<AktivitetInputDTO>()
-                        val aktivitet = AktivitetDTO(
-                            type = aktivitetInput.type,
-                            dato = aktivitetInput.dato,
-                            id = UUID.randomUUID(),
-                            timer = aktivitetInput.timer,
-                        )
-
                         call.respond(HttpStatusCode.OK, aktivitet)
                     }
 

@@ -81,21 +81,6 @@ class AktivitetApiTest {
     }
 
     @Test
-    fun `Skal kunne gjøre endringer på en eksisterende aktivitet`() {
-        val id = UUID.randomUUID().toString()
-        withAktivitetApi {
-            autentisert(
-                endepunkt = "/aktivitet/$id",
-                httpMethod = HttpMethod.Put,
-                //language=JSON
-                body = """{"type": "Arbeid", "dato": "2023-05-16", "timer": "5"}""",
-            ).let { response ->
-                response.status shouldBe HttpStatusCode.OK
-            }
-        }
-    }
-
-    @Test
     fun `Skal kunne slette en aktivitet`() {
         val id = UUID.randomUUID().toString()
         withAktivitetApi {
