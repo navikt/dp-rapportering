@@ -62,25 +62,6 @@ paths:
       operationId: get-aktivitet-id
       tags:
         - Aktivitet
-    put:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AktivitetInput'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Aktivitet'
-          description: OK
-      summary: Gjør endringer på en eksisterende aktivitet
-      description: Kan vel bare endre timetall
-      operationId: put-aktivitet-id
-      tags:
-        - Aktivitet
     delete:
       responses:
         '204':
