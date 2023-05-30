@@ -35,8 +35,7 @@ class RapporteringApiTest {
     fun `Skal kunne hente ut en rapporteringsperiode med en gitt id`() {
         val periode1 = Rapporteringsperiode(
             person = Person(defaultDummyFodselsnummer),
-            fom = LocalDate.now().minusDays(1),
-            tom = LocalDate.now().plusDays(1),
+            rapporteringspliktFom = LocalDate.now().minusDays(1),
         )
         val id = periode1.rapporteringsperiodeId
         withRapporteringApi(

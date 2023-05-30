@@ -31,11 +31,11 @@ class Rapporteringsperiode private constructor(
     private val opprettet: LocalDateTime,
     private var oppdatert: LocalDateTime = opprettet,
 ) : Aktivitetskontekst {
+    // TODO: Må utvides med at perioden blir mandag-mandag
     constructor(
         person: Person,
-        fom: LocalDate,
-        tom: LocalDate,
-    ) : this(person, fom, tom, Aktivitetstidslinje())
+        rapporteringspliktFom: LocalDate,
+    ) : this(person, rapporteringspliktFom, rapporteringspliktFom.plusDays(14), person.aktivitetstidslinje)
 
     internal constructor(
         person: Person,
