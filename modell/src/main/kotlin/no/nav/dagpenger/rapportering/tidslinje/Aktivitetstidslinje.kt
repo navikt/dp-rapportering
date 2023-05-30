@@ -1,32 +1,48 @@
 package no.nav.dagpenger.rapportering.tidslinje
 
 import no.nav.dagpenger.rapportering.AktivitetstidslinjeVisitor
-import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
-import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
 import java.time.LocalDate
 
-internal class Aktivitetstidslinje(dager: List<Aktivitet> = emptyList()) {
-    private val aktiviteter = dager.toMutableList()
+interface Tidslinje : Collection<Aktivitet> {
+    val dagerMedAktivitet: Int
 
-    // TODO: Kun brukt i tester - må fjernes
-    internal fun håndter(aktivitet: Aktivitet) {
-        aktiviteter.add(aktivitet)
-    }
+    fun accept(visitor: AktivitetstidslinjeVisitor)
+}
 
-    fun håndter(hendelse: NyAktivitetHendelse) {
-        aktiviteter.addAll(hendelse.aktiviteter)
-    }
+internal data class Aktivitetstidslinje internal constructor(
+    private val aktiviteter: MutableSet<Aktivitet> = mutableSetOf(),
+) : MutableCollection<Aktivitet> by aktiviteter, Tidslinje {
+    override val dagerMedAktivitet get() = Aktivitet.perDag(aktiviteter).size
 
-    fun antallAktiviteter() = aktiviteter.size
-    fun antallDager() = Aktivitet.perDag(aktiviteter).size
+    fun forPeriode(periode: ClosedRange<LocalDate>) = Aktivitetsperiode(periode.start, periode.endInclusive)
 
-    fun forPeriode(periode: ClosedRange<LocalDate>) = Aktivitetstidslinje(aktiviteter.filter { it.dekkesAv(periode) })
+    fun forPeriode(fraOgMed: LocalDate, tilOgMed: LocalDate) = Aktivitetsperiode(fraOgMed, tilOgMed)
 
-    fun håndter(hendelse: NyRapporteringHendelse) {
-        aktiviteter.forEach { it.håndter(hendelse) }
-    }
-
-    fun accept(visitor: AktivitetstidslinjeVisitor) {
+    override fun accept(visitor: AktivitetstidslinjeVisitor) {
         visitor.visit(aktiviteter.toList())
+    }
+
+    internal inner class Aktivitetsperiode(fraOgMed: LocalDate, tilOgMed: LocalDate) : Tidslinje {
+        internal val periode = fraOgMed..tilOgMed
+        private val aktiviteter
+            get() = this@Aktivitetstidslinje.aktiviteter.filter {
+                it.dekkesAv(periode)
+            }
+
+        override fun accept(visitor: AktivitetstidslinjeVisitor) {
+            visitor.visit(aktiviteter.toList())
+        }
+
+        override val dagerMedAktivitet get() = Aktivitet.perDag(aktiviteter).size
+
+        override fun iterator() = aktiviteter.iterator()
+
+        override val size get() = aktiviteter.size
+
+        override fun contains(element: Aktivitet) = aktiviteter.contains(element)
+
+        override fun containsAll(elements: Collection<Aktivitet>) = aktiviteter.containsAll(elements)
+
+        override fun isEmpty() = aktiviteter.isEmpty()
     }
 }

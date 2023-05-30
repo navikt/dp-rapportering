@@ -53,7 +53,7 @@ class Person private constructor(
         hendelse.kontekst(this)
         hendelse.info("Tar imot ny aktivitet utført av bruker")
 
-        aktivitetstidslinje.håndter(hendelse)
+        aktivitetstidslinje.addAll(hendelse.aktiviteter)
     }
 
     fun behandle(hendelse: NyRapporteringsperiodeHendelse) {

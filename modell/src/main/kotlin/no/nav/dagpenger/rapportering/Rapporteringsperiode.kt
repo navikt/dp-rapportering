@@ -23,14 +23,13 @@ internal class Meldeprivate constructor() : Aktivitetskontekst {
 class Rapporteringsperiode private constructor(
     private val person: Person,
     val rapporteringsperiodeId: UUID,
-    private val meldedag: LocalDate,
-    private val periode: ClosedRange<LocalDate>,
+    private val rapporteringsfrist: LocalDate,
+    periode: ClosedRange<LocalDate>,
     private var tilstand: Rapporteringsperiodetilstand,
     private val opprettet: LocalDateTime,
     private var oppdatert: LocalDateTime = opprettet,
 ) : Aktivitetskontekst {
-    private val aktivitetstidslinje
-        get() = person.aktivitetstidslinje.forPeriode(periode)
+    private val aktivitetsperiode = person.aktivitetstidslinje.forPeriode(periode)
 
     // TODO: Må utvides med at perioden blir mandag-mandag
     constructor(
@@ -45,15 +44,15 @@ class Rapporteringsperiode private constructor(
     ) : this(
         person = person,
         rapporteringsperiodeId = UUID.randomUUID(),
-        meldedag = tom,
+        rapporteringsfrist = tom,
         periode = fom..tom,
         tilstand = Opprettet,
         opprettet = LocalDateTime.now(),
     )
 
     fun accept(visitor: RapporteringsperiodVisitor) {
-        visitor.visit(this, rapporteringsperiodeId, periode, this.tilstand.type)
-        aktivitetstidslinje.accept(visitor)
+        visitor.visit(this, rapporteringsperiodeId, aktivitetsperiode.periode, this.tilstand.type)
+        aktivitetsperiode.accept(visitor)
     }
 
     fun behandle(hendelse: SøknadInnsendtHendelse) {
@@ -96,8 +95,7 @@ class Rapporteringsperiode private constructor(
             hendelse: NyRapporteringHendelse,
             rapporteringsperiode: Rapporteringsperiode,
         ) {
-            rapporteringsperiode.aktivitetstidslinje
-                .håndter(hendelse)
+            rapporteringsperiode.aktivitetsperiode.forEach { it.håndter(hendelse) }
             rapporteringsperiode.tilstand(hendelse, Godkjent)
         }
     }
@@ -138,8 +136,8 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiodeId = rapporteringsperiodeId,
             gjeldendeTilstand = tilstand.type,
             forrigeTilstand = forrigeTilstand.type,
-            fom = periode.start,
-            tom = periode.endInclusive,
+            fom = aktivitetsperiode.periode.start,
+            tom = aktivitetsperiode.periode.endInclusive,
         )
 
         person.rapporteringsperiodeEndret(event)
@@ -148,8 +146,8 @@ class Rapporteringsperiode private constructor(
     override fun toSpesifikkKontekst() = SpesifikkKontekst(
         "Rapporteringsperiode",
         mapOf(
-            "fom" to periode.start.toString(),
-            "tom" to periode.endInclusive.toString(),
+            "fom" to aktivitetsperiode.periode.start.toString(),
+            "tom" to aktivitetsperiode.periode.endInclusive.toString(),
         ),
     )
 

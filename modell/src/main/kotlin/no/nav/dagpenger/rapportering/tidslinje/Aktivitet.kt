@@ -24,7 +24,7 @@ sealed class Aktivitet(
     }
 
     companion object {
-        fun perDag(aktiviteter: List<Aktivitet>) = aktiviteter.associateBy { it.dato }
+        fun perDag(aktiviteter: Collection<Aktivitet>) = aktiviteter.associateBy { it.dato }
     }
 
     fun dekkesAv(periode: ClosedRange<LocalDate>) = dato in periode
