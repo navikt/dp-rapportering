@@ -29,7 +29,6 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
             route("/aktivitet") {
                 get {
                     val aktiviteter = repository.hentAktiviteter(call.ident()).map {
-                        // TODO: Dette er veldig gnøkka.
                         AktivitetDTO(
                             id = it.uuid,
                             dato = it.dato,
