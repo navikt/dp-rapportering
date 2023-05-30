@@ -139,7 +139,7 @@ paths:
           format: uuid
         in: path
         required: true
-  /rapporteringsperioder/{id}/innsending:
+  /rapporteringsperioder/{id}/godkjenn:
     post:
       responses:
         '200':
@@ -148,8 +148,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Rapporteringsperiode'
           description: OK
-      summary: Send inn en rapporteringsperiode
-      description: Send inn en rapporteringsperiode
+      summary: Godkjenner en rapporteringsperiode
+      description: Godkjenner en rapporteringsperiode
       operationId: post-rapporteringsperiode-ferdigstill
       tags:
         - Rapporteringsperiode

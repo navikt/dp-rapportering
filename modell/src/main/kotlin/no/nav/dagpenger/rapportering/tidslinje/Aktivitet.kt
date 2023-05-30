@@ -41,11 +41,11 @@ sealed class Aktivitet(
 
     private object Ny : Tilstand {
         override fun behandle(hendelse: NyRapporteringHendelse, aktivitet: Aktivitet) {
-            aktivitet.tilstand = Innsendt
+            aktivitet.tilstand = Låst
         }
     }
 
-    private object Innsendt : Tilstand
+    private object Låst : Tilstand
 
     class Arbeid(dato: LocalDate, arbeidstimer: Number) :
         Aktivitet(dato, arbeidstimer.toDouble().hours, AktivitetType.Arbeid)

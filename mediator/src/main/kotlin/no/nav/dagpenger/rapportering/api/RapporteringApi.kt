@@ -61,7 +61,7 @@ fun Application.rapporteringApi(
                         call.respond(HttpStatusCode.OK, dto)
                     }
 
-                    route("/innsending") {
+                    route("/godkjenn") {
                         post {
                             val id = call.parameters["id"]?.let {
                                 UUID.fromString(it)
@@ -73,7 +73,7 @@ fun Application.rapporteringApi(
                                     id = UUID.randomUUID(),
                                     fraOgMed = LocalDate.of(2023, 5, 22),
                                     tilOgMed = LocalDate.of(2023, 6, 4),
-                                    status = RapporteringsperiodeDTO.Status.TilUtfylling,
+                                    status = RapporteringsperiodeDTO.Status.Godkjent,
                                     dager = lagNoe(),
                                     aktiviteter = listOf(),
                                 ),
