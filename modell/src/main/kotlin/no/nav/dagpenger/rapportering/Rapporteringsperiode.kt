@@ -31,7 +31,6 @@ class Rapporteringsperiode private constructor(
     private val opprettet: LocalDateTime,
     private var oppdatert: LocalDateTime = opprettet,
 ) : Aktivitetskontekst {
-
     constructor(
         person: Person,
         fom: LocalDate,
@@ -101,10 +100,16 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiode.aktivitetstidslinje
                 .forPeriode(rapporteringsperiode.periode)
                 .håndter(hendelse)
-            rapporteringsperiode.tilstand(hendelse, Innsendt)
+            rapporteringsperiode.tilstand(hendelse, Godkjent)
         }
     }
 
+    // Bruker har godkjent, men ikke sendt videre
+    private object Godkjent : Rapporteringsperiodetilstand {
+        override val type = TilstandType.Godkjent
+    }
+
+    // En eller annen hendelse (vedtak fattet eller rapporteringsfrist passert) sender perioden videre
     private object Innsendt : Rapporteringsperiodetilstand {
         override val type = TilstandType.Innsendt
     }
@@ -152,6 +157,7 @@ class Rapporteringsperiode private constructor(
 
     enum class TilstandType {
         Opprettet,
+        Godkjent,
         Innsendt,
     }
 }

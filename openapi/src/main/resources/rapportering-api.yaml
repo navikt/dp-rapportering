@@ -225,6 +225,7 @@ components:
           type: string
           enum:
             - TilUtfylling
+            - Godkjent
             - Innsendt
           example: TilUtfylling
         dager:

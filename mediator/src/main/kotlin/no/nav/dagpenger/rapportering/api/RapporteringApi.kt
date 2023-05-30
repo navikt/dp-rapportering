@@ -12,6 +12,8 @@ import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.AktivitetVisitor
 import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
+import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Innsendt
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Opprettet
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
@@ -97,7 +99,8 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
                 tilOgMed = periode.endInclusive,
                 status = when (tilstand) {
                     Opprettet -> RapporteringsperiodeDTO.Status.TilUtfylling
-                    Rapporteringsperiode.TilstandType.Innsendt -> RapporteringsperiodeDTO.Status.Innsendt
+                    Godkjent -> RapporteringsperiodeDTO.Status.Godkjent
+                    Innsendt -> RapporteringsperiodeDTO.Status.Innsendt
                 },
                 dager = lagNoe(),
                 aktiviteter = aktiviteter.tilDto(),

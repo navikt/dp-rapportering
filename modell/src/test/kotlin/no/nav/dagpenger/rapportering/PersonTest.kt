@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering
 
+import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
 import no.nav.dagpenger.rapportering.helpers.TestData.nyAktivitetHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.nyRapporteringHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.nyRapporteringsperiodeHendelse
@@ -63,7 +64,7 @@ class PersonTest {
             nyRapporteringHendelse(person.__TEST_rapporteringId()),
         )
 
-        assertEquals("Innsendt", observer.tilstand)
+        assertEquals(Godkjent.name, observer.tilstand)
         // Bruker sender inn rapportering for samme periode på nytt
         assertThrows<IllegalStateException> {
             person.behandle(
