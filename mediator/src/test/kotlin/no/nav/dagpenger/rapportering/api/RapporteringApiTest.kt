@@ -16,7 +16,6 @@ import no.nav.dagpenger.rapportering.repository.InMemoryAktivitetRepository
 import no.nav.dagpenger.rapportering.repository.InMemoryRapporteringsperiodeRepository
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import java.util.UUID
 
 class RapporteringApiTest {
     @Test
@@ -53,8 +52,14 @@ class RapporteringApiTest {
 
     @Test
     fun `Skal kunne ferdigstille en rapporteringsperiode`() {
-        val id = UUID.randomUUID().toString()
-        withRapporteringApi {
+        val periode1 = Rapporteringsperiode(
+            person = Person(defaultDummyFodselsnummer),
+            rapporteringspliktFom = LocalDate.now().minusDays(1),
+        )
+        val id = periode1.rapporteringsperiodeId
+        withRapporteringApi(
+            rapporteringsperioder = listOf(periode1),
+        ) {
             client.post("/rapporteringsperioder/$id/godkjenn") {
                 autentisert()
                 contentType(ContentType.Application.Json)

@@ -65,11 +65,8 @@ fun Application.rapporteringApi(
                             )?.let { RapporteringsperiodeMapper(it).dto }
                                 ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
                             val godkjent = dto.copy(status = RapporteringsperiodeDTO.Status.Godkjent)
-                           
-                            call.respond(
-                                HttpStatusCode.OK,
-                                godkjent,
-                            )
+
+                            call.respond(HttpStatusCode.Created, godkjent)
                         }
                     }
                 }
