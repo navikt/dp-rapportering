@@ -123,7 +123,13 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
             aktivitet.accept(this)
         }
 
-        override fun visit(dato: LocalDate, tid: Duration, type: Aktivitet.AktivitetType, uuid: UUID) {
+        override fun visit(
+            aktivitet: Aktivitet,
+            dato: LocalDate,
+            tid: Duration,
+            type: Aktivitet.AktivitetType,
+            uuid: UUID,
+        ) {
             aktivitetDTO = AktivitetDTO(
                 type = when (type) {
                     Aktivitet.AktivitetType.Arbeid -> AktivitetTypeDTO.Arbeid
@@ -143,7 +149,12 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
         AktivitetMapper(it).aktivitetDTO
     }
 
-    override fun visit(id: UUID, periode: ClosedRange<LocalDate>, tilstand: Rapporteringsperiode.TilstandType) {
+    override fun visit(
+        rapporteringsperiode: Rapporteringsperiode,
+        id: UUID,
+        periode: ClosedRange<LocalDate>,
+        tilstand: Rapporteringsperiode.TilstandType,
+    ) {
         this.id = id
         this.periode = periode
         this.tilstand = tilstand

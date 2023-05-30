@@ -52,7 +52,7 @@ class Rapporteringsperiode private constructor(
     )
 
     fun accept(visitor: RapporteringsperiodVisitor) {
-        visitor.visit(rapporteringsperiodeId, periode, this.tilstand.type)
+        visitor.visit(this, rapporteringsperiodeId, periode, this.tilstand.type)
         aktivitetstidslinje.accept(visitor)
     }
 

@@ -16,7 +16,7 @@ sealed class Aktivitet(
 ) {
 
     fun accept(visitor: AktivitetVisitor) {
-        visitor.visit(dato, tid, type, uuid)
+        visitor.visit(this, dato, tid, type, uuid)
     }
 
     enum class AktivitetType {

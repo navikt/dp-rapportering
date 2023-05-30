@@ -1,9 +1,11 @@
 package no.nav.dagpenger.rapportering.api
 
+import io.kotest.assertions.json.shouldContainJsonKey
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.ktor.client.request.get
 import io.ktor.client.request.post
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -20,12 +22,21 @@ import java.time.LocalDate
 class RapporteringApiTest {
     @Test
     fun `skal hente en liste med mulige rapportinger`() {
-        withRapporteringApi {
+        val periode1 = Rapporteringsperiode(
+            person = Person(defaultDummyFodselsnummer),
+            rapporteringspliktFom = LocalDate.now().minusDays(1),
+        )
+        withRapporteringApi(
+            rapporteringsperioder = listOf(periode1),
+        ) {
             client.get("/rapporteringsperioder") {
                 autentisert()
             }.also { response ->
                 response.status shouldBe HttpStatusCode.OK
                 "${response.contentType()}" shouldContain "application/json"
+                response.bodyAsText().let { json ->
+                    json shouldContainJsonKey "$.[0].status"
+                }
             }
         }
     }

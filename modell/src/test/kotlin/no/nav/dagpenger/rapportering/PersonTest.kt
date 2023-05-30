@@ -59,16 +59,17 @@ class PersonTest {
         person.behandle(
             nyRapporteringsperiodeHendelse(),
         )
+        val rapporteringsperiodeId = TestVisitor(person).rapporteringsperiodeId
         // Bruker sender inn rapportering for en periode
         person.behandle(
-            nyRapporteringHendelse(person.__TEST_rapporteringId()),
+            nyRapporteringHendelse(rapporteringsperiodeId),
         )
 
         assertEquals(Godkjent.name, observer.tilstand)
         // Bruker sender inn rapportering for samme periode på nytt
         assertThrows<IllegalStateException> {
             person.behandle(
-                nyRapporteringHendelse(person.__TEST_rapporteringId()),
+                nyRapporteringHendelse(rapporteringsperiodeId),
             )
         }
 
@@ -79,6 +80,23 @@ class PersonTest {
         lateinit var tilstand: String
         override fun rapporteringsperiodeEndret(event: RapporteringsperiodeObserver.RapporteringsperiodeEndret) {
             tilstand = event.gjeldendeTilstand.toString()
+        }
+    }
+
+    private class TestVisitor(person: Person) : PersonVisitor {
+        lateinit var rapporteringsperiodeId: UUID
+
+        init {
+            person.accept(this)
+        }
+
+        override fun visit(
+            rapporteringsperiode: Rapporteringsperiode,
+            id: UUID,
+            periode: ClosedRange<LocalDate>,
+            tilstand: Rapporteringsperiode.TilstandType,
+        ) {
+            this.rapporteringsperiodeId = id
         }
     }
 }

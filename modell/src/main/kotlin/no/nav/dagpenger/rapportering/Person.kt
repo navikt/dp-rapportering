@@ -36,9 +36,6 @@ class Person private constructor(
         Aktivitetslogg(),
     )
 
-    // TODO: Fjern denne etter testen kan bruke f.eks. en visitor
-    fun __TEST_rapporteringId() = rapporteringsperioder.first().rapporteringsperiodeId
-
     fun behandle(hendelse: SøknadInnsendtHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Behandler søknad innsendt")
@@ -94,4 +91,11 @@ class Person private constructor(
     override fun equals(other: Any?) = other is Person && this.ident == other.ident
 
     override fun hashCode() = this.ident.hashCode()
+    fun accept(visitor: PersonVisitor) {
+        visitor.visit(this, ident)
+        aktivitetstidslinje.accept(visitor)
+        rapporteringsperioder.accept(visitor)
+    }
 }
+
+private fun <E : Rapporteringsperiode> Collection<E>.accept(visitor: PersonVisitor) = forEach { it.accept(visitor) }
