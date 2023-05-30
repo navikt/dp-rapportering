@@ -1,6 +1,8 @@
 package no.nav.dagpenger.rapportering.repository
 
 import no.nav.dagpenger.rapportering.Person
+import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import java.util.UUID
 
 class InMemoryPersonRepository(private val rapporteringsperiodeRepository: InMemoryRapporteringsperiodeRepository) :
     PersonRepository {
@@ -14,5 +16,6 @@ class InMemoryPersonRepository(private val rapporteringsperiodeRepository: InMem
             rapporteringsperiodeRepository.hentRapporteringsperioder(ident),
         ).also {
             personer.add(it)
+            it.behandle(SøknadInnsendtHendelse(UUID.randomUUID(), ident))
         }
 }

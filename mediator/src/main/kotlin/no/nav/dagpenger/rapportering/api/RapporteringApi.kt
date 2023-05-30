@@ -4,6 +4,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
+import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -47,18 +48,9 @@ fun Application.rapporteringApi(
                     get {
                         val dto =
                             rapporteringsperiodeRepository.hentRapporteringsperiode(call.ident(), call.finnUUID("id"))
-                                ?.let {
-                                    RapporteringsperiodeMapper(it).dto
-                                } ?: RapporteringsperiodeDTO(
-                                id = UUID.randomUUID(),
-                                fraOgMed = LocalDate.of(2023, 5, 22),
-                                tilOgMed = LocalDate.of(2023, 6, 4),
-                                status = RapporteringsperiodeDTO.Status.TilUtfylling,
-                                dager = lagNoe(),
-                                aktiviteter = aktivitetRepository.hentAktiviteter(call.ident()).map {
-                                    RapporteringsperiodeMapper.AktivitetMapper(it).aktivitetDTO
-                                },
-                            )
+                                ?.let { RapporteringsperiodeMapper(it).dto }
+                                ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
+
                         call.respond(HttpStatusCode.OK, dto)
                     }
 
@@ -67,17 +59,16 @@ fun Application.rapporteringApi(
                             val id = call.parameters["id"]?.let {
                                 UUID.fromString(it)
                             }
-
+                            val dto = rapporteringsperiodeRepository.hentRapporteringsperiode(
+                                call.ident(),
+                                call.finnUUID("id"),
+                            )?.let { RapporteringsperiodeMapper(it).dto }
+                                ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
+                            val godkjent = dto.copy(status = RapporteringsperiodeDTO.Status.Godkjent)
+                           
                             call.respond(
-                                HttpStatusCode.Created,
-                                RapporteringsperiodeDTO(
-                                    id = UUID.randomUUID(),
-                                    fraOgMed = LocalDate.of(2023, 5, 22),
-                                    tilOgMed = LocalDate.of(2023, 6, 4),
-                                    status = RapporteringsperiodeDTO.Status.Godkjent,
-                                    dager = lagNoe(),
-                                    aktiviteter = listOf(),
-                                ),
+                                HttpStatusCode.OK,
+                                godkjent,
                             )
                         }
                     }
