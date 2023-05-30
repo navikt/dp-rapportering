@@ -16,6 +16,7 @@ import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetInputDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
 import no.nav.dagpenger.rapportering.repository.AktivitetRepository
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Arbeid
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Ferie
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Syk
@@ -80,6 +81,8 @@ internal fun no.nav.dagpenger.rapportering.tidslinje.Aktivitet.toAktivitetDTO():
         is Arbeid -> AktivitetTypeDTO.Arbeid
         is Ferie -> AktivitetTypeDTO.Ferie
         is Syk -> AktivitetTypeDTO.Syk
+        is Aktivitet.IkkeRapporteringsplikt -> TODO()
+        is Aktivitet.Rapporteringsplikt -> TODO()
     }
     return AktivitetDTO(
         type = aktivitetType,

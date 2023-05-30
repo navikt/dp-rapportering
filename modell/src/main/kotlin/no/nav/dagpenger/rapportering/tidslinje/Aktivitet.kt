@@ -20,7 +20,7 @@ sealed class Aktivitet(
     }
 
     enum class AktivitetType {
-        Arbeid, Syk, Ferie
+        Arbeid, Syk, Ferie, Rapporteringsplikt, IkkeRapporteringsplikt
     }
 
     companion object {
@@ -53,4 +53,8 @@ sealed class Aktivitet(
     class Syk(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE, AktivitetType.Syk)
 
     class Ferie(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE, AktivitetType.Ferie)
+
+    class Rapporteringsplikt(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE, AktivitetType.Rapporteringsplikt)
+
+    class IkkeRapporteringsplikt(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE, AktivitetType.IkkeRapporteringsplikt)
 }

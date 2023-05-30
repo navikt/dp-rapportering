@@ -8,7 +8,6 @@ import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
-import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -26,28 +25,28 @@ class Rapporteringsperiode private constructor(
     val rapporteringsperiodeId: UUID,
     private val meldedag: LocalDate,
     private val periode: ClosedRange<LocalDate>,
-    private val aktivitetstidslinje: Aktivitetstidslinje,
     private var tilstand: Rapporteringsperiodetilstand,
     private val opprettet: LocalDateTime,
     private var oppdatert: LocalDateTime = opprettet,
 ) : Aktivitetskontekst {
+    private val aktivitetstidslinje
+        get() = person.aktivitetstidslinje.forPeriode(periode)
+
     // TODO: Må utvides med at perioden blir mandag-mandag
     constructor(
         person: Person,
         rapporteringspliktFom: LocalDate,
-    ) : this(person, rapporteringspliktFom, rapporteringspliktFom.plusDays(14), person.aktivitetstidslinje)
+    ) : this(person, rapporteringspliktFom, rapporteringspliktFom.plusDays(14))
 
     internal constructor(
         person: Person,
         fom: LocalDate,
         tom: LocalDate,
-        aktivitetstidslinje: Aktivitetstidslinje,
     ) : this(
         person = person,
         rapporteringsperiodeId = UUID.randomUUID(),
         meldedag = tom,
         periode = fom..tom,
-        aktivitetstidslinje = aktivitetstidslinje,
         tilstand = Opprettet,
         opprettet = LocalDateTime.now(),
     )
@@ -98,7 +97,6 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiode: Rapporteringsperiode,
         ) {
             rapporteringsperiode.aktivitetstidslinje
-                .forPeriode(rapporteringsperiode.periode)
                 .håndter(hendelse)
             rapporteringsperiode.tilstand(hendelse, Godkjent)
         }

@@ -24,6 +24,7 @@ import no.nav.dagpenger.rapportering.repository.AktivitetRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import java.time.LocalDate
+import java.time.Period
 import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -102,13 +103,29 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
                     Godkjent -> RapporteringsperiodeDTO.Status.Godkjent
                     Innsendt -> RapporteringsperiodeDTO.Status.Innsendt
                 },
-                dager = lagNoe(),
+                dager = lagRapporteringsdager(),
                 aktiviteter = aktiviteter.tilDto(),
             )
         }
 
     init {
         rapporteringsperiode.accept(this)
+    }
+
+    private fun lagRapporteringsdager(): List<RapporteringsperiodeDagerInnerDTO> {
+        val start = periode.start
+        val dager = Period.between(start, periode.endInclusive).days
+        return (0..dager).map { index ->
+            RapporteringsperiodeDagerInnerDTO(
+                dagIndex = index,
+                dato = start.plusDays(index.toLong()),
+                muligeAktiviteter = listOf(
+                    AktivitetTypeDTO.Arbeid,
+                    AktivitetTypeDTO.Ferie,
+                    AktivitetTypeDTO.Syk,
+                ),
+            )
+        }
     }
 
     class AktivitetMapper(aktivitet: Aktivitet) : AktivitetVisitor {
@@ -124,6 +141,8 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
                     Aktivitet.AktivitetType.Arbeid -> AktivitetTypeDTO.Arbeid
                     Aktivitet.AktivitetType.Syk -> AktivitetTypeDTO.Syk
                     Aktivitet.AktivitetType.Ferie -> AktivitetTypeDTO.Ferie
+                    Aktivitet.AktivitetType.Rapporteringsplikt -> TODO()
+                    Aktivitet.AktivitetType.IkkeRapporteringsplikt -> TODO()
                 },
                 dato = dato,
                 id = uuid,
