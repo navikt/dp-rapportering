@@ -56,7 +56,7 @@ class RapporteringApiTest {
     fun `Skal kunne ferdigstille en rapporteringsperiode`() {
         val id = UUID.randomUUID().toString()
         withRapporteringApi {
-            client.post("/rapporteringsperioder/$id/innsending") {
+            client.post("/rapporteringsperioder/$id/godkjenn") {
                 autentisert()
                 contentType(ContentType.Application.Json)
             }.also { response ->
