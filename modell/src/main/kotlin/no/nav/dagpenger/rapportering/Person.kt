@@ -42,7 +42,7 @@ class Person private constructor(
 
         Rapporteringsperiode(
             this,
-            hendelse.fraOgMed(),
+            rapporteringspliktFom = hendelse.fom,
         ).also {
             rapporteringsperioder.add(it)
             it.behandle(hendelse)

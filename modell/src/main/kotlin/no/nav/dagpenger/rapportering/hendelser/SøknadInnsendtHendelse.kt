@@ -1,9 +1,7 @@
 package no.nav.dagpenger.rapportering.hendelser
 
 import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
-import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.temporal.TemporalAdjusters
 import java.util.UUID
 
 class SøknadInnsendtHendelse(meldingsreferanseId: UUID, ident: String) : PersonHendelse(
@@ -11,11 +9,11 @@ class SøknadInnsendtHendelse(meldingsreferanseId: UUID, ident: String) : Person
     ident,
     Aktivitetslogg(),
 ) {
-    // TODO: Bruke søknadsdato i stedet for dagens dato
-    fun fraOgMed(): LocalDate {
+    internal val fom: LocalDate
+
+    // TODO: Skal etterhvert være basert på søknadsdato eller ønsker dagpenger fra dato
+    init {
         val dagensDato = LocalDate.now()
-        return dagensDato.finnFørsteMandagIUken()
+        fom = dagensDato
     }
 }
-
-fun LocalDate.finnFørsteMandagIUken() = this.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))

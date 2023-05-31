@@ -8,6 +8,7 @@ import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import no.nav.dagpenger.rapportering.utils.finnFørsteMandagIUken
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -24,6 +25,7 @@ class Rapporteringsperiode private constructor(
     private val person: Person,
     val rapporteringsperiodeId: UUID,
     private val rapporteringsfrist: LocalDate,
+    private val rapporteringspliktFom: LocalDate,
     periode: ClosedRange<LocalDate>,
     private var tilstand: Rapporteringsperiodetilstand,
     private val opprettet: LocalDateTime,
@@ -31,20 +33,25 @@ class Rapporteringsperiode private constructor(
 ) : Aktivitetskontekst {
     private val aktivitetsperiode = person.aktivitetstidslinje.forPeriode(periode)
 
-    // TODO: Må utvides med at perioden blir mandag-mandag
     constructor(
         person: Person,
         rapporteringspliktFom: LocalDate,
-    ) : this(person, rapporteringspliktFom, rapporteringspliktFom.plusDays(14))
+    ) : this(
+        person = person,
+        rapporteringspliktFom = rapporteringspliktFom,
+        fom = rapporteringspliktFom.finnFørsteMandagIUken(),
+    )
 
     internal constructor(
         person: Person,
+        rapporteringspliktFom: LocalDate,
         fom: LocalDate,
-        tom: LocalDate,
+        tom: LocalDate = fom.plusDays(14),
     ) : this(
         person = person,
         rapporteringsperiodeId = UUID.randomUUID(),
         rapporteringsfrist = tom,
+        rapporteringspliktFom = rapporteringspliktFom,
         periode = fom..tom,
         tilstand = Opprettet,
         opprettet = LocalDateTime.now(),
