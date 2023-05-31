@@ -37,15 +37,17 @@ sealed class Aktivitet(
             uuid: UUID,
             dato: LocalDate,
             type: String,
-            tid: Number,
+            tid: Number = Int.MAX_VALUE,
             tilstand: String,
         ): Aktivitet {
+            val rehydrertTilstand = tilstand.rehydrerTilstand()
+
             return when (AktivitetType.valueOf(type)) {
-                AktivitetType.Arbeid -> Arbeid.rehydrer(uuid, dato, tid, tilstand)
-                AktivitetType.Syk -> TODO()
-                AktivitetType.Ferie -> TODO()
-                AktivitetType.Rapporteringsplikt -> TODO()
-                AktivitetType.IkkeRapporteringsplikt -> TODO()
+                AktivitetType.Arbeid -> Arbeid(uuid, dato, tid, rehydrertTilstand)
+                AktivitetType.Syk -> Syk(dato, uuid, rehydrertTilstand)
+                AktivitetType.Ferie -> Ferie(dato, uuid, rehydrertTilstand)
+                AktivitetType.Rapporteringsplikt -> throw IllegalStateException("Ikke serialiserbar")
+                AktivitetType.IkkeRapporteringsplikt -> throw IllegalStateException("Ikke serialiserbar")
             }
         }
     }
@@ -56,7 +58,7 @@ sealed class Aktivitet(
         tilstand.behandle(hendelse, this)
     }
 
-    private interface Tilstand {
+    interface Tilstand {
         fun behandle(hendelse: NyRapporteringHendelse, aktivitet: Aktivitet) {
             throw IllegalStateException("Kan ikke håndtere ${hendelse::class.java.simpleName} i denne tilstanden")
         }
@@ -70,7 +72,7 @@ sealed class Aktivitet(
 
     private object Låst : Tilstand
 
-    class Arbeid private constructor(
+    class Arbeid(
         uuid: UUID = UUID.randomUUID(),
         dato: LocalDate,
         arbeidstimer: Number,
@@ -78,22 +80,13 @@ sealed class Aktivitet(
     ) :
         Aktivitet(dato, arbeidstimer.toDouble().hours, AktivitetType.Arbeid, uuid, tilstand) {
         constructor(dato: LocalDate, arbeidstimer: Number) : this(UUID.randomUUID(), dato, arbeidstimer, Ny)
-
-        companion object {
-            fun rehydrer(
-                uuid: UUID,
-                dato: LocalDate,
-                tid: Number,
-                tilstand: String,
-            ): Arbeid {
-                return Arbeid(uuid, dato, tid, tilstand.rehydrerTilstand())
-            }
-        }
     }
 
-    class Syk(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE, AktivitetType.Syk)
+    class Syk(dato: LocalDate, uuid: UUID = UUID.randomUUID(), tilstand: Tilstand = Ny) :
+        Aktivitet(dato, Duration.INFINITE, AktivitetType.Syk, uuid, tilstand)
 
-    class Ferie(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE, AktivitetType.Ferie)
+    class Ferie(dato: LocalDate, uuid: UUID = UUID.randomUUID(), tilstand: Tilstand = Ny) :
+        Aktivitet(dato, Duration.INFINITE, AktivitetType.Ferie, uuid, tilstand)
 
     class Rapporteringsplikt(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE, AktivitetType.Rapporteringsplikt)
 

@@ -27,17 +27,33 @@ class AktivitetTest {
     fun `rehydrering funksjoner`() {
         val uuid = UUID.randomUUID()
         val dato = LocalDate.now()
-        Aktivitet.rehydrer(
-            uuid,
-            dato = dato,
-            type = "Arbeid",
-            tid = 7.5,
-            tilstand = "Ny",
-        ).let {
+
+        Aktivitet.rehydrer(uuid, dato, "Arbeid", 7.5, "Ny").let {
             it should beInstanceOf<Aktivitet.Arbeid>()
             it.dato shouldBe dato
             it.uuid shouldBe uuid
             it.tid shouldBe 7.5.toDuration(DurationUnit.HOURS)
+        }
+
+        Aktivitet.rehydrer(
+            uuid = uuid,
+            dato = dato,
+            type = "Syk",
+            tilstand = "Ny",
+        ).let {
+            it should beInstanceOf<Aktivitet.Syk>()
+            it.dato shouldBe dato
+            it.uuid shouldBe uuid
+        }
+        Aktivitet.rehydrer(
+            uuid = uuid,
+            dato = dato,
+            type = "Ferie",
+            tilstand = "Ny",
+        ).let {
+            it should beInstanceOf<Aktivitet.Ferie>()
+            it.dato shouldBe dato
+            it.uuid shouldBe uuid
         }
     }
 }
