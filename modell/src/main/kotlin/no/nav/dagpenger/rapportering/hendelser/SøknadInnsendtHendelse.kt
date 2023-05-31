@@ -14,14 +14,8 @@ class SøknadInnsendtHendelse(meldingsreferanseId: UUID, ident: String) : Person
     // TODO: Bruke søknadsdato i stedet for dagens dato
     fun fraOgMed(): LocalDate {
         val dagensDato = LocalDate.now()
-
-        if (dagensDato.erMandag()) {
-            return dagensDato
-        } else {
-            return finnForrigeMandag(fra = dagensDato)
-        }
+        return dagensDato.finnFørsteMandagIUken()
     }
 }
 
-fun LocalDate.erMandag(): Boolean = this.dayOfWeek == DayOfWeek.MONDAY
-fun finnForrigeMandag(fra: LocalDate): LocalDate = fra.with(TemporalAdjusters.previous(DayOfWeek.MONDAY))
+fun LocalDate.finnFørsteMandagIUken() = this.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
