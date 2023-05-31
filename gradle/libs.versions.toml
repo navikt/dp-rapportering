@@ -30,6 +30,12 @@ rapids-and-rivers = { group = "com.github.navikt", name = "rapids-and-rivers", v
 kotlin-logging = { group = "io.github.microutils", name = "kotlin-logging", version = "3.0.5" }
 mockk = { group = "io.mockk", name = "mockk", version = "1.13.5" }
 mock-oauth2-server = { group = "no.nav.security", name = "mock-oauth2-server", version = "0.5.8" }
+testContainer = { group = "org.testcontainers", name = "testcontainers", version = "1.18.2" }
+testContainer-postgresql = { group = "org.testcontainers", name = "postgresql", version = "1.18.2" }
+flywaydb = { group = "org.flywaydb", name = "flyway-core", version = "9.19.1" }
+hikariCP = { group = "com.zaxxer", name = "HikariCP", version = "5.0.1" }
+postgresql-driver = { group = "org.postgresql", name = "postgresql", version = "42.6.0" }
+kotlinquery = { group = "com.github.seratch", name = "kotliquery", version = "1.9.0" }
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
