@@ -135,7 +135,7 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
                     Aktivitet.AktivitetType.Arbeid -> AktivitetTypeDTO.Arbeid
                     Aktivitet.AktivitetType.Syk -> AktivitetTypeDTO.Syk
                     Aktivitet.AktivitetType.Ferie -> AktivitetTypeDTO.Ferie
-                    Aktivitet.AktivitetType.Rapporteringsplikt -> TODO()
+                    Aktivitet.AktivitetType.Rapporteringsplikt -> TODO("Skal ikke eksponeres til API")
                     Aktivitet.AktivitetType.IkkeRapporteringsplikt -> TODO()
                 },
                 dato = dato,
@@ -145,7 +145,7 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
         }
     }
 
-    private fun List<Aktivitet>.tilDto() = this.map {
+    private fun List<Aktivitet>.tilDto() = this.filterNot { it is Aktivitet.Rapporteringsplikt }.map {
         AktivitetMapper(it).aktivitetDTO
     }
 
@@ -162,22 +162,5 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
 
     override fun visit(aktiviteter: List<Aktivitet>) {
         this.aktiviteter = aktiviteter
-    }
-}
-
-// todo Dette må fikses på når vi lager "dager" i en Rapporteringsperiode
-private fun lagNoe(): List<RapporteringsperiodeDagerInnerDTO> {
-    val date = LocalDate.of(2023, 5, 22)
-
-    return (0..13).map { index ->
-        RapporteringsperiodeDagerInnerDTO(
-            dagIndex = index,
-            dato = date.plusDays(index.toLong()),
-            muligeAktiviteter = listOf(
-                AktivitetTypeDTO.Arbeid,
-                AktivitetTypeDTO.Ferie,
-                AktivitetTypeDTO.Syk,
-            ).shuffled().subList(0, 2),
-        )
     }
 }

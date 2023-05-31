@@ -27,13 +27,20 @@ internal data class Aktivitetstidslinje internal constructor(
         private val aktiviteter
             get() = this@Aktivitetstidslinje.aktiviteter.filter {
                 it.dekkesAv(periode)
-            }
+            }.medRapporteringsplikt()
+
+        private fun List<Aktivitet>.medRapporteringsplikt(): List<Aktivitet> {
+            val dagerMedAktivitet: List<LocalDate> = map { it.dato }
+            val dagerUtenAktivitet =
+                periode.start.datesUntil(periode.endInclusive.plusDays(1)).filter { !dagerMedAktivitet.contains(it) }
+            return this + dagerUtenAktivitet.map { Aktivitet.Rapporteringsplikt(it) }.toList()
+        }
 
         override fun accept(visitor: AktivitetstidslinjeVisitor) {
             visitor.visit(aktiviteter.toList())
         }
 
-        override val dagerMedAktivitet get() = Aktivitet.perDag(aktiviteter).size
+        override val dagerMedAktivitet get() = Aktivitet.perDag(aktiviteter.filterNot { it is Aktivitet.Rapporteringsplikt }).size
 
         override fun iterator() = aktiviteter.iterator()
 
