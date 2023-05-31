@@ -5,4 +5,5 @@ plugins {
 
 dependencies {
     implementation(project(":aktivitetslogg"))
+    testImplementation(libs.bundles.kotest.assertions)
 }

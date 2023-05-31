@@ -37,6 +37,10 @@ flywaydb = { group = "org.flywaydb", name = "flyway-core", version = "9.19.1" }
 hikariCP = { group = "com.zaxxer", name = "HikariCP", version = "5.0.1" }
 postgresql-driver = { group = "org.postgresql", name = "postgresql", version = "42.6.0" }
 kotlinquery = { group = "com.github.seratch", name = "kotliquery", version = "1.9.0" }
+kotest-assertions-core = { group = "io.kotest", name = "kotest-assertions-core-jvm", version.ref = "kotest" }
+kotest-assertions-json = { group = "io.kotest", name = "kotest-assertions-json-jvm", version.ref = "kotest" }
+
+
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -49,4 +53,5 @@ ktor-client = ["ktor-client-auth-jvm", "ktor-client-cio", "ktor-serialization-ja
 postgres = ["flywaydb", "postgresql-driver", "hikariCP", "kotlinquery"]
 postgres-test = ["testContainer", "testContainer-postgresql"]
 jackson = ["jackson-core", "jackson-datatype-jsr310", "jackson-annotation"]
+kotest-assertions = ["kotest-assertions-core", "kotest-assertions-json"]
 

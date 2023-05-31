@@ -10,7 +10,6 @@ internal object DBUtils {
     fun Row.duration(columnLabel: String): Duration {
         val interval: PGInterval = this.underlying.getObject(columnLabel) as PGInterval
         return interval.days.toDuration(DurationUnit.DAYS) + interval.hours.toDuration(DurationUnit.HOURS) +
-                interval.minutes.toDuration(DurationUnit.MINUTES)
+            interval.minutes.toDuration(DurationUnit.MINUTES)
     }
-
 }
