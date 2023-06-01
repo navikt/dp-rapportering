@@ -3,7 +3,8 @@ package no.nav.dagpenger.rapportering
 import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.aktivitetslogg.Subaktivitetskontekst
-import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
+import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 
@@ -35,6 +36,7 @@ class Person private constructor(
         hendelse.kontekst(this)
         hendelse.info("Behandler søknad innsendt")
 
+        // TODO: Lag noe overlappskontroll så vi ikke ender med flere perioder i samme tidsrom
         Rapporteringsperiode(
             rapporteringspliktFom = hendelse.fom,
         ).also {
@@ -42,6 +44,13 @@ class Person private constructor(
             it.registrer(this)
             it.behandle(hendelse)
         }
+    }
+
+    fun behandle(hendelse: NyAktivitetHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Tar imot ny aktivitet utført av bruker")
+
+        rapporteringsperioder.forEach { it.behandle(hendelse) }
     }
 
     fun behandle(hendelse: NyRapporteringsperiodeHendelse) {
@@ -57,7 +66,7 @@ class Person private constructor(
         }
     }
 
-    fun behandle(hendelse: NyRapporteringHendelse) {
+    fun behandle(hendelse: GodkjennPeriodeHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Behandler ny innrapportering")
 

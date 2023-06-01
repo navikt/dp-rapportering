@@ -4,7 +4,7 @@ import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import java.util.UUID
 
-class NyRapporteringHendelse(
+class GodkjennPeriodeHendelse(
     meldingsreferanseId: UUID,
     ident: String,
     val rapporteringId: UUID,

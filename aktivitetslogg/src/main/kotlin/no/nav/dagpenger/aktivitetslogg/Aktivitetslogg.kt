@@ -26,6 +26,10 @@ class Aktivitetslogg(
         val formatertMelding = if (params.isEmpty()) melding else String.format(melding, *params)
         add(Aktivitet.Info.opprett(kontekster.toSpesifikk(), formatertMelding))
     }
+    override fun warn(melding: String, vararg params: Any?) {
+        val formatertMelding = if (params.isEmpty()) melding else String.format(melding, *params)
+        add(Aktivitet.Warn.opprett(kontekster.toSpesifikk(), formatertMelding))
+    }
 
     override fun behov(type: Behov.Behovtype, melding: String, detaljer: Map<String, Any?>) {
         add(Behov.opprett(type, kontekster.toSpesifikk(), melding, detaljer))
@@ -40,6 +44,10 @@ class Aktivitetslogg(
     private fun MutableList<Aktivitetskontekst>.toSpesifikk() = this.map { it.toSpesifikkKontekst() }
 
     override fun harAktiviteter() = info().isNotEmpty() || behov().isNotEmpty()
+
+    override fun harLogiskFeil() = warn().isNotEmpty() || harBehov()
+
+    override fun harBehov() = behov().isNotEmpty()
 
     override fun barn() = Aktivitetslogg(this).also { it.kontekster.addAll(this.kontekster) }
 
@@ -92,6 +100,7 @@ class Aktivitetslogg(
             .map { Aktivitetslogg(this).apply { aktiviteter.addAll(it.value) } }
 
     private fun info() = Aktivitet.Info.filter(aktiviteter)
+    private fun warn() = Aktivitet.Warn.filter(aktiviteter)
     override fun behov() = Behov.filter(aktiviteter)
 
     class AktivitetException internal constructor(private val aktivitetslogg: Aktivitetslogg) :

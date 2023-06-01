@@ -3,7 +3,7 @@ package no.nav.dagpenger.rapportering.tidslinje
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
-import no.nav.dagpenger.rapportering.helpers.TestData.nyRapporteringHendelse
+import no.nav.dagpenger.rapportering.helpers.TestData.godkjennPeriodeHendelse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
@@ -15,10 +15,10 @@ class AktivitetTest {
     fun `aktivitet har tilstand`() {
         val aktivitet = Aktivitet.Arbeid(LocalDate.now(), 3)
 
-        aktivitet.håndter(nyRapporteringHendelse())
+        aktivitet.håndter(godkjennPeriodeHendelse())
 
         assertThrows<IllegalStateException> {
-            aktivitet.håndter(nyRapporteringHendelse())
+            aktivitet.håndter(godkjennPeriodeHendelse())
         }
     }
 

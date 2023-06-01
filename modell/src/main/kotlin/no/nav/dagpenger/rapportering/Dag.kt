@@ -2,7 +2,7 @@ package no.nav.dagpenger.rapportering
 
 import no.nav.dagpenger.aktivitetslogg.Aktivitetskontekst
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
-import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
+import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Arbeid
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Ferie
@@ -40,7 +40,7 @@ class Dag(
         harRapporteringslikt = false
     }
 
-    fun håndter(hendelse: NyRapporteringHendelse) {
+    fun håndter(hendelse: GodkjennPeriodeHendelse) {
         hendelse.kontekst(this)
         aktiviteter.forEach { it.håndter(hendelse) }
     }

@@ -2,8 +2,10 @@ package no.nav.dagpenger.aktivitetslogg
 
 interface IAktivitetslogg {
     fun info(melding: String, vararg params: Any?)
+    fun warn(melding: String, vararg params: Any?)
     fun behov(type: Aktivitet.Behov.Behovtype, melding: String, detaljer: Map<String, Any?> = emptyMap())
     fun harAktiviteter(): Boolean
+    fun harLogiskFeil(): Boolean
     fun aktivitetsteller(): Int
     fun behov(): List<Aktivitet.Behov>
     fun barn(): IAktivitetslogg
@@ -12,4 +14,5 @@ interface IAktivitetslogg {
     fun kontekster(): List<IAktivitetslogg>
     fun toMap(mapper: AktivitetsloggMappingPort): Map<String, List<Map<String, Any>>>
     fun registrer(observer: AktivitetsloggObserver)
+    fun harBehov(): Boolean
 }

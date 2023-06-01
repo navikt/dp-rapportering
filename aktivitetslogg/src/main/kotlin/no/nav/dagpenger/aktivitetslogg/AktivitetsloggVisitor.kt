@@ -15,6 +15,14 @@ interface AktivitetsloggVisitor {
         tidsstempel: String,
     ) {
     }
+    fun visitWarn(
+        id: UUID,
+        kontekster: List<SpesifikkKontekst>,
+        aktivitet: Aktivitet.Warn,
+        melding: String,
+        tidsstempel: String,
+    ) {
+    }
 
     fun visitBehov(
         id: UUID,

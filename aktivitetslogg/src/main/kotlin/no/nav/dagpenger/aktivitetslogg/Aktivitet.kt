@@ -69,6 +69,34 @@ sealed class Aktivitet(
         }
     }
 
+    class Warn private constructor(
+        id: UUID,
+        kontekster: List<SpesifikkKontekst>,
+        private val melding: String,
+        private val tidsstempel: String = LocalDateTime.now().format(tidsstempelformat),
+    ) : Aktivitet(id, 25, 'W', melding, tidsstempel, kontekster) {
+        companion object {
+            internal fun filter(aktiviteter: List<Aktivitet>): List<Info> {
+                return aktiviteter.filterIsInstance<Info>()
+            }
+
+            internal fun gjenopprett(
+                id: UUID,
+                kontekster: List<SpesifikkKontekst>,
+                melding: String,
+                tidsstempel: String,
+            ) =
+                Warn(id, kontekster, melding, tidsstempel)
+
+            internal fun opprett(kontekster: List<SpesifikkKontekst>, melding: String) =
+                Warn(UUID.randomUUID(), kontekster, melding)
+        }
+
+        override fun accept(visitor: AktivitetsloggVisitor) {
+            visitor.visitWarn(id, kontekster, this, melding, tidsstempel)
+        }
+    }
+
     class Behov private constructor(
         id: UUID,
         private val type: Behovtype,
@@ -111,6 +139,7 @@ sealed class Aktivitet(
         override fun accept(visitor: AktivitetsloggVisitor) {
             visitor.visitBehov(id, kontekster, this, type, melding, detaljer, tidsstempel)
         }
+
         interface Behovtype
     }
 }

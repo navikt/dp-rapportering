@@ -4,7 +4,8 @@ import no.nav.dagpenger.aktivitetslogg.Aktivitetskontekst
 import no.nav.dagpenger.aktivitetslogg.IAktivitetslogg
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.rapportering.Foobar.utbetalingshistorikk
-import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
+import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
@@ -69,22 +70,38 @@ class Rapporteringsperiode private constructor(
         hendelse.info("Opprettet ny rapporteringsperiode")
     }
 
-    fun behandle(hendelse: NyRapporteringHendelse) {
+    fun behandle(hendelse: GodkjennPeriodeHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Sender inn ny rapportering")
 
         tilstand.behandle(hendelse, this)
     }
 
+    fun behandle(hendelse: NyAktivitetHendelse) {
+        if (!hendelse.aktivitet.dekkesAv(periode)) return
+        hendelse.kontekst(this)
+        hendelse.info("Registrerer ny aktivitet")
+
+        tilstand.behandle(hendelse, this)
+    }
+
     private sealed interface Rapporteringsperiodetilstand : Aktivitetskontekst {
         val type: TilstandType
+
         fun entering(rapporteringsperiode: Rapporteringsperiode, hendelse: IAktivitetslogg) {}
 
         fun behandle(
-            hendelse: NyRapporteringHendelse,
+            hendelse: GodkjennPeriodeHendelse,
             rapporteringsperiode: Rapporteringsperiode,
         ) {
-            throw IllegalStateException("Forventet ikke ny rapportering tilstand ${type.name}")
+            hendelse.warn("Forventet ikke ny rapportering tilstand ${type.name}")
+        }
+
+        fun behandle(
+            hendelse: NyAktivitetHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
+            hendelse.warn("Forventet ikke ny aktivitet tilstand ${type.name}")
         }
 
         fun leaving(rapporteringsperiode: Rapporteringsperiode, hendelse: IAktivitetslogg) {}
@@ -96,13 +113,19 @@ class Rapporteringsperiode private constructor(
     private object Opprettet : Rapporteringsperiodetilstand {
         override val type = TilstandType.Opprettet
         override fun behandle(
-            hendelse: NyRapporteringHendelse,
+            hendelse: GodkjennPeriodeHendelse,
             rapporteringsperiode: Rapporteringsperiode,
         ) {
-            if (!rapporteringsperiode.erGyldig()) throw IllegalStateException("Perioden kan ikke godkjennes")
+            hendelse.kontekst(this)
+            if (!rapporteringsperiode.erGyldig()) hendelse.warn("Perioden kan ikke godkjennes")
 
             rapporteringsperiode.tidslinje.forEach { it.håndter(hendelse) }
             rapporteringsperiode.tilstand(hendelse, Godkjent)
+        }
+
+        override fun behandle(hendelse: NyAktivitetHendelse, rapporteringsperiode: Rapporteringsperiode) {
+            hendelse.kontekst(this)
+            rapporteringsperiode.tidslinje.leggTilAktivitet(hendelse.aktivitet)
         }
     }
 

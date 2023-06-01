@@ -1,7 +1,7 @@
 package no.nav.dagpenger.rapportering.tidslinje
 
 import no.nav.dagpenger.rapportering.AktivitetVisitor
-import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
+import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.time.Duration
@@ -52,18 +52,18 @@ sealed class Aktivitet(
 
     fun dekkesAv(periode: ClosedRange<LocalDate>) = dato in periode
 
-    fun håndter(hendelse: NyRapporteringHendelse) {
+    fun håndter(hendelse: GodkjennPeriodeHendelse) {
         tilstand.behandle(hendelse, this)
     }
 
     interface Tilstand {
-        fun behandle(hendelse: NyRapporteringHendelse, aktivitet: Aktivitet) {
+        fun behandle(hendelse: GodkjennPeriodeHendelse, aktivitet: Aktivitet) {
             throw IllegalStateException("Kan ikke håndtere ${hendelse::class.java.simpleName} i denne tilstanden")
         }
     }
 
     private object Ny : Tilstand {
-        override fun behandle(hendelse: NyRapporteringHendelse, aktivitet: Aktivitet) {
+        override fun behandle(hendelse: GodkjennPeriodeHendelse, aktivitet: Aktivitet) {
             aktivitet.tilstand = Låst
         }
     }

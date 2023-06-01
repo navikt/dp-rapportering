@@ -1,17 +1,17 @@
 package no.nav.dagpenger.rapportering
 
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
-import no.nav.dagpenger.rapportering.helpers.TestData.nyRapporteringHendelse
-import no.nav.dagpenger.rapportering.helpers.TestData.nyRapporteringsperiodeHendelse
+import no.nav.dagpenger.rapportering.helpers.TestData.godkjennPeriodeHendelse
+import no.nav.dagpenger.rapportering.helpers.TestData.nyAktivitetHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.søknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.testIdent
 import no.nav.dagpenger.rapportering.helpers.TestData.testPerson
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 import java.util.UUID
 
@@ -36,7 +36,6 @@ class PersonTest {
         val observer = TestObserver().also { person.registrer(it) }
         person.behandle(søknadInnsendtHendelse())
         // Bruker melder inn aktiviteter
-        /* Erstatt disse med repository
         person.behandle(
             nyAktivitetHendelse(
                 Aktivitet.Arbeid(LocalDate.now().plusDays(5), 3.2),
@@ -45,36 +44,34 @@ class PersonTest {
         person.behandle(
             nyAktivitetHendelse(
                 Aktivitet.Syk(LocalDate.now().plusDays(4)),
-                Aktivitet.Syk(LocalDate.now().plusDays(3)),
             ),
         )
         person.behandle(
             nyAktivitetHendelse(
                 Aktivitet.Syk(LocalDate.now().plusDays(2)),
-                Aktivitet.Syk(LocalDate.now().plusDays(1)),
             ),
         )
-         */
-        // Det utløses en ny rapporteringsperiode (enten som konsekvens av søknad eller ny periode)
-        person.behandle(
-            nyRapporteringsperiodeHendelse(),
-        )
-        val rapporteringsperiodeId = TestVisitor(person).rapporteringsperiodeId
-        // Bruker sender inn rapportering for en periode
-        person.behandle(
-            nyRapporteringHendelse(rapporteringsperiodeId),
-        )
-
+        assertEquals(3, person.antallAktiviteter)
+        val rapporteringsperiodeId = person.aktivRapporteringsperiode
+        // Bruker godkjenner rapportering for en periode
+        person.behandle(godkjennPeriodeHendelse(rapporteringsperiodeId))
         assertEquals(Godkjent.name, observer.tilstand)
+
+        // Kan ikke rapportere aktivitet etter en periode er godkjent
+        val nyAktivitetHendelse = nyAktivitetHendelse(LocalDate.now().plusDays(3))
+        person.behandle(nyAktivitetHendelse)
+        assertTrue(nyAktivitetHendelse.harLogiskFeil())
+        assertEquals(3, person.antallAktiviteter)
         // Bruker sender inn rapportering for samme periode på nytt
-        assertThrows<IllegalStateException> {
-            person.behandle(
-                nyRapporteringHendelse(rapporteringsperiodeId),
-            )
-        }
+        val hendelse = godkjennPeriodeHendelse(rapporteringsperiodeId)
+        person.behandle(hendelse)
+        assertTrue(hendelse.harLogiskFeil())
 
         println(person)
     }
+
+    private val Person.aktivRapporteringsperiode get() = TestVisitor(this).rapporteringsperioder.last().rapporteringsperiodeId
+    private val Person.antallAktiviteter get() = TestVisitor(this).aktiviteter.size
 
     private class TestObserver : PersonObserver {
         lateinit var tilstand: String
@@ -84,7 +81,8 @@ class PersonTest {
     }
 
     private class TestVisitor(person: Person) : PersonVisitor {
-        lateinit var rapporteringsperiodeId: UUID
+        val rapporteringsperioder = mutableListOf<Rapporteringsperiode>()
+        val aktiviteter = mutableListOf<Aktivitet>()
 
         init {
             person.accept(this)
@@ -96,7 +94,16 @@ class PersonTest {
             periode: ClosedRange<LocalDate>,
             tilstand: Rapporteringsperiode.TilstandType,
         ) {
-            this.rapporteringsperiodeId = id
+            rapporteringsperioder += rapporteringsperiode
+        }
+
+        override fun visit(
+            dag: Dag,
+            dato: LocalDate,
+            aktiviteter: List<Aktivitet>,
+            muligeAktiviter: List<Aktivitet.AktivitetType>,
+        ) {
+            this.aktiviteter += aktiviteter
         }
     }
 }
