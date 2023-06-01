@@ -16,7 +16,9 @@ class InMemoryRapporteringsperiodeRepository : RapporteringsperiodeRepository {
     private val rapporteringsperioder = PersonCollection<Rapporteringsperiode>()
     override fun hentRapporteringsperiode(ident: String, uuid: UUID) =
         rapporteringsperioder.hent(ident).find { it.rapporteringsperiodeId == uuid }
-            ?: Rapporteringsperiode(LocalDate.now().minusDays(5))
+            ?: Rapporteringsperiode(LocalDate.now().minusDays(5)).also {
+                lagreRapporteringsperiode(ident, it)
+            }
 
     override fun hentRapporteringsperioder(ident: String) =
         rapporteringsperioder.hent(ident)

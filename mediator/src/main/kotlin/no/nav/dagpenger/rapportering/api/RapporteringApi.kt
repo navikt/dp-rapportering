@@ -76,7 +76,7 @@ fun Application.rapporteringApi(
 }
 
 private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperiode) : RapporteringsperiodVisitor {
-    private val dager: MutableMap<LocalDate, List<Aktivitet.AktivitetType>> = mutableMapOf()
+    private val dager = mutableMapOf<LocalDate, List<Aktivitet.AktivitetType>>()
     lateinit var id: UUID
     lateinit var periode: ClosedRange<LocalDate>
     lateinit var tilstand: Rapporteringsperiode.TilstandType
