@@ -76,7 +76,7 @@ fun Application.rapporteringApi(
 }
 
 private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperiode) : RapporteringsperiodVisitor {
-    private val dager: MutableMap<LocalDate, List<Aktivitet>> = mutableMapOf()
+    private val dager: MutableMap<LocalDate, List<Aktivitet.AktivitetType>> = mutableMapOf()
     lateinit var id: UUID
     lateinit var periode: ClosedRange<LocalDate>
     lateinit var tilstand: Rapporteringsperiode.TilstandType
@@ -108,13 +108,7 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
                     RapporteringsperiodeDagerInnerDTO(
                         dagIndex = index,
                         dato = dag.key,
-                        muligeAktiviteter = dag.value.map {
-                            when (it.type) {
-                                Aktivitet.AktivitetType.Arbeid -> AktivitetTypeDTO.Arbeid
-                                Aktivitet.AktivitetType.Syk -> AktivitetTypeDTO.Syk
-                                Aktivitet.AktivitetType.Ferie -> AktivitetTypeDTO.Ferie
-                            }
-                        },
+                        muligeAktiviteter = dag.value.map { AktivitetTypeDTO.valueOf(it.name) },
                     ),
                 )
             }
@@ -136,11 +130,7 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
             uuid: UUID,
         ) {
             aktivitetDTO = AktivitetDTO(
-                type = when (type) {
-                    Aktivitet.AktivitetType.Arbeid -> AktivitetTypeDTO.Arbeid
-                    Aktivitet.AktivitetType.Syk -> AktivitetTypeDTO.Syk
-                    Aktivitet.AktivitetType.Ferie -> AktivitetTypeDTO.Ferie
-                },
+                type = AktivitetTypeDTO.valueOf(type.name),
                 dato = dato,
                 id = uuid,
                 timer = tid.toDouble(DurationUnit.HOURS).toBigDecimal(),
@@ -163,7 +153,12 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
         this.tilstand = tilstand
     }
 
-    override fun visit(dag: Dag, dato: LocalDate, aktiviteter: List<Aktivitet>, muligeAktiviter: List<Aktivitet>) {
+    override fun visit(
+        dag: Dag,
+        dato: LocalDate,
+        aktiviteter: List<Aktivitet>,
+        muligeAktiviter: List<Aktivitet.AktivitetType>,
+    ) {
         this.dager[dato] = muligeAktiviter
         this.aktiviteter += aktiviteter
     }

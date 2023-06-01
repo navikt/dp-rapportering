@@ -4,6 +4,9 @@ import no.nav.dagpenger.aktivitetslogg.Aktivitetskontekst
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Arbeid
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Ferie
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Syk
 import java.time.LocalDate
 
 class Dag(
@@ -13,14 +16,16 @@ class Dag(
 ) : Aktivitetskontekst {
     constructor(dato: LocalDate) : this(dato, mutableListOf())
 
-    private val muligeAktiviteter = emptyList<Aktivitet>()
+    private val muligeAktiviteter = listOf(Arbeid, Syk, Ferie) - aktiviteter.map { it.type }.toSet()
     private val rapporteringspliktig get() = harRapporteringslikt || erHelligdag
-
-    internal fun sammenfallerMed(other: Dag) = this.dato == other.dato
-    internal fun sammenfallerMed(other: LocalDate) = this.dato == other
-
     private val erHelligdag: Boolean
         get() = dato in norskeHelligdager(dato.year)
+
+    internal fun sammenfallerMed(other: Dag) = this.dato == other.dato
+
+    internal fun sammenfallerMed(other: LocalDate) = this.dato == other
+
+    internal fun dekkesAv(periode: ClosedRange<LocalDate>) = dato in periode
 
     fun leggTilAktivitet(aktivitet: Aktivitet): Boolean {
         if (!rapporteringspliktig) throw IllegalStateException("Kan ikke legge til aktivitet på dager uten rapporteringsplikt")
@@ -31,8 +36,8 @@ class Dag(
     fun gyldig() = true
 
     fun harAktivitet() = aktiviteter.isNotEmpty()
-    fun accept(visitor: AktivitetstidslinjeVisitor) {
-        visitor.visit(this, dato, aktiviteter, muligeAktiviteter)
+    fun leggTilFritak() {
+        harRapporteringslikt = false
     }
 
     fun håndter(hendelse: NyRapporteringHendelse) {
@@ -40,13 +45,12 @@ class Dag(
         aktiviteter.forEach { it.håndter(hendelse) }
     }
 
-    override fun toSpesifikkKontekst(): SpesifikkKontekst {
-        return SpesifikkKontekst("dag", mapOf("dato" to dato.toString()))
+    fun accept(visitor: AktivitetstidslinjeVisitor) {
+        visitor.visit(this, dato, aktiviteter, muligeAktiviteter)
     }
 
-    fun dekkesAv(periode: ClosedRange<LocalDate>) = dato in periode
-    fun leggTilFritak() {
-        harRapporteringslikt = false
+    override fun toSpesifikkKontekst(): SpesifikkKontekst {
+        return SpesifikkKontekst("dag", mapOf("dato" to dato.toString()))
     }
 }
 

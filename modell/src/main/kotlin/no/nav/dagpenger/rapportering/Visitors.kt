@@ -26,7 +26,13 @@ interface AktivitetstidslinjeVisitor : AktivitetVisitor, DagVisitor {
 }
 
 interface DagVisitor {
-    fun visit(dag: Dag, dato: LocalDate, aktiviteter: List<Aktivitet>, muligeAktiviter: List<Aktivitet>) {}
+    fun visit(
+        dag: Dag,
+        dato: LocalDate,
+        aktiviteter: List<Aktivitet>,
+        muligeAktiviter: List<Aktivitet.AktivitetType>,
+    ) {
+    }
 }
 
 interface AktivitetVisitor {
