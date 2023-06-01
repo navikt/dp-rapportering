@@ -8,52 +8,36 @@ import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.time.LocalDate
+import org.junit.jupiter.api.assertThrows
 
 class AktivitetstidslinjeTest {
     @Test
-    fun `tidslinje kan ha aktiviteter`() {
-        val tidslinje = Aktivitetstidslinje()
-        tidslinje.add(Arbeid(LocalDate.now().minusDays(3), 4.2))
-        tidslinje.add(Arbeid(LocalDate.now().minusDays(3), 2.2))
-        tidslinje.add(Syk(LocalDate.now().minusDays(2)))
-        tidslinje.add(Ferie(LocalDate.now().minusDays(1)))
-
-        assertEquals(4, tidslinje.size)
-        assertEquals(3, tidslinje.dagerMedAktivitet)
-    }
-
-    @Test
-    fun `tidslinjer kan ha subset`() {
-        val tidslinje = Aktivitetstidslinje()
-        // Lag et subset av den store tidslinjen
+    fun `tidslinje holder på dager, fritak og aktiviteter`() {
         val periode = 1.januar..14.januar
-        val subset = tidslinje.forPeriode(periode.start, periode.endInclusive)
-        // Subsettet skal alltid være like langt som perioden
-        assertEquals(14, subset.size)
+        val tidslinje = Aktivitetstidslinje(periode)
+        // Tidslinjen skal alltid ha like mange dager som perioden
+        assertEquals(14, tidslinje.size)
+        // Legg til dager uten rapporteringsplikt
+        tidslinje.leggTilFritak(1.januar)
+        tidslinje.leggTilFritak(2.januar)
+        tidslinje.leggTilFritak(8.januar, 9.januar, 10.januar)
+        // Kan ikke rapportere aktivitet på dager uten rapporteringsplikt
+        assertThrows<IllegalStateException> {
+            tidslinje.leggTilAktivitet(Arbeid(8.januar, 3))
+        }
         // Legg til aktiviteter
-        tidslinje.add(Arbeid(1.januar, 4.2))
-        tidslinje.add(Arbeid(2.januar, 2.2))
-        tidslinje.add(Arbeid(2.januar, 4.2))
-        tidslinje.add(Syk(3.januar))
-        tidslinje.add(Ferie(4.januar))
+        tidslinje.leggTilAktivitet(Arbeid(3.januar, 4.2))
+        tidslinje.leggTilAktivitet(Arbeid(4.januar, 2.2))
+        tidslinje.leggTilAktivitet(Arbeid(4.januar, 4.2))
+        tidslinje.leggTilAktivitet(Syk(5.januar))
+        tidslinje.leggTilAktivitet(Ferie(6.januar))
 
-        assertEquals(15, subset.size)
-        assertEquals(4, subset.dagerMedAktivitet)
+        assertEquals(14, tidslinje.size)
+        assertEquals(4, tidslinje.dagerMedAktivitet)
 
-        subset.forEach {
+        tidslinje.forEach {
+            // Alle dager i tidslinja er dekket av perioden
             assertTrue(it.dekkesAv(periode))
         }
-        // Endringer gjort på den store tidslinjen reflekteres i subset
-        val ferie = Ferie(5.januar)
-        tidslinje.add(ferie)
-        assertEquals(6, tidslinje.size)
-        assertEquals(15, subset.size)
-
-        // Endringer gjort på den store tidslinjen utenfor perioden reflekteres ikke i subset
-        tidslinje.add(Ferie(22.januar))
-        tidslinje.add(Ferie(23.januar))
-        assertEquals(15, subset.size)
-        assertEquals(8, tidslinje.size)
     }
 }

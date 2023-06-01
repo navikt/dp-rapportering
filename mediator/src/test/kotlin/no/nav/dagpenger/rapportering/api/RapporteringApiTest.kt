@@ -10,7 +10,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.testing.ApplicationTestBuilder
-import no.nav.dagpenger.rapportering.Person
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
 import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
@@ -23,7 +22,6 @@ class RapporteringApiTest {
     @Test
     fun `skal hente en liste med mulige rapportinger`() {
         val periode1 = Rapporteringsperiode(
-            person = Person(defaultDummyFodselsnummer),
             rapporteringspliktFom = LocalDate.now().minusDays(1),
         )
         withRapporteringApi(
@@ -44,7 +42,6 @@ class RapporteringApiTest {
     @Test
     fun `Skal kunne hente ut en rapporteringsperiode med en gitt id`() {
         val periode1 = Rapporteringsperiode(
-            person = Person(defaultDummyFodselsnummer),
             rapporteringspliktFom = LocalDate.now().minusDays(1),
         )
         val id = periode1.rapporteringsperiodeId
@@ -64,7 +61,6 @@ class RapporteringApiTest {
     @Test
     fun `Skal kunne ferdigstille en rapporteringsperiode`() {
         val periode1 = Rapporteringsperiode(
-            person = Person(defaultDummyFodselsnummer),
             rapporteringspliktFom = LocalDate.now().minusDays(1),
         )
         val id = periode1.rapporteringsperiodeId

@@ -3,15 +3,12 @@ package no.nav.dagpenger.rapportering
 import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.aktivitetslogg.Subaktivitetskontekst
-import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
-import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 
 class Person private constructor(
     val ident: String,
-    internal val aktivitetstidslinje: Aktivitetstidslinje,
     private val rapporteringsperioder: MutableList<Rapporteringsperiode>,
     override val aktivitetslogg: Aktivitetslogg,
 ) : Subaktivitetskontekst, RapporteringsperiodeObserver {
@@ -21,7 +18,6 @@ class Person private constructor(
         ident: String,
     ) : this(
         ident,
-        Aktivitetstidslinje(),
         mutableListOf(),
         Aktivitetslogg(),
     )
@@ -31,7 +27,6 @@ class Person private constructor(
         rapporteringsperioder: MutableList<Rapporteringsperiode>,
     ) : this(
         ident,
-        Aktivitetstidslinje(),
         rapporteringsperioder,
         Aktivitetslogg(),
     )
@@ -41,19 +36,12 @@ class Person private constructor(
         hendelse.info("Behandler søknad innsendt")
 
         Rapporteringsperiode(
-            this,
             rapporteringspliktFom = hendelse.fom,
         ).also {
             rapporteringsperioder.add(it)
+            it.registrer(this)
             it.behandle(hendelse)
         }
-    }
-
-    fun behandle(hendelse: NyAktivitetHendelse) {
-        hendelse.kontekst(this)
-        hendelse.info("Tar imot ny aktivitet utført av bruker")
-
-        aktivitetstidslinje.addAll(hendelse.aktiviteter)
     }
 
     fun behandle(hendelse: NyRapporteringsperiodeHendelse) {
@@ -61,10 +49,10 @@ class Person private constructor(
         hendelse.info("Behandler ny rapporteringsperioder")
 
         Rapporteringsperiode(
-            this,
             hendelse.fom,
         ).also {
             rapporteringsperioder.add(it)
+            it.registrer(this)
             it.behandle(hendelse)
         }
     }
@@ -72,7 +60,6 @@ class Person private constructor(
     fun behandle(hendelse: NyRapporteringHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Behandler ny innrapportering")
-        hendelse.aktivitetstidslinje = aktivitetstidslinje
 
         rapporteringsperioder.single { it.rapporteringsperiodeId == hendelse.rapporteringId }
             .behandle(hendelse)
@@ -93,7 +80,6 @@ class Person private constructor(
     override fun hashCode() = this.ident.hashCode()
     fun accept(visitor: PersonVisitor) {
         visitor.visit(this, ident)
-        aktivitetstidslinje.accept(visitor)
         rapporteringsperioder.accept(visitor)
     }
 }

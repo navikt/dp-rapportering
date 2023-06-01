@@ -8,6 +8,7 @@ import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import no.nav.dagpenger.rapportering.utils.finnFørsteMandagIUken
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -22,49 +23,45 @@ internal class Meldeprivate constructor() : Aktivitetskontekst {
 }
 
 class Rapporteringsperiode private constructor(
-    private val person: Person,
     val rapporteringsperiodeId: UUID,
     private val rapporteringsfrist: LocalDate,
-    private val rapporteringspliktFom: LocalDate,
-    periode: ClosedRange<LocalDate>,
+    private val periode: ClosedRange<LocalDate>,
     private var tilstand: Rapporteringsperiodetilstand,
     private val opprettet: LocalDateTime,
     private var oppdatert: LocalDateTime = opprettet,
+    private val tidslinje: Aktivitetstidslinje = Aktivitetstidslinje(periode),
 ) : Aktivitetskontekst {
-    private val aktivitetsperiode = person.aktivitetstidslinje.forPeriode(periode)
+    private val observers: MutableSet<RapporteringsperiodeObserver> = mutableSetOf()
 
-    constructor(
-        person: Person,
-        rapporteringspliktFom: LocalDate,
-    ) : this(
-        person = person,
-        rapporteringspliktFom = rapporteringspliktFom,
-        fom = rapporteringspliktFom.finnFørsteMandagIUken(),
-    )
+    constructor(rapporteringspliktFom: LocalDate) : this(fom = rapporteringspliktFom.finnFørsteMandagIUken())
 
     internal constructor(
-        person: Person,
-        rapporteringspliktFom: LocalDate,
         fom: LocalDate,
         tom: LocalDate = fom.plusDays(14),
     ) : this(
-        person = person,
         rapporteringsperiodeId = UUID.randomUUID(),
         rapporteringsfrist = tom,
-        rapporteringspliktFom = rapporteringspliktFom,
         periode = fom..tom,
         tilstand = Opprettet,
         opprettet = LocalDateTime.now(),
     )
 
+    fun erGyldig() = tidslinje.all { it.gyldig() }
+
+    fun leggTilFritak(dato: LocalDate) {}
+
     fun accept(visitor: RapporteringsperiodVisitor) {
-        visitor.visit(this, rapporteringsperiodeId, aktivitetsperiode.periode, this.tilstand.type)
-        aktivitetsperiode.accept(visitor)
+        visitor.visit(this, rapporteringsperiodeId, periode, this.tilstand.type)
+        tidslinje.accept(visitor)
     }
 
     fun behandle(hendelse: SøknadInnsendtHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Opprettet ny rapporteringsperiode på grunn av innsendt søknad")
+        // rapporteringsfristFra = hendelse.fom
+        periode.start.datesUntil(hendelse.fom).forEach {
+            // TODO: Legg til fritak i perioden fra start til innsendt
+        }
     }
 
     fun behandle(hendelse: NyRapporteringsperiodeHendelse) {
@@ -102,7 +99,9 @@ class Rapporteringsperiode private constructor(
             hendelse: NyRapporteringHendelse,
             rapporteringsperiode: Rapporteringsperiode,
         ) {
-            rapporteringsperiode.aktivitetsperiode.forEach { it.håndter(hendelse) }
+            if (!rapporteringsperiode.erGyldig()) throw IllegalStateException("Perioden kan ikke godkjennes")
+
+            rapporteringsperiode.tidslinje.forEach { it.håndter(hendelse) }
             rapporteringsperiode.tilstand(hendelse, Godkjent)
         }
     }
@@ -143,20 +142,22 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiodeId = rapporteringsperiodeId,
             gjeldendeTilstand = tilstand.type,
             forrigeTilstand = forrigeTilstand.type,
-            fom = aktivitetsperiode.periode.start,
-            tom = aktivitetsperiode.periode.endInclusive,
+            fom = periode.start,
+            tom = periode.endInclusive,
         )
 
-        person.rapporteringsperiodeEndret(event)
+        observers.forEach { it.rapporteringsperiodeEndret(event) }
     }
 
     override fun toSpesifikkKontekst() = SpesifikkKontekst(
         "Rapporteringsperiode",
         mapOf(
-            "fom" to aktivitetsperiode.periode.start.toString(),
-            "tom" to aktivitetsperiode.periode.endInclusive.toString(),
+            "fom" to periode.start.toString(),
+            "tom" to periode.endInclusive.toString(),
         ),
     )
+
+    fun registrer(observer: RapporteringsperiodeObserver) = observers.add(observer)
 
     enum class TilstandType {
         Opprettet,

@@ -19,7 +19,7 @@ sealed class Aktivitet(
     }
 
     enum class AktivitetType {
-        Arbeid, Syk, Ferie, Rapporteringsplikt, IkkeRapporteringsplikt
+        Arbeid, Syk, Ferie
     }
 
     companion object {
@@ -46,8 +46,6 @@ sealed class Aktivitet(
                 AktivitetType.Arbeid -> Arbeid(uuid, dato, tid, rehydrertTilstand)
                 AktivitetType.Syk -> Syk(dato, uuid, rehydrertTilstand)
                 AktivitetType.Ferie -> Ferie(dato, uuid, rehydrertTilstand)
-                AktivitetType.Rapporteringsplikt -> throw IllegalStateException("Ikke serialiserbar")
-                AktivitetType.IkkeRapporteringsplikt -> throw IllegalStateException("Ikke serialiserbar")
             }
         }
     }
@@ -87,9 +85,4 @@ sealed class Aktivitet(
 
     class Ferie(dato: LocalDate, uuid: UUID = UUID.randomUUID(), tilstand: Tilstand = Ny) :
         Aktivitet(dato, Duration.INFINITE, AktivitetType.Ferie, uuid, tilstand)
-
-    class Rapporteringsplikt(dato: LocalDate) : Aktivitet(dato, Duration.INFINITE, AktivitetType.Rapporteringsplikt)
-
-    class IkkeRapporteringsplikt(dato: LocalDate) :
-        Aktivitet(dato, Duration.INFINITE, AktivitetType.IkkeRapporteringsplikt)
 }

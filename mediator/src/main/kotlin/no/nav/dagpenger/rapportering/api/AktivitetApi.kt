@@ -76,13 +76,11 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
     }
 }
 
-internal fun no.nav.dagpenger.rapportering.tidslinje.Aktivitet.toAktivitetDTO(): AktivitetDTO {
+internal fun Aktivitet.toAktivitetDTO(): AktivitetDTO {
     val aktivitetType = when (this) {
         is Arbeid -> AktivitetTypeDTO.Arbeid
         is Ferie -> AktivitetTypeDTO.Ferie
         is Syk -> AktivitetTypeDTO.Syk
-        is Aktivitet.IkkeRapporteringsplikt -> TODO()
-        is Aktivitet.Rapporteringsplikt -> TODO()
     }
     return AktivitetDTO(
         type = aktivitetType,

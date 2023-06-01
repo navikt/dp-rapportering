@@ -1,11 +1,9 @@
 package no.nav.dagpenger.rapportering.helpers
 
 import no.nav.dagpenger.rapportering.Person
-import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
-import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import java.time.LocalDate
 import java.util.UUID
 
@@ -16,12 +14,6 @@ internal object TestData {
     fun søknadInnsendtHendelse() = SøknadInnsendtHendelse(
         UUID.randomUUID(),
         testIdent,
-    )
-
-    fun nyAktivitetHendelse(vararg aktivitet: Aktivitet) = NyAktivitetHendelse(
-        UUID.randomUUID(),
-        testIdent,
-        aktivitet.toList(),
     )
 
     fun nyRapporteringsperiodeHendelse(

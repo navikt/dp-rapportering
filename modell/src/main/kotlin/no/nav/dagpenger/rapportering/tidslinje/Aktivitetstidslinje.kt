@@ -1,55 +1,37 @@
 package no.nav.dagpenger.rapportering.tidslinje
 
 import no.nav.dagpenger.rapportering.AktivitetstidslinjeVisitor
+import no.nav.dagpenger.rapportering.Dag
 import java.time.LocalDate
 
-interface Tidslinje : Collection<Aktivitet> {
-    val dagerMedAktivitet: Int
+data class Aktivitetstidslinje internal constructor(
+    private val dager: MutableSet<Dag> = mutableSetOf(),
+) : MutableCollection<Dag> by dager {
+    constructor(fraOgMed: LocalDate, tilOgMed: LocalDate) : this(fraOgMed..tilOgMed)
+    constructor(periode: ClosedRange<LocalDate>) : this(
+        mutableSetOf<Dag>().apply {
+            val datesUntil = periode.start.datesUntil(periode.endInclusive.plusDays(1))
+            datesUntil.forEach {
+                add(Dag(it))
+            }
+        },
+    )
 
-    fun accept(visitor: AktivitetstidslinjeVisitor)
-}
+    val dagerMedAktivitet get() = dager.count { it.harAktivitet() }
 
-internal data class Aktivitetstidslinje internal constructor(
-    private val aktiviteter: MutableSet<Aktivitet> = mutableSetOf(),
-) : MutableCollection<Aktivitet> by aktiviteter, Tidslinje {
-    override val dagerMedAktivitet get() = Aktivitet.perDag(aktiviteter).size
-
-    fun forPeriode(periode: ClosedRange<LocalDate>) = Aktivitetsperiode(periode.start, periode.endInclusive)
-
-    fun forPeriode(fraOgMed: LocalDate, tilOgMed: LocalDate) = Aktivitetsperiode(fraOgMed, tilOgMed)
-
-    override fun accept(visitor: AktivitetstidslinjeVisitor) {
-        visitor.visit(aktiviteter.toList())
+    fun leggTilFritak(vararg dato: LocalDate) {
+        dato.forEach { fritak ->
+            this.single { it.sammenfallerMed(fritak) }.leggTilFritak()
+        }
     }
 
-    internal inner class Aktivitetsperiode(fraOgMed: LocalDate, tilOgMed: LocalDate) : Tidslinje {
-        internal val periode = fraOgMed..tilOgMed
-        private val aktiviteter
-            get() = this@Aktivitetstidslinje.aktiviteter.filter {
-                it.dekkesAv(periode)
-            }.medRapporteringsplikt()
+    fun leggTilAktivitet(aktivitet: Aktivitet) {
+        this.single { it.sammenfallerMed(aktivitet.dato) }.leggTilAktivitet(aktivitet)
+    }
 
-        private fun List<Aktivitet>.medRapporteringsplikt(): List<Aktivitet> {
-            val dagerMedAktivitet: List<LocalDate> = map { it.dato }
-            val dagerUtenAktivitet =
-                periode.start.datesUntil(periode.endInclusive.plusDays(1)).filter { !dagerMedAktivitet.contains(it) }
-            return this + dagerUtenAktivitet.map { Aktivitet.Rapporteringsplikt(it) }.toList()
-        }
-
-        override fun accept(visitor: AktivitetstidslinjeVisitor) {
-            visitor.visit(aktiviteter.toList())
-        }
-
-        override val dagerMedAktivitet get() = Aktivitet.perDag(aktiviteter.filterNot { it is Aktivitet.Rapporteringsplikt }).size
-
-        override fun iterator() = aktiviteter.iterator()
-
-        override val size get() = aktiviteter.size
-
-        override fun contains(element: Aktivitet) = aktiviteter.contains(element)
-
-        override fun containsAll(elements: Collection<Aktivitet>) = aktiviteter.containsAll(elements)
-
-        override fun isEmpty() = aktiviteter.isEmpty()
+    fun accept(visitor: AktivitetstidslinjeVisitor) {
+        visitor.preVisit(this)
+        dager.forEach { it.accept(visitor) }
+        visitor.postVisit(this)
     }
 }

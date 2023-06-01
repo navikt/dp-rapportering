@@ -1,14 +1,12 @@
 package no.nav.dagpenger.rapportering
 
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
-import no.nav.dagpenger.rapportering.helpers.TestData.nyAktivitetHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.nyRapporteringHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.nyRapporteringsperiodeHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.søknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.testIdent
 import no.nav.dagpenger.rapportering.helpers.TestData.testPerson
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
-import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -38,6 +36,7 @@ class PersonTest {
         val observer = TestObserver().also { person.registrer(it) }
         person.behandle(søknadInnsendtHendelse())
         // Bruker melder inn aktiviteter
+        /* Erstatt disse med repository
         person.behandle(
             nyAktivitetHendelse(
                 Aktivitet.Arbeid(LocalDate.now().plusDays(5), 3.2),
@@ -55,6 +54,7 @@ class PersonTest {
                 Aktivitet.Syk(LocalDate.now().plusDays(1)),
             ),
         )
+         */
         // Det utløses en ny rapporteringsperiode (enten som konsekvens av søknad eller ny periode)
         person.behandle(
             nyRapporteringsperiodeHendelse(),

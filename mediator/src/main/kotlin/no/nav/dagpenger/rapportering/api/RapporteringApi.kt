@@ -11,6 +11,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.AktivitetVisitor
+import no.nav.dagpenger.rapportering.Dag
 import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
@@ -25,7 +26,6 @@ import no.nav.dagpenger.rapportering.repository.AktivitetRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import java.time.LocalDate
-import java.time.Period
 import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -76,10 +76,11 @@ fun Application.rapporteringApi(
 }
 
 private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperiode) : RapporteringsperiodVisitor {
+    private val dager: MutableMap<LocalDate, List<Aktivitet>> = mutableMapOf()
     lateinit var id: UUID
     lateinit var periode: ClosedRange<LocalDate>
     lateinit var tilstand: Rapporteringsperiode.TilstandType
-    lateinit var aktiviteter: List<Aktivitet>
+    val aktiviteter: MutableList<Aktivitet> = mutableListOf()
     val dto: RapporteringsperiodeDTO
         get() {
             return RapporteringsperiodeDTO(
@@ -101,19 +102,23 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
     }
 
     private fun lagRapporteringsdager(): List<RapporteringsperiodeDagerInnerDTO> {
-        val start = periode.start
-        val dager = Period.between(start, periode.endInclusive).days
-        return (0..dager).map { index ->
-            RapporteringsperiodeDagerInnerDTO(
-                dagIndex = index,
-                dato = start.plusDays(index.toLong()),
-                muligeAktiviteter = listOf(
-                    AktivitetTypeDTO.Arbeid,
-                    AktivitetTypeDTO.Ferie,
-                    AktivitetTypeDTO.Syk,
-                ),
-            )
-        }
+        return mutableListOf<RapporteringsperiodeDagerInnerDTO>().apply {
+            dager.onEachIndexed { index, dag ->
+                add(
+                    RapporteringsperiodeDagerInnerDTO(
+                        dagIndex = index,
+                        dato = dag.key,
+                        muligeAktiviteter = dag.value.map {
+                            when (it.type) {
+                                Aktivitet.AktivitetType.Arbeid -> AktivitetTypeDTO.Arbeid
+                                Aktivitet.AktivitetType.Syk -> AktivitetTypeDTO.Syk
+                                Aktivitet.AktivitetType.Ferie -> AktivitetTypeDTO.Ferie
+                            }
+                        },
+                    ),
+                )
+            }
+        }.toList()
     }
 
     class AktivitetMapper(aktivitet: Aktivitet) : AktivitetVisitor {
@@ -135,8 +140,6 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
                     Aktivitet.AktivitetType.Arbeid -> AktivitetTypeDTO.Arbeid
                     Aktivitet.AktivitetType.Syk -> AktivitetTypeDTO.Syk
                     Aktivitet.AktivitetType.Ferie -> AktivitetTypeDTO.Ferie
-                    Aktivitet.AktivitetType.Rapporteringsplikt -> TODO("Skal ikke eksponeres til API")
-                    Aktivitet.AktivitetType.IkkeRapporteringsplikt -> TODO()
                 },
                 dato = dato,
                 id = uuid,
@@ -145,7 +148,7 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
         }
     }
 
-    private fun List<Aktivitet>.tilDto() = this.filterNot { it is Aktivitet.Rapporteringsplikt }.map {
+    private fun List<Aktivitet>.tilDto() = this.map {
         AktivitetMapper(it).aktivitetDTO
     }
 
@@ -160,7 +163,8 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
         this.tilstand = tilstand
     }
 
-    override fun visit(aktiviteter: List<Aktivitet>) {
-        this.aktiviteter = aktiviteter
+    override fun visit(dag: Dag, dato: LocalDate, aktiviteter: List<Aktivitet>, muligeAktiviter: List<Aktivitet>) {
+        this.dager[dato] = muligeAktiviter
+        this.aktiviteter += aktiviteter
     }
 }
