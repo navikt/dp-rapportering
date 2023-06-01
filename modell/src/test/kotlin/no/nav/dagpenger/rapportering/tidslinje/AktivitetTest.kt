@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 import java.util.UUID
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.hours
 
 class AktivitetTest {
     @Test
@@ -28,11 +27,11 @@ class AktivitetTest {
         val uuid = UUID.randomUUID()
         val dato = LocalDate.now()
 
-        Aktivitet.rehydrer(uuid, dato, "Arbeid", 7.5, "Ny").let {
+        Aktivitet.rehydrer(uuid, dato, "Arbeid", 7.5.hours, "Ny").let {
             it should beInstanceOf<Aktivitet.Arbeid>()
             it.dato shouldBe dato
             it.uuid shouldBe uuid
-            it.tid shouldBe 7.5.toDuration(DurationUnit.HOURS)
+            it.tid shouldBe 7.5.hours
         }
 
         Aktivitet.rehydrer(

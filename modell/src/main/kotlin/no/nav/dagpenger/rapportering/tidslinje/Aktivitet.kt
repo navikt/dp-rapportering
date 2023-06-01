@@ -37,7 +37,7 @@ sealed class Aktivitet(
             uuid: UUID,
             dato: LocalDate,
             type: String,
-            tid: Number = Int.MAX_VALUE,
+            tid: Duration = Duration.INFINITE,
             tilstand: String,
         ): Aktivitet {
             val rehydrertTilstand = tilstand.rehydrerTilstand()
@@ -73,11 +73,16 @@ sealed class Aktivitet(
     class Arbeid(
         uuid: UUID = UUID.randomUUID(),
         dato: LocalDate,
-        arbeidstimer: Number,
+        arbeidstimer: Duration,
         tilstand: Tilstand = Ny,
     ) :
-        Aktivitet(dato, arbeidstimer.toDouble().hours, AktivitetType.Arbeid, uuid, tilstand) {
-        constructor(dato: LocalDate, arbeidstimer: Number) : this(UUID.randomUUID(), dato, arbeidstimer, Ny)
+        Aktivitet(dato, arbeidstimer, AktivitetType.Arbeid, uuid, tilstand) {
+        constructor(dato: LocalDate, arbeidstimer: Number) : this(
+            UUID.randomUUID(),
+            dato,
+            arbeidstimer.toDouble().hours,
+            Ny,
+        )
     }
 
     class Syk(dato: LocalDate, uuid: UUID = UUID.randomUUID(), tilstand: Tilstand = Ny) :
