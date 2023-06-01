@@ -1,11 +1,11 @@
 package no.nav.dagpenger.rapportering.repository
 
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
+import java.time.LocalDate
 import java.util.UUID
 
 class InMemoryRapporteringsperiodeRepository : RapporteringsperiodeRepository {
-
-//    ?: RapporteringsperiodeDTO(
+    //    ?: RapporteringsperiodeDTO(
 //    id = UUID.randomUUID(),
 //    fraOgMed = LocalDate.of(2023, 5, 22),
 //    tilOgMed = LocalDate.of(2023, 6, 4),
@@ -16,6 +16,7 @@ class InMemoryRapporteringsperiodeRepository : RapporteringsperiodeRepository {
     private val rapporteringsperioder = PersonCollection<Rapporteringsperiode>()
     override fun hentRapporteringsperiode(ident: String, uuid: UUID) =
         rapporteringsperioder.hent(ident).find { it.rapporteringsperiodeId == uuid }
+            ?: Rapporteringsperiode(LocalDate.now().minusDays(5))
 
     override fun hentRapporteringsperioder(ident: String) =
         rapporteringsperioder.hent(ident)
