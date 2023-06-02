@@ -16,6 +16,7 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
 import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
+import no.nav.dagpenger.rapportering.repository.InMemoryAktivitetRepository
 import no.nav.dagpenger.rapportering.repository.InMemoryRapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import org.junit.jupiter.api.Test
@@ -161,13 +162,20 @@ private fun withRapporteringApi(
         moduleFunction = {
             konfigurasjon()
             rapporteringApi(
-                InMemoryRapporteringsperiodeRepository().apply {
+                InMemoryRapporteringsperiodeRepository(
+                    InMemoryAktivitetRepository().apply {
+                        this.leggTilAktiviteter(
+                            defaultDummyFodselsnummer,
+                            aktiviteter,
+                        )
+                    },
+                ).apply {
                     rapporteringsperioder.forEach {
                         lagreRapporteringsperiode(defaultDummyFodselsnummer, it)
                     }
                 },
+            )
         },
         test = test,
     )
-}
 }

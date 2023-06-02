@@ -82,7 +82,7 @@ fun Application.rapporteringApi(
 
                     route("/aktivitet") {
                         get {
-                            val aktiviteter = aktivitetRepository.hentAktiviteter(call.ident()).map {
+                            val aktiviteter = rapporteringsperiodeRepository.hentAktiviteter(call.ident()).map {
                                 AktivitetDTO(
                                     id = it.uuid,
                                     dato = it.dato,
@@ -111,7 +111,7 @@ fun Application.rapporteringApi(
                                 )
                             }
 
-                            aktivitetRepository.leggTilAktivitet(call.ident(), aktivitet)
+                            rapporteringsperiodeRepository.leggTilAktivitet(call.ident(), aktivitet)
 
                             call.respond(HttpStatusCode.Created, aktivitet.toAktivitetDTO())
                         }
@@ -119,12 +119,18 @@ fun Application.rapporteringApi(
                         route("{aktivitetId}") {
                             get {
                                 val aktivitet =
-                                    aktivitetRepository.hentAktivitet(call.ident(), call.finnUUID("aktivitetId"))
+                                    rapporteringsperiodeRepository.hentAktivitet(
+                                        call.ident(),
+                                        call.finnUUID("aktivitetId"),
+                                    )
                                 call.respond(HttpStatusCode.OK, aktivitet)
                             }
 
                             delete {
-                                aktivitetRepository.slettAktivitet(call.ident(), call.finnUUID("aktivitetId"))
+                                rapporteringsperiodeRepository.slettAktivitet(
+                                    call.ident(),
+                                    call.finnUUID("aktivitetId"),
+                                )
                                 call.respond(HttpStatusCode.NoContent)
                             }
                         }

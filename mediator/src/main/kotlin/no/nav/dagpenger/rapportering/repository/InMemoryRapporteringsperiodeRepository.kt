@@ -4,7 +4,9 @@ import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import java.time.LocalDate
 import java.util.UUID
 
-class InMemoryRapporteringsperiodeRepository : RapporteringsperiodeRepository {
+class InMemoryRapporteringsperiodeRepository(private val aktivitetRepository: InMemoryAktivitetRepository) :
+    RapporteringsperiodeRepository,
+    AktivitetRepository by aktivitetRepository {
     //    ?: RapporteringsperiodeDTO(
 //    id = UUID.randomUUID(),
 //    fraOgMed = LocalDate.of(2023, 5, 22),
