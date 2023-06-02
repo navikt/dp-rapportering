@@ -4,49 +4,84 @@ import kotliquery.Query
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
+import no.nav.dagpenger.rapportering.DagVisitor
 import no.nav.dagpenger.rapportering.Person
 import no.nav.dagpenger.rapportering.PersonVisitor
+import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import java.time.LocalDate
 import java.util.UUID
 import javax.sql.DataSource
+import kotlin.time.Duration
 
 internal class PostgresRepository(private val ds: DataSource) :
     PersonRepository,
-    AktivitetRepository,
     RapporteringsperiodeRepository {
-    override fun hentAktivitet(ident: String, uuid: UUID): Aktivitet {
-        TODO()
-//        using(sessionOf(ds)) { session ->
-//            session.run(
-//                //language=PostgreSQL
-//                queryOf(
-//                    statement = """
-//                    SELECT tilstand, dato, type, tid  FROM aktivitet WHERE person_ident = :ident AND uuid = :uuid
-//                    """.trimIndent(),
-//                    paramMap = mapOf(
-//                        "ident" to ident,
-//                        "uuid" to uuid,
-//
-//                    ),
-//                ).map { row ->
-//                    row.l
-//                    TODO()
-// //                    Aktivitet.rehydrer(
-// //                        dato = row.localDate("dato"),
-// //                        tid = r,
-// //                        type = "",
-// //                        uuid =,
-// //                        tilstand = ""
-// //
-// //                    )
-//                }.asSingle,
-//            )
-//        }
+    override fun hentRapporteringsperiode(ident: String, uuid: UUID): Rapporteringsperiode? {
+        TODO("Not yet implemented")
     }
 
-    override fun hentAktiviteter(ident: String): List<Aktivitet> {
+    override fun hentRapporteringsperioder(ident: String): List<Rapporteringsperiode> {
+        return using(sessionOf(ds)) { session ->
+            session.run(
+                queryOf(
+                    //language=PostgreSQL
+                    statement = """SELECT * FROM rapporteringsperiode WHERE person_ident = :ident""",
+                    paramMap = mapOf("ident" to ident),
+                ).map { row ->
+                    val fraOgMed = row.localDate("fom")
+                    val tilOgMed = row.localDate("tom")
+                    val rapporteringsperiodeId = row.uuid("uuid")
+                    val tidslinje = Aktivitetstidslinje(fraOgMed, tilOgMed).apply {
+                        hentAktiviteterFor(rapporteringsperiodeId).forEach { leggTilAktivitet(it) }
+                    }
+                    Rapporteringsperiode.rehydrer(
+                        rapporteringsperiodeId,
+                        row.localDate("rapporteringsfrist"),
+                        fraOgMed,
+                        tilOgMed,
+                        Rapporteringsperiode.TilstandType.valueOf(row.string("tilstand")),
+                        row.localDateTime("opprettet"),
+                        tidslinje,
+                    )
+                }.asList,
+            )
+        }
+    }
+
+    private fun hentAktiviteterFor(rapporteringsperiodeId: UUID): List<Aktivitet> {
+        return using(sessionOf(ds)) { session ->
+            session.run(
+                queryOf(
+                    //language=PostgreSQL
+                    statement = """
+                        |SELECT * FROM aktivitet 
+                        |LEFT JOIN dag d ON aktivitet.uuid = d.aktivitet_id
+                        |WHERE d.rapporteringsperiode_id = :rapporteringsperiodeId
+                    """.trimMargin(),
+                    paramMap = mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
+                ).map { row ->
+                    val type = AktivitetType.valueOf(row.string("type"))
+                    val dato = row.localDate("dato")
+                    when (type) {
+                        AktivitetType.Arbeid -> Aktivitet.Arbeid(
+                            dato,
+                            // TODO Duration.parse(row.string("tid")).inWholeHours
+                            2,
+                        )
+
+                        AktivitetType.Syk -> Aktivitet.Syk(dato)
+                        AktivitetType.Ferie -> Aktivitet.Ferie(dato)
+                    }
+                }.asList,
+            )
+        }
+    }
+
+    override fun hentRapporteringsperiodeFor(ident: String, dato: LocalDate): Rapporteringsperiode? {
         TODO("Not yet implemented")
     }
 
@@ -58,7 +93,10 @@ internal class PostgresRepository(private val ds: DataSource) :
                     statement = """SELECT ident FROM person WHERE ident = :ident""",
                     paramMap = mapOf("ident" to ident),
                 ).map { row ->
-                    Person(row.string("ident"))
+                    Person(
+                        row.string("ident"),
+                        hentRapporteringsperioder(ident),
+                    )
                 }.asSingle,
             )
         }
@@ -76,21 +114,13 @@ internal class PostgresRepository(private val ds: DataSource) :
     override fun lagre(person: Person) {
         using(sessionOf(ds)) { session ->
             session.transaction { tx ->
-                tx.run(LagrePersonStatementBuilder(person).query.asUpdate)
+                val queries = LagrePersonStatementBuilder(person).queries
+                queries.forEach { query ->
+                    tx.run(query.asUpdate)
+                    println(query)
+                }
             }
         }
-    }
-
-    override fun hentRapporteringsperiode(ident: String, uuid: UUID): Rapporteringsperiode? {
-        TODO("Not yet implemented")
-    }
-
-    override fun hentRapporteringsperioder(ident: String): List<Rapporteringsperiode> {
-        TODO("Not yet implemented")
-    }
-
-    override fun hentRapporteringsperiodeFor(ident: String, dato: LocalDate): Rapporteringsperiode? {
-        TODO("Not yet implemented")
     }
 
     private fun insertPerson(ident: String) {
@@ -105,33 +135,121 @@ internal class PostgresRepository(private val ds: DataSource) :
         }
     }
 
-    private fun personFinnes(ident: String): Boolean {
-        return using(sessionOf(ds)) { session ->
-            session.run(
-                queryOf(
-                    //language=PostgreSQL
-                    statement = """SELECT EXISTS(SELECT 1 FROM person WHERE ident = :ident) AS finnes""",
-                    paramMap = mapOf("ident" to ident),
-                ).map { row ->
-                    row.boolean("finnes")
-                }.asSingle,
-            )
-        } ?: false
-    }
+    private fun personFinnes(ident: String) = using(sessionOf(ds)) { session ->
+        session.run(
+            queryOf(
+                //language=PostgreSQL
+                statement = """SELECT EXISTS(SELECT 1 FROM person WHERE ident = :ident) AS finnes""",
+                paramMap = mapOf("ident" to ident),
+            ).map { row ->
+                row.boolean("finnes")
+            }.asSingle,
+        )
+    } ?: false
 }
 
-private class LagrePersonStatementBuilder(person: Person) : PersonVisitor {
-    lateinit var query: Query
+private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, RapporteringsperiodVisitor, DagVisitor {
+    private lateinit var rapporteringsperiodeId: UUID
+    private lateinit var ident: String
+    var queries = mutableListOf<Query>()
 
     init {
         person.accept(this)
     }
 
     override fun visit(person: Person, ident: String) {
-        query = queryOf(
-            //language=PostgreSQL
-            statement = """INSERT INTO person(ident) VALUES (:ident) ON CONFLICT DO NOTHING""",
-            paramMap = mapOf("ident" to ident),
+        this.ident = ident
+        queries.add(
+            queryOf(
+                //language=PostgreSQL
+                statement = """INSERT INTO person(ident) VALUES (:ident) ON CONFLICT DO NOTHING""",
+                paramMap = mapOf("ident" to ident),
+            ),
+        )
+    }
+
+    override fun visit(
+        rapporteringsperiode: Rapporteringsperiode,
+        id: UUID,
+        periode: ClosedRange<LocalDate>,
+        tilstand: Rapporteringsperiode.TilstandType,
+        rapporteringsfrist: LocalDate,
+    ) {
+        this.rapporteringsperiodeId = id
+        queries.add(
+            queryOf(
+                //language=PostgreSQL
+                statement = """
+                    INSERT INTO rapporteringsperiode (uuid, person_ident, tilstand, rapporteringsfrist, fom, tom)
+                    VALUES (:uuid,
+                            :ident,
+                            :tilstand,
+                            :rapporteringsfrist,
+                            :fraOgMed,
+                            :tilOgMed)
+                    ON CONFLICT (uuid) DO UPDATE SET tilstand = :tilstand
+                """.trimIndent(),
+                paramMap = mapOf(
+                    "uuid" to id,
+                    "ident" to ident,
+                    "rapporteringsfrist" to rapporteringsfrist,
+                    "tilstand" to tilstand.name,
+                    "fraOgMed" to periode.start,
+                    "tilOgMed" to periode.endInclusive,
+                ),
+            ),
+        )
+    }
+
+    override fun visit(
+        aktivitet: Aktivitet,
+        uuid: UUID,
+        dato: LocalDate,
+        tid: Duration,
+        type: AktivitetType,
+        tilstand: Aktivitet.TilstandType,
+    ) {
+        queries.add(
+            queryOf(
+                //language=PostgreSQL
+                statement = """
+                INSERT INTO aktivitet(uuid,
+                                      person_ident,
+                                      tilstand,
+                                      dato,
+                                      "type",
+                                      tid)
+                VALUES (:uuid,
+                        :ident,
+                        :tilstand,
+                        :dato,
+                        :type,
+                        :tid::interval)
+                ON CONFLICT (uuid) DO UPDATE SET tilstand = :tilstand
+                """.trimIndent(),
+                paramMap = mapOf(
+                    "uuid" to aktivitet.uuid,
+                    "ident" to ident,
+                    "tilstand" to tilstand.name,
+                    "dato" to dato,
+                    "type" to type.name,
+                    "tid" to tid.toIsoString(),
+                ),
+            ),
+        )
+        queries.add(
+            queryOf(
+                //language=PostgreSQL
+                statement = """
+                    INSERT INTO dag(rapporteringsperiode_id, aktivitet_id)
+                    VALUES (:rapporteringsperiodeId, :aktivitetId)
+                    ON CONFLICT DO NOTHING
+                """.trimIndent(),
+                paramMap = mapOf(
+                    "rapporteringsperiodeId" to rapporteringsperiodeId,
+                    "aktivitetId" to aktivitet.uuid,
+                ),
+            ),
         )
     }
 }

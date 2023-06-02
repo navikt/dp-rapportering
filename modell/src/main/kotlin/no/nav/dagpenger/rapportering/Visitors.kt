@@ -17,16 +17,17 @@ interface RapporteringsperiodVisitor : AktivitetstidslinjeVisitor {
         id: UUID,
         periode: ClosedRange<LocalDate>,
         tilstand: Rapporteringsperiode.TilstandType,
+        rapporteringsfrist: LocalDate,
     ) {
     }
 }
 
-interface AktivitetstidslinjeVisitor : AktivitetVisitor, DagVisitor {
+interface AktivitetstidslinjeVisitor : DagVisitor {
     fun preVisit(aktivitetstidslinje: Aktivitetstidslinje) {}
     fun postVisit(aktivitetstidslinje: Aktivitetstidslinje) {}
 }
 
-interface DagVisitor {
+interface DagVisitor : AktivitetVisitor {
     fun visit(
         dag: Dag,
         dato: LocalDate,
@@ -39,10 +40,11 @@ interface DagVisitor {
 interface AktivitetVisitor {
     fun visit(
         aktivitet: Aktivitet,
+        uuid: UUID = UUID.randomUUID(),
         dato: LocalDate,
         tid: Duration,
         type: Aktivitet.AktivitetType,
-        uuid: UUID = UUID.randomUUID(),
+        tilstand: Aktivitet.TilstandType,
     ) {
     }
 }

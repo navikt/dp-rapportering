@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS aktivitet
     tilstand     TEXT                                                              NOT NULL,
     opprettet    TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'::TEXT) NOT NULL,
     dato         DATE                                                              NOT NULL,
-    type         TEXT                                                              NOT NULL,
+    "type"       TEXT                                                              NOT NULL,
     tid          INTERVAL                                                          NOT NULL
 );
 
@@ -30,8 +30,8 @@ CREATE TABLE IF NOT EXISTS rapporteringsperiode
 
 CREATE TABLE IF NOT EXISTS dag
 (
-    rappoteringsperiode_id uuid REFERENCES rapporteringsperiode (uuid),
-    aktivitet_id           uuid REFERENCES aktivitet (uuid)
+    rapporteringsperiode_id uuid REFERENCES rapporteringsperiode (uuid),
+    aktivitet_id            uuid REFERENCES aktivitet (uuid)
 );
 
 

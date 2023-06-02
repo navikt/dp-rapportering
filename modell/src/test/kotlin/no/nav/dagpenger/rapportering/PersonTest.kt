@@ -99,6 +99,7 @@ class PersonTest {
             id: UUID,
             periode: ClosedRange<LocalDate>,
             tilstand: Rapporteringsperiode.TilstandType,
+            rapporteringsfrist: LocalDate,
         ) {
             rapporteringsperioder += rapporteringsperiode
         }

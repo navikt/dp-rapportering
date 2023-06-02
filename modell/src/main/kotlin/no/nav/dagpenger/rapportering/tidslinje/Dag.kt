@@ -57,6 +57,7 @@ class Dag(
 
     fun accept(visitor: DagVisitor) {
         visitor.visit(this, dato, aktiviteter, muligeAktiviteter)
+        aktiviteter.forEach { it.accept(visitor) }
     }
 
     override fun toSpesifikkKontekst(): SpesifikkKontekst {

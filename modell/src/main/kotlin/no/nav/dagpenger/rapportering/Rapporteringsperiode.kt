@@ -48,6 +48,30 @@ class Rapporteringsperiode private constructor(
         opprettet = LocalDateTime.now(),
     )
 
+    companion object {
+        fun rehydrer(
+            rapporteringsperiodeId: UUID,
+            rapporteringsfrist: LocalDate,
+            fraOgMed: LocalDate,
+            tilOgMed: LocalDate,
+            tilstand: TilstandType,
+            opprettet: LocalDateTime,
+            tidslinje: Aktivitetstidslinje,
+        ) = Rapporteringsperiode(
+            rapporteringsperiodeId,
+            rapporteringsfrist,
+            fraOgMed..tilOgMed,
+            when (tilstand) {
+                TilstandType.TilUtfylling -> TilUtfylling
+                TilstandType.Godkjent -> Godkjent
+                TilstandType.Innsendt -> Innsendt
+            },
+            opprettet,
+            opprettet,
+            tidslinje,
+        )
+    }
+
     fun gjelderFor(dato: LocalDate) = dato in periode
 
     fun erGyldig() = tidslinje.all { it.gyldig() }
@@ -55,7 +79,7 @@ class Rapporteringsperiode private constructor(
     fun leggTilFritak(dato: LocalDate) {}
 
     fun accept(visitor: RapporteringsperiodVisitor) {
-        visitor.visit(this, rapporteringsperiodeId, periode, this.tilstand.type)
+        visitor.visit(this, rapporteringsperiodeId, periode, this.tilstand.type, rapporteringsfrist)
         tidslinje.accept(visitor)
     }
 
@@ -145,6 +169,7 @@ class Rapporteringsperiode private constructor(
             hendelse.kontekst(this)
             rapporteringsperiode.tidslinje.leggTilAktivitet(hendelse.aktivitet)
         }
+
         override fun behandle(hendelse: SlettAktivitetHendelse, rapporteringsperiode: Rapporteringsperiode) {
             hendelse.kontekst(this)
             rapporteringsperiode.tidslinje.slettAktivitet(hendelse.aktivitetId)

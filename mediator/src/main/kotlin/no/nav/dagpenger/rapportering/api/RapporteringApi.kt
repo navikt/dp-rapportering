@@ -34,6 +34,7 @@ import no.nav.dagpenger.rapportering.tidslinje.Dag
 import java.time.LocalDate
 import java.util.SortedSet
 import java.util.UUID
+import kotlin.time.Duration
 
 internal fun Application.rapporteringApi(
     rapporteringsperiodeRepository: RapporteringsperiodeRepository,
@@ -169,10 +170,11 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
 
         override fun visit(
             aktivitet: Aktivitet,
-            dato: LocalDate,
-            tid: kotlin.time.Duration,
-            type: Aktivitet.AktivitetType,
             uuid: UUID,
+            dato: LocalDate,
+            tid: Duration,
+            type: Aktivitet.AktivitetType,
+            tilstand: Aktivitet.TilstandType,
         ) {
             aktivitetDTO = AktivitetDTO(
                 type = AktivitetTypeDTO.valueOf(type.name),
@@ -188,6 +190,7 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
         id: UUID,
         periode: ClosedRange<LocalDate>,
         tilstand: Rapporteringsperiode.TilstandType,
+        rapporteringsfrist: LocalDate,
     ) {
         this.id = id
         this.periode = periode

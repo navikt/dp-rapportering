@@ -12,22 +12,17 @@ sealed class Aktivitet(
     val tid: Duration,
     val type: AktivitetType,
     val uuid: UUID = UUID.randomUUID(),
-    private var tilstand: Tilstand = Ny,
+    private var tilstand: Tilstand = Åpen,
 ) {
-    fun accept(visitor: AktivitetVisitor) {
-        visitor.visit(this, dato, tid, type, uuid)
-    }
-
     enum class AktivitetType {
         Arbeid, Syk, Ferie
     }
 
     companion object {
         fun perDag(aktiviteter: Collection<Aktivitet>) = aktiviteter.associateBy { it.dato }
-
         private fun String.rehydrerTilstand(): Tilstand {
             return when (this) {
-                "Ny" -> Ny
+                "Ny" -> Åpen
                 "Låst" -> Låst
                 else -> throw IllegalStateException("Ugyldig tilstan: $this")
             }
@@ -58,7 +53,13 @@ sealed class Aktivitet(
 
     val kanSlettes = tilstand.kanSlettes
 
+    enum class TilstandType {
+        Åpen,
+        Låst,
+    }
+
     interface Tilstand {
+        val type: TilstandType
         fun behandle(hendelse: GodkjennPeriodeHendelse, aktivitet: Aktivitet) {
             throw IllegalStateException("Kan ikke håndtere ${hendelse::class.java.simpleName} i denne tilstanden")
         }
@@ -66,34 +67,40 @@ sealed class Aktivitet(
         val kanSlettes: Boolean get() = false
     }
 
-    private object Ny : Tilstand {
+    private object Åpen : Tilstand {
+        override val type = TilstandType.Åpen
         override fun behandle(hendelse: GodkjennPeriodeHendelse, aktivitet: Aktivitet) {
             aktivitet.tilstand = Låst
         }
-
         override val kanSlettes = true
     }
 
-    private object Låst : Tilstand
+    private object Låst : Tilstand {
+        override val type = TilstandType.Låst
+    }
+
+    fun accept(visitor: AktivitetVisitor) {
+        visitor.visit(this, uuid, dato, tid, type, tilstand.type)
+    }
 
     class Arbeid(
         uuid: UUID = UUID.randomUUID(),
         dato: LocalDate,
         arbeidstimer: Duration,
-        tilstand: Tilstand = Ny,
+        tilstand: Tilstand = Åpen,
     ) :
         Aktivitet(dato, arbeidstimer, AktivitetType.Arbeid, uuid, tilstand) {
         constructor(dato: LocalDate, arbeidstimer: Number) : this(
             UUID.randomUUID(),
             dato,
             arbeidstimer.toDouble().hours,
-            Ny,
+            Åpen,
         )
     }
 
-    class Syk(dato: LocalDate, uuid: UUID = UUID.randomUUID(), tilstand: Tilstand = Ny) :
+    class Syk(dato: LocalDate, uuid: UUID = UUID.randomUUID(), tilstand: Tilstand = Åpen) :
         Aktivitet(dato, Duration.INFINITE, AktivitetType.Syk, uuid, tilstand)
 
-    class Ferie(dato: LocalDate, uuid: UUID = UUID.randomUUID(), tilstand: Tilstand = Ny) :
+    class Ferie(dato: LocalDate, uuid: UUID = UUID.randomUUID(), tilstand: Tilstand = Åpen) :
         Aktivitet(dato, Duration.INFINITE, AktivitetType.Ferie, uuid, tilstand)
 }
