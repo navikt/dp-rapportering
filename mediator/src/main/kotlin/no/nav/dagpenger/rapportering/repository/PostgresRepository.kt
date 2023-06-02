@@ -54,6 +54,7 @@ internal class PostgresRepository(private val ds: DataSource) :
 
     private fun hentAktiviteterFor(rapporteringsperiodeId: UUID): List<Aktivitet> {
         return using(sessionOf(ds)) { session ->
+            session.run(queryOf("SET intervalstyle=iso_8601").asExecute)
             session.run(
                 queryOf(
                     //language=PostgreSQL
@@ -67,12 +68,7 @@ internal class PostgresRepository(private val ds: DataSource) :
                     val type = AktivitetType.valueOf(row.string("type"))
                     val dato = row.localDate("dato")
                     when (type) {
-                        AktivitetType.Arbeid -> Aktivitet.Arbeid(
-                            dato,
-                            // TODO Duration.parse(row.string("tid")).inWholeHours
-                            2,
-                        )
-
+                        AktivitetType.Arbeid -> Aktivitet.Arbeid(dato, Duration.parse(row.string("tid")).inWholeHours)
                         AktivitetType.Syk -> Aktivitet.Syk(dato)
                         AktivitetType.Ferie -> Aktivitet.Ferie(dato)
                     }
