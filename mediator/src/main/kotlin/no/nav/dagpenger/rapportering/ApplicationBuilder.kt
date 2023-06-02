@@ -1,7 +1,6 @@
 package no.nav.dagpenger.rapportering
 
 import mu.KotlinLogging
-import no.nav.dagpenger.rapportering.api.aktivitetApi
 import no.nav.dagpenger.rapportering.api.konfigurasjon
 import no.nav.dagpenger.rapportering.api.rapporteringApi
 import no.nav.dagpenger.rapportering.repository.InMemoryAktivitetRepository
@@ -18,7 +17,6 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
         RapidApplication.Builder(RapidApplication.RapidApplicationConfig.fromEnv(configuration))
             .withKtorModule {
                 konfigurasjon()
-                aktivitetApi(aktivitetRepository)
                 rapporteringApi(rapporteringsperiodeRepository, aktivitetRepository)
             }.build()
     private val mediator = Mediator(

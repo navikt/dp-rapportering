@@ -5,7 +5,9 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.plugins.NotFoundException
+import io.ktor.server.request.receive
 import io.ktor.server.response.respond
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
@@ -19,6 +21,7 @@ import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Innsendt
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Opprettet
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
+import no.nav.dagpenger.rapportering.api.models.AktivitetInputDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDagerInnerDTO
@@ -43,10 +46,19 @@ fun Application.rapporteringApi(
                     call.respond(HttpStatusCode.OK, rapporteringsperioder)
                 }
 
-                route("{id}") {
+                route("/gjeldende") {
+                    get {
+                        call.respond(HttpStatusCode.OK)
+                    }
+                }
+
+                route("{periodeId}") {
                     get {
                         val dto =
-                            rapporteringsperiodeRepository.hentRapporteringsperiode(call.ident(), call.finnUUID("id"))
+                            rapporteringsperiodeRepository.hentRapporteringsperiode(
+                                call.ident(),
+                                call.finnUUID("periodeId"),
+                            )
                                 ?.let { RapporteringsperiodeMapper(it).dto }
                                 ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
 
@@ -55,17 +67,67 @@ fun Application.rapporteringApi(
 
                     route("/godkjenn") {
                         post {
-                            val id = call.parameters["id"]?.let {
+                            call.parameters["periodeId"]?.let {
                                 UUID.fromString(it)
                             }
                             val dto = rapporteringsperiodeRepository.hentRapporteringsperiode(
                                 call.ident(),
-                                call.finnUUID("id"),
+                                call.finnUUID("periodeId"),
                             )?.let { RapporteringsperiodeMapper(it).dto }
                                 ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
                             val godkjent = dto.copy(status = RapporteringsperiodeDTO.Status.Godkjent)
 
                             call.respond(HttpStatusCode.Created, godkjent)
+                        }
+                    }
+
+                    route("/aktivitet") {
+                        get {
+                            val aktiviteter = aktivitetRepository.hentAktiviteter(call.ident()).map {
+                                AktivitetDTO(
+                                    id = it.uuid,
+                                    dato = it.dato,
+                                    type = AktivitetTypeDTO.valueOf(it.type.name),
+                                    timer = it.tid.toIsoString(),
+                                )
+                            }
+                            call.respond(HttpStatusCode.OK, aktiviteter)
+                        }
+
+                        post {
+                            val aktivitetInput = call.receive<AktivitetInputDTO>()
+                            val aktivitet = when (aktivitetInput.type) {
+                                AktivitetTypeDTO.Arbeid -> Aktivitet.Arbeid(
+                                    dato = aktivitetInput.dato,
+                                    arbeidstimer = aktivitetInput.timer?.toDouble()
+                                        ?: throw IllegalArgumentException("Må ha antall arbeidstimer"),
+                                )
+
+                                AktivitetTypeDTO.Syk -> Aktivitet.Syk(
+                                    dato = aktivitetInput.dato,
+                                )
+
+                                AktivitetTypeDTO.Ferie -> Aktivitet.Ferie(
+                                    dato = aktivitetInput.dato,
+                                )
+                            }
+
+                            aktivitetRepository.leggTilAktivitet(call.ident(), aktivitet)
+
+                            call.respond(HttpStatusCode.Created, aktivitet.toAktivitetDTO())
+                        }
+
+                        route("{aktivitetId}") {
+                            get {
+                                val aktivitet =
+                                    aktivitetRepository.hentAktivitet(call.ident(), call.finnUUID("aktivitetId"))
+                                call.respond(HttpStatusCode.OK, aktivitet)
+                            }
+
+                            delete {
+                                aktivitetRepository.slettAktivitet(call.ident(), call.finnUUID("aktivitetId"))
+                                call.respond(HttpStatusCode.NoContent)
+                            }
                         }
                     }
                 }
@@ -167,4 +229,18 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
         this.muligeAktiviter[dato] = muligeAktiviter
         this.aktiviteter[dato] = aktiviteter
     }
+}
+
+private fun Aktivitet.toAktivitetDTO(): AktivitetDTO {
+    val aktivitetType = when (this) {
+        is Aktivitet.Arbeid -> AktivitetTypeDTO.Arbeid
+        is Aktivitet.Ferie -> AktivitetTypeDTO.Ferie
+        is Aktivitet.Syk -> AktivitetTypeDTO.Syk
+    }
+    return AktivitetDTO(
+        type = aktivitetType,
+        dato = this.dato,
+        id = this.uuid,
+        timer = this.tid.toIsoString(),
+    )
 }
