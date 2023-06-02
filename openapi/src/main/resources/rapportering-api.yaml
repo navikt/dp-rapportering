@@ -11,7 +11,7 @@ servers:
   - url: https://dp-rapportering.intern.nav.no
     description: prod
 paths:
-  /rapporteringsperiode/{id}/aktivitet:
+  /rapporteringsperiode/{periodeId}/aktivitet:
     get:
       responses:
         '200':
@@ -46,7 +46,15 @@ paths:
       operationId: post-aktiviteter
       tags:
         - Aktivitet
-  /rapporteringsperiode/{id}/aktivitet/{id}:
+    parameters:
+      - name: periodeId
+        description: ID til rapporteringsperioden
+        schema:
+          type: string
+          format: uuid
+        in: path
+        required: true
+  /rapporteringsperiode/{periodeId}/aktivitet/{aktivitetId}:
     get:
       responses:
         '200':
@@ -74,7 +82,14 @@ paths:
       tags:
         - Aktivitet
     parameters:
-      - name: id
+      - name: periodeId
+        description: ID til rapporteringsperioden
+        schema:
+          type: string
+          format: uuid
+        in: path
+        required: true
+      - name: aktivitetId
         description: ID til aktiviteten som skal oppdateres eller slettes
         schema:
           type: integer
@@ -129,7 +144,7 @@ paths:
       operationId: get-rapporteringsperiode-gjeldende
       tags:
         - Rapporteringsperiode
-  /rapporteringsperioder/{id}:
+  /rapporteringsperioder/{periodeId}:
     get:
       responses:
         '200':
@@ -146,14 +161,14 @@ paths:
       tags:
         - Rapporteringsperiode
     parameters:
-      - name: id
+      - name: periodeId
         description: ID til rapporteringsperioden
         schema:
           type: string
           format: uuid
         in: path
         required: true
-  /rapporteringsperioder/{id}/godkjenn:
+  /rapporteringsperioder/{periodeId}/godkjenn:
     post:
       responses:
         '200':
@@ -168,7 +183,7 @@ paths:
       tags:
         - Rapporteringsperiode
     parameters:
-      - name: id
+      - name: periodeId
         description: ID of the reporting period to get or correct
         schema:
           type: integer
@@ -220,7 +235,7 @@ components:
           type: string
     Rapporteringsperiode:
       required:
-        - id
+        - periodeId
         - fraOgMed
         - tilOgMed
         - status
