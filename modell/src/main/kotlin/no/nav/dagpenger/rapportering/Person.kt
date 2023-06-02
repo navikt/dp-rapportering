@@ -35,7 +35,6 @@ class Person private constructor(
     fun behandle(hendelse: SøknadInnsendtHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Behandler søknad innsendt")
-
         // TODO: Lag noe overlappskontroll så vi ikke ender med flere perioder i samme tidsrom
         Rapporteringsperiode(
             rapporteringspliktFom = hendelse.fom,
@@ -50,7 +49,9 @@ class Person private constructor(
         hendelse.kontekst(this)
         hendelse.info("Tar imot ny aktivitet utført av bruker")
 
-        rapporteringsperioder.forEach { it.behandle(hendelse) }
+        if (rapporteringsperioder.none { it.behandle(hendelse) }) {
+            hendelse.logiskFeil("Ingen rapporteringsperiode håndterte aktiviteten")
+        }
     }
 
     fun behandle(hendelse: NyRapporteringsperiodeHendelse) {

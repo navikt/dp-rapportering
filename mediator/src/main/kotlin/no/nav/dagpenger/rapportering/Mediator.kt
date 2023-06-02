@@ -1,18 +1,15 @@
 package no.nav.dagpenger.rapportering
 
+import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.meldinger.SøknadInnsendtMelding
-import no.nav.dagpenger.rapportering.repository.AktivitetRepository
 import no.nav.dagpenger.rapportering.repository.PersonRepository
-import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidsConnection
 
 internal class Mediator(
     rapidsConnection: RapidsConnection,
     private val personRepository: PersonRepository,
-    private val aktivitetRepository: AktivitetRepository,
-    private val rapporteringsperiodeRepository: RapporteringsperiodeRepository,
 ) : IHendelseMediator, PersonRepository by personRepository {
     override fun behandle(melding: SøknadInnsendtMelding, hendelse: SøknadInnsendtHendelse, context: MessageContext) {
         // hente ØnskerDagpengerFraDato
@@ -20,6 +17,11 @@ internal class Mediator(
         // hente eller lage Person
         // opprett rapporteringsperiode
         // person.behandle(periode)
+        val person = hentEllerOpprettPerson(hendelse.ident())
+        person.behandle(hendelse)
+    }
+
+    override fun behandle(hendelse: NyAktivitetHendelse) {
         val person = hentEllerOpprettPerson(hendelse.ident())
         person.behandle(hendelse)
     }

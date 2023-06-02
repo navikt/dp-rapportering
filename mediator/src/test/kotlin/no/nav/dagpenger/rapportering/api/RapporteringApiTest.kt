@@ -13,6 +13,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.testing.ApplicationTestBuilder
+import io.mockk.mockk
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
 import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
@@ -174,6 +175,7 @@ private fun withRapporteringApi(
                         lagreRapporteringsperiode(defaultDummyFodselsnummer, it)
                     }
                 },
+                mockk(relaxed = true),
             )
         },
         test = test,

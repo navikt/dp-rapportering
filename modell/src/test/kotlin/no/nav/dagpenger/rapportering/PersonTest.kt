@@ -37,29 +37,32 @@ class PersonTest {
         val person = testPerson
         val observer = TestObserver().also { person.registrer(it) }
         person.behandle(søknadInnsendtHendelse())
+        val rapporteringsperiodeId = person.aktivRapporteringsperiode
         // Bruker melder inn aktiviteter
         person.behandle(
             nyAktivitetHendelse(
+                rapporteringsperiodeId,
                 Aktivitet.Arbeid(LocalDate.now().plusDays(5), 3.2),
             ),
         )
         person.behandle(
             nyAktivitetHendelse(
+                rapporteringsperiodeId,
                 Aktivitet.Syk(LocalDate.now().plusDays(4)),
             ),
         )
         person.behandle(
             nyAktivitetHendelse(
+                rapporteringsperiodeId,
                 Aktivitet.Syk(LocalDate.now().plusDays(2)),
             ),
         )
         assertEquals(3, person.antallAktiviteter)
-        val rapporteringsperiodeId = person.aktivRapporteringsperiode
         // Bruker godkjenner rapportering for en periode
         person.behandle(godkjennPeriodeHendelse(rapporteringsperiodeId))
         assertEquals(Godkjent.name, observer.tilstand)
         // Kan ikke rapportere aktivitet etter en periode er godkjent
-        val nyAktivitetHendelse = nyAktivitetHendelse(LocalDate.now().plusDays(3))
+        val nyAktivitetHendelse = nyAktivitetHendelse(rapporteringsperiodeId, LocalDate.now().plusDays(3))
 
         assertThrows<IllegalStateException> {
             person.behandle(nyAktivitetHendelse)

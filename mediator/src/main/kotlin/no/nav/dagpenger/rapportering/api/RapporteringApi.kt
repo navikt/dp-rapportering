@@ -14,6 +14,7 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.AktivitetVisitor
 import no.nav.dagpenger.rapportering.DagVisitor
+import no.nav.dagpenger.rapportering.IHendelseMediator
 import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
@@ -25,6 +26,7 @@ import no.nav.dagpenger.rapportering.api.models.AktivitetInputDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDagerInnerDTO
+import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
@@ -32,8 +34,9 @@ import java.time.LocalDate
 import java.util.SortedSet
 import java.util.UUID
 
-fun Application.rapporteringApi(
+internal fun Application.rapporteringApi(
     rapporteringsperiodeRepository: RapporteringsperiodeRepository,
+    mediator: IHendelseMediator,
 ) {
     routing {
         authenticate("tokenX") {
@@ -100,23 +103,10 @@ fun Application.rapporteringApi(
 
                         post {
                             val aktivitetInput = call.receive<AktivitetInputDTO>()
-                            val aktivitet = when (aktivitetInput.type) {
-                                AktivitetTypeDTO.Arbeid -> Aktivitet.Arbeid(
-                                    dato = aktivitetInput.dato,
-                                    arbeidstimer = aktivitetInput.timer?.toDouble()
-                                        ?: throw IllegalArgumentException("Må ha antall arbeidstimer"),
-                                )
+                            val aktivitet = aktivitetInput.toAktivitet()
+                            val periodeId = call.finnUUID("periodeId")
 
-                                AktivitetTypeDTO.Syk -> Aktivitet.Syk(
-                                    dato = aktivitetInput.dato,
-                                )
-
-                                AktivitetTypeDTO.Ferie -> Aktivitet.Ferie(
-                                    dato = aktivitetInput.dato,
-                                )
-                            }
-
-                            rapporteringsperiodeRepository.leggTilAktivitet(call.ident(), aktivitet)
+                            mediator.behandle(NyAktivitetHendelse(call.ident(), periodeId, aktivitet))
 
                             call.respond(HttpStatusCode.Created, aktivitet.toAktivitetDTO())
                         }
@@ -145,6 +135,23 @@ fun Application.rapporteringApi(
         }
     }
 }
+
+private fun AktivitetInputDTO.toAktivitet() =
+    when (type) {
+        AktivitetTypeDTO.Arbeid -> Aktivitet.Arbeid(
+            dato = dato,
+            arbeidstimer = timer?.toDouble()
+                ?: throw IllegalArgumentException("Må ha antall arbeidstimer"),
+        )
+
+        AktivitetTypeDTO.Syk -> Aktivitet.Syk(
+            dato = dato,
+        )
+
+        AktivitetTypeDTO.Ferie -> Aktivitet.Ferie(
+            dato = dato,
+        )
+    }
 
 private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperiode) : RapporteringsperiodVisitor {
     private lateinit var id: UUID

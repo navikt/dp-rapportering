@@ -8,5 +8,5 @@ interface RapporteringsperiodeRepository : AktivitetRepository {
     fun hentRapporteringsperiode(ident: String, uuid: UUID): Rapporteringsperiode?
     fun hentRapporteringsperioder(ident: String): List<Rapporteringsperiode>
     fun lagreRapporteringsperiode(ident: String, rapporteringsperiode: Rapporteringsperiode): Boolean
-    fun hentRapporteringsperiodeFor(ident: String, now: LocalDate): Rapporteringsperiode?
+    fun hentRapporteringsperiodeFor(ident: String, dato: LocalDate): Rapporteringsperiode?
 }

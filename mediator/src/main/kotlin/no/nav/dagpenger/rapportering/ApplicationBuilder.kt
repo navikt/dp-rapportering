@@ -17,13 +17,11 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
         RapidApplication.Builder(RapidApplication.RapidApplicationConfig.fromEnv(configuration))
             .withKtorModule {
                 konfigurasjon()
-                rapporteringApi(rapporteringsperiodeRepository)
+                rapporteringApi(rapporteringsperiodeRepository, mediator)
             }.build()
     private val mediator = Mediator(
         rapidsConnection = rapidsConnection,
         InMemoryPersonRepository(rapporteringsperiodeRepository),
-        aktivitetRepository,
-        rapporteringsperiodeRepository,
     )
 
     init {

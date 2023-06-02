@@ -79,12 +79,13 @@ class Rapporteringsperiode private constructor(
         tilstand.behandle(hendelse, this)
     }
 
-    fun behandle(hendelse: NyAktivitetHendelse) {
-        if (!hendelse.aktivitet.dekkesAv(periode)) return
+    fun behandle(hendelse: NyAktivitetHendelse): Boolean {
+        if (hendelse.rapporteringsperiodeId != rapporteringsperiodeId) return false
         hendelse.kontekst(this)
         hendelse.info("Registrerer ny aktivitet")
 
         tilstand.behandle(hendelse, this)
+        return true
     }
 
     private sealed interface Rapporteringsperiodetilstand : Aktivitetskontekst {

@@ -8,6 +8,7 @@ import no.nav.dagpenger.rapportering.Person
 import no.nav.dagpenger.rapportering.PersonVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
+import java.time.LocalDate
 import java.util.UUID
 import javax.sql.DataSource
 
@@ -97,6 +98,10 @@ internal class PostgresRepository(private val ds: DataSource) :
     }
 
     override fun lagreRapporteringsperiode(ident: String, rapporteringsperiode: Rapporteringsperiode): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun hentRapporteringsperiodeFor(ident: String, dato: LocalDate): Rapporteringsperiode? {
         TODO("Not yet implemented")
     }
 

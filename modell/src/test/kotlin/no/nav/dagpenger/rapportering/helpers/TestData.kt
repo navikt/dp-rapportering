@@ -15,8 +15,10 @@ internal object TestData {
 
     fun søknadInnsendtHendelse() = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent)
 
-    fun nyAktivitetHendelse(aktivitet: Aktivitet) = NyAktivitetHendelse(UUID.randomUUID(), testIdent, aktivitet)
-    fun nyAktivitetHendelse(dato: LocalDate) = nyAktivitetHendelse(Aktivitet.Arbeid(dato, 3))
+    fun nyAktivitetHendelse(rapporteringsperiodeId: UUID, aktivitet: Aktivitet) =
+        NyAktivitetHendelse(testIdent, rapporteringsperiodeId, aktivitet)
+
+    fun nyAktivitetHendelse(rapporteringsperiodeId: UUID, dato: LocalDate) = nyAktivitetHendelse(rapporteringsperiodeId, Aktivitet.Arbeid(dato, 3))
 
     fun nyRapporteringsperiodeHendelse(
         fom: LocalDate = LocalDate.now().minusDays(14),
