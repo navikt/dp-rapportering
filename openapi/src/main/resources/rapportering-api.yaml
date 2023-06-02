@@ -11,7 +11,7 @@ servers:
   - url: https://dp-rapportering.intern.nav.no
     description: prod
 paths:
-  /aktivitet:
+  /rapporteringsperiode/{id}/aktivitet:
     get:
       responses:
         '200':
@@ -46,7 +46,7 @@ paths:
       operationId: post-aktiviteter
       tags:
         - Aktivitet
-  /aktivitet/{id}:
+  /rapporteringsperiode/{id}/aktivitet/{id}:
     get:
       responses:
         '200':
@@ -94,6 +94,39 @@ paths:
       summary: Hent alle rapporteringsperioder
       description: Lister ut alle rapporteringsperioder, både aktive og historiske
       operationId: get-rapporteringsperiode
+      tags:
+        - Rapporteringsperiode
+    parameters:
+      - name: status
+        description: Tilstand på rapporteringsperiode
+        schema:
+          type: string
+          enum:
+            - TilUtfylling
+            - Godkjent
+            - Innsendt
+        in: query
+        required: false
+      - name: fristPassert
+        description: Har fristdatoen passert?
+        schema:
+          type: boolean
+        in: query
+        required: false
+  /rapporteringsperioder/gjeldende:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rapporteringsperiode'
+          description: OK
+        '404':
+          description: Not Found
+      summary: Henter ut gjeldende rapporteringsperiode
+      description: Henter ut en rapporteringsperiode.
+      operationId: get-rapporteringsperiode-gjeldende
       tags:
         - Rapporteringsperiode
   /rapporteringsperioder/{id}:
@@ -161,14 +194,15 @@ components:
         type:
           $ref: '#/components/schemas/AktivitetType'
         timer:
-          type: number
+          type: string
+          format: ISO8601 Duration
         dato:
           format: date
           type: string
       example:
         id: 4a49e571-6384-4eab-9c2e-3f4d48d30b9a
         type: Arbeid
-        timer: 8
+        timer: PT8H30M
         dato: '2023-05-05'
     AktivitetInput:
       required:
@@ -179,7 +213,8 @@ components:
         type:
           $ref: '#/components/schemas/AktivitetType'
         timer:
-          type: number
+          type: string
+          format: ISO8601 Duration
         dato:
           format: date
           type: string
@@ -190,7 +225,6 @@ components:
         - tilOgMed
         - status
         - dager
-        - aktiviteter
       type: object
       properties:
         id:
@@ -217,6 +251,7 @@ components:
               - dagIndex
               - dato
               - muligeAktiviteter
+              - aktiviteter
             properties:
               dagIndex:
                 type: integer
@@ -227,10 +262,10 @@ components:
                 type: array
                 items:
                   $ref: '#/components/schemas/AktivitetType'
-        aktiviteter:
-          type: array
-          items:
-            $ref: '#/components/schemas/Aktivitet'
+              aktiviteter:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Aktivitet'
     PeriodeKorreksjonsInput:
       required:
         - fraOgMed
@@ -261,13 +296,13 @@ components:
   responses: { }
   parameters: { }
 tags:
-  - name: Aktivitet
-    description: >-
-      Lager en tidslinje med all aktivitet bruker har utført i en periode med
-      rapporteringsplikt
   - name: Rapporteringsperiode
     description: >-
       Rapporteringsperioder representerer hvilke perioder man må eller har meldt
       seg for
+  - name: Aktivitet
+    description: >-
+      Lager en tidslinje med all aktivitet bruker har utført i en periode med
+      rapporteringsplikt
 security:
   - tokenx: [ ]
