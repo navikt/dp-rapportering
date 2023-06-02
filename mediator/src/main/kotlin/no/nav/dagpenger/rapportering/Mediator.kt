@@ -5,9 +5,7 @@ import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
-import no.nav.dagpenger.rapportering.meldinger.SøknadInnsendtMelding
 import no.nav.dagpenger.rapportering.repository.PersonRepository
-import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidsConnection
 
 private val sikkerlogg = KotlinLogging.logger("tjenestekall.Mediator")
@@ -16,7 +14,8 @@ internal class Mediator(
     rapidsConnection: RapidsConnection,
     private val personRepository: PersonRepository,
 ) : IHendelseMediator, PersonRepository by personRepository {
-    override fun behandle(melding: SøknadInnsendtMelding, hendelse: SøknadInnsendtHendelse, context: MessageContext) {
+    // TODO - override fun behandle(melding: SøknadInnsendtMelding, hendelse: SøknadInnsendtHendelse, context: MessageContext) {
+    override fun behandle(hendelse: SøknadInnsendtHendelse) {
         hentPersonOgHåndter(hendelse.ident(), hendelse) { person ->
             person.behandle(hendelse)
         }

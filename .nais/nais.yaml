@@ -32,6 +32,11 @@ spec:
     pool: {{ kafka.pool }}
   tokenx:
     enabled: true
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_14
+        databases:
+          - name: rapportering
   accessPolicy:
     inbound:
       rules:

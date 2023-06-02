@@ -8,7 +8,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import no.nav.dagpenger.rapportering.Mediator
-import no.nav.dagpenger.rapportering.meldinger.SøknadInnsendtMelding
+import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.tjenester.Meldingsfabrikk.`innsending ferdigstilt hendelse`
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.junit.jupiter.api.Test
@@ -19,9 +19,9 @@ class SøknadMottakTest {
 
     @Test
     fun `Skal behandle innsending_ferdigstilt event for type NySøknad`() {
-        val slot = slot<SøknadInnsendtMelding>()
+        val slot = slot<SøknadInnsendtHendelse>()
         val mockMediator = mockk<Mediator>().also {
-            every { it.behandle(capture(slot), any(), any()) } just Runs
+            every { it.behandle(capture(slot)) } just Runs
         }
 
         TestRapid().let { testRapid ->
@@ -37,10 +37,10 @@ class SøknadMottakTest {
                 ),
             )
 
-            verify(exactly = 1) { mockMediator.behandle(any(), any(), any()) }
+            verify(exactly = 1) { mockMediator.behandle(any<SøknadInnsendtHendelse>()) }
 
             slot.captured.let { hendelse ->
-                hendelse.ident shouldBe ident
+                hendelse.ident() shouldBe ident
             }
         }
     }

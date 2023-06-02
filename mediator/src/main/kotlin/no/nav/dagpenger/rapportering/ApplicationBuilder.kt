@@ -3,23 +3,23 @@ package no.nav.dagpenger.rapportering
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.api.konfigurasjon
 import no.nav.dagpenger.rapportering.api.rapporteringApi
-import no.nav.dagpenger.rapportering.repository.InMemoryPersonRepository
-import no.nav.dagpenger.rapportering.repository.InMemoryRapporteringsperiodeRepository
+import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.dataSource
+import no.nav.dagpenger.rapportering.repository.PostgresRepository
 import no.nav.dagpenger.rapportering.tjenester.SøknadMottak
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
 
 internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsConnection.StatusListener {
-    private val rapporteringsperiodeRepository = InMemoryRapporteringsperiodeRepository()
+    private val personRepository = PostgresRepository(dataSource)
     private val rapidsConnection: RapidsConnection =
         RapidApplication.Builder(RapidApplication.RapidApplicationConfig.fromEnv(configuration))
             .withKtorModule {
                 konfigurasjon()
-                rapporteringApi(rapporteringsperiodeRepository, mediator)
+                rapporteringApi(personRepository, mediator)
             }.build()
     private val mediator = Mediator(
         rapidsConnection = rapidsConnection,
-        InMemoryPersonRepository(rapporteringsperiodeRepository),
+        personRepository,
     )
 
     init {
