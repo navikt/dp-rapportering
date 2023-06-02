@@ -17,7 +17,6 @@ import io.mockk.mockk
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
 import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
-import no.nav.dagpenger.rapportering.repository.InMemoryAktivitetRepository
 import no.nav.dagpenger.rapportering.repository.InMemoryRapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import org.junit.jupiter.api.Test
@@ -102,19 +101,6 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `Skal kunne hente ut alle aktiviteter`() {
-        withRapporteringApi(rapporteringsperioder = listOf(testPeriode)) {
-            autentisert(
-                httpMethod = HttpMethod.Get,
-                endepunkt = "/rapporteringsperioder/$testPeriodeId/aktivitet",
-            ).let { response ->
-                response.status shouldBe HttpStatusCode.OK
-                "${response.contentType()}" shouldContain "application/json"
-            }
-        }
-    }
-
-    @Test
     fun `Skal kunne rapportere en aktivitet`() {
         withRapporteringApi(rapporteringsperioder = listOf(testPeriode)) {
             autentisert(
@@ -126,17 +112,6 @@ class RapporteringApiTest {
                 response.status shouldBe HttpStatusCode.Created
                 "${response.contentType()}" shouldContain "application/json"
             }
-        }
-    }
-
-    @Test
-    fun `Skal kunne hente ut en aktvitet med en gitt id`() {
-        val aktivitet = Aktivitet.Arbeid(LocalDate.now(), 4)
-        withRapporteringApi(rapporteringsperioder = listOf(testPeriode), aktiviteter = listOf(aktivitet)) {
-            autentisert(
-                "/rapporteringsperioder/$testPeriodeId/aktivitet/${aktivitet.uuid}",
-                httpMethod = HttpMethod.Get,
-            ).status shouldBe HttpStatusCode.OK
         }
     }
 
@@ -163,17 +138,8 @@ private fun withRapporteringApi(
         moduleFunction = {
             konfigurasjon()
             rapporteringApi(
-                InMemoryRapporteringsperiodeRepository(
-                    InMemoryAktivitetRepository().apply {
-                        this.leggTilAktiviteter(
-                            defaultDummyFodselsnummer,
-                            aktiviteter,
-                        )
-                    },
-                ).apply {
-                    rapporteringsperioder.forEach {
-                        lagreRapporteringsperiode(defaultDummyFodselsnummer, it)
-                    }
+                InMemoryRapporteringsperiodeRepository {
+                    hent(defaultDummyFodselsnummer).addAll(rapporteringsperioder)
                 },
                 mockk(relaxed = true),
             )

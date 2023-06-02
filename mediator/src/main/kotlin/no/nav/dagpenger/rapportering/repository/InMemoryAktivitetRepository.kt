@@ -11,9 +11,4 @@ class InMemoryAktivitetRepository(
     }
 
     override fun hentAktiviteter(ident: String) = aktiviteter.getOrElse(ident) { emptyList() }
-
-    override fun leggTilAktiviteter(ident: String, aktiviteter: List<Aktivitet>) =
-        this.aktiviteter.getOrPut(ident) { mutableListOf() }.addAll(aktiviteter)
-
-    override fun slettAktivitet(ident: String, uuid: UUID) = aktiviteter[ident]?.removeIf { it.uuid == uuid }
 }

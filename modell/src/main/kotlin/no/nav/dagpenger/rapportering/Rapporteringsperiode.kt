@@ -8,6 +8,7 @@ import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
+import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import no.nav.dagpenger.rapportering.utils.finnFørsteMandagIUken
@@ -43,7 +44,7 @@ class Rapporteringsperiode private constructor(
         rapporteringsperiodeId = UUID.randomUUID(),
         rapporteringsfrist = tom,
         periode = fom..tom,
-        tilstand = Opprettet,
+        tilstand = TilUtfylling,
         opprettet = LocalDateTime.now(),
     )
 
@@ -88,6 +89,15 @@ class Rapporteringsperiode private constructor(
         return true
     }
 
+    fun behandle(hendelse: SlettAktivitetHendelse): Boolean {
+        if (hendelse.rapporteringsperiodeId != rapporteringsperiodeId) return false
+        hendelse.kontekst(this)
+        hendelse.info("Sletter aktivitet")
+
+        tilstand.behandle(hendelse, this)
+        return true
+    }
+
     private sealed interface Rapporteringsperiodetilstand : Aktivitetskontekst {
         val type: TilstandType
 
@@ -104,16 +114,21 @@ class Rapporteringsperiode private constructor(
             hendelse: NyAktivitetHendelse,
             rapporteringsperiode: Rapporteringsperiode,
         ) {
-            throw IllegalStateException("Forventet ikke ny aktivitet tilstand ${type.name}")
+            throw IllegalStateException("Forventet ikke ny aktivitet i tilstand ${type.name}")
+        }
+
+        fun behandle(hendelse: SlettAktivitetHendelse, rapporteringsperiode: Rapporteringsperiode) {
+            throw IllegalStateException("Forventet ikke sletting av aktivitet i tilstand ${type.name}")
         }
 
         fun leaving(rapporteringsperiode: Rapporteringsperiode, hendelse: IAktivitetslogg) {}
+
         override fun toSpesifikkKontekst() =
             SpesifikkKontekst("Tilstand", mapOf("tilstand" to type.name))
     }
 
-    private object Opprettet : Rapporteringsperiodetilstand {
-        override val type = TilstandType.Opprettet
+    private object TilUtfylling : Rapporteringsperiodetilstand {
+        override val type = TilstandType.TilUtfylling
 
         override fun behandle(
             hendelse: GodkjennPeriodeHendelse,
@@ -129,6 +144,10 @@ class Rapporteringsperiode private constructor(
         override fun behandle(hendelse: NyAktivitetHendelse, rapporteringsperiode: Rapporteringsperiode) {
             hendelse.kontekst(this)
             rapporteringsperiode.tidslinje.leggTilAktivitet(hendelse.aktivitet)
+        }
+        override fun behandle(hendelse: SlettAktivitetHendelse, rapporteringsperiode: Rapporteringsperiode) {
+            hendelse.kontekst(this)
+            rapporteringsperiode.tidslinje.slettAktivitet(hendelse.aktivitetId)
         }
     }
 
@@ -186,7 +205,7 @@ class Rapporteringsperiode private constructor(
     fun registrer(observer: RapporteringsperiodeObserver) = observers.add(observer)
 
     enum class TilstandType {
-        Opprettet,
+        TilUtfylling,
         Godkjent,
         Innsendt,
     }

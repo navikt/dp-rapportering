@@ -6,6 +6,7 @@ import no.nav.dagpenger.aktivitetslogg.Subaktivitetskontekst
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 
 class Person private constructor(
@@ -54,6 +55,15 @@ class Person private constructor(
         }
     }
 
+    fun behandle(hendelse: SlettAktivitetHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Sletter aktivitet utført av bruker")
+
+        if (rapporteringsperioder.none { it.behandle(hendelse) }) {
+            hendelse.logiskFeil("Ingen rapporteringsperiode håndterte aktiviteten")
+        }
+    }
+
     fun behandle(hendelse: NyRapporteringsperiodeHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Behandler ny rapporteringsperioder")
@@ -86,8 +96,8 @@ class Person private constructor(
     override fun toSpesifikkKontekst() = SpesifikkKontekst("person", mapOf("ident" to ident))
 
     override fun equals(other: Any?) = other is Person && this.ident == other.ident
-
     override fun hashCode() = this.ident.hashCode()
+
     fun accept(visitor: PersonVisitor) {
         visitor.visit(this, ident)
         rapporteringsperioder.accept(visitor)

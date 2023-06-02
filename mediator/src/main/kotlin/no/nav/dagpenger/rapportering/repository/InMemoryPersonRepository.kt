@@ -2,7 +2,7 @@ package no.nav.dagpenger.rapportering.repository
 
 import no.nav.dagpenger.rapportering.Person
 
-class InMemoryPersonRepository(private val rapporteringsperiodeRepository: InMemoryRapporteringsperiodeRepository) :
+internal class InMemoryPersonRepository(private val rapporteringsperiodeRepository: InMemoryRapporteringsperiodeRepository) :
     PersonRepository {
     private val personer: MutableSet<Person> = mutableSetOf()
 

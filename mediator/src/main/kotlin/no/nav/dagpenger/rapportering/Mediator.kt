@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering
 
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
+import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.meldinger.SøknadInnsendtMelding
 import no.nav.dagpenger.rapportering.repository.PersonRepository
@@ -22,6 +23,11 @@ internal class Mediator(
     }
 
     override fun behandle(hendelse: NyAktivitetHendelse) {
+        val person = hentEllerOpprettPerson(hendelse.ident())
+        person.behandle(hendelse)
+    }
+
+    override fun behandle(hendelse: SlettAktivitetHendelse) {
         val person = hentEllerOpprettPerson(hendelse.ident())
         person.behandle(hendelse)
     }

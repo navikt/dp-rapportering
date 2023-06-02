@@ -9,6 +9,7 @@ import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Arbeid
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Ferie
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Syk
 import java.time.LocalDate
+import java.util.UUID
 
 class Dag(
     internal val dato: LocalDate,
@@ -36,6 +37,10 @@ class Dag(
         if (!rapporteringspliktig) throw IllegalStateException("Kan ikke legge til aktivitet på dager uten rapporteringsplikt")
         // TODO: Logikk for om det er mulig å legge til aktivitet
         return aktiviteter.add(aktivitet)
+    }
+
+    fun slettAktivitet(aktivitetId: UUID): Boolean {
+        return aktiviteter.removeIf { it.uuid == aktivitetId }
     }
 
     fun gyldig() = true

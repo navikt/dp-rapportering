@@ -50,14 +50,6 @@ internal class PostgresRepository(private val ds: DataSource) :
         TODO("Not yet implemented")
     }
 
-    override fun leggTilAktiviteter(ident: String, aktiviteter: List<Aktivitet>): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun slettAktivitet(ident: String, uuid: UUID): Boolean? {
-        TODO("Not yet implemented")
-    }
-
     override fun hentPerson(ident: String): Person? {
         return using(sessionOf(ds)) { session ->
             session.run(
@@ -94,10 +86,6 @@ internal class PostgresRepository(private val ds: DataSource) :
     }
 
     override fun hentRapporteringsperioder(ident: String): List<Rapporteringsperiode> {
-        TODO("Not yet implemented")
-    }
-
-    override fun lagreRapporteringsperiode(ident: String, rapporteringsperiode: Rapporteringsperiode): Boolean {
         TODO("Not yet implemented")
     }
 

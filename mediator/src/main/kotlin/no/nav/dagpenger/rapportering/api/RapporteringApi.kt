@@ -19,7 +19,7 @@ import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Innsendt
-import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Opprettet
+import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.TilUtfylling
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetInputDTO
@@ -27,6 +27,7 @@ import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDagerInnerDTO
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
+import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
@@ -101,9 +102,12 @@ internal fun Application.rapporteringApi(
 
                         route("{aktivitetId}") {
                             delete {
-                                rapporteringsperiodeRepository.slettAktivitet(
-                                    call.ident(),
-                                    call.finnUUID("aktivitetId"),
+                                mediator.behandle(
+                                    SlettAktivitetHendelse(
+                                        call.ident(),
+                                        call.finnUUID("periodeId"),
+                                        call.finnUUID("aktivitetId"),
+                                    ),
                                 )
                                 call.respond(HttpStatusCode.NoContent)
                             }
@@ -144,7 +148,7 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
                 fraOgMed = periode.start,
                 tilOgMed = periode.endInclusive,
                 status = when (tilstand) {
-                    Opprettet -> RapporteringsperiodeDTO.Status.TilUtfylling
+                    TilUtfylling -> RapporteringsperiodeDTO.Status.TilUtfylling
                     Godkjent -> RapporteringsperiodeDTO.Status.Godkjent
                     Innsendt -> RapporteringsperiodeDTO.Status.Innsendt
                 },

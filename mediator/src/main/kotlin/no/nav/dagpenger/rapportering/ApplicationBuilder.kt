@@ -12,7 +12,7 @@ import no.nav.helse.rapids_rivers.RapidsConnection
 
 internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsConnection.StatusListener {
     private val aktivitetRepository = InMemoryAktivitetRepository()
-    private val rapporteringsperiodeRepository = InMemoryRapporteringsperiodeRepository(aktivitetRepository)
+    private val rapporteringsperiodeRepository = InMemoryRapporteringsperiodeRepository()
     private val rapidsConnection: RapidsConnection =
         RapidApplication.Builder(RapidApplication.RapidApplicationConfig.fromEnv(configuration))
             .withKtorModule {
