@@ -89,18 +89,6 @@ internal fun Application.rapporteringApi(
                     }
 
                     route("/aktivitet") {
-                        get {
-                            val aktiviteter = rapporteringsperiodeRepository.hentAktiviteter(call.ident()).map {
-                                AktivitetDTO(
-                                    id = it.uuid,
-                                    dato = it.dato,
-                                    type = AktivitetTypeDTO.valueOf(it.type.name),
-                                    timer = it.tid.toIsoString(),
-                                )
-                            }
-                            call.respond(HttpStatusCode.OK, aktiviteter)
-                        }
-
                         post {
                             val aktivitetInput = call.receive<AktivitetInputDTO>()
                             val aktivitet = aktivitetInput.toAktivitet()
@@ -112,15 +100,6 @@ internal fun Application.rapporteringApi(
                         }
 
                         route("{aktivitetId}") {
-                            get {
-                                val aktivitet =
-                                    rapporteringsperiodeRepository.hentAktivitet(
-                                        call.ident(),
-                                        call.finnUUID("aktivitetId"),
-                                    )
-                                call.respond(HttpStatusCode.OK, aktivitet)
-                            }
-
                             delete {
                                 rapporteringsperiodeRepository.slettAktivitet(
                                     call.ident(),

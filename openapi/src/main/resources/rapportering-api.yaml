@@ -12,21 +12,6 @@ servers:
     description: prod
 paths:
   /rapporteringsperioder/{periodeId}/aktivitet:
-    get:
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Aktivitet'
-          description: OK
-      summary: Hent all aktivitet
-      description: Henter ut alle registrerte aktiviteter
-      operationId: get-aktiviteter
-      tags:
-        - Aktivitet
     post:
       requestBody:
         content:
@@ -55,21 +40,6 @@ paths:
         in: path
         required: true
   /rapporteringsperioder/{periodeId}/aktivitet/{aktivitetId}:
-    get:
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Aktivitet'
-          description: OK
-        '404':
-          description: Not Found
-      summary: Hent en bestemt aktivitet etter ID
-      description: ''
-      operationId: get-aktivitet-id
-      tags:
-        - Aktivitet
     delete:
       responses:
         '204':
