@@ -11,7 +11,7 @@ servers:
   - url: https://dp-rapportering.intern.nav.no
     description: prod
 paths:
-  /rapporteringsperiode/{periodeId}/aktivitet:
+  /rapporteringsperioder/{periodeId}/aktivitet:
     get:
       responses:
         '200':
@@ -54,7 +54,7 @@ paths:
           format: uuid
         in: path
         required: true
-  /rapporteringsperiode/{periodeId}/aktivitet/{aktivitetId}:
+  /rapporteringsperioder/{periodeId}/aktivitet/{aktivitetId}:
     get:
       responses:
         '200':
