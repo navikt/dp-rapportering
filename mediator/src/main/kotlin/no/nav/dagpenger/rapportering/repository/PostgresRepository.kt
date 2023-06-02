@@ -62,9 +62,8 @@ internal class PostgresRepository(private val ds: DataSource) :
             session.run(
                 queryOf(
                     //language=PostgreSQL
-                    statement = """SELECT ident FROM person where ident = :ident""",
+                    statement = """SELECT ident FROM person WHERE ident = :ident""",
                     paramMap = mapOf("ident" to ident),
-
                 ).map { row ->
                     Person(row.string("ident"))
                 }.asSingle,
@@ -103,10 +102,10 @@ internal class PostgresRepository(private val ds: DataSource) :
 
     private fun insertPerson(ident: String) {
         using(sessionOf(ds)) { session ->
-            //language=PostgreSQL
             session.run(
                 queryOf(
-                    statement = """INSERT INTO person(ident) values (:ident)""",
+                    //language=PostgreSQL
+                    statement = """INSERT INTO person(ident) VALUES (:ident)""",
                     paramMap = mapOf("ident" to ident),
                 ).asUpdate,
             )
@@ -115,10 +114,10 @@ internal class PostgresRepository(private val ds: DataSource) :
 
     private fun personFinnes(ident: String): Boolean {
         return using(sessionOf(ds)) { session ->
-            //language=PostgreSQL
             session.run(
                 queryOf(
-                    statement = """SELECT exists(SELECT 1 FROM person WHERE ident = :ident) AS finnes""",
+                    //language=PostgreSQL
+                    statement = """SELECT EXISTS(SELECT 1 FROM person WHERE ident = :ident) AS finnes""",
                     paramMap = mapOf("ident" to ident),
                 ).map { row ->
                     row.boolean("finnes")
