@@ -15,4 +15,8 @@ class InMemoryPersonRepository(private val rapporteringsperiodeRepository: InMem
         ).also {
             personer.add(it)
         }
+
+    override fun lagre(person: Person) {
+        TODO("Not yet implemented")
+    }
 }

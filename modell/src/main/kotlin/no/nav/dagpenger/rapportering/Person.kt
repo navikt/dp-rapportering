@@ -25,10 +25,10 @@ class Person private constructor(
 
     constructor(
         ident: String,
-        rapporteringsperioder: MutableList<Rapporteringsperiode>,
+        rapporteringsperioder: List<Rapporteringsperiode>,
     ) : this(
         ident,
-        rapporteringsperioder,
+        rapporteringsperioder.toMutableList(),
         Aktivitetslogg(),
     )
 
