@@ -16,9 +16,7 @@ class PostgresRepositoryTest {
     fun `Oppretter en person dersom personen ikke finnes`() {
         withMigratedDb {
             val repository = PostgresRepository(dataSource)
-            repository.hentEllerOpprettPerson(testIdent)
-
-            repository.hentPerson(testIdent).let { person ->
+            repository.hentEllerOpprettPerson(testIdent).let { person ->
                 person shouldNotBe null
                 person!!.ident shouldBe testIdent
             }
@@ -31,7 +29,7 @@ class PostgresRepositoryTest {
             val repository = PostgresRepository(dataSource)
             repository.lagre(Person(testIdent))
 
-            repository.hentPerson(testIdent).let { person ->
+            repository.hentEllerOpprettPerson(testIdent).let { person ->
                 person shouldNotBe null
                 person!!.ident shouldBe testIdent
             }

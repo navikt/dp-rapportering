@@ -6,17 +6,12 @@ internal class InMemoryPersonRepository(private val rapporteringsperiodeReposito
     PersonRepository {
     private val personer: MutableSet<Person> = mutableSetOf()
 
-    override fun hentPerson(ident: String) = personer.singleOrNull { it.ident == ident }
-
     override fun hentEllerOpprettPerson(ident: String) =
-        hentPerson(ident) ?: Person(
-            ident,
-            rapporteringsperiodeRepository.hentRapporteringsperioder(ident),
-        ).also {
-            personer.add(it)
-        }
+        hentPerson(ident) ?: Person(ident, rapporteringsperiodeRepository.hentRapporteringsperioder(ident))
 
     override fun lagre(person: Person) {
-        TODO("Not yet implemented")
+        personer.add(person)
     }
+
+    private fun hentPerson(ident: String) = personer.singleOrNull { it.ident == ident }
 }

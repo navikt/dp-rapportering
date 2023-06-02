@@ -30,4 +30,5 @@ abstract class PersonHendelse protected constructor(
     }
 
     protected open fun kontekst(): Map<String, String> = emptyMap()
+    fun toLogString() = aktivitetslogg.toString()
 }

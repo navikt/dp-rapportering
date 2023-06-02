@@ -50,7 +50,7 @@ internal class PostgresRepository(private val ds: DataSource) :
         TODO("Not yet implemented")
     }
 
-    override fun hentPerson(ident: String): Person? {
+    private fun hentPerson(ident: String): Person? {
         return using(sessionOf(ds)) { session ->
             session.run(
                 queryOf(
