@@ -27,4 +27,8 @@ class InMemoryRapporteringsperiodeRepository(private val aktivitetRepository: In
 
     override fun lagreRapporteringsperiode(ident: String, rapporteringsperiode: Rapporteringsperiode) =
         rapporteringsperioder.hent(ident).add(rapporteringsperiode)
+
+    override fun hentRapporteringsperiodeFor(ident: String, dato: LocalDate): Rapporteringsperiode? {
+        return rapporteringsperioder.hent(ident).find { it.gjelderFor(dato) }
+    }
 }

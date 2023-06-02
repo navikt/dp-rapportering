@@ -47,7 +47,12 @@ fun Application.rapporteringApi(
 
                 route("/gjeldende") {
                     get {
-                        call.respond(HttpStatusCode.OK)
+                        val rapporteringsperiode =
+                            rapporteringsperiodeRepository.hentRapporteringsperiodeFor(call.ident(), LocalDate.now())
+                                ?.let { RapporteringsperiodeMapper(it).dto }
+                                ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
+
+                        call.respond(HttpStatusCode.OK, rapporteringsperiode)
                     }
                 }
 

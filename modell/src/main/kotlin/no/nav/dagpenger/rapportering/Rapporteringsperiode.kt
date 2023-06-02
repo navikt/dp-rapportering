@@ -47,6 +47,8 @@ class Rapporteringsperiode private constructor(
         opprettet = LocalDateTime.now(),
     )
 
+    fun gjelderFor(dato: LocalDate) = dato in periode
+
     fun erGyldig() = tidslinje.all { it.gyldig() }
 
     fun leggTilFritak(dato: LocalDate) {}
@@ -105,13 +107,13 @@ class Rapporteringsperiode private constructor(
         }
 
         fun leaving(rapporteringsperiode: Rapporteringsperiode, hendelse: IAktivitetslogg) {}
-
         override fun toSpesifikkKontekst() =
             SpesifikkKontekst("Tilstand", mapOf("tilstand" to type.name))
     }
 
     private object Opprettet : Rapporteringsperiodetilstand {
         override val type = TilstandType.Opprettet
+
         override fun behandle(
             hendelse: GodkjennPeriodeHendelse,
             rapporteringsperiode: Rapporteringsperiode,
