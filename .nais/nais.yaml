@@ -37,6 +37,7 @@ spec:
       - type: POSTGRES_14
         databases:
           - name: rapportering
+            envVarPrefix: DB
   accessPolicy:
     inbound:
       rules:
