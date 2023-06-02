@@ -13,5 +13,22 @@ interface AktivitetsloggObserver {
         melding: String,
         kontekster: List<SpesifikkKontekst>,
         tidsstempel: LocalDateTime,
+    ) {}
+    fun varsel(
+        id: UUID,
+        label: Char,
+        kode: Varselkode?,
+        melding: String,
+        kontekster: List<SpesifikkKontekst>,
+        parse: LocalDateTime,
+    ) {}
+
+    fun funksjonellFeil(
+        id: UUID,
+        label: Char,
+        kode: Varselkode,
+        melding: String,
+        kontekster: List<SpesifikkKontekst>,
+        tidsstempel: LocalDateTime,
     )
 }

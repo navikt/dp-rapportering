@@ -12,28 +12,43 @@ class Aktivitetslogg(
     private val kontekster = mutableListOf<Aktivitetskontekst>()
     private val observers = mutableListOf<AktivitetsloggObserver>()
 
-    fun accept(visitor: AktivitetsloggVisitor) {
-        visitor.preVisitAktivitetslogg(this)
-        aktiviteter.forEach { it.accept(visitor) }
-        visitor.postVisitAktivitetslogg(this)
-    }
-
-    override fun registrer(observer: AktivitetsloggObserver) {
-        observers.add(observer)
-    }
-
     override fun info(melding: String, vararg params: Any?) {
         val formatertMelding = if (params.isEmpty()) melding else String.format(melding, *params)
         add(Aktivitet.Info.opprett(kontekster.toSpesifikk(), formatertMelding))
-    }
-    override fun warn(melding: String, vararg params: Any?) {
-        val formatertMelding = if (params.isEmpty()) melding else String.format(melding, *params)
-        add(Aktivitet.Warn.opprett(kontekster.toSpesifikk(), formatertMelding))
     }
 
     override fun behov(type: Behov.Behovtype, melding: String, detaljer: Map<String, Any?>) {
         add(Behov.opprett(type, kontekster.toSpesifikk(), melding, detaljer))
     }
+
+    override fun varsel(melding: String) {
+        add(Aktivitet.Varsel.opprett(kontekster.toSpesifikk(), melding = melding))
+    }
+    override fun varsel(kode: Varselkode) {
+        add(kode.varsel(kontekster.toSpesifikk()))
+    }
+
+    override fun funksjonellFeil(kode: Varselkode) {
+        TODO("Brukes i kombinasjon med varsel til saksbehandler")
+        // add(kode.funksjonellFeil(kontekster.toSpesifikk()))
+    }
+
+    override fun logiskFeil(melding: String, vararg params: Any?): Nothing {
+        add(Aktivitet.LogiskFeil.opprett(kontekster.toSpesifikk(), String.format(melding, *params)))
+
+        throw AktivitetException(this)
+    }
+
+    override fun harAktiviteter() = info().isNotEmpty() || behov().isNotEmpty()
+
+    override fun harVarslerEllerVerre() = varsel().isNotEmpty() || harFunksjonelleFeilEllerVerre()
+    override fun harFunksjonelleFeilEllerVerre() = funksjonelleFeil().isNotEmpty() || logiskFeil().isNotEmpty()
+
+    override fun aktivitetsteller() = aktiviteter.size
+
+    override fun barn() = Aktivitetslogg(this).also { it.kontekster.addAll(this.kontekster) }
+
+    override fun toString() = this.aktiviteter.map { it.inOrder() }.joinToString(separator = "\n") { it }
 
     private fun add(aktivitet: Aktivitet) {
         observers.forEach { aktivitet.notify(it) }
@@ -42,18 +57,6 @@ class Aktivitetslogg(
     }
 
     private fun MutableList<Aktivitetskontekst>.toSpesifikk() = this.map { it.toSpesifikkKontekst() }
-
-    override fun harAktiviteter() = info().isNotEmpty() || behov().isNotEmpty()
-
-    override fun harLogiskFeil() = warn().isNotEmpty() || harBehov()
-
-    override fun harBehov() = behov().isNotEmpty()
-
-    override fun barn() = Aktivitetslogg(this).also { it.kontekster.addAll(this.kontekster) }
-
-    override fun toString() = this.aktiviteter.map { it.inOrder() }.joinToString(separator = "\n") { it }
-
-    override fun aktivitetsteller() = aktiviteter.size
 
     override fun kontekst(kontekst: Aktivitetskontekst) {
         val spesifikkKontekst = kontekst.toSpesifikkKontekst()
@@ -94,14 +97,26 @@ class Aktivitetslogg(
         }
     }
 
+    private fun info() = Aktivitet.Info.filter(aktiviteter)
+    fun varsel() = Aktivitet.Varsel.filter(aktiviteter)
+
+    private fun funksjonelleFeil() = Aktivitet.FunksjonellFeil.filter(aktiviteter)
+    private fun logiskFeil() = Aktivitet.LogiskFeil.filter(aktiviteter)
+    override fun behov() = Behov.filter(aktiviteter)
     override fun kontekster() =
         aktiviteter
             .groupBy { it.kontekst(null) }
             .map { Aktivitetslogg(this).apply { aktiviteter.addAll(it.value) } }
 
-    private fun info() = Aktivitet.Info.filter(aktiviteter)
-    private fun warn() = Aktivitet.Warn.filter(aktiviteter)
-    override fun behov() = Behov.filter(aktiviteter)
+    fun accept(visitor: AktivitetsloggVisitor) {
+        visitor.preVisitAktivitetslogg(this)
+        aktiviteter.forEach { it.accept(visitor) }
+        visitor.postVisitAktivitetslogg(this)
+    }
+
+    override fun registrer(observer: AktivitetsloggObserver) {
+        observers.add(observer)
+    }
 
     class AktivitetException internal constructor(private val aktivitetslogg: Aktivitetslogg) :
         RuntimeException(aktivitetslogg.toString()) {

@@ -8,7 +8,7 @@ import java.util.UUID
 sealed class Aktivitet(
     protected val id: UUID,
     private val alvorlighetsgrad: Int,
-    private val label: Char,
+    protected val label: Char,
     private var melding: String,
     private val tidsstempel: String,
     val kontekster: List<SpesifikkKontekst>,
@@ -41,6 +41,7 @@ sealed class Aktivitet(
     }
 
     operator fun contains(kontekst: Aktivitetskontekst) = kontekst.toSpesifikkKontekst() in kontekster
+
     class Info private constructor(
         id: UUID,
         kontekster: List<SpesifikkKontekst>,
@@ -69,31 +70,37 @@ sealed class Aktivitet(
         }
     }
 
-    class Warn private constructor(
+    class Varsel private constructor(
         id: UUID,
         kontekster: List<SpesifikkKontekst>,
+        private val kode: Varselkode? = null,
         private val melding: String,
         private val tidsstempel: String = LocalDateTime.now().format(tidsstempelformat),
     ) : Aktivitet(id, 25, 'W', melding, tidsstempel, kontekster) {
         companion object {
-            internal fun filter(aktiviteter: List<Aktivitet>): List<Info> {
-                return aktiviteter.filterIsInstance<Info>()
+            internal fun filter(aktiviteter: List<Aktivitet>): List<Varsel> {
+                return aktiviteter.filterIsInstance<Varsel>()
             }
 
-            internal fun gjenopprett(
+            fun gjennopprett(
                 id: UUID,
                 kontekster: List<SpesifikkKontekst>,
+                kode: Varselkode?,
                 melding: String,
                 tidsstempel: String,
             ) =
-                Warn(id, kontekster, melding, tidsstempel)
+                Varsel(id, kontekster, kode, melding, tidsstempel)
 
-            internal fun opprett(kontekster: List<SpesifikkKontekst>, melding: String) =
-                Warn(UUID.randomUUID(), kontekster, melding)
+            internal fun opprett(kontekster: List<SpesifikkKontekst>, kode: Varselkode? = null, melding: String) =
+                Varsel(UUID.randomUUID(), kontekster, kode, melding = melding)
         }
 
         override fun accept(visitor: AktivitetsloggVisitor) {
-            visitor.visitWarn(id, kontekster, this, melding, tidsstempel)
+            visitor.visitVarsel(id, kontekster, this, kode, melding, tidsstempel)
+        }
+
+        override fun notify(observer: AktivitetsloggObserver) {
+            observer.varsel(id, label, kode, melding, kontekster, LocalDateTime.parse(tidsstempel, tidsstempelformat))
         }
     }
 
@@ -141,5 +148,65 @@ sealed class Aktivitet(
         }
 
         interface Behovtype
+    }
+
+    class FunksjonellFeil private constructor(
+        id: UUID,
+        kontekster: List<SpesifikkKontekst>,
+        private val kode: Varselkode,
+        private val melding: String,
+        private val tidsstempel: String = LocalDateTime.now().format(tidsstempelformat),
+    ) : Aktivitet(id, 75, 'E', melding, tidsstempel, kontekster) {
+        companion object {
+            internal fun filter(aktiviteter: List<Aktivitet>): List<FunksjonellFeil> {
+                return aktiviteter.filterIsInstance<FunksjonellFeil>()
+            }
+
+            internal fun opprett(kontekster: List<SpesifikkKontekst>, kode: Varselkode, melding: String) =
+                FunksjonellFeil(UUID.randomUUID(), kontekster, kode, melding)
+        }
+
+        override fun accept(visitor: AktivitetsloggVisitor) {
+            visitor.visitFunksjonellFeil(id, kontekster, this, melding, tidsstempel)
+        }
+
+        override fun notify(observer: AktivitetsloggObserver) {
+            observer.funksjonellFeil(
+                id,
+                label,
+                kode,
+                melding,
+                kontekster,
+                LocalDateTime.parse(tidsstempel, tidsstempelformat),
+            )
+        }
+    }
+
+    class LogiskFeil private constructor(
+        id: UUID,
+        kontekster: List<SpesifikkKontekst>,
+        private val melding: String,
+        private val tidsstempel: String = LocalDateTime.now().format(tidsstempelformat),
+    ) : Aktivitet(id, 100, 'S', melding, tidsstempel, kontekster) {
+        companion object {
+            internal fun filter(aktiviteter: List<Aktivitet>): List<Info> {
+                return aktiviteter.filterIsInstance<Info>()
+            }
+
+            internal fun gjenopprett(
+                id: UUID,
+                kontekster: List<SpesifikkKontekst>,
+                melding: String,
+                tidsstempel: String,
+            ) =
+                LogiskFeil(id, kontekster, melding, tidsstempel)
+
+            internal fun opprett(kontekster: List<SpesifikkKontekst>, melding: String) =
+                LogiskFeil(UUID.randomUUID(), kontekster, melding)
+        }
+
+        override fun accept(visitor: AktivitetsloggVisitor) {
+            visitor.visitWarn(id, kontekster, this, melding, tidsstempel)
+        }
     }
 }

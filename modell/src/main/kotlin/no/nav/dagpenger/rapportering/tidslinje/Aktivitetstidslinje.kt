@@ -1,7 +1,6 @@
 package no.nav.dagpenger.rapportering.tidslinje
 
 import no.nav.dagpenger.rapportering.AktivitetstidslinjeVisitor
-import no.nav.dagpenger.rapportering.Dag
 import java.time.LocalDate
 
 data class Aktivitetstidslinje internal constructor(
