@@ -8,10 +8,12 @@ import no.nav.dagpenger.rapportering.helpers.TestData.testIdent
 import no.nav.dagpenger.rapportering.helpers.TestData.testPerson
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
+import no.nav.dagpenger.rapportering.tidslinje.Dag
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 import java.util.UUID
 
@@ -56,16 +58,17 @@ class PersonTest {
         // Bruker godkjenner rapportering for en periode
         person.behandle(godkjennPeriodeHendelse(rapporteringsperiodeId))
         assertEquals(Godkjent.name, observer.tilstand)
-
         // Kan ikke rapportere aktivitet etter en periode er godkjent
         val nyAktivitetHendelse = nyAktivitetHendelse(LocalDate.now().plusDays(3))
-        person.behandle(nyAktivitetHendelse)
-        assertTrue(nyAktivitetHendelse.harLogiskFeil())
-        assertEquals(3, person.antallAktiviteter)
+
+        assertThrows<IllegalStateException> {
+            person.behandle(nyAktivitetHendelse)
+        }
         // Bruker sender inn rapportering for samme periode på nytt
         val hendelse = godkjennPeriodeHendelse(rapporteringsperiodeId)
-        person.behandle(hendelse)
-        assertTrue(hendelse.harLogiskFeil())
+        assertThrows<IllegalStateException> {
+            person.behandle(hendelse)
+        }
 
         println(person)
     }

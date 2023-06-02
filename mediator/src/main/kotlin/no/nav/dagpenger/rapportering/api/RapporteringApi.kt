@@ -13,7 +13,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.AktivitetVisitor
-import no.nav.dagpenger.rapportering.Dag
+import no.nav.dagpenger.rapportering.DagVisitor
 import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
@@ -25,16 +25,15 @@ import no.nav.dagpenger.rapportering.api.models.AktivitetInputDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDagerInnerDTO
-import no.nav.dagpenger.rapportering.repository.AktivitetRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
+import no.nav.dagpenger.rapportering.tidslinje.Dag
 import java.time.LocalDate
+import java.util.SortedSet
 import java.util.UUID
-import kotlin.time.Duration
 
 fun Application.rapporteringApi(
     rapporteringsperiodeRepository: RapporteringsperiodeRepository,
-    aktivitetRepository: AktivitetRepository,
 ) {
     routing {
         authenticate("tokenX") {
@@ -137,12 +136,10 @@ fun Application.rapporteringApi(
 }
 
 private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperiode) : RapporteringsperiodVisitor {
-    private val dager = mutableSetOf<LocalDate>()
-    private val muligeAktiviter = mutableMapOf<LocalDate, List<Aktivitet.AktivitetType>>()
-    val aktiviteter = mutableMapOf<LocalDate, List<Aktivitet>>()
-    lateinit var id: UUID
-    lateinit var periode: ClosedRange<LocalDate>
-    lateinit var tilstand: Rapporteringsperiode.TilstandType
+    private lateinit var id: UUID
+    private lateinit var periode: ClosedRange<LocalDate>
+    private lateinit var tilstand: Rapporteringsperiode.TilstandType
+    private val dager: SortedSet<Dag> = sortedSetOf(Dag.Companion.eldsteDagFørst)
     val dto: RapporteringsperiodeDTO
         get() {
             return RapporteringsperiodeDTO(
@@ -154,31 +151,12 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
                     Godkjent -> RapporteringsperiodeDTO.Status.Godkjent
                     Innsendt -> RapporteringsperiodeDTO.Status.Innsendt
                 },
-                dager = lagRapporteringsdager(),
+                dager = dager.mapIndexed { index, it -> DagMapper(index, it).dto },
             )
         }
 
     init {
         rapporteringsperiode.accept(this)
-    }
-
-    private fun lagRapporteringsdager(): List<RapporteringsperiodeDagerInnerDTO> {
-        return mutableListOf<RapporteringsperiodeDagerInnerDTO>().apply {
-            dager.onEachIndexed { index, dag ->
-                add(
-                    RapporteringsperiodeDagerInnerDTO(
-                        dagIndex = index,
-                        dato = dag,
-                        muligeAktiviteter = muligeAktiviter.getOrDefault(dag, emptyList()).map {
-                            AktivitetTypeDTO.valueOf(
-                                it.name,
-                            )
-                        },
-                        aktiviteter = aktiviteter.getOrDefault(dag, emptyList()).tilDto(),
-                    ),
-                )
-            }
-        }.toList()
     }
 
     class AktivitetMapper(aktivitet: Aktivitet) : AktivitetVisitor {
@@ -191,7 +169,7 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
         override fun visit(
             aktivitet: Aktivitet,
             dato: LocalDate,
-            tid: Duration,
+            tid: kotlin.time.Duration,
             type: Aktivitet.AktivitetType,
             uuid: UUID,
         ) {
@@ -202,10 +180,6 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
                 timer = tid.toIsoString(),
             )
         }
-    }
-
-    private fun List<Aktivitet>.tilDto() = this.map {
-        AktivitetMapper(it).aktivitetDTO
     }
 
     override fun visit(
@@ -225,9 +199,39 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
         aktiviteter: List<Aktivitet>,
         muligeAktiviter: List<Aktivitet.AktivitetType>,
     ) {
-        this.dager.add(dato)
-        this.muligeAktiviter[dato] = muligeAktiviter
-        this.aktiviteter[dato] = aktiviteter
+        // Legg til dager i et sortet set for å garantere rekkefølge
+        this.dager.add(dag)
+    }
+
+    private class DagMapper(private val index: Int, dag: Dag) :
+        DagVisitor {
+        lateinit var dto: RapporteringsperiodeDagerInnerDTO
+
+        init {
+            dag.accept(this)
+        }
+
+        override fun visit(
+            dag: Dag,
+            dato: LocalDate,
+            aktiviteter: List<Aktivitet>,
+            muligeAktiviter: List<Aktivitet.AktivitetType>,
+        ) {
+            dto = RapporteringsperiodeDagerInnerDTO(
+                dagIndex = index,
+                dato = dato,
+                muligeAktiviteter = muligeAktiviter.map {
+                    AktivitetTypeDTO.valueOf(
+                        it.name,
+                    )
+                },
+                aktiviteter = aktiviteter.tilDto(),
+            )
+        }
+
+        private fun List<Aktivitet>.tilDto() = this.map {
+            AktivitetMapper(it).aktivitetDTO
+        }
     }
 }
 

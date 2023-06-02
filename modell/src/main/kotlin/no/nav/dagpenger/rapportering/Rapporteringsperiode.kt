@@ -94,14 +94,14 @@ class Rapporteringsperiode private constructor(
             hendelse: GodkjennPeriodeHendelse,
             rapporteringsperiode: Rapporteringsperiode,
         ) {
-            hendelse.warn("Forventet ikke ny rapportering tilstand ${type.name}")
+            throw IllegalStateException("Forventet ikke ny rapportering tilstand ${type.name}")
         }
 
         fun behandle(
             hendelse: NyAktivitetHendelse,
             rapporteringsperiode: Rapporteringsperiode,
         ) {
-            hendelse.warn("Forventet ikke ny aktivitet tilstand ${type.name}")
+            throw IllegalStateException("Forventet ikke ny aktivitet tilstand ${type.name}")
         }
 
         fun leaving(rapporteringsperiode: Rapporteringsperiode, hendelse: IAktivitetslogg) {}
@@ -117,7 +117,7 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiode: Rapporteringsperiode,
         ) {
             hendelse.kontekst(this)
-            if (!rapporteringsperiode.erGyldig()) hendelse.warn("Perioden kan ikke godkjennes")
+            if (!rapporteringsperiode.erGyldig()) throw IllegalStateException("Kan ikke godkjenne en ugyldig periode")
 
             rapporteringsperiode.tidslinje.forEach { it.håndter(hendelse) }
             rapporteringsperiode.tilstand(hendelse, Godkjent)

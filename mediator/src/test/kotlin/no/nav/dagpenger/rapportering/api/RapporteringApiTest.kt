@@ -16,7 +16,6 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
 import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
-import no.nav.dagpenger.rapportering.repository.InMemoryAktivitetRepository
 import no.nav.dagpenger.rapportering.repository.InMemoryRapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import org.junit.jupiter.api.Test
@@ -71,7 +70,16 @@ class RapporteringApiTest {
             }.let { response ->
                 response.status shouldBe HttpStatusCode.OK
                 "${response.contentType()}" shouldContain "application/json"
-                // todo sjekke json
+                response.bodyAsText().let { json ->
+                    json shouldContainJsonKey "$.id"
+                    json shouldContainJsonKey "$.fraOgMed"
+                    json shouldContainJsonKey "$.tilOgMed"
+                    json shouldContainJsonKey "$.status"
+                    json shouldContainJsonKey "$.dager.[*].dagIndex"
+                    json shouldContainJsonKey "$.dager.[*].dato"
+                    json shouldContainJsonKey "$.dager.[*].muligeAktiviteter"
+                    json shouldContainJsonKey "$.dager.[*].aktiviteter"
+                }
             }
         }
     }
@@ -158,13 +166,8 @@ private fun withRapporteringApi(
                         lagreRapporteringsperiode(defaultDummyFodselsnummer, it)
                     }
                 },
-                InMemoryAktivitetRepository(
-                    mutableMapOf<String, MutableList<Aktivitet>>().apply {
-                        put(defaultDummyFodselsnummer, aktiviteter.toMutableList())
-                    },
-                ),
-            )
         },
         test = test,
     )
+}
 }

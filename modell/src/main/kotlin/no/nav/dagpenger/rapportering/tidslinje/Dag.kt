@@ -1,9 +1,10 @@
-package no.nav.dagpenger.rapportering
+package no.nav.dagpenger.rapportering.tidslinje
 
 import no.nav.dagpenger.aktivitetslogg.Aktivitetskontekst
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
+import no.nav.dagpenger.rapportering.DagVisitor
+import no.nav.dagpenger.rapportering.Kalender
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
-import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Arbeid
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Ferie
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Syk
@@ -15,6 +16,10 @@ class Dag(
     private var harRapporteringslikt: Boolean = true,
 ) : Aktivitetskontekst {
     constructor(dato: LocalDate) : this(dato, mutableListOf())
+
+    companion object {
+        val eldsteDagFørst = Comparator<Dag> { a, b -> a.dato.compareTo(b.dato) }
+    }
 
     private val muligeAktiviteter = listOf(Arbeid, Syk, Ferie) - aktiviteter.map { it.type }.toSet()
     private val rapporteringspliktig get() = harRapporteringslikt || erHelligdag
@@ -45,7 +50,7 @@ class Dag(
         aktiviteter.forEach { it.håndter(hendelse) }
     }
 
-    fun accept(visitor: AktivitetstidslinjeVisitor) {
+    fun accept(visitor: DagVisitor) {
         visitor.visit(this, dato, aktiviteter, muligeAktiviteter)
     }
 
