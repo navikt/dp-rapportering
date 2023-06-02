@@ -28,7 +28,6 @@ import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.time.Duration
-import kotlin.time.DurationUnit
 
 fun Application.rapporteringApi(
     rapporteringsperiodeRepository: RapporteringsperiodeRepository,
@@ -76,11 +75,12 @@ fun Application.rapporteringApi(
 }
 
 private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperiode) : RapporteringsperiodVisitor {
-    private val dager = mutableMapOf<LocalDate, List<Aktivitet.AktivitetType>>()
+    private val dager = mutableSetOf<LocalDate>()
+    private val muligeAktiviter = mutableMapOf<LocalDate, List<Aktivitet.AktivitetType>>()
+    val aktiviteter = mutableMapOf<LocalDate, List<Aktivitet>>()
     lateinit var id: UUID
     lateinit var periode: ClosedRange<LocalDate>
     lateinit var tilstand: Rapporteringsperiode.TilstandType
-    val aktiviteter: MutableList<Aktivitet> = mutableListOf()
     val dto: RapporteringsperiodeDTO
         get() {
             return RapporteringsperiodeDTO(
@@ -93,7 +93,6 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
                     Innsendt -> RapporteringsperiodeDTO.Status.Innsendt
                 },
                 dager = lagRapporteringsdager(),
-                aktiviteter = aktiviteter.tilDto(),
             )
         }
 
@@ -107,8 +106,13 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
                 add(
                     RapporteringsperiodeDagerInnerDTO(
                         dagIndex = index,
-                        dato = dag.key,
-                        muligeAktiviteter = dag.value.map { AktivitetTypeDTO.valueOf(it.name) },
+                        dato = dag,
+                        muligeAktiviteter = muligeAktiviter.getOrDefault(dag, emptyList()).map {
+                            AktivitetTypeDTO.valueOf(
+                                it.name,
+                            )
+                        },
+                        aktiviteter = aktiviteter.getOrDefault(dag, emptyList()).tilDto(),
                     ),
                 )
             }
@@ -133,7 +137,7 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
                 type = AktivitetTypeDTO.valueOf(type.name),
                 dato = dato,
                 id = uuid,
-                timer = tid.toDouble(DurationUnit.HOURS).toBigDecimal(),
+                timer = tid.toIsoString(),
             )
         }
     }
@@ -159,7 +163,8 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
         aktiviteter: List<Aktivitet>,
         muligeAktiviter: List<Aktivitet.AktivitetType>,
     ) {
-        this.dager[dato] = muligeAktiviter
-        this.aktiviteter += aktiviteter
+        this.dager.add(dato)
+        this.muligeAktiviter[dato] = muligeAktiviter
+        this.aktiviteter[dato] = aktiviteter
     }
 }

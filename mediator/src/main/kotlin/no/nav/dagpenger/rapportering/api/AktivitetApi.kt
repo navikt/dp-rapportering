@@ -20,7 +20,6 @@ import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Arbeid
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Ferie
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Syk
-import kotlin.time.DurationUnit
 
 internal fun Application.aktivitetApi(repository: AktivitetRepository) {
     routing {
@@ -32,7 +31,7 @@ internal fun Application.aktivitetApi(repository: AktivitetRepository) {
                             id = it.uuid,
                             dato = it.dato,
                             type = AktivitetTypeDTO.valueOf(it.type.name),
-                            timer = it.tid.toDouble(DurationUnit.HOURS).toBigDecimal(),
+                            timer = it.tid.toIsoString(),
                         )
                     }
                     call.respond(HttpStatusCode.OK, aktiviteter)
@@ -86,6 +85,6 @@ internal fun Aktivitet.toAktivitetDTO(): AktivitetDTO {
         type = aktivitetType,
         dato = this.dato,
         id = this.uuid,
-        timer = this.tid.inWholeHours.toBigDecimal(),
+        timer = this.tid.toIsoString(),
     )
 }
