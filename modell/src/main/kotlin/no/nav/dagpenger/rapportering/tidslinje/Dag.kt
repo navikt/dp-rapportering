@@ -40,7 +40,7 @@ class Dag(
     }
 
     fun slettAktivitet(aktivitetId: UUID): Boolean {
-        return aktiviteter.removeIf { it.uuid == aktivitetId }
+        return aktiviteter.removeIf { it.uuid == aktivitetId && it.kanSlettes }
     }
 
     fun gyldig() = true

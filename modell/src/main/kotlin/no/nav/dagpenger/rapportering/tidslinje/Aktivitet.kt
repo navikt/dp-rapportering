@@ -56,16 +56,22 @@ sealed class Aktivitet(
         tilstand.behandle(hendelse, this)
     }
 
+    val kanSlettes = tilstand.kanSlettes
+
     interface Tilstand {
         fun behandle(hendelse: GodkjennPeriodeHendelse, aktivitet: Aktivitet) {
             throw IllegalStateException("Kan ikke håndtere ${hendelse::class.java.simpleName} i denne tilstanden")
         }
+
+        val kanSlettes: Boolean get() = false
     }
 
     private object Ny : Tilstand {
         override fun behandle(hendelse: GodkjennPeriodeHendelse, aktivitet: Aktivitet) {
             aktivitet.tilstand = Låst
         }
+
+        override val kanSlettes = true
     }
 
     private object Låst : Tilstand
