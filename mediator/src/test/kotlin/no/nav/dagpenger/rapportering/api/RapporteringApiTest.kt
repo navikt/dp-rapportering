@@ -19,24 +19,24 @@ import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnumm
 import no.nav.dagpenger.rapportering.repository.InMemoryAktivitetRepository
 import no.nav.dagpenger.rapportering.repository.InMemoryRapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class RapporteringApiTest {
+    private val testPeriode = Rapporteringsperiode(rapporteringspliktFom = LocalDate.now().minusDays(1))
+    private val testPeriodeId = testPeriode.rapporteringsperiodeId
 
     @Test
-    fun `uautentiserte get kall feiler`() {
+    fun `uautentiserte GET kall feiler`() {
         withRapporteringApi {
             client.get("/rapporteringsperioder").status shouldBe HttpStatusCode.Unauthorized
         }
     }
 
-    @Disabled
     @Test
     fun `uautentiserte POST kall feiler`() {
-        withRapporteringApi() {
-            client.post("/rapporteringsperioder/aktivitet") {
+        withRapporteringApi(rapporteringsperioder = listOf(testPeriode)) {
+            client.post("/rapporteringsperioder/$testPeriodeId/aktivitet") {
                 this.header("Content-Type", "application/json")
                 this.setBody("""{"type": "Arbeid", "dato": "2023-05-16", "timer": "7" }""")
             }.status shouldBe HttpStatusCode.Unauthorized
@@ -44,12 +44,10 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `skal hente en liste med mulige rapportinger`() {
-        val periode1 = Rapporteringsperiode(
-            rapporteringspliktFom = LocalDate.now().minusDays(1),
-        )
+    fun `skal hente en liste med alle rapportingsperioder`() {
+        val periode2 = Rapporteringsperiode(rapporteringspliktFom = LocalDate.now().minusDays(2))
         withRapporteringApi(
-            rapporteringsperioder = listOf(periode1),
+            rapporteringsperioder = listOf(testPeriode, periode2),
         ) {
             client.get("/rapporteringsperioder") {
                 autentisert()
@@ -65,14 +63,10 @@ class RapporteringApiTest {
 
     @Test
     fun `Skal kunne hente ut en rapporteringsperiode med en gitt id`() {
-        val periode1 = Rapporteringsperiode(
-            rapporteringspliktFom = LocalDate.now().minusDays(1),
-        )
-        val periodeId = periode1.rapporteringsperiodeId
         withRapporteringApi(
-            rapporteringsperioder = listOf(periode1),
+            rapporteringsperioder = listOf(testPeriode),
         ) {
-            client.get("/rapporteringsperioder/$periodeId") {
+            client.get("/rapporteringsperioder/$testPeriodeId") {
                 autentisert()
             }.let { response ->
                 response.status shouldBe HttpStatusCode.OK
@@ -84,14 +78,10 @@ class RapporteringApiTest {
 
     @Test
     fun `Skal kunne ferdigstille en rapporteringsperiode`() {
-        val periode1 = Rapporteringsperiode(
-            rapporteringspliktFom = LocalDate.now().minusDays(1),
-        )
-        val periodeId = periode1.rapporteringsperiodeId
         withRapporteringApi(
-            rapporteringsperioder = listOf(periode1),
+            rapporteringsperioder = listOf(testPeriode),
         ) {
-            client.post("/rapporteringsperioder/$periodeId/godkjenn") {
+            client.post("/rapporteringsperioder/$testPeriodeId/godkjenn") {
                 autentisert()
                 contentType(ContentType.Application.Json)
             }.also { response ->
@@ -103,15 +93,10 @@ class RapporteringApiTest {
 
     @Test
     fun `Skal kunne hente ut alle aktiviteter`() {
-        val periode1 = Rapporteringsperiode(
-            rapporteringspliktFom = LocalDate.now().minusDays(1),
-        )
-        val periodeId = periode1.rapporteringsperiodeId
-
-        withRapporteringApi(rapporteringsperioder = listOf(periode1)) {
+        withRapporteringApi(rapporteringsperioder = listOf(testPeriode)) {
             autentisert(
                 httpMethod = HttpMethod.Get,
-                endepunkt = "/rapporteringsperioder/$periodeId/aktivitet",
+                endepunkt = "/rapporteringsperioder/$testPeriodeId/aktivitet",
             ).let { response ->
                 response.status shouldBe HttpStatusCode.OK
                 "${response.contentType()}" shouldContain "application/json"
@@ -121,13 +106,9 @@ class RapporteringApiTest {
 
     @Test
     fun `Skal kunne rapportere en aktivitet`() {
-        val periode1 = Rapporteringsperiode(
-            rapporteringspliktFom = LocalDate.now().minusDays(1),
-        )
-        val periodeId = periode1.rapporteringsperiodeId
-        withRapporteringApi(rapporteringsperioder = listOf(periode1)) {
+        withRapporteringApi(rapporteringsperioder = listOf(testPeriode)) {
             autentisert(
-                endepunkt = "/rapporteringsperioder/$periodeId/aktivitet",
+                endepunkt = "/rapporteringsperioder/$testPeriodeId/aktivitet",
                 httpMethod = HttpMethod.Post,
                 //language=JSON
                 body = """{"type": "Arbeid", "dato": "2023-05-16", "timer": "7" }""",
@@ -140,14 +121,10 @@ class RapporteringApiTest {
 
     @Test
     fun `Skal kunne hente ut en aktvitet med en gitt id`() {
-        val periode1 = Rapporteringsperiode(
-            rapporteringspliktFom = LocalDate.now().minusDays(1),
-        )
-        val periodeId = periode1.rapporteringsperiodeId
         val aktivitet = Aktivitet.Arbeid(LocalDate.now(), 4)
-        withRapporteringApi(rapporteringsperioder = listOf(periode1), aktiviteter = listOf(aktivitet)) {
+        withRapporteringApi(rapporteringsperioder = listOf(testPeriode), aktiviteter = listOf(aktivitet)) {
             autentisert(
-                "/rapporteringsperioder/$periodeId/aktivitet/${aktivitet.uuid}",
+                "/rapporteringsperioder/$testPeriodeId/aktivitet/${aktivitet.uuid}",
                 httpMethod = HttpMethod.Get,
             ).status shouldBe HttpStatusCode.OK
         }
@@ -155,13 +132,12 @@ class RapporteringApiTest {
 
     @Test
     fun `Skal kunne slette en aktivitet`() {
-        val periode1 = Rapporteringsperiode(
-            rapporteringspliktFom = LocalDate.now().minusDays(1),
-        )
-        val periodeId = periode1.rapporteringsperiodeId
         val aktivitet = Aktivitet.Arbeid(LocalDate.now(), 4)
         withRapporteringApi {
-            autentisert("/rapporteringsperioder/$periodeId/aktivitet/${aktivitet.uuid}", httpMethod = HttpMethod.Delete).let { response ->
+            autentisert(
+                "/rapporteringsperioder/$testPeriodeId/aktivitet/${aktivitet.uuid}",
+                httpMethod = HttpMethod.Delete,
+            ).let { response ->
                 response.status shouldBe HttpStatusCode.NoContent
             }
         }
