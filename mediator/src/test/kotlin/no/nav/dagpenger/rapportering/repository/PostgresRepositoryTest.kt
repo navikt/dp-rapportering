@@ -25,7 +25,7 @@ class PostgresRepositoryTest {
             val repository = PostgresRepository(dataSource)
             repository.hentEllerOpprettPerson(testIdent).let { person ->
                 person shouldNotBe null
-                person!!.ident shouldBe testIdent
+                person.ident shouldBe testIdent
             }
         }
     }
@@ -38,7 +38,7 @@ class PostgresRepositoryTest {
 
             repository.hentEllerOpprettPerson(testIdent).let { person ->
                 person shouldNotBe null
-                person!!.ident shouldBe testIdent
+                person.ident shouldBe testIdent
             }
 
             shouldNotThrowAny {
@@ -57,12 +57,12 @@ class PostgresRepositoryTest {
             }
             repository.lagre(person)
 
-            repository.hentEllerOpprettPerson(testIdent).let { person ->
-                person shouldNotBe null
-                person!!.ident shouldBe testIdent
+            repository.hentEllerOpprettPerson(testIdent).let { lagretPerson ->
+                lagretPerson shouldNotBe null
+                lagretPerson.ident shouldBe testIdent
 
-                TestVisitor(person).rapporteringsperioder.size shouldBe 1
-                TestVisitor(person).aktiviteter.size shouldBe 1
+                TestVisitor(lagretPerson).rapporteringsperioder.size shouldBe 1
+                TestVisitor(lagretPerson).aktiviteter.size shouldBe 1
             }
 
             shouldNotThrowAny {
