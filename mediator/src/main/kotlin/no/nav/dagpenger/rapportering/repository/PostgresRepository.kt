@@ -78,7 +78,17 @@ internal class PostgresRepository(private val ds: DataSource) :
     }
 
     override fun hentRapporteringsperiodeFor(ident: String, dato: LocalDate): Rapporteringsperiode? {
-        TODO("Not yet implemented")
+        return using(sessionOf(ds)) { session ->
+            session.run(
+                queryOf(
+                    //language=PostgreSQL
+                    statement = """SELECT uuid FROM rapporteringsperiode WHERE person_ident = :ident AND :dato BETWEEN fom AND tom""",
+                    paramMap = mapOf("ident" to ident, "dato" to dato),
+                ).map { row ->
+                    hentRapporteringsperiode(ident, row.uuid("uuid"))
+                }.asSingle,
+            )
+        }
     }
 
     private fun hentPerson(ident: String): Person? {
