@@ -152,13 +152,13 @@ internal class PostgresRepository(private val ds: DataSource) :
                     """.trimMargin(),
                     paramMap = mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
                 ).map { row ->
-                    val type = AktivitetType.valueOf(row.string("type"))
-                    val dato = row.localDate("dato")
-                    when (type) {
-                        AktivitetType.Arbeid -> Aktivitet.Arbeid(dato, Duration.parse(row.string("tid")).inWholeHours)
-                        AktivitetType.Syk -> Aktivitet.Syk(dato)
-                        AktivitetType.Ferie -> Aktivitet.Ferie(dato)
-                    }
+                    Aktivitet.rehydrer(
+                        row.uuid("uuid"),
+                        row.localDate("dato"),
+                        row.string("type"),
+                        row.stringOrNull("tid")?.let { Duration.parse(it) },
+                        row.string("tilstand"),
+                    )
                 }.asList,
             )
         }
