@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.repository
 
 import kotliquery.Query
+import kotliquery.Row
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
@@ -21,7 +22,15 @@ internal class PostgresRepository(private val ds: DataSource) :
     PersonRepository,
     RapporteringsperiodeRepository {
     override fun hentRapporteringsperiode(ident: String, uuid: UUID): Rapporteringsperiode? {
-        TODO("Not yet implemented")
+        return using(sessionOf(ds)) { session ->
+            session.run(
+                queryOf(
+                    //language=PostgreSQL
+                    statement = """SELECT * FROM rapporteringsperiode WHERE person_ident = :ident AND uuid = :uuid""",
+                    paramMap = mapOf("ident" to ident, "uuid" to uuid),
+                ).map { it.toRapporteringsperiode() }.asSingle,
+            )
+        }
     }
 
     override fun hentRapporteringsperioder(ident: String): List<Rapporteringsperiode> {
@@ -31,48 +40,7 @@ internal class PostgresRepository(private val ds: DataSource) :
                     //language=PostgreSQL
                     statement = """SELECT * FROM rapporteringsperiode WHERE person_ident = :ident""",
                     paramMap = mapOf("ident" to ident),
-                ).map { row ->
-                    val fraOgMed = row.localDate("fom")
-                    val tilOgMed = row.localDate("tom")
-                    val rapporteringsperiodeId = row.uuid("uuid")
-                    val tidslinje = Aktivitetstidslinje(fraOgMed, tilOgMed).apply {
-                        hentAktiviteterFor(rapporteringsperiodeId).forEach { leggTilAktivitet(it) }
-                    }
-                    Rapporteringsperiode.rehydrer(
-                        rapporteringsperiodeId,
-                        row.localDate("rapporteringsfrist"),
-                        fraOgMed,
-                        tilOgMed,
-                        Rapporteringsperiode.TilstandType.valueOf(row.string("tilstand")),
-                        row.localDateTime("opprettet"),
-                        tidslinje,
-                    )
-                }.asList,
-            )
-        }
-    }
-
-    private fun hentAktiviteterFor(rapporteringsperiodeId: UUID): List<Aktivitet> {
-        return using(sessionOf(ds)) { session ->
-            session.run(queryOf("SET intervalstyle=iso_8601").asExecute)
-            session.run(
-                queryOf(
-                    //language=PostgreSQL
-                    statement = """
-                        |SELECT * FROM aktivitet 
-                        |LEFT JOIN dag d ON aktivitet.uuid = d.aktivitet_id
-                        |WHERE d.rapporteringsperiode_id = :rapporteringsperiodeId
-                    """.trimMargin(),
-                    paramMap = mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
-                ).map { row ->
-                    val type = AktivitetType.valueOf(row.string("type"))
-                    val dato = row.localDate("dato")
-                    when (type) {
-                        AktivitetType.Arbeid -> Aktivitet.Arbeid(dato, Duration.parse(row.string("tid")).inWholeHours)
-                        AktivitetType.Syk -> Aktivitet.Syk(dato)
-                        AktivitetType.Ferie -> Aktivitet.Ferie(dato)
-                    }
-                }.asList,
+                ).map { it.toRapporteringsperiode() }.asList,
             )
         }
     }
@@ -152,6 +120,49 @@ internal class PostgresRepository(private val ds: DataSource) :
             }.asSingle,
         )
     } ?: false
+
+    private fun Row.toRapporteringsperiode(): Rapporteringsperiode {
+        val fraOgMed = localDate("fom")
+        val tilOgMed = localDate("tom")
+        val rapporteringsperiodeId = uuid("uuid")
+        val tidslinje = Aktivitetstidslinje(fraOgMed, tilOgMed).apply {
+            hentAktiviteterFor(rapporteringsperiodeId).forEach { leggTilAktivitet(it) }
+        }
+        return Rapporteringsperiode.rehydrer(
+            rapporteringsperiodeId,
+            localDate("rapporteringsfrist"),
+            fraOgMed,
+            tilOgMed,
+            Rapporteringsperiode.TilstandType.valueOf(this.string("tilstand")),
+            localDateTime("opprettet"),
+            tidslinje,
+        )
+    }
+
+    private fun hentAktiviteterFor(rapporteringsperiodeId: UUID): List<Aktivitet> {
+        return using(sessionOf(ds)) { session ->
+            session.run(queryOf("SET intervalstyle=iso_8601").asExecute)
+            session.run(
+                queryOf(
+                    //language=PostgreSQL
+                    statement = """
+                        |SELECT * FROM aktivitet 
+                        |LEFT JOIN dag d ON aktivitet.uuid = d.aktivitet_id
+                        |WHERE d.rapporteringsperiode_id = :rapporteringsperiodeId
+                    """.trimMargin(),
+                    paramMap = mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
+                ).map { row ->
+                    val type = AktivitetType.valueOf(row.string("type"))
+                    val dato = row.localDate("dato")
+                    when (type) {
+                        AktivitetType.Arbeid -> Aktivitet.Arbeid(dato, Duration.parse(row.string("tid")).inWholeHours)
+                        AktivitetType.Syk -> Aktivitet.Syk(dato)
+                        AktivitetType.Ferie -> Aktivitet.Ferie(dato)
+                    }
+                }.asList,
+            )
+        }
+    }
 }
 
 private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, RapporteringsperiodVisitor, DagVisitor {
