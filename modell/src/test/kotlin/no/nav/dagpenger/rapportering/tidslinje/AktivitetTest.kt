@@ -39,7 +39,7 @@ class AktivitetTest {
             uuid = uuid,
             dato = dato,
             type = "Syk",
-            tilstand = "Ny",
+            tilstand = Åpen.name,
         ).let {
             it should beInstanceOf<Aktivitet.Syk>()
             it.dato shouldBe dato
@@ -49,7 +49,7 @@ class AktivitetTest {
             uuid = uuid,
             dato = dato,
             type = "Ferie",
-            tilstand = "Ny",
+            tilstand = Åpen.name,
         ).let {
             it should beInstanceOf<Aktivitet.Ferie>()
             it.dato shouldBe dato

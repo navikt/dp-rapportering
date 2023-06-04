@@ -28,6 +28,7 @@ import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDagerInnerDTO
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
+import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
@@ -48,6 +49,18 @@ internal fun Application.rapporteringApi(
                         .map { RapporteringsperiodeMapper(it).dto }
 
                     call.respond(HttpStatusCode.OK, rapporteringsperioder)
+                }
+
+                post {
+                    // TODO: Fjern eller legg på tokenx-auth (så bare saksbehandler kan. Det bør sannsynligvis helst gå via Kafka for sporing)
+                    val harGjeldende =
+                        rapporteringsperiodeRepository.hentRapporteringsperiodeFor(call.ident(), LocalDate.now())
+                            ?.let { true } ?: false
+                    if (harGjeldende) call.respond(HttpStatusCode.Conflict)
+
+                    mediator.behandle(SøknadInnsendtHendelse(UUID.randomUUID(), ident = call.ident()))
+
+                    call.respond(HttpStatusCode.Created)
                 }
 
                 route("/gjeldende") {
