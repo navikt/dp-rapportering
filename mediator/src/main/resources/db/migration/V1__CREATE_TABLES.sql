@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS aktivitet
 (
     id           BIGSERIAL PRIMARY KEY,
     uuid         uuid                                                              NOT NULL UNIQUE,
-    person_ident VARCHAR(11)                                                       NOT NULL REFERENCES person (ident) ,
+    person_ident VARCHAR(11)                                                       NOT NULL REFERENCES person (ident),
     tilstand     TEXT                                                              NOT NULL,
     opprettet    TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'::TEXT) NOT NULL,
     dato         DATE                                                              NOT NULL,
