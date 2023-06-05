@@ -15,9 +15,13 @@ import io.ktor.http.contentType
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
+import no.nav.dagpenger.rapportering.Mediator
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
 import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
+import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
+import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import org.junit.jupiter.api.Test
@@ -112,6 +116,9 @@ class RapporteringApiTest {
             ).let { response ->
                 response.status shouldBe HttpStatusCode.Created
                 "${response.contentType()}" shouldContain "application/json"
+                verify {
+                    mediatorMock.behandle(any<NyAktivitetHendelse>())
+                }
             }
         }
     }
@@ -125,10 +132,15 @@ class RapporteringApiTest {
                 httpMethod = HttpMethod.Delete,
             ).let { response ->
                 response.status shouldBe HttpStatusCode.NoContent
+                verify {
+                    mediatorMock.behandle(any<SlettAktivitetHendelse>())
+                }
             }
         }
     }
 }
+
+private val mediatorMock = mockk<Mediator>(relaxed = true)
 
 private fun withRapporteringApi(
     rapporteringsperioder: List<Rapporteringsperiode> = emptyList(),
@@ -142,7 +154,7 @@ private fun withRapporteringApi(
                     every { hentRapporteringsperioder(defaultDummyFodselsnummer) } answers { rapporteringsperioder }
                     every { hentRapporteringsperiode(defaultDummyFodselsnummer, any()) } answers { rapporteringsperioder.single() }
                 },
-                mockk(relaxed = true),
+                mediatorMock,
             )
         },
         test = test,
