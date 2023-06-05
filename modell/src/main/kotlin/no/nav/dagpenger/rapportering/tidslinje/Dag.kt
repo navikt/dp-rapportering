@@ -22,7 +22,7 @@ class Dag(
         val eldsteDagFørst = Comparator<Dag> { a, b -> a.dato.compareTo(b.dato) }
     }
 
-    private val muligeAktiviteter = if (aktiviteter.isEmpty()) listOf(Arbeid, Syk, Ferie) else emptyList()
+    private val muligeAktiviteter get() = if (aktiviteter.isEmpty()) listOf(Arbeid, Syk, Ferie) else emptyList()
     private val rapporteringspliktig get() = harRapporteringslikt || erHelligdag
     private val erHelligdag: Boolean
         get() = Kalender.erHelligdag(dato)
