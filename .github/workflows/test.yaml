@@ -1,0 +1,24 @@
+name: Test Dependabot PRs
+
+on:
+  push:
+    branches:
+      - 'dependabot/**'
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 19
+
+      - uses: gradle/gradle-build-action@v2.4.2
+        with:
+          arguments: --configuration-cache test
