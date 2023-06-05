@@ -33,7 +33,7 @@ sealed class Aktivitet(
             }
 
             return when (AktivitetType.valueOf(type)) {
-                AktivitetType.Arbeid -> Arbeid(uuid, dato, tid!!, rehydrertTilstand)
+                AktivitetType.Arbeid -> Arbeid(dato, tid!!, uuid, rehydrertTilstand)
                 AktivitetType.Syk -> Syk(dato, uuid, rehydrertTilstand)
                 AktivitetType.Ferie -> Ferie(dato, uuid, rehydrertTilstand)
             }
@@ -79,22 +79,22 @@ sealed class Aktivitet(
     }
 
     class Arbeid internal constructor(
-        uuid: UUID = UUID.randomUUID(),
         dato: LocalDate,
         arbeidstimer: Duration,
+        uuid: UUID = UUID.randomUUID(),
         tilstand: Tilstand = Åpen,
     ) : Aktivitet(dato, arbeidstimer, AktivitetType.Arbeid, uuid, tilstand) {
         constructor(dato: LocalDate, arbeidstimer: String) : this(
-            UUID.randomUUID(),
             dato,
             Duration.parseIsoString(arbeidstimer),
+            UUID.randomUUID(),
             Åpen,
         )
 
         constructor(dato: LocalDate, arbeidstimer: Int) : this(
-            UUID.randomUUID(),
             dato,
             Duration.parseIsoString("PT${arbeidstimer}H"),
+            UUID.randomUUID(),
             Åpen,
         )
     }
