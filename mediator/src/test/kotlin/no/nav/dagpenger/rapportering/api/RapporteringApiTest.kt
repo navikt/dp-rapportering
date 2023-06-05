@@ -13,11 +13,12 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.testing.ApplicationTestBuilder
+import io.mockk.every
 import io.mockk.mockk
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
 import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
-import no.nav.dagpenger.rapportering.repository.InMemoryRapporteringsperiodeRepository
+import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -131,15 +132,15 @@ class RapporteringApiTest {
 
 private fun withRapporteringApi(
     rapporteringsperioder: List<Rapporteringsperiode> = emptyList(),
-    aktiviteter: List<Aktivitet> = emptyList(),
     test: suspend ApplicationTestBuilder.() -> Unit,
 ) {
     TestApplication.withMockAuthServerAndTestApplication(
         moduleFunction = {
             konfigurasjon()
             rapporteringApi(
-                InMemoryRapporteringsperiodeRepository {
-                    hent(defaultDummyFodselsnummer).addAll(rapporteringsperioder)
+                mockk<RapporteringsperiodeRepository>().apply {
+                    every { hentRapporteringsperioder(defaultDummyFodselsnummer) } answers { rapporteringsperioder }
+                    every { hentRapporteringsperiode(defaultDummyFodselsnummer, any()) } answers { rapporteringsperioder.single() }
                 },
                 mockk(relaxed = true),
             )
