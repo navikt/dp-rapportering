@@ -70,6 +70,14 @@ class Rapporteringsperiode private constructor(
             opprettet,
             tidslinje,
         )
+
+        fun List<Rapporteringsperiode>.hentGjeldende(dato: LocalDate = LocalDate.now()): Rapporteringsperiode? {
+            return this.filter {
+                it.gjelderFor(dato)
+            }.singleOrNull {
+                it.tilstand == TilUtfylling
+            }
+        }
     }
 
     fun gjelderFor(dato: LocalDate) = dato in periode

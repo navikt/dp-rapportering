@@ -17,6 +17,7 @@ import no.nav.dagpenger.rapportering.DagVisitor
 import no.nav.dagpenger.rapportering.IHendelseMediator
 import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.Rapporteringsperiode.Companion.hentGjeldende
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Innsendt
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.TilUtfylling
@@ -66,7 +67,7 @@ internal fun Application.rapporteringApi(
                 route("/gjeldende") {
                     get {
                         val rapporteringsperiode =
-                            rapporteringsperiodeRepository.hentRapporteringsperiodeFor(call.ident(), LocalDate.now())
+                            rapporteringsperiodeRepository.hentRapporteringsperioder(call.ident()).hentGjeldende()
                                 ?.let { RapporteringsperiodeMapper(it).dto }
                                 ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
 
