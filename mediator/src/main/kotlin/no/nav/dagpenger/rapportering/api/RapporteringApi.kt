@@ -137,8 +137,7 @@ private fun AktivitetInputDTO.toAktivitet() =
     when (type) {
         AktivitetTypeDTO.Arbeid -> Aktivitet.Arbeid(
             dato = dato,
-            arbeidstimer = timer?.toDouble()
-                ?: throw IllegalArgumentException("Må ha antall arbeidstimer"),
+            arbeidstimer = timer ?: throw IllegalArgumentException("Må ha antall arbeidstimer"),
         )
 
         AktivitetTypeDTO.Syk -> Aktivitet.Syk(

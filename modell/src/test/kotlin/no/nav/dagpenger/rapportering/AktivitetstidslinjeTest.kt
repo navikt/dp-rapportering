@@ -23,12 +23,12 @@ class AktivitetstidslinjeTest {
         tidslinje.leggTilFritak(8.januar, 9.januar, 10.januar)
         // Kan ikke rapportere aktivitet på dager uten rapporteringsplikt
         assertThrows<IllegalStateException> {
-            tidslinje.leggTilAktivitet(Arbeid(8.januar, 3))
+            tidslinje.leggTilAktivitet(Arbeid(8.januar, "PT3H"))
         }
         // Legg til aktiviteter
-        tidslinje.leggTilAktivitet(Arbeid(3.januar, 4.2))
-        tidslinje.leggTilAktivitet(Arbeid(4.januar, 2.2))
-        tidslinje.leggTilAktivitet(Arbeid(4.januar, 4.2))
+        tidslinje.leggTilAktivitet(Arbeid(3.januar, "PT3H20M"))
+        tidslinje.leggTilAktivitet(Arbeid(4.januar, "PT2H30M"))
+        tidslinje.leggTilAktivitet(Arbeid(4.januar, "PT4H25M"))
         tidslinje.leggTilAktivitet(Syk(5.januar))
         tidslinje.leggTilAktivitet(Ferie(6.januar))
 

@@ -42,7 +42,7 @@ class PersonTest {
         person.behandle(
             nyAktivitetHendelse(
                 rapporteringsperiodeId,
-                Aktivitet.Arbeid(LocalDate.now().plusDays(5), 3.2),
+                Aktivitet.Arbeid(LocalDate.now().plusDays(5), "PT3H20M"),
             ),
         )
         person.behandle(

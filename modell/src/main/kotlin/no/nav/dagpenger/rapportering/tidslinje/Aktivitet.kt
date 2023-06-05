@@ -5,7 +5,6 @@ import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.hours
 
 sealed class Aktivitet(
     val dato: LocalDate,
@@ -85,10 +84,17 @@ sealed class Aktivitet(
         arbeidstimer: Duration,
         tilstand: Tilstand = Åpen,
     ) : Aktivitet(dato, arbeidstimer, AktivitetType.Arbeid, uuid, tilstand) {
-        constructor(dato: LocalDate, arbeidstimer: Number) : this(
+        constructor(dato: LocalDate, arbeidstimer: String) : this(
             UUID.randomUUID(),
             dato,
-            arbeidstimer.toDouble().hours,
+            Duration.parseIsoString(arbeidstimer),
+            Åpen,
+        )
+
+        constructor(dato: LocalDate, arbeidstimer: Int) : this(
+            UUID.randomUUID(),
+            dato,
+            Duration.parseIsoString("PT${arbeidstimer}H"),
             Åpen,
         )
     }

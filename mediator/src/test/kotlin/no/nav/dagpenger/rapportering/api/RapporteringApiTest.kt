@@ -107,7 +107,7 @@ class RapporteringApiTest {
                 endepunkt = "/rapporteringsperioder/$testPeriodeId/aktivitet",
                 httpMethod = HttpMethod.Post,
                 //language=JSON
-                body = """{"type": "Arbeid", "dato": "2023-05-16", "timer": "7" }""",
+                body = """{"type": "Arbeid", "dato": "2023-05-16", "timer": "PT7H" }""",
             ).let { response ->
                 response.status shouldBe HttpStatusCode.Created
                 "${response.contentType()}" shouldContain "application/json"
