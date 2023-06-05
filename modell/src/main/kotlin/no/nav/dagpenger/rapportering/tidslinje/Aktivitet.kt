@@ -112,8 +112,8 @@ sealed class Aktivitet(
     }
 
     class Syk(dato: LocalDate, uuid: UUID = UUID.randomUUID(), tilstand: Tilstand = Åpen) :
-        Aktivitet(dato, Duration.INFINITE, AktivitetType.Syk, uuid, tilstand)
+        Aktivitet(dato, Duration.ZERO, AktivitetType.Syk, uuid, tilstand)
 
     class Ferie(dato: LocalDate, uuid: UUID = UUID.randomUUID(), tilstand: Tilstand = Åpen) :
-        Aktivitet(dato, Duration.INFINITE, AktivitetType.Ferie, uuid, tilstand)
+        Aktivitet(dato, Duration.ZERO, AktivitetType.Ferie, uuid, tilstand)
 }
