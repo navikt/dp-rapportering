@@ -6,6 +6,7 @@ import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 
 sealed class Aktivitet(
     val dato: LocalDate,
@@ -112,8 +113,8 @@ sealed class Aktivitet(
     }
 
     class Syk(dato: LocalDate, uuid: UUID = UUID.randomUUID(), tilstand: Tilstand = Åpen) :
-        Aktivitet(dato, Duration.ZERO, AktivitetType.Syk, uuid, tilstand)
+        Aktivitet(dato, 1.days, AktivitetType.Syk, uuid, tilstand)
 
     class Ferie(dato: LocalDate, uuid: UUID = UUID.randomUUID(), tilstand: Tilstand = Åpen) :
-        Aktivitet(dato, Duration.ZERO, AktivitetType.Ferie, uuid, tilstand)
+        Aktivitet(dato, 1.days, AktivitetType.Ferie, uuid, tilstand)
 }
