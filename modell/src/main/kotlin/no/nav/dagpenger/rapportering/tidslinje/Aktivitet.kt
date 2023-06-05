@@ -50,6 +50,7 @@ sealed class Aktivitet(
     }
 
     fun håndter(hendelse: SlettAktivitetHendelse) {
+        if (hendelse.aktivitetId == uuid) return
         tilstand.behandle(hendelse, this)
     }
 
