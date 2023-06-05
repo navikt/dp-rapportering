@@ -20,6 +20,7 @@ import no.nav.dagpenger.rapportering.Mediator
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
 import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
+import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
@@ -91,7 +92,7 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `Skal kunne ferdigstille en rapporteringsperiode`() {
+    fun `Skal kunne godkjenne en rapporteringsperiode`() {
         withRapporteringApi(
             rapporteringsperioder = listOf(testPeriode),
         ) {
@@ -101,6 +102,9 @@ class RapporteringApiTest {
             }.also { response ->
                 response.status shouldBe HttpStatusCode.Created
                 "${response.contentType()}" shouldContain "application/json"
+                verify {
+                    mediatorMock.behandle(any<GodkjennPeriodeHendelse>())
+                }
             }
         }
     }

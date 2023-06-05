@@ -1,7 +1,6 @@
 package no.nav.dagpenger.rapportering.hendelser
 
 import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
-import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import java.util.UUID
 
 class GodkjennPeriodeHendelse(
@@ -13,5 +12,5 @@ class GodkjennPeriodeHendelse(
     ident,
     Aktivitetslogg(),
 ) {
-    internal var aktivitetstidslinje = Aktivitetstidslinje()
+    constructor(ident: String, rapporteringId: UUID) : this(UUID.randomUUID(), ident, rapporteringId)
 }

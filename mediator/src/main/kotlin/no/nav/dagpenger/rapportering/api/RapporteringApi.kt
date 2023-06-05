@@ -27,6 +27,7 @@ import no.nav.dagpenger.rapportering.api.models.AktivitetInputDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDagerInnerDTO
+import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
@@ -90,17 +91,13 @@ internal fun Application.rapporteringApi(
 
                     route("/godkjenn") {
                         post {
-                            call.parameters["periodeId"]?.let {
-                                UUID.fromString(it)
-                            }
-                            val dto = rapporteringsperiodeRepository.hentRapporteringsperiode(
+                            mediator.behandle(GodkjennPeriodeHendelse(call.ident(), call.finnUUID("periodeId")))
+                            val periode = rapporteringsperiodeRepository.hentRapporteringsperiode(
                                 call.ident(),
                                 call.finnUUID("periodeId"),
-                            )?.let { RapporteringsperiodeMapper(it).dto }
-                                ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
-                            val godkjent = dto.copy(status = RapporteringsperiodeDTO.Status.Godkjent)
+                            )!!.let { RapporteringsperiodeMapper(it).dto }
 
-                            call.respond(HttpStatusCode.Created, godkjent)
+                            call.respond(HttpStatusCode.Created, periode)
                         }
                     }
 

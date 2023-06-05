@@ -1,10 +1,13 @@
 package no.nav.dagpenger.rapportering
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import no.nav.dagpenger.rapportering.db.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.dataSource
+import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
+import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.repository.PostgresRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
@@ -27,7 +30,6 @@ class MediatorTest {
 
         hendelse.aktivitetsteller() shouldBe 2
         hendelse.harAktiviteter() shouldBe true
-
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiode
         mediator.behandle(NyAktivitetHendelse(testIdent, rapporteringsperiodeId, Aktivitet.Arbeid(LocalDate.now(), 2)))
@@ -35,8 +37,42 @@ class MediatorTest {
         mediator.hentEllerOpprettPerson(testIdent).antallAktiviteter shouldBe 1
     }
 
+    @Test
+    fun `kan ikke endre på godkjent periode`() = withMigratedDb {
+        val mediator = Mediator(mockk(), PostgresRepository(dataSource))
+        val testIdent = "12312312311"
+        val hendelse = SøknadInnsendtHendelse(
+            UUID.randomUUID(),
+            testIdent,
+        )
+
+        mediator.behandle(hendelse)
+        val person = mediator.hentEllerOpprettPerson(testIdent)
+        val rapporteringsperiodeId = person.aktivRapporteringsperiode
+        mediator.behandle(NyAktivitetHendelse(testIdent, rapporteringsperiodeId, Aktivitet.Arbeid(LocalDate.now(), 2)))
+
+        mediator.hentEllerOpprettPerson(testIdent).antallAktiviteter shouldBe 1
+
+        mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))
+
+        shouldThrow<IllegalStateException> {
+            mediator.behandle(
+                NyAktivitetHendelse(
+                    testIdent,
+                    rapporteringsperiodeId,
+                    Aktivitet.Arbeid(LocalDate.now(), 2),
+                ),
+            )
+        }
+        val sisteAktivitet = mediator.hentEllerOpprettPerson(testIdent).sisteAktivitet
+        shouldThrow<IllegalStateException> {
+            mediator.behandle(SlettAktivitetHendelse(testIdent, rapporteringsperiodeId, sisteAktivitet.uuid))
+        }
+    }
+
     private val Person.aktivRapporteringsperiode get() = TestVisitor(this).rapporteringsperioder.last().rapporteringsperiodeId
     private val Person.antallAktiviteter get() = TestVisitor(this).aktiviteter.size
+    private val Person.sisteAktivitet get() = TestVisitor(this).aktiviteter.last()
 
     private class TestVisitor(person: Person) : PersonVisitor {
         val rapporteringsperioder = mutableListOf<Rapporteringsperiode>()

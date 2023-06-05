@@ -3,7 +3,12 @@ package no.nav.dagpenger.rapportering.api
 import `in`.specmatic.test.SpecmaticJUnitSupport
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.ApplicationEngine
+import no.nav.dagpenger.rapportering.Mediator
+import no.nav.dagpenger.rapportering.db.Postgres.withMigratedDb
+import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder
+import no.nav.dagpenger.rapportering.repository.PostgresRepository
 import no.nav.helse.rapids_rivers.KtorBuilder
+import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Disabled
@@ -15,14 +20,18 @@ object SpecmaticTest : SpecmaticJUnitSupport() {
     @BeforeAll
     @JvmStatic
     fun setUp() {
-        System.setProperty("host", "localhost")
-        System.setProperty("port", "8081")
-        System.setProperty("endpointsAPI", "http://0.0.0.0:8081/")
+        withMigratedDb {
+            System.setProperty("host", "localhost")
+            System.setProperty("port", "8081")
+            System.setProperty("endpointsAPI", "http://0.0.0.0:8081/")
 
-        System.setProperty("SPECMATIC_GENERATIVE_TESTS", "true")
-        server = KtorBuilder().port(8081).module {
-            konfigurasjon()
-        }.build(CIO).start()
+            System.setProperty("SPECMATIC_GENERATIVE_TESTS", "true")
+            val rapporteringsperiodeRepository = PostgresRepository(PostgresDataSourceBuilder.dataSource)
+            server = KtorBuilder().port(8081).module {
+                konfigurasjon()
+                rapporteringApi(rapporteringsperiodeRepository, Mediator(TestRapid(), rapporteringsperiodeRepository))
+            }.build(CIO).start()
+        }
     }
 
     @AfterAll

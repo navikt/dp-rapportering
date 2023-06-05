@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering
 
 import mu.KotlinLogging
+import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
@@ -28,6 +29,12 @@ internal class Mediator(
     }
 
     override fun behandle(hendelse: SlettAktivitetHendelse) {
+        hentPersonOgHåndter(hendelse.ident(), hendelse) { person ->
+            person.behandle(hendelse)
+        }
+    }
+
+    override fun behandle(hendelse: GodkjennPeriodeHendelse) {
         hentPersonOgHåndter(hendelse.ident(), hendelse) { person ->
             person.behandle(hendelse)
         }
