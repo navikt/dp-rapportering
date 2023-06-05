@@ -2,7 +2,6 @@ package no.nav.dagpenger.rapportering.tidslinje
 
 import no.nav.dagpenger.rapportering.AktivitetstidslinjeVisitor
 import java.time.LocalDate
-import java.util.UUID
 
 data class Aktivitetstidslinje internal constructor(
     private val dager: MutableSet<Dag> = mutableSetOf(),
@@ -27,8 +26,6 @@ data class Aktivitetstidslinje internal constructor(
 
     fun leggTilAktivitet(aktivitet: Aktivitet) =
         this.single { it.sammenfallerMed(aktivitet.dato) }.leggTilAktivitet(aktivitet)
-
-    fun slettAktivitet(aktivitetId: UUID) = dager.forEach { it.slettAktivitet(aktivitetId) }
 
     fun accept(visitor: AktivitetstidslinjeVisitor) {
         visitor.preVisit(this)

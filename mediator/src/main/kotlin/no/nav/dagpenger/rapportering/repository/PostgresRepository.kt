@@ -225,6 +225,16 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
         type: AktivitetType,
         tilstand: Aktivitet.TilstandType,
     ) {
+        if (tilstand == Aktivitet.TilstandType.Slettet) {
+            queries.add(
+                queryOf(
+                    //language=PostgreSQL
+                    statement = """DELETE FROM aktivitet WHERE uuid=:uuid""",
+                    paramMap = mapOf("uuid" to uuid),
+                ),
+            )
+            return
+        }
         queries.add(
             queryOf(
                 //language=PostgreSQL

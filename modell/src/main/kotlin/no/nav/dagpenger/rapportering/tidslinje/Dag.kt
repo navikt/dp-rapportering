@@ -5,11 +5,11 @@ import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.rapportering.DagVisitor
 import no.nav.dagpenger.rapportering.Kalender
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Arbeid
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Ferie
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Syk
 import java.time.LocalDate
-import java.util.UUID
 
 class Dag(
     internal val dato: LocalDate,
@@ -39,10 +39,6 @@ class Dag(
         return aktiviteter.add(aktivitet)
     }
 
-    fun slettAktivitet(aktivitetId: UUID): Boolean {
-        return aktiviteter.removeIf { it.uuid == aktivitetId && it.kanSlettes }
-    }
-
     fun gyldig() = true
 
     fun harAktivitet() = aktiviteter.isNotEmpty()
@@ -51,6 +47,11 @@ class Dag(
     }
 
     fun håndter(hendelse: GodkjennPeriodeHendelse) {
+        hendelse.kontekst(this)
+        aktiviteter.forEach { it.håndter(hendelse) }
+    }
+
+    fun håndter(hendelse: SlettAktivitetHendelse) {
         hendelse.kontekst(this)
         aktiviteter.forEach { it.håndter(hendelse) }
     }

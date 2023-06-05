@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.tidslinje
 
 import no.nav.dagpenger.rapportering.AktivitetVisitor
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.time.Duration
@@ -30,6 +31,7 @@ sealed class Aktivitet(
             val rehydrertTilstand = when (TilstandType.valueOf(tilstand)) {
                 TilstandType.Åpen -> Åpen
                 TilstandType.Låst -> Låst
+                TilstandType.Slettet -> throw IllegalStateException("Skal aldri rehydrere en slettet aktivitet")
             }
 
             return when (AktivitetType.valueOf(type)) {
@@ -46,10 +48,12 @@ sealed class Aktivitet(
         tilstand.behandle(hendelse, this)
     }
 
-    val kanSlettes = tilstand.kanSlettes
+    fun håndter(hendelse: SlettAktivitetHendelse) {
+        tilstand.behandle(hendelse, this)
+    }
 
     enum class TilstandType {
-        Åpen, Låst,
+        Åpen, Låst, Slettet
     }
 
     interface Tilstand {
@@ -58,7 +62,9 @@ sealed class Aktivitet(
             throw IllegalStateException("Kan ikke håndtere ${hendelse::class.java.simpleName} i denne tilstanden")
         }
 
-        val kanSlettes: Boolean get() = false
+        fun behandle(hendelse: SlettAktivitetHendelse, aktivitet: Aktivitet) {
+            throw IllegalStateException("Kan ikke håndtere ${hendelse::class.java.simpleName} i denne tilstanden")
+        }
     }
 
     private object Åpen : Tilstand {
@@ -67,11 +73,17 @@ sealed class Aktivitet(
             aktivitet.tilstand = Låst
         }
 
-        override val kanSlettes = true
+        override fun behandle(hendelse: SlettAktivitetHendelse, aktivitet: Aktivitet) {
+            aktivitet.tilstand = Slettet
+        }
     }
 
     private object Låst : Tilstand {
         override val type = TilstandType.Låst
+    }
+
+    private object Slettet : Tilstand {
+        override val type = TilstandType.Slettet
     }
 
     fun accept(visitor: AktivitetVisitor) {

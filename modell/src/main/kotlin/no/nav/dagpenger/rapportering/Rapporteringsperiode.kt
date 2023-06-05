@@ -172,7 +172,7 @@ class Rapporteringsperiode private constructor(
 
         override fun behandle(hendelse: SlettAktivitetHendelse, rapporteringsperiode: Rapporteringsperiode) {
             hendelse.kontekst(this)
-            rapporteringsperiode.tidslinje.slettAktivitet(hendelse.aktivitetId)
+            rapporteringsperiode.tidslinje.forEach { it.håndter(hendelse) }
         }
     }
 

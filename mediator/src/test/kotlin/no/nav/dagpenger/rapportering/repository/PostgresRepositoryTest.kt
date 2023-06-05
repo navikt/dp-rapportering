@@ -9,12 +9,14 @@ import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.db.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
+import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.UUID
+import kotlin.time.Duration
 
 class PostgresRepositoryTest {
     private val testIdent = "12345678910"
@@ -53,7 +55,13 @@ class PostgresRepositoryTest {
             val repository = PostgresRepository(dataSource)
             val person = Person(testIdent).apply {
                 behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent))
-                behandle(NyAktivitetHendelse(testIdent, aktivRapporteringsperiodeId, Aktivitet.Arbeid(LocalDate.now(), 2)))
+                behandle(
+                    NyAktivitetHendelse(
+                        testIdent,
+                        aktivRapporteringsperiodeId,
+                        Aktivitet.Arbeid(LocalDate.now(), 2),
+                    ),
+                )
             }
             repository.lagre(person)
 
@@ -71,9 +79,48 @@ class PostgresRepositoryTest {
         }
     }
 
+    @Test
+    fun `kan slette en aktivitet`() {
+        withMigratedDb {
+            val repository = PostgresRepository(dataSource)
+            val person = Person(testIdent).apply {
+                behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent))
+                behandle(
+                    NyAktivitetHendelse(
+                        testIdent,
+                        aktivRapporteringsperiodeId,
+                        Aktivitet.Arbeid(LocalDate.now(), 2),
+                    ),
+                )
+            }
+            repository.lagre(person)
+
+            person.antallAktiviteter shouldBe 1
+
+            repository.hentEllerOpprettPerson(testIdent).let { lagretPerson ->
+                lagretPerson.behandle(
+                    SlettAktivitetHendelse(
+                        testIdent,
+                        lagretPerson.aktivRapporteringsperiodeId,
+                        lagretPerson.aktivitetId,
+                    ),
+                )
+
+                repository.lagre(lagretPerson)
+            }
+
+            repository.hentEllerOpprettPerson(testIdent).let { lagretPerson ->
+                lagretPerson.antallAktiviteter shouldBe 0
+            }
+        }
+    }
+
     private val Person.aktivRapporteringsperiodeId get() = TestVisitor(this).rapporteringsperioder.last().rapporteringsperiodeId
+    private val Person.aktivitetId get() = TestVisitor(this).aktivAktivitetId
+    private val Person.antallAktiviteter get() = TestVisitor(this).aktiviteter.size
 
     private class TestVisitor(person: Person) : PersonVisitor {
+        lateinit var aktivAktivitetId: UUID
         val rapporteringsperioder = mutableListOf<Rapporteringsperiode>()
         val aktiviteter = mutableListOf<Aktivitet>()
 
@@ -98,6 +145,17 @@ class PostgresRepositoryTest {
             muligeAktiviter: List<Aktivitet.AktivitetType>,
         ) {
             this.aktiviteter += aktiviteter
+        }
+
+        override fun visit(
+            aktivitet: Aktivitet,
+            uuid: UUID,
+            dato: LocalDate,
+            tid: Duration,
+            type: Aktivitet.AktivitetType,
+            tilstand: Aktivitet.TilstandType,
+        ) {
+            aktivAktivitetId = uuid
         }
     }
 }
