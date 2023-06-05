@@ -91,7 +91,6 @@ internal class PostgresRepository(private val ds: DataSource) :
                 val queries = LagrePersonStatementBuilder(person).queries
                 queries.forEach { query ->
                     tx.run(query.asUpdate)
-                    println(query)
                 }
             }
         }
