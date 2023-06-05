@@ -200,7 +200,7 @@ class Rapporteringsperiode private constructor(
         override val type = TilstandType.Godkjent
         override fun behandle(hendelse: RapporteringsfristHendelse, rapporteringsperiode: Rapporteringsperiode) {
             if (rapporteringsperiode.rapporteringsfrist.isAfter(hendelse.rapporteringsfrist)) return
-
+            // TODO: Sjekk at perioden overlapper med et gyldig vedtak
             hendelse.kontekst(this)
             hendelse.info("Sender inn godkjent periode", mapOf("rapporteringsfrist" to hendelse.rapporteringsfrist))
 
