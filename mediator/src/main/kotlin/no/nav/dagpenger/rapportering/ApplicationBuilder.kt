@@ -3,8 +3,8 @@ package no.nav.dagpenger.rapportering
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.api.konfigurasjon
 import no.nav.dagpenger.rapportering.api.rapporteringApi
-import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.dataSource
+import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.runMigration
 import no.nav.dagpenger.rapportering.repository.PostgresRepository
 import no.nav.dagpenger.rapportering.tjenester.SøknadMottak
 import no.nav.helse.rapids_rivers.RapidApplication
@@ -33,8 +33,10 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
     }
 
     override fun onStartup(rapidsConnection: RapidsConnection) {
-        PostgresDataSourceBuilder.runMigration()
+        runMigration()
         logger.info { "Starter appen ${Configuration.appName}" }
+
+        Innsendingsjobb.start(mediator)
     }
 
     override fun onShutdown(rapidsConnection: RapidsConnection) {

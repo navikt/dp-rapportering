@@ -6,12 +6,14 @@ import no.nav.dagpenger.aktivitetslogg.Subaktivitetskontekst
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 
 class Person private constructor(
     val ident: String,
     private val rapporteringsperioder: MutableList<Rapporteringsperiode>,
+    // private val rapporteringsplikt: Rapporteringsplikt,
     override val aktivitetslogg: Aktivitetslogg,
 ) : Subaktivitetskontekst, RapporteringsperiodeObserver {
     private val observers = mutableListOf<PersonObserver>()
@@ -32,6 +34,10 @@ class Person private constructor(
         rapporteringsperioder.toMutableList(),
         Aktivitetslogg(),
     )
+
+    init {
+        rapporteringsperioder.forEach { it.registrer(this) }
+    }
 
     fun behandle(hendelse: SøknadInnsendtHendelse) {
         hendelse.kontekst(this)
@@ -85,6 +91,10 @@ class Person private constructor(
             .behandle(hendelse)
     }
 
+    fun behandle(hendelse: RapporteringsfristHendelse) {
+        rapporteringsperioder.forEach { it.behandle(hendelse) }
+    }
+
     fun registrer(observer: PersonObserver) {
         observers.add(observer)
     }
@@ -94,8 +104,8 @@ class Person private constructor(
     }
 
     override fun toSpesifikkKontekst() = SpesifikkKontekst("person", mapOf("ident" to ident))
-
     override fun equals(other: Any?) = other is Person && this.ident == other.ident
+
     override fun hashCode() = this.ident.hashCode()
 
     fun accept(visitor: PersonVisitor) {

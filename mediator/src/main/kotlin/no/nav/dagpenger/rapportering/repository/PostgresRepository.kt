@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.Person
 import no.nav.dagpenger.rapportering.PersonVisitor
 import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
@@ -94,6 +95,20 @@ internal class PostgresRepository(private val ds: DataSource) :
                 }
             }
         }
+    }
+
+    override fun hentIdenterMedGodkjentPeriode() = using(sessionOf(ds)) { session ->
+        session.run(
+            queryOf(
+                //language=PostgreSQL
+                statement = """SELECT ident FROM person LEFT JOIN rapporteringsperiode r ON person.ident = r.person_ident WHERE r.tilstand=:tilstand""",
+                paramMap = mapOf(
+                    "tilstand" to Godkjent.name,
+                ),
+            ).map { row ->
+                row.string("ident")
+            }.asList,
+        )
     }
 
     private fun insertPerson(ident: String) {

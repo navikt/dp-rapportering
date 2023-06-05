@@ -8,6 +8,7 @@ import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
@@ -130,6 +131,12 @@ class Rapporteringsperiode private constructor(
         return true
     }
 
+    fun behandle(hendelse: RapporteringsfristHendelse) {
+        hendelse.kontekst(this)
+
+        tilstand.behandle(hendelse, this)
+    }
+
     private sealed interface Rapporteringsperiodetilstand : Aktivitetskontekst {
         val type: TilstandType
 
@@ -151,6 +158,10 @@ class Rapporteringsperiode private constructor(
 
         fun behandle(hendelse: SlettAktivitetHendelse, rapporteringsperiode: Rapporteringsperiode) {
             throw IllegalStateException("Forventet ikke sletting av aktivitet i tilstand ${type.name}")
+        }
+
+        fun behandle(hendelse: RapporteringsfristHendelse, rapporteringsperiode: Rapporteringsperiode) {
+            // noop
         }
 
         fun leaving(rapporteringsperiode: Rapporteringsperiode, hendelse: IAktivitetslogg) {}
@@ -187,6 +198,14 @@ class Rapporteringsperiode private constructor(
     // Bruker har godkjent, men ikke sendt videre
     private object Godkjent : Rapporteringsperiodetilstand {
         override val type = TilstandType.Godkjent
+        override fun behandle(hendelse: RapporteringsfristHendelse, rapporteringsperiode: Rapporteringsperiode) {
+            if (rapporteringsperiode.rapporteringsfrist.isAfter(hendelse.rapporteringsfrist)) return
+
+            hendelse.kontekst(this)
+            hendelse.info("Sender inn godkjent periode", mapOf("rapporteringsfrist" to hendelse.rapporteringsfrist))
+
+            rapporteringsperiode.tilstand(hendelse, Innsendt)
+        }
     }
 
     // En eller annen hendelse (vedtak fattet eller rapporteringsfrist passert) sender perioden videre

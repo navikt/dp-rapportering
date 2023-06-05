@@ -1,11 +1,14 @@
 package no.nav.dagpenger.rapportering
 
+import io.kotest.matchers.shouldBe
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
+import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Innsendt
 import no.nav.dagpenger.rapportering.helpers.TestData.godkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.nyAktivitetHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.søknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.testIdent
 import no.nav.dagpenger.rapportering.helpers.TestData.testPerson
+import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
@@ -72,6 +75,13 @@ class PersonTest {
         assertThrows<IllegalStateException> {
             person.behandle(hendelse)
         }
+
+        observer.tilstand shouldBe Godkjent.name
+
+        val fristHendelse = RapporteringsfristHendelse(UUID.randomUUID(), testIdent, LocalDate.now().plusDays(14))
+        person.behandle(fristHendelse)
+
+        observer.tilstand shouldBe Innsendt.name
 
         println(person)
     }
