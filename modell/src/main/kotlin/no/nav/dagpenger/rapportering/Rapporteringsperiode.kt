@@ -25,6 +25,8 @@ internal class Meldeprivate constructor() : Aktivitetskontekst {
     }
 }
 
+private const val RAPPORTERINGSPERIODE_LENGDE = 14L
+
 class Rapporteringsperiode private constructor(
     val rapporteringsperiodeId: UUID,
     private val rapporteringsfrist: LocalDate,
@@ -40,7 +42,7 @@ class Rapporteringsperiode private constructor(
 
     internal constructor(
         fom: LocalDate,
-        tom: LocalDate = fom.plusDays(14),
+        tom: LocalDate = fom.plusDays(RAPPORTERINGSPERIODE_LENGDE - 1),
     ) : this(
         rapporteringsperiodeId = UUID.randomUUID(),
         rapporteringsfrist = tom,

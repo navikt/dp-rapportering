@@ -93,9 +93,10 @@ class PostgresRepositoryTest {
                     ),
                 )
             }
-            repository.lagre(person)
-
+            person.antallDager shouldBe 14
             person.antallAktiviteter shouldBe 1
+
+            repository.lagre(person)
 
             repository.hentEllerOpprettPerson(testIdent).let { lagretPerson ->
                 lagretPerson.behandle(
@@ -111,6 +112,7 @@ class PostgresRepositoryTest {
 
             repository.hentEllerOpprettPerson(testIdent).let { lagretPerson ->
                 lagretPerson.antallAktiviteter shouldBe 0
+                lagretPerson.antallDager shouldBe 14
             }
         }
     }
@@ -118,11 +120,13 @@ class PostgresRepositoryTest {
     private val Person.aktivRapporteringsperiodeId get() = TestVisitor(this).rapporteringsperioder.last().rapporteringsperiodeId
     private val Person.aktivitetId get() = TestVisitor(this).aktivAktivitetId
     private val Person.antallAktiviteter get() = TestVisitor(this).aktiviteter.size
+    private val Person.antallDager get() = TestVisitor(this).dager.size
 
     private class TestVisitor(person: Person) : PersonVisitor {
         lateinit var aktivAktivitetId: UUID
         val rapporteringsperioder = mutableListOf<Rapporteringsperiode>()
         val aktiviteter = mutableListOf<Aktivitet>()
+        val dager = mutableListOf<Dag>()
 
         init {
             person.accept(this)
@@ -145,6 +149,7 @@ class PostgresRepositoryTest {
             muligeAktiviter: List<Aktivitet.AktivitetType>,
         ) {
             this.aktiviteter += aktiviteter
+            this.dager += dag
         }
 
         override fun visit(

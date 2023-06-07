@@ -5,6 +5,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.AuthenticationConfig
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -14,7 +15,7 @@ import no.nav.dagpenger.rapportering.serialisering.Jackson.config
 import org.slf4j.event.Level
 import java.util.UUID
 
-fun Application.konfigurasjon() {
+fun Application.konfigurasjon(auth: AuthenticationConfig.() -> Unit = { jwt("tokenX") { tokenX() } }) {
     install(CallLogging) {
         disableDefaultColors()
         filter {
@@ -29,9 +30,7 @@ fun Application.konfigurasjon() {
     }
 
     install(Authentication) {
-        jwt("tokenX") {
-            tokenX()
-        }
+        auth()
     }
 }
 
