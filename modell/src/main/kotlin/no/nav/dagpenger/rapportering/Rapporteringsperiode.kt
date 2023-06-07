@@ -205,6 +205,7 @@ class Rapporteringsperiode private constructor(
             hendelse.info("Sender inn godkjent periode", mapOf("rapporteringsfrist" to hendelse.rapporteringsfrist))
 
             rapporteringsperiode.tilstand(hendelse, Innsendt)
+            rapporteringsperiode.emitVedtaksperiodeGodkjent(hendelse)
         }
     }
 
@@ -244,6 +245,17 @@ class Rapporteringsperiode private constructor(
         )
 
         observers.forEach { it.rapporteringsperiodeEndret(event) }
+    }
+
+    private fun emitVedtaksperiodeGodkjent(hendelse: RapporteringsfristHendelse) {
+        val event = RapporteringsperiodeObserver.RapporteringsperiodeInnsendt(
+            rapporteringsperiodeId = rapporteringsperiodeId,
+            fom = periode.start,
+            tom = periode.endInclusive,
+            dager = this.tidslinje.toList(),
+        )
+
+        observers.forEach { it.rapporteringsperiodeInnsendt(event) }
     }
 
     override fun toSpesifikkKontekst() = SpesifikkKontekst(
