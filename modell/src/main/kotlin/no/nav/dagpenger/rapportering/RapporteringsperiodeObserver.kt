@@ -8,7 +8,7 @@ import java.util.UUID
 interface PersonObserver : RapporteringsperiodeObserver
 interface RapporteringsperiodeObserver {
     fun rapporteringsperiodeEndret(event: RapporteringsperiodeEndret)
-    fun rapporteringsperiodeInnsendt(event: RapporteringsperiodeInnsendt) {}
+    fun rapporteringsperiodeInnsendt(event: RapporteringsperiodeInnsendt)
 
     data class RapporteringsperiodeEndret(
         // val ident: String,

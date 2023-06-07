@@ -103,6 +103,10 @@ class Person private constructor(
         observers.forEach { it.rapporteringsperiodeEndret(event) }
     }
 
+    override fun rapporteringsperiodeInnsendt(event: RapporteringsperiodeObserver.RapporteringsperiodeInnsendt) {
+        observers.forEach { it.rapporteringsperiodeInnsendt(event) }
+    }
+
     override fun toSpesifikkKontekst() = SpesifikkKontekst("person", mapOf("ident" to ident))
     override fun equals(other: Any?) = other is Person && this.ident == other.ident
 

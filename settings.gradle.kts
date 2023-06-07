@@ -8,5 +8,6 @@ include(
     "aktivitetslogg",
     "mediator",
     "modell",
-    "openapi"
+    "openapi",
+    "common-test"
 )

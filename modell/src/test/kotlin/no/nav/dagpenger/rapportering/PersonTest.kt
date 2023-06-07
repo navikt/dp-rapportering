@@ -94,6 +94,8 @@ class PersonTest {
         override fun rapporteringsperiodeEndret(event: RapporteringsperiodeObserver.RapporteringsperiodeEndret) {
             tilstand = event.gjeldendeTilstand.toString()
         }
+
+        override fun rapporteringsperiodeInnsendt(event: RapporteringsperiodeObserver.RapporteringsperiodeInnsendt) {}
     }
 
     private class TestVisitor(person: Person) : PersonVisitor {

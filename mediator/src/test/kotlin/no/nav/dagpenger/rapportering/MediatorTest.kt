@@ -73,7 +73,7 @@ class MediatorTest {
     }
 
     @Test
-    fun `godkjente rapporteringsperioder publiseres`() = withMigratedDb {
+    fun `godkjente rapporteringsperioder publiseres når fristen har passert`() = withMigratedDb {
         val testIdent = "12312312311"
         val hendelse = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent)
         mediator.behandle(hendelse)
@@ -85,7 +85,7 @@ class MediatorTest {
         rapid.inspektør.size shouldBe 1
 
         mediator.behandle(RapporteringsfristHendelse(UUID.randomUUID(), testIdent, LocalDate.now().plusDays(14)))
-        rapid.inspektør.size shouldBe 2
+        rapid.inspektør.size shouldBe 3
     }
 
     private val Person.aktivRapporteringsperiode get() = TestVisitor(this).rapporteringsperioder.last().rapporteringsperiodeId
