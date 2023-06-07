@@ -14,7 +14,9 @@ import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.junit.jupiter.api.Test
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 import java.util.UUID
 
 class MediatorTest {
@@ -81,10 +83,12 @@ class MediatorTest {
         val rapporteringsperiodeId = person.aktivRapporteringsperiode
         mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))
 
-        mediator.behandle(RapporteringsfristHendelse(UUID.randomUUID(), testIdent, LocalDate.now()))
+        val frist = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusDays(14)
+
+        mediator.behandle(RapporteringsfristHendelse(UUID.randomUUID(), testIdent, frist.minusDays(3)))
         rapid.inspektør.size shouldBe 1
 
-        mediator.behandle(RapporteringsfristHendelse(UUID.randomUUID(), testIdent, LocalDate.now().plusDays(14)))
+        mediator.behandle(RapporteringsfristHendelse(UUID.randomUUID(), testIdent, frist))
         rapid.inspektør.size shouldBe 3
     }
 
