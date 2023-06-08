@@ -33,7 +33,6 @@ class UtsendingsObserver(private val rapidsConnection: RapidsConnection, private
     }
 
     private class DagJsonBuilder(dag: Dag) : DagVisitor {
-        private val mapper = jacksonObjectMapper().also { it.config() }
 
         private lateinit var dato: LocalDate
         private val aktiviteter = mutableListOf<Map<String, Any>>()
