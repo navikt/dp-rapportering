@@ -111,6 +111,10 @@ internal class PostgresRepository(private val ds: DataSource) :
         )
     }
 
+    override fun hentIdenterMedRapporteringsplikt(): List<String> {
+        TODO("Not yet implemented")
+    }
+
     private fun insertPerson(ident: String) {
         using(sessionOf(ds)) { session ->
             session.run(

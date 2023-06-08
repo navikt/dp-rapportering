@@ -9,7 +9,6 @@ import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
-import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import no.nav.dagpenger.rapportering.utils.finnFørsteMandagIUken
 import java.time.LocalDate
@@ -84,15 +83,6 @@ class Rapporteringsperiode private constructor(
     fun accept(visitor: RapporteringsperiodVisitor) {
         visitor.visit(this, rapporteringsperiodeId, periode, this.tilstand.type, rapporteringsfrist)
         tidslinje.accept(visitor)
-    }
-
-    fun behandle(hendelse: SøknadInnsendtHendelse) {
-        hendelse.kontekst(this)
-        hendelse.info("Opprettet ny rapporteringsperiode på grunn av innsendt søknad")
-        // rapporteringsfristFra = hendelse.fom
-        periode.start.datesUntil(hendelse.fom).forEach {
-            // TODO: Legg til fritak i perioden fra start til innsendt
-        }
     }
 
     fun behandle(hendelse: NyRapporteringssyklusHendelse) {

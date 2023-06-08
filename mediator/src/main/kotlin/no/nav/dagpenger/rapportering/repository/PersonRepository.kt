@@ -6,4 +6,5 @@ interface PersonRepository {
     fun hentEllerOpprettPerson(ident: String): Person
     fun lagre(person: Person)
     fun hentIdenterMedGodkjentPeriode(): List<String>
+    fun hentIdenterMedRapporteringsplikt(): List<String>
 }

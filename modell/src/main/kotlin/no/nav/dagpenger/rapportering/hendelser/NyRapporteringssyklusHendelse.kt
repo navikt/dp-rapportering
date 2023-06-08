@@ -8,7 +8,6 @@ class NyRapporteringssyklusHendelse(
     meldingsreferanseId: UUID,
     ident: String,
     val fom: LocalDate,
-    val tom: LocalDate,
 ) : PersonHendelse(
     meldingsreferanseId,
     ident,

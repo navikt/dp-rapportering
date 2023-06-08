@@ -22,8 +22,7 @@ internal object TestData {
 
     fun nyRapporteringsperiodeHendelse(
         fom: LocalDate = LocalDate.now().minusDays(14),
-        tom: LocalDate = LocalDate.now(),
-    ) = NyRapporteringssyklusHendelse(UUID.randomUUID(), testIdent, fom, tom)
+    ) = NyRapporteringssyklusHendelse(UUID.randomUUID(), testIdent, fom)
 
     fun godkjennPeriodeHendelse(rapporteringId: UUID = UUID.randomUUID()) =
         GodkjennPeriodeHendelse(UUID.randomUUID(), testIdent, rapporteringId)
