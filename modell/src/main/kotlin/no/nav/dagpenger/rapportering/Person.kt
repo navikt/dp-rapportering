@@ -5,7 +5,8 @@ import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.aktivitetslogg.Subaktivitetskontekst
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
-import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
+import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
@@ -13,7 +14,7 @@ import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 class Person private constructor(
     val ident: String,
     private val rapporteringsperioder: MutableList<Rapporteringsperiode>,
-    // private val rapporteringsplikt: Rapporteringsplikt,
+    internal var rapporteringsplikt: Rapporteringsplikt,
     override val aktivitetslogg: Aktivitetslogg,
 ) : Subaktivitetskontekst, RapporteringsperiodeObserver {
     private val observers = mutableListOf<PersonObserver>()
@@ -23,6 +24,7 @@ class Person private constructor(
     ) : this(
         ident,
         mutableListOf(),
+        IngenRapporteringsplikt(),
         Aktivitetslogg(),
     )
 
@@ -32,6 +34,7 @@ class Person private constructor(
     ) : this(
         ident,
         rapporteringsperioder.toMutableList(),
+        RapporteringspliktSøknad(), // TODO: Må hentes fra databsen
         Aktivitetslogg(),
     )
 
@@ -42,14 +45,23 @@ class Person private constructor(
     fun behandle(hendelse: SøknadInnsendtHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Behandler søknad innsendt")
-        // TODO: Lag noe overlappskontroll så vi ikke ender med flere perioder i samme tidsrom
-        Rapporteringsperiode(
-            rapporteringspliktFom = hendelse.fom,
-        ).also {
-            rapporteringsperioder.add(it)
-            it.registrer(this)
-            it.behandle(hendelse)
+        rapporteringsplikt.behandle(this, hendelse)
+    }
+
+    fun leggTilRapporteringsperiode(rapporteringsperiode: Rapporteringsperiode, hendelse: PersonHendelse) {
+        hendelse.kontekst(this)
+
+        if (rapporteringsperioder.any {
+                it.gjelderFor(rapporteringsperiode.gjelderFra)
+            }
+        ) {
+            hendelse.info("Det finnes allerede en rapporteringsperiode for denne perioden")
+            return
         }
+
+        hendelse.info("Legger til ny rapporteringsperiode")
+        rapporteringsperioder.add(rapporteringsperiode)
+        rapporteringsperiode.registrer(this)
     }
 
     fun behandle(hendelse: NyAktivitetHendelse) {
@@ -70,17 +82,11 @@ class Person private constructor(
         }
     }
 
-    fun behandle(hendelse: NyRapporteringsperiodeHendelse) {
+    fun behandle(hendelse: NyRapporteringssyklusHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Behandler ny rapporteringsperioder")
 
-        Rapporteringsperiode(
-            hendelse.fom,
-        ).also {
-            rapporteringsperioder.add(it)
-            it.registrer(this)
-            it.behandle(hendelse)
-        }
+        rapporteringsplikt.behandle(this, hendelse)
     }
 
     fun behandle(hendelse: GodkjennPeriodeHendelse) {

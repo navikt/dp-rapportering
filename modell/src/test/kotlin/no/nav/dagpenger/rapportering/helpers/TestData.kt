@@ -3,7 +3,7 @@ package no.nav.dagpenger.rapportering.helpers
 import no.nav.dagpenger.rapportering.Person
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
-import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import java.time.LocalDate
@@ -23,7 +23,7 @@ internal object TestData {
     fun nyRapporteringsperiodeHendelse(
         fom: LocalDate = LocalDate.now().minusDays(14),
         tom: LocalDate = LocalDate.now(),
-    ) = NyRapporteringsperiodeHendelse(UUID.randomUUID(), testIdent, fom, tom)
+    ) = NyRapporteringssyklusHendelse(UUID.randomUUID(), testIdent, fom, tom)
 
     fun godkjennPeriodeHendelse(rapporteringId: UUID = UUID.randomUUID()) =
         GodkjennPeriodeHendelse(UUID.randomUUID(), testIdent, rapporteringId)

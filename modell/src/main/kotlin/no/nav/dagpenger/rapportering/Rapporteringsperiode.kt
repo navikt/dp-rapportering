@@ -3,10 +3,9 @@ package no.nav.dagpenger.rapportering
 import no.nav.dagpenger.aktivitetslogg.Aktivitetskontekst
 import no.nav.dagpenger.aktivitetslogg.IAktivitetslogg
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
-import no.nav.dagpenger.rapportering.Foobar.utbetalingshistorikk
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
-import no.nav.dagpenger.rapportering.hendelser.NyRapporteringsperiodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
@@ -29,6 +28,7 @@ class Rapporteringsperiode private constructor(
     private val tidslinje: Aktivitetstidslinje = Aktivitetstidslinje(periode),
 ) : Aktivitetskontekst {
     private val observers: MutableSet<RapporteringsperiodeObserver> = mutableSetOf()
+    val gjelderFra = periode.start
 
     constructor(rapporteringspliktFom: LocalDate) : this(fom = rapporteringspliktFom.finnFørsteMandagIUken())
 
@@ -95,7 +95,7 @@ class Rapporteringsperiode private constructor(
         }
     }
 
-    fun behandle(hendelse: NyRapporteringsperiodeHendelse) {
+    fun behandle(hendelse: NyRapporteringssyklusHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Opprettet ny rapporteringsperiode")
     }

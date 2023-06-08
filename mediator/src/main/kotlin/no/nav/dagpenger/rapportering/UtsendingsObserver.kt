@@ -1,8 +1,6 @@
 package no.nav.dagpenger.rapportering
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
-import no.nav.dagpenger.rapportering.serialisering.Jackson.config
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
 import no.nav.helse.rapids_rivers.JsonMessage

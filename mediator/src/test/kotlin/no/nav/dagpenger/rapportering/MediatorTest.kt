@@ -33,7 +33,7 @@ class MediatorTest {
 
         mediator.behandle(hendelse)
 
-        hendelse.aktivitetsteller() shouldBe 2
+        hendelse.aktivitetsteller() shouldBe 5
         hendelse.harAktiviteter() shouldBe true
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiode
