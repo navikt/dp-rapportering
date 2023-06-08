@@ -17,14 +17,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
-internal class Meldeprivate constructor() : Aktivitetskontekst {
-    override fun toSpesifikkKontekst() = SpesifikkKontekst("Rapporteringsperiode")
-
-    private fun trengerYtelser(hendelse: IAktivitetslogg) {
-        utbetalingshistorikk(hendelse, LocalDate.MIN..LocalDate.MAX)
-    }
-}
-
 private const val RAPPORTERINGSPERIODE_LENGDE = 14L
 
 class Rapporteringsperiode private constructor(
