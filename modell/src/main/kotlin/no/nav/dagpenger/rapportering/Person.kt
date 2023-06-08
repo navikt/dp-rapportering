@@ -10,32 +10,41 @@ import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 class Person private constructor(
     val ident: String,
     private val rapporteringsperioder: MutableList<Rapporteringsperiode>,
-    internal var rapporteringsplikt: Rapporteringsplikt,
+    private var rapporteringsplikt: TemporalCollection<Rapporteringsplikt>,
     override val aktivitetslogg: Aktivitetslogg,
 ) : Subaktivitetskontekst, RapporteringsperiodeObserver {
     private val observers = mutableListOf<PersonObserver>()
+    private val localDate: LocalDate?
+        get() {
+            val fom = LocalDate.now()
+            return fom
+        }
 
     constructor(
         ident: String,
     ) : this(
         ident,
         mutableListOf(),
-        IngenRapporteringsplikt(),
+        TemporalCollection<Rapporteringsplikt>().apply { put(LocalDate.now(), IngenRapporteringsplikt()) },
         Aktivitetslogg(),
     )
 
     constructor(
         ident: String,
         rapporteringsperioder: List<Rapporteringsperiode>,
-        rapporteringsplikt: Rapporteringsplikt,
+        rapporteringsplikt: List<Pair<LocalDateTime, Rapporteringsplikt>>,
     ) : this(
         ident,
         rapporteringsperioder.toMutableList(),
-        rapporteringsplikt, // TODO: Må hentes fra databsen
+        rapporteringsplikt.fold(TemporalCollection<Rapporteringsplikt>()) { acc, (fom, rapporteringsplikt) ->
+            acc.also { it.put(fom, rapporteringsplikt) }
+        },
         Aktivitetslogg(),
     )
 
@@ -43,10 +52,8 @@ class Person private constructor(
         rapporteringsperioder.forEach { it.registrer(this) }
     }
 
-    fun behandle(hendelse: SøknadInnsendtHendelse) {
-        hendelse.kontekst(this)
-        hendelse.info("Behandler søknad innsendt")
-        rapporteringsplikt.behandle(this, hendelse)
+    fun nyRapporteringsplikt(rapporteringsplikt: Rapporteringsplikt, fom: LocalDate = LocalDate.now()) {
+        this.rapporteringsplikt.put(fom, rapporteringsplikt)
     }
 
     fun leggTilRapporteringsperiode(rapporteringsperiode: Rapporteringsperiode, hendelse: PersonHendelse) {
@@ -63,6 +70,19 @@ class Person private constructor(
         hendelse.info("Legger til ny rapporteringsperiode")
         rapporteringsperioder.add(rapporteringsperiode)
         rapporteringsperiode.registrer(this)
+    }
+
+    fun behandle(hendelse: SøknadInnsendtHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Behandler søknad innsendt")
+        rapporteringsplikt.get(hendelse.fom).behandle(this, hendelse)
+    }
+
+    fun behandle(hendelse: NyRapporteringssyklusHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Behandler ny rapporteringsperioder")
+
+        rapporteringsplikt.get(hendelse.fom).behandle(this, hendelse)
     }
 
     fun behandle(hendelse: NyAktivitetHendelse) {
@@ -83,19 +103,11 @@ class Person private constructor(
         }
     }
 
-    fun behandle(hendelse: NyRapporteringssyklusHendelse) {
-        hendelse.kontekst(this)
-        hendelse.info("Behandler ny rapporteringsperioder")
-
-        rapporteringsplikt.behandle(this, hendelse)
-    }
-
     fun behandle(hendelse: GodkjennPeriodeHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Behandler ny innrapportering")
 
-        rapporteringsperioder.single { it.rapporteringsperiodeId == hendelse.rapporteringId }
-            .behandle(hendelse)
+        rapporteringsperioder.single { it.rapporteringsperiodeId == hendelse.rapporteringId }.behandle(hendelse)
     }
 
     fun behandle(hendelse: RapporteringsfristHendelse) {

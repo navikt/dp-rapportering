@@ -77,7 +77,6 @@ class PersonTest {
         }
 
         observer.tilstand shouldBe Godkjent.name
-
         val fristHendelse = RapporteringsfristHendelse(UUID.randomUUID(), testIdent, LocalDate.now().plusDays(14))
         person.behandle(fristHendelse)
 
@@ -86,8 +85,24 @@ class PersonTest {
         println(person)
     }
 
+    @Test
+    fun `håndterer endringer i rapporteringsplikt`() {
+        val person = Person(testIdent)
+
+        // Personer begynner uten rapporertingsplikt
+        person.rapporteringsplikt shouldBe RapporteringspliktType.Ingen
+        person.nyRapporteringsplikt(RapporteringspliktSøknad(), LocalDate.now().minusDays(2))
+        person.rapporteringsplikt shouldBe RapporteringspliktType.Søknad
+        person.nyRapporteringsplikt(RapporteringspliktVedtak(), LocalDate.now().minusDays(1))
+        person.rapporteringsplikt shouldBe RapporteringspliktType.Vedtak
+
+        person.rapporteringsplikter.size shouldBe 3
+    }
+
     private val Person.aktivRapporteringsperiode get() = TestVisitor(this).rapporteringsperioder.last().rapporteringsperiodeId
     private val Person.antallAktiviteter get() = TestVisitor(this).aktiviteter.size
+    private val Person.rapporteringsplikt get() = TestVisitor(this).rapporteringspliktType
+    private val Person.rapporteringsplikter get() = TestVisitor(this).rapporteringsplikter
 
     private class TestObserver : PersonObserver {
         lateinit var tilstand: String
@@ -101,6 +116,8 @@ class PersonTest {
     private class TestVisitor(person: Person) : PersonVisitor {
         val rapporteringsperioder = mutableListOf<Rapporteringsperiode>()
         val aktiviteter = mutableListOf<Aktivitet>()
+        lateinit var rapporteringspliktType: RapporteringspliktType
+        val rapporteringsplikter = mutableListOf<Rapporteringsplikt>()
 
         init {
             person.accept(this)
@@ -123,6 +140,11 @@ class PersonTest {
             muligeAktiviter: List<Aktivitet.AktivitetType>,
         ) {
             this.aktiviteter += aktiviteter
+        }
+
+        override fun visit(rapporteringsplikt: Rapporteringsplikt, id: UUID, type: RapporteringspliktType) {
+            rapporteringspliktType = type
+            this.rapporteringsplikter.add(rapporteringsplikt)
         }
     }
 }

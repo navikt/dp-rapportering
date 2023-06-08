@@ -55,7 +55,8 @@ class PostgresRepositoryTest {
     fun `lagring og henter en komplett person`() {
         withMigratedDb {
             val repository = PostgresRepository(dataSource)
-            val person = Person(testIdent).apply {
+            val person = Person(testIdent).also { repository.lagre(it) }
+            person.apply {
                 behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent))
                 behandle(
                     NyAktivitetHendelse(
@@ -170,7 +171,11 @@ class PostgresRepositoryTest {
             aktivAktivitetId = uuid
         }
 
-        override fun visit(rapporteringsplikt: Rapporteringsplikt, rapporteringspliktId: UUID, type: RapporteringspliktType) {
+        override fun visit(
+            rapporteringsplikt: Rapporteringsplikt,
+            rapporteringspliktId: UUID,
+            type: RapporteringspliktType,
+        ) {
             this.rapporteringspliktId = rapporteringspliktId
             this.rapporteringspliktType = type
         }

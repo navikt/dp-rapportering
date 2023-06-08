@@ -23,9 +23,22 @@ enum class RapporteringspliktType {
     Vedtak,
 }
 
+class IngenRapporteringsplikt(override val uuid: UUID = UUID.randomUUID()) : Rapporteringsplikt {
+    override val type = RapporteringspliktType.Ingen
+
+    override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Oppretter rapporteringsplikt")
+
+        person.nyRapporteringsplikt(RapporteringspliktSøknad())
+        person.behandle(hendelse)
+    }
+
+    override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {}
+}
+
 class RapporteringspliktSøknad(override val uuid: UUID = UUID.randomUUID()) : Rapporteringsplikt {
-    override val type: RapporteringspliktType
-        get() = RapporteringspliktType.Søknad
+    override val type = RapporteringspliktType.Søknad
 
     override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {
         hendelse.kontekst(this)
@@ -53,8 +66,7 @@ class RapporteringspliktSøknad(override val uuid: UUID = UUID.randomUUID()) : R
 class RapporteringspliktVedtak(
     override val uuid: UUID = UUID.randomUUID(),
 ) : Rapporteringsplikt {
-    override val type: RapporteringspliktType
-        get() = RapporteringspliktType.Vedtak
+    override val type = RapporteringspliktType.Vedtak
 
     override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {}
     override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {
@@ -65,19 +77,4 @@ class RapporteringspliktVedtak(
             person.leggTilRapporteringsperiode(it, hendelse)
         }
     }
-}
-
-class IngenRapporteringsplikt(override val uuid: UUID = UUID.randomUUID()) : Rapporteringsplikt {
-    override val type: RapporteringspliktType
-        get() = RapporteringspliktType.Ingen
-
-    override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {
-        hendelse.kontekst(this)
-        hendelse.info("Oppretter rapporteringsplikt")
-
-        person.rapporteringsplikt = RapporteringspliktSøknad()
-        person.behandle(hendelse)
-    }
-
-    override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {}
 }

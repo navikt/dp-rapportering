@@ -4,6 +4,7 @@ import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import no.nav.dagpenger.rapportering.tidslinje.Dag
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.time.Duration
 
@@ -22,8 +23,11 @@ interface RapporteringsperiodVisitor : AktivitetstidslinjeVisitor {
     }
 }
 
-interface RapporteringspliktVisitor : AktivitetstidslinjeVisitor {
+interface RapporteringspliktVisitor : AktivitetstidslinjeVisitor, TemporalCollectionVisitor<Rapporteringsplikt> {
     fun visit(rapporteringsplikt: Rapporteringsplikt, id: UUID, type: RapporteringspliktType) {}
+    override fun visit(at: LocalDateTime, item: Rapporteringsplikt) {
+        item.accept(this)
+    }
 }
 
 interface AktivitetstidslinjeVisitor : DagVisitor {

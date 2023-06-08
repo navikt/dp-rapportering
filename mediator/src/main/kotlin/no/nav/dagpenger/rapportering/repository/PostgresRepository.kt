@@ -20,6 +20,7 @@ import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 import javax.sql.DataSource
 import kotlin.time.Duration
@@ -51,24 +52,26 @@ internal class PostgresRepository(private val ds: DataSource) :
         }
     }
 
-    override fun hentRapporteringspliktFor(ident: String): Rapporteringsplikt {
+    override fun hentRapporteringspliktFor(ident: String): List<Pair<LocalDateTime, Rapporteringsplikt>> {
         return using(sessionOf(ds)) { session ->
             session.run(
                 queryOf(
                     //language=PostgreSQL
-                    statement = """SELECT uuid, type FROM rapporteringsplikt LEFT JOIN person p ON rapporteringsplikt.person_id = p.id WHERE p.ident = :ident""",
+                    statement = """SELECT uuid, gjelder_fra, type FROM rapporteringsplikt LEFT JOIN person p ON rapporteringsplikt.person_id = p.id WHERE p.ident = :ident""",
                     paramMap = mapOf("ident" to ident),
                 ).map {
+                    val gjelderFra = it.localDateTime("gjelder_fra")
                     val type = RapporteringspliktType.valueOf(it.string("type"))
                     val uuid = it.uuid("uuid")
-                    when (type) {
+                    val plikt = when (type) {
                         RapporteringspliktType.Ingen -> IngenRapporteringsplikt(uuid)
                         RapporteringspliktType.Søknad -> RapporteringspliktSøknad(uuid)
                         RapporteringspliktType.Vedtak -> RapporteringspliktVedtak(uuid)
                     }
-                }.asSingle,
+                    Pair(gjelderFra, plikt)
+                }.asList,
             )
-        }!!
+        }
     }
 
     override fun hentRapporteringsperiodeFor(ident: String, dato: LocalDate): Rapporteringsperiode? {
