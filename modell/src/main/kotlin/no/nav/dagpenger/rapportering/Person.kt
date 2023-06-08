@@ -31,10 +31,11 @@ class Person private constructor(
     constructor(
         ident: String,
         rapporteringsperioder: List<Rapporteringsperiode>,
+        rapporteringsplikt: Rapporteringsplikt,
     ) : this(
         ident,
         rapporteringsperioder.toMutableList(),
-        RapporteringspliktSøknad(), // TODO: Må hentes fra databsen
+        rapporteringsplikt, // TODO: Må hentes fra databsen
         Aktivitetslogg(),
     )
 
@@ -121,6 +122,7 @@ class Person private constructor(
     fun accept(visitor: PersonVisitor) {
         visitor.visit(this, ident)
         rapporteringsperioder.accept(visitor)
+        rapporteringsplikt.accept(visitor)
     }
 }
 

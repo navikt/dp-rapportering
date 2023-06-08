@@ -6,6 +6,8 @@ import io.kotest.matchers.shouldNotBe
 import no.nav.dagpenger.rapportering.Person
 import no.nav.dagpenger.rapportering.PersonVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.Rapporteringsplikt
+import no.nav.dagpenger.rapportering.RapporteringspliktType
 import no.nav.dagpenger.rapportering.db.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
@@ -69,8 +71,11 @@ class PostgresRepositoryTest {
                 lagretPerson shouldNotBe null
                 lagretPerson.ident shouldBe testIdent
 
-                TestVisitor(lagretPerson).rapporteringsperioder.size shouldBe 1
-                TestVisitor(lagretPerson).aktiviteter.size shouldBe 1
+                TestVisitor(lagretPerson).let {
+                    it.rapporteringsperioder.size shouldBe 1
+                    it.aktiviteter.size shouldBe 1
+                    it.rapporteringspliktType shouldBe RapporteringspliktType.Søknad
+                }
             }
 
             shouldNotThrowAny {
@@ -124,6 +129,8 @@ class PostgresRepositoryTest {
 
     private class TestVisitor(person: Person) : PersonVisitor {
         lateinit var aktivAktivitetId: UUID
+        lateinit var rapporteringspliktId: UUID
+        lateinit var rapporteringspliktType: RapporteringspliktType
         val rapporteringsperioder = mutableListOf<Rapporteringsperiode>()
         val aktiviteter = mutableListOf<Aktivitet>()
         val dager = mutableListOf<Dag>()
@@ -161,6 +168,11 @@ class PostgresRepositoryTest {
             tilstand: Aktivitet.TilstandType,
         ) {
             aktivAktivitetId = uuid
+        }
+
+        override fun visit(rapporteringsplikt: Rapporteringsplikt, rapporteringspliktId: UUID, type: RapporteringspliktType) {
+            this.rapporteringspliktId = rapporteringspliktId
+            this.rapporteringspliktType = type
         }
     }
 }

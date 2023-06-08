@@ -4,23 +4,28 @@ import no.nav.dagpenger.aktivitetslogg.Aktivitetskontekst
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import java.util.UUID
 
 interface Rapporteringsplikt : Aktivitetskontekst {
-    val type: Rapporteringsplikttype
+    val uuid: UUID
+    val type: RapporteringspliktType
     fun behandle(person: Person, hendelse: SøknadInnsendtHendelse)
     fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse)
     override fun toSpesifikkKontekst() = SpesifikkKontekst("Rapporteringsplikt", mapOf("type" to type.name))
+    fun accept(visitor: RapporteringspliktVisitor) {
+        visitor.visit(this, this.uuid, this.type)
+    }
 }
 
-enum class Rapporteringsplikttype {
+enum class RapporteringspliktType {
     Ingen,
     Søknad,
     Vedtak,
 }
 
-class RapporteringspliktSøknad : Rapporteringsplikt {
-    override val type: Rapporteringsplikttype
-        get() = Rapporteringsplikttype.Søknad
+class RapporteringspliktSøknad(override val uuid: UUID = UUID.randomUUID()) : Rapporteringsplikt {
+    override val type: RapporteringspliktType
+        get() = RapporteringspliktType.Søknad
 
     override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {
         hendelse.kontekst(this)
@@ -45,9 +50,11 @@ class RapporteringspliktSøknad : Rapporteringsplikt {
     }
 }
 
-class RapporteringspliktVedtak(private val normalFastsattArbeidstid: Double) : Rapporteringsplikt {
-    override val type: Rapporteringsplikttype
-        get() = Rapporteringsplikttype.Vedtak
+class RapporteringspliktVedtak(
+    override val uuid: UUID = UUID.randomUUID(),
+) : Rapporteringsplikt {
+    override val type: RapporteringspliktType
+        get() = RapporteringspliktType.Vedtak
 
     override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {}
     override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {
@@ -60,9 +67,9 @@ class RapporteringspliktVedtak(private val normalFastsattArbeidstid: Double) : R
     }
 }
 
-class IngenRapporteringsplikt : Rapporteringsplikt {
-    override val type: Rapporteringsplikttype
-        get() = Rapporteringsplikttype.Ingen
+class IngenRapporteringsplikt(override val uuid: UUID = UUID.randomUUID()) : Rapporteringsplikt {
+    override val type: RapporteringspliktType
+        get() = RapporteringspliktType.Ingen
 
     override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {
         hendelse.kontekst(this)
@@ -71,5 +78,6 @@ class IngenRapporteringsplikt : Rapporteringsplikt {
         person.rapporteringsplikt = RapporteringspliktSøknad()
         person.behandle(hendelse)
     }
+
     override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {}
 }

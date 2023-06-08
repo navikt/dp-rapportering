@@ -6,11 +6,16 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
 import no.nav.dagpenger.rapportering.DagVisitor
+import no.nav.dagpenger.rapportering.IngenRapporteringsplikt
 import no.nav.dagpenger.rapportering.Person
 import no.nav.dagpenger.rapportering.PersonVisitor
 import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
+import no.nav.dagpenger.rapportering.Rapporteringsplikt
+import no.nav.dagpenger.rapportering.RapporteringspliktSøknad
+import no.nav.dagpenger.rapportering.RapporteringspliktType
+import no.nav.dagpenger.rapportering.RapporteringspliktVedtak
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
@@ -46,6 +51,26 @@ internal class PostgresRepository(private val ds: DataSource) :
         }
     }
 
+    override fun hentRapporteringspliktFor(ident: String): Rapporteringsplikt {
+        return using(sessionOf(ds)) { session ->
+            session.run(
+                queryOf(
+                    //language=PostgreSQL
+                    statement = """SELECT uuid, type FROM rapporteringsplikt LEFT JOIN person p ON rapporteringsplikt.person_id = p.id WHERE p.ident = :ident""",
+                    paramMap = mapOf("ident" to ident),
+                ).map {
+                    val type = RapporteringspliktType.valueOf(it.string("type"))
+                    val uuid = it.uuid("uuid")
+                    when (type) {
+                        RapporteringspliktType.Ingen -> IngenRapporteringsplikt(uuid)
+                        RapporteringspliktType.Søknad -> RapporteringspliktSøknad(uuid)
+                        RapporteringspliktType.Vedtak -> RapporteringspliktVedtak(uuid)
+                    }
+                }.asSingle,
+            )
+        }!!
+    }
+
     override fun hentRapporteringsperiodeFor(ident: String, dato: LocalDate): Rapporteringsperiode? {
         return using(sessionOf(ds)) { session ->
             session.run(
@@ -71,6 +96,7 @@ internal class PostgresRepository(private val ds: DataSource) :
                     Person(
                         row.string("ident"),
                         hentRapporteringsperioder(ident),
+                        hentRapporteringspliktFor(ident),
                     )
                 }.asSingle,
             )
@@ -112,7 +138,16 @@ internal class PostgresRepository(private val ds: DataSource) :
     }
 
     override fun hentIdenterMedRapporteringsplikt(): List<String> {
-        TODO("Not yet implemented")
+        return using(sessionOf(dataSource = ds)) { session ->
+            session.run(
+                queryOf(
+                    //language=PostgreSQL
+                    statement = """SELECT ident FROM person LEFT JOIN rapporteringsplikt r ON person.id = r.person_id WHERE r.type!='Ingen'""",
+                ).map { row ->
+                    row.string("ident")
+                }.asList,
+            )
+        }
     }
 
     private fun insertPerson(ident: String) {
@@ -185,6 +220,7 @@ internal class PostgresRepository(private val ds: DataSource) :
 
 private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, RapporteringsperiodVisitor, DagVisitor {
     private lateinit var rapporteringsperiodeId: UUID
+    private lateinit var rapporteringspliktId: UUID
     private lateinit var ident: String
     var queries = mutableListOf<Query>()
 
@@ -199,6 +235,30 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
                 //language=PostgreSQL
                 statement = """INSERT INTO person(ident) VALUES (:ident) ON CONFLICT DO NOTHING""",
                 paramMap = mapOf("ident" to ident),
+            ),
+        )
+    }
+
+    override fun visit(
+        rapporteringsplikt: Rapporteringsplikt,
+        rapporteringspliktId: UUID,
+        type: RapporteringspliktType,
+    ) {
+        this.rapporteringspliktId = rapporteringspliktId
+        queries.add(
+            queryOf(
+                //language=PostgreSQL
+                statement = """
+                    INSERT INTO rapporteringsplikt(uuid, person_id, type) 
+                    SELECT :rapporteringspliktId, id, :type 
+                    FROM person WHERE ident = :ident 
+                    ON CONFLICT (uuid) DO UPDATE SET type = :type  
+                """.trimIndent(),
+                mapOf(
+                    "ident" to ident,
+                    "type" to type.name,
+                    "rapporteringspliktId" to rapporteringspliktId,
+                ),
             ),
         )
     }

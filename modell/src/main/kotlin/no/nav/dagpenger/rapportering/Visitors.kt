@@ -7,7 +7,7 @@ import java.time.LocalDate
 import java.util.UUID
 import kotlin.time.Duration
 
-interface PersonVisitor : RapporteringsperiodVisitor, AktivitetstidslinjeVisitor {
+interface PersonVisitor : RapporteringsperiodVisitor, AktivitetstidslinjeVisitor, RapporteringspliktVisitor {
     fun visit(person: Person, ident: String) {}
 }
 
@@ -20,6 +20,10 @@ interface RapporteringsperiodVisitor : AktivitetstidslinjeVisitor {
         rapporteringsfrist: LocalDate,
     ) {
     }
+}
+
+interface RapporteringspliktVisitor : AktivitetstidslinjeVisitor {
+    fun visit(rapporteringsplikt: Rapporteringsplikt, id: UUID, type: RapporteringspliktType) {}
 }
 
 interface AktivitetstidslinjeVisitor : DagVisitor {
