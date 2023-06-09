@@ -110,7 +110,7 @@ paths:
         '404':
           description: Not Found
       summary: Henter ut gjeldende rapporteringsperiode
-      description: Henter ut en rapporteringsperiode.
+      description: Henter ut en rapporteringsperiode. Henter alltid den siste perioden som gjelder for tidsrommet.
       operationId: get-rapporteringsperiode-gjeldende
       tags:
         - Rapporteringsperiode
@@ -150,6 +150,27 @@ paths:
       summary: Godkjenner en rapporteringsperiode
       description: Godkjenner en rapporteringsperiode
       operationId: post-rapporteringsperiode-ferdigstill
+      tags:
+        - Rapporteringsperiode
+    parameters:
+      - name: periodeId
+        description: ID of the reporting period to get or correct
+        schema:
+          type: integer
+        in: path
+        required: true
+  /rapporteringsperioder/{periodeId}/korrigering:
+    post:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rapporteringsperiode'
+          description: OK
+      summary: Lag en korrigering for en rapporteringsperiode
+      description: Lager en korrigering for en rapporteringsperiode
+      operationId: post-rapporteringsperiode-korrigering
       tags:
         - Rapporteringsperiode
     parameters:
@@ -221,6 +242,15 @@ components:
         tilOgMed:
           format: date
           type: string
+        korrigerer:
+          type: string
+          format: uuid
+          nullable: true
+        korrigertAv:
+          type: array
+          items:
+            type: string
+            format: uuid
         status:
           type: string
           enum:
