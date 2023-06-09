@@ -25,11 +25,25 @@ class Rapporteringsperiode private constructor(
     private val opprettet: LocalDateTime,
     private var oppdatert: LocalDateTime = opprettet,
     private val tidslinje: Aktivitetstidslinje = Aktivitetstidslinje(periode),
+    val korrigerer: Rapporteringsperiode? = null,
 ) : Aktivitetskontekst {
     private val observers: MutableSet<RapporteringsperiodeObserver> = mutableSetOf()
     val gjelderFra = periode.start
 
     constructor(rapporteringspliktFom: LocalDate) : this(fom = rapporteringspliktFom.finnFørsteMandagIUken())
+
+    fun lagKorrigering(): Rapporteringsperiode {
+        return Rapporteringsperiode(
+            UUID.randomUUID(),
+            periode.start,
+            periode,
+            TilUtfylling,
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            tidslinje.kopier(),
+            this,
+        )
+    }
 
     internal constructor(
         fom: LocalDate,

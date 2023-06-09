@@ -64,4 +64,8 @@ class Dag(
     override fun toSpesifikkKontekst(): SpesifikkKontekst {
         return SpesifikkKontekst("dag", mapOf("dato" to dato.toString()))
     }
+
+    fun kopier() = Dag(dato, aktiviteter.kopier(), harRapporteringslikt)
 }
+
+private fun List<Aktivitet>.kopier() = this.map { it.kopier() }.toMutableList()

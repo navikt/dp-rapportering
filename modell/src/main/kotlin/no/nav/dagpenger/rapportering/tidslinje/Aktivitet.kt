@@ -92,6 +92,8 @@ sealed class Aktivitet(
         visitor.visit(this, uuid, dato, tid, type, tilstand.type)
     }
 
+    abstract fun kopier(): Aktivitet
+
     class Arbeid internal constructor(
         dato: LocalDate,
         arbeidstimer: Duration,
@@ -111,11 +113,17 @@ sealed class Aktivitet(
             UUID.randomUUID(),
             Åpen,
         )
+
+        override fun kopier() = Arbeid(dato, tid, UUID.randomUUID(), Åpen)
     }
 
     class Syk(dato: LocalDate, uuid: UUID = UUID.randomUUID(), tilstand: Tilstand = Åpen) :
-        Aktivitet(dato, 1.days, AktivitetType.Syk, uuid, tilstand)
+        Aktivitet(dato, 1.days, AktivitetType.Syk, uuid, tilstand) {
+        override fun kopier() = Syk(dato, UUID.randomUUID(), Åpen)
+    }
 
     class Ferie(dato: LocalDate, uuid: UUID = UUID.randomUUID(), tilstand: Tilstand = Åpen) :
-        Aktivitet(dato, 1.days, AktivitetType.Ferie, uuid, tilstand)
+        Aktivitet(dato, 1.days, AktivitetType.Ferie, uuid, tilstand) {
+        override fun kopier() = Ferie(dato, UUID.randomUUID(), Åpen)
+    }
 }

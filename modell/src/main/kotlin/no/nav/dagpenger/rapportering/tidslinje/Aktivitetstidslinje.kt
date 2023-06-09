@@ -25,11 +25,17 @@ data class Aktivitetstidslinje internal constructor(
     }
 
     fun leggTilAktivitet(aktivitet: Aktivitet) =
-        this.single { it.sammenfallerMed(aktivitet.dato) }.leggTilAktivitet(aktivitet)
+        this.single { dag -> dag.sammenfallerMed(aktivitet.dato) }.leggTilAktivitet(aktivitet)
 
     fun accept(visitor: AktivitetstidslinjeVisitor) {
         visitor.preVisit(this)
         dager.forEach { it.accept(visitor) }
         visitor.postVisit(this)
     }
+
+    fun kopier() = Aktivitetstidslinje(
+        dager.map {
+            it.kopier()
+        }.toMutableSet(),
+    )
 }
