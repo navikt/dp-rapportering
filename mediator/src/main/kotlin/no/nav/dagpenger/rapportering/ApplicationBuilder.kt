@@ -37,6 +37,7 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
         logger.info { "Starter appen ${Configuration.appName}" }
 
         Innsendingsjobb.start(mediator)
+        NyRapporteringssyklusJobb.start(mediator)
     }
 
     override fun onShutdown(rapidsConnection: RapidsConnection) {
