@@ -31,9 +31,6 @@ spec:
     pool: {{ kafka.pool }}
   tokenx:
     enabled: true
-  env:
-    - name: FLYWAY_CLEAN_DISABLED
-      value: "false"
   gcp:
     sqlInstances:
       - type: POSTGRES_14

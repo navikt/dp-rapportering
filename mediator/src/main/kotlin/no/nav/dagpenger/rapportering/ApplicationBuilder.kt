@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.repository.PostgresRepository
 import no.nav.dagpenger.rapportering.tjenester.SøknadMottak
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
+import org.flywaydb.core.internal.configuration.ConfigUtils
 
 internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsConnection.StatusListener {
     private val personRepository = PostgresRepository(dataSource)
@@ -34,6 +35,7 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
     }
 
     override fun onStartup(rapidsConnection: RapidsConnection) {
+        System.setProperty(ConfigUtils.CLEAN_DISABLED, "false")
         clean()
         runMigration()
         logger.info { "Starter appen ${Configuration.appName}" }
