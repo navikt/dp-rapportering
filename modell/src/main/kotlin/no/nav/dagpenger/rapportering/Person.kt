@@ -81,7 +81,7 @@ class Person private constructor(
 
     fun behandle(hendelse: NyRapporteringssyklusHendelse) {
         hendelse.kontekst(this)
-        hendelse.info("Behandler ny rapporteringsperioder")
+        hendelse.info("Behandler ny rapporteringssyklus")
 
         rapporteringsplikt.get(hendelse.fom).behandle(this, hendelse)
     }
