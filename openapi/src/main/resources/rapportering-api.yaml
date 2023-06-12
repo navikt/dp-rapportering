@@ -114,6 +114,17 @@ paths:
       operationId: get-rapporteringsperiode-gjeldende
       tags:
         - Rapporteringsperiode
+      parameters:
+        - name: embed
+          in: query
+          description: Hvilke felter som skal embeddes som JSON path.
+          example: korrigeringAv
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+          required: false
   /rapporteringsperioder/{periodeId}:
     get:
       responses:
