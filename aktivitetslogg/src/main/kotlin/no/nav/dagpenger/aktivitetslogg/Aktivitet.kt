@@ -189,8 +189,8 @@ sealed class Aktivitet(
         private val tidsstempel: String = LocalDateTime.now().format(tidsstempelformat),
     ) : Aktivitet(id, 100, 'S', melding, tidsstempel, kontekster) {
         companion object {
-            internal fun filter(aktiviteter: List<Aktivitet>): List<Info> {
-                return aktiviteter.filterIsInstance<Info>()
+            internal fun filter(aktiviteter: List<Aktivitet>): List<LogiskFeil> {
+                return aktiviteter.filterIsInstance<LogiskFeil>()
             }
 
             internal fun gjenopprett(
