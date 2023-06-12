@@ -11,7 +11,6 @@ import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 class Person private constructor(
     val ident: String,
@@ -38,12 +37,12 @@ class Person private constructor(
     constructor(
         ident: String,
         rapporteringsperioder: List<Rapporteringsperiode>,
-        rapporteringsplikt: List<Pair<LocalDateTime, Rapporteringsplikt>>,
+        rapporteringsplikt: List<Rapporteringsplikt>,
     ) : this(
         ident,
         rapporteringsperioder.toMutableList(),
-        rapporteringsplikt.fold(TemporalCollection<Rapporteringsplikt>()) { acc, (fom, rapporteringsplikt) ->
-            acc.also { it.put(fom, rapporteringsplikt) }
+        rapporteringsplikt.fold(TemporalCollection<Rapporteringsplikt>()) { acc, rapporteringsplikt ->
+            acc.also { it.put(rapporteringsplikt.gjelderFra, rapporteringsplikt) }
         },
         Aktivitetslogg(),
     )
@@ -53,8 +52,8 @@ class Person private constructor(
         rapporteringsperioder.forEach { it.registrer(this) }
     }
 
-    fun nyRapporteringsplikt(rapporteringsplikt: Rapporteringsplikt, fom: LocalDate = LocalDate.now()) {
-        this.rapporteringsplikt.put(fom, rapporteringsplikt)
+    fun nyRapporteringsplikt(rapporteringsplikt: Rapporteringsplikt) {
+        this.rapporteringsplikt.put(rapporteringsplikt.gjelderFra, rapporteringsplikt)
     }
 
     fun leggTilRapporteringsperiode(rapporteringsperiode: Rapporteringsperiode, hendelse: PersonHendelse) {

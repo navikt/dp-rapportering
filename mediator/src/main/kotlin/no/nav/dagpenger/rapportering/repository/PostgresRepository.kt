@@ -20,7 +20,6 @@ import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.UUID
 import javax.sql.DataSource
 import kotlin.time.Duration
@@ -52,7 +51,7 @@ internal class PostgresRepository(private val ds: DataSource) :
         }
     }
 
-    override fun hentRapporteringspliktFor(ident: String): List<Pair<LocalDateTime, Rapporteringsplikt>> {
+    override fun hentRapporteringspliktFor(ident: String): List<Rapporteringsplikt> {
         return using(sessionOf(ds)) { session ->
             session.run(
                 queryOf(
@@ -63,12 +62,11 @@ internal class PostgresRepository(private val ds: DataSource) :
                     val gjelderFra = it.localDateTime("gjelder_fra")
                     val type = RapporteringspliktType.valueOf(it.string("type"))
                     val uuid = it.uuid("uuid")
-                    val plikt = when (type) {
-                        RapporteringspliktType.Ingen -> IngenRapporteringsplikt(uuid)
-                        RapporteringspliktType.Søknad -> RapporteringspliktSøknad(uuid)
-                        RapporteringspliktType.Vedtak -> RapporteringspliktVedtak(uuid)
+                    when (type) {
+                        RapporteringspliktType.Ingen -> IngenRapporteringsplikt(uuid, gjelderFra)
+                        RapporteringspliktType.Søknad -> RapporteringspliktSøknad(uuid, gjelderFra)
+                        RapporteringspliktType.Vedtak -> RapporteringspliktVedtak(uuid, gjelderFra)
                     }
-                    Pair(gjelderFra, plikt)
                 }.asList,
             )
         }
@@ -252,15 +250,16 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
             queryOf(
                 //language=PostgreSQL
                 statement = """
-                    INSERT INTO rapporteringsplikt(uuid, person_id, type) 
-                    SELECT :rapporteringspliktId, id, :type 
+                    INSERT INTO rapporteringsplikt(uuid, person_id, type, gjelder_fra) 
+                    SELECT :rapporteringspliktId, id, :type, :gjelderFra 
                     FROM person WHERE ident = :ident 
-                    ON CONFLICT (uuid) DO UPDATE SET type = :type  
+                    ON CONFLICT (uuid) DO NOTHING 
                 """.trimIndent(),
                 mapOf(
                     "ident" to ident,
                     "type" to type.name,
                     "rapporteringspliktId" to rapporteringspliktId,
+                    "gjelderFra" to rapporteringsplikt.gjelderFra,
                 ),
             ),
         )

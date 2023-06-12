@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 class PersonTest {
@@ -91,9 +92,9 @@ class PersonTest {
 
         // Personer begynner uten rapporertingsplikt
         person.rapporteringsplikt shouldBe RapporteringspliktType.Ingen
-        person.nyRapporteringsplikt(RapporteringspliktSøknad(), LocalDate.now().minusDays(2))
+        person.nyRapporteringsplikt(RapporteringspliktSøknad(gjelderFra = LocalDateTime.now()))
         person.rapporteringsplikt shouldBe RapporteringspliktType.Søknad
-        person.nyRapporteringsplikt(RapporteringspliktVedtak(), LocalDate.now().minusDays(1))
+        person.nyRapporteringsplikt(RapporteringspliktVedtak(gjelderFra = LocalDateTime.now()))
         person.rapporteringsplikt shouldBe RapporteringspliktType.Vedtak
 
         person.rapporteringsplikter.size shouldBe 3

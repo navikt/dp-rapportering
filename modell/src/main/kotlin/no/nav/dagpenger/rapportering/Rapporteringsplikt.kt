@@ -4,11 +4,13 @@ import no.nav.dagpenger.aktivitetslogg.Aktivitetskontekst
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import java.time.LocalDateTime
 import java.util.UUID
 
 interface Rapporteringsplikt : Aktivitetskontekst {
     val uuid: UUID
     val type: RapporteringspliktType
+    val gjelderFra: LocalDateTime
     fun behandle(person: Person, hendelse: SøknadInnsendtHendelse)
     fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse)
     override fun toSpesifikkKontekst() = SpesifikkKontekst("Rapporteringsplikt", mapOf("type" to type.name))
@@ -23,21 +25,25 @@ enum class RapporteringspliktType {
     Vedtak,
 }
 
-class IngenRapporteringsplikt(override val uuid: UUID = UUID.randomUUID()) : Rapporteringsplikt {
+class IngenRapporteringsplikt(
+    override val uuid: UUID = UUID.randomUUID(),
+    override val gjelderFra: LocalDateTime = LocalDateTime.now(),
+) : Rapporteringsplikt {
     override val type = RapporteringspliktType.Ingen
 
     override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Oppretter rapporteringsplikt")
 
-        person.nyRapporteringsplikt(RapporteringspliktSøknad())
+        person.nyRapporteringsplikt(RapporteringspliktSøknad(gjelderFra = hendelse.fom.atStartOfDay()))
         person.behandle(hendelse)
     }
 
     override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {}
 }
 
-class RapporteringspliktSøknad(override val uuid: UUID = UUID.randomUUID()) : Rapporteringsplikt {
+class RapporteringspliktSøknad(override val uuid: UUID = UUID.randomUUID(), override val gjelderFra: LocalDateTime) :
+    Rapporteringsplikt {
     override val type = RapporteringspliktType.Søknad
 
     override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {
@@ -65,6 +71,7 @@ class RapporteringspliktSøknad(override val uuid: UUID = UUID.randomUUID()) : R
 
 class RapporteringspliktVedtak(
     override val uuid: UUID = UUID.randomUUID(),
+    override val gjelderFra: LocalDateTime,
 ) : Rapporteringsplikt {
     override val type = RapporteringspliktType.Vedtak
 
