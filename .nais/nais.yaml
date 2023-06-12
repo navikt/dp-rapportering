@@ -16,6 +16,8 @@ spec:
     path: /isalive
   readiness:
     path: /isready
+  startup:
+    path: /isready
   replicas:
     min: 2
     max: 2

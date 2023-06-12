@@ -7,13 +7,22 @@ import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
 import no.nav.helse.rapids_rivers.asLocalDate
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 
 class UtsendingsObserverTest {
+    @Test
+    fun foo() {
+        assertEquals(
+            7 * 24 * 60 * 60 * 1000,
+            7.days.inWholeMilliseconds,
+        )
+    }
 
     @Test
     fun `Skal sende ut riktig melding ved rapportering_innsendt_hendelse`() {
