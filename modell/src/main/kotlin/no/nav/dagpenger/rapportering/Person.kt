@@ -49,6 +49,7 @@ class Person private constructor(
     )
 
     init {
+        require(rapporteringsplikt.isNotEmpty()) { "Person må ha minst en rapporteringsplikt" }
         rapporteringsperioder.forEach { it.registrer(this) }
     }
 

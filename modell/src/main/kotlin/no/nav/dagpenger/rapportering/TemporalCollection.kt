@@ -27,7 +27,7 @@ internal open class TemporalCollection<R> {
         return contents.filter { it.key.isBefore(til.atStartOfDay()) || it.key == til.atStartOfDay() }.values
     }
 
-    fun harHistorikk() = contents.isNotEmpty()
+    fun isNotEmpty() = contents.isNotEmpty()
 
     fun accept(visitor: TemporalCollectionVisitor<R>) {
         contents.forEach {

@@ -1,2 +1,0 @@
-ALTER TABLE rapporteringsplikt
-    ADD COLUMN gjelder_fra TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'::TEXT) NOT NULL
