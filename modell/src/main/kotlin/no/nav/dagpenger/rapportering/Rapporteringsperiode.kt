@@ -26,6 +26,7 @@ class Rapporteringsperiode private constructor(
     private var oppdatert: LocalDateTime = opprettet,
     private val tidslinje: Aktivitetstidslinje = Aktivitetstidslinje(periode),
     val korrigerer: Rapporteringsperiode? = null,
+    private var korrigertAv: Rapporteringsperiode? = null,
 ) : Aktivitetskontekst {
     private val observers: MutableSet<RapporteringsperiodeObserver> = mutableSetOf()
     val gjelderFra = periode.start
@@ -42,7 +43,7 @@ class Rapporteringsperiode private constructor(
             LocalDateTime.now(),
             tidslinje.kopier(),
             this,
-        )
+        ).also { this.korrigertAv = it }
     }
 
     internal constructor(
