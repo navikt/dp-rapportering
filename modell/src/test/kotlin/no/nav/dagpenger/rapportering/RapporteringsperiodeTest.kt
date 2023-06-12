@@ -1,13 +1,16 @@
 package no.nav.dagpenger.rapportering
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.Companion.hentGjeldende
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Innsendt
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.TilUtfylling
 import no.nav.dagpenger.rapportering.helpers.TestData.godkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.nyAktivitetHendelse
+import no.nav.dagpenger.rapportering.helpers.TestData.testIdent
 import no.nav.dagpenger.rapportering.helpers.januar
+import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -30,7 +33,9 @@ class RapporteringsperiodeTest {
     @Test
     fun `kan korrigere innsendt periode`() {
         val innsendtPeriode = lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = Innsendt)
-        val korrigertPeriode = innsendtPeriode.lagKorrigering()
+        innsendtPeriode.behandle(KorrigerPeriodeHendelse(testIdent, innsendtPeriode.rapporteringsperiodeId))
+
+        val korrigertPeriode = innsendtPeriode.korrigertAv
 
         innsendtPeriode.tilstand shouldBe Innsendt
         korrigertPeriode.tilstand shouldBe TilUtfylling
@@ -41,10 +46,33 @@ class RapporteringsperiodeTest {
         korrigertPeriode.tilstand shouldBe Godkjent
     }
 
+    @Test
+    fun `kan erstatte påbegynt korrigering`() {
+        val innsendtPeriode = lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = Innsendt)
+        innsendtPeriode.behandle(KorrigerPeriodeHendelse(testIdent, innsendtPeriode.rapporteringsperiodeId))
+
+        val korrigertPeriode1 = innsendtPeriode.korrigertAv
+        korrigertPeriode1.tilstand shouldBe TilUtfylling
+
+        innsendtPeriode.behandle(KorrigerPeriodeHendelse(testIdent, innsendtPeriode.rapporteringsperiodeId))
+
+        val korrigertPeriode2 = innsendtPeriode.korrigertAv
+        korrigertPeriode2 shouldNotBe korrigertPeriode1
+        korrigertPeriode2.korrigerer shouldBe innsendtPeriode
+
+        korrigertPeriode2.behandle(nyAktivitetHendelse(korrigertPeriode2.rapporteringsperiodeId, 6.januar))
+        korrigertPeriode2.behandle(godkjennPeriodeHendelse(korrigertPeriode2.rapporteringsperiodeId))
+        korrigertPeriode2.tilstand shouldBe Godkjent
+    }
+
     private val Rapporteringsperiode.tilstand get() = TestVisitor(this).tilstand
+    private val Rapporteringsperiode.korrigerer get() = TestVisitor(this).korrigerer!!
+    private val Rapporteringsperiode.korrigertAv get() = TestVisitor(this).korrigertAv!!
 
     private class TestVisitor(rapporteringsperiode: Rapporteringsperiode) : RapporteringsperiodVisitor {
         lateinit var tilstand: Rapporteringsperiode.TilstandType
+        var korrigerer: Rapporteringsperiode? = null
+        var korrigertAv: Rapporteringsperiode? = null
 
         init {
             rapporteringsperiode.accept(this)
@@ -56,8 +84,12 @@ class RapporteringsperiodeTest {
             periode: ClosedRange<LocalDate>,
             tilstand: Rapporteringsperiode.TilstandType,
             rapporteringsfrist: LocalDate,
+            korrigerer: Rapporteringsperiode?,
+            korrigertAv: Rapporteringsperiode?,
         ) {
             this.tilstand = tilstand
+            this.korrigerer = korrigerer
+            this.korrigertAv = korrigertAv
         }
     }
 

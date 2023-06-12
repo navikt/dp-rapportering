@@ -254,14 +254,11 @@ components:
           format: date
           type: string
         korrigerer:
-          type: string
-          format: uuid
+          $ref: '#/components/schemas/Rapporteringsperiode'
           nullable: true
         korrigertAv:
-          type: array
-          items:
-            type: string
-            format: uuid
+          $ref: '#/components/schemas/Rapporteringsperiode'
+          nullable: true
         status:
           type: string
           enum:

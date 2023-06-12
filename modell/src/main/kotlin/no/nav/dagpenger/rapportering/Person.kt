@@ -4,6 +4,7 @@ import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.aktivitetslogg.Subaktivitetskontekst
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
@@ -112,6 +113,13 @@ class Person private constructor(
 
     fun behandle(hendelse: RapporteringsfristHendelse) {
         rapporteringsperioder.forEach { it.behandle(hendelse) }
+    }
+
+    fun behandle(hendelse: KorrigerPeriodeHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Korrigerer rapporteringsperiode")
+
+        rapporteringsperioder.single { it.rapporteringsperiodeId == hendelse.rapporteringId }.behandle(hendelse)
     }
 
     fun registrer(observer: PersonObserver) {

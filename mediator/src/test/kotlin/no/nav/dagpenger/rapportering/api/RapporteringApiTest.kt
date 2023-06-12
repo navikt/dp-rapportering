@@ -21,6 +21,7 @@ import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
 import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
@@ -110,6 +111,22 @@ class RapporteringApiTest {
     }
 
     @Test
+    fun `Skal kunne korrigere en rapporteringsperiode`() {
+        withRapporteringApi(rapporteringsperioder = listOf(testPeriode)) {
+            client.post("/rapporteringsperioder/$testPeriodeId/korrigering") {
+                autentisert()
+                contentType(ContentType.Application.Json)
+            }.also { response ->
+                response.status shouldBe HttpStatusCode.OK
+                "${response.contentType()}" shouldContain "application/json"
+                verify {
+                    mediatorMock.behandle(any<KorrigerPeriodeHendelse>())
+                }
+            }
+        }
+    }
+
+    @Test
     fun `Skal kunne rapportere en aktivitet`() {
         withRapporteringApi(rapporteringsperioder = listOf(testPeriode)) {
             autentisert(
@@ -156,7 +173,12 @@ private fun withRapporteringApi(
             rapporteringApi(
                 mockk<RapporteringsperiodeRepository>().apply {
                     every { hentRapporteringsperioder(defaultDummyFodselsnummer) } answers { rapporteringsperioder }
-                    every { hentRapporteringsperiode(defaultDummyFodselsnummer, any()) } answers { rapporteringsperioder.single() }
+                    every {
+                        hentRapporteringsperiode(
+                            defaultDummyFodselsnummer,
+                            any(),
+                        )
+                    } answers { rapporteringsperioder.single() }
                 },
                 mediatorMock,
             )

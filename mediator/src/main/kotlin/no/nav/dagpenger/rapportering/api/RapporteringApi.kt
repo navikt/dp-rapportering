@@ -28,6 +28,7 @@ import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDagerInnerDTO
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
@@ -101,6 +102,21 @@ internal fun Application.rapporteringApi(
                         }
                     }
 
+                    route("/korrigering") {
+                        post {
+                            mediator.behandle(KorrigerPeriodeHendelse(call.ident(), call.finnUUID("periodeId")))
+                            val gjeldende =
+                                rapporteringsperiodeRepository.hentRapporteringsperiode(
+                                    call.ident(),
+                                    call.finnUUID("periodeId"),
+                                )!!.let {
+                                    RapporteringsperiodeMapper(it).dto
+                                }
+
+                            call.respond(HttpStatusCode.OK, gjeldende)
+                        }
+                    }
+
                     route("/aktivitet") {
                         post {
                             val aktivitetInput = call.receive<AktivitetInputDTO>()
@@ -152,6 +168,8 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
     private lateinit var periode: ClosedRange<LocalDate>
     private lateinit var tilstand: Rapporteringsperiode.TilstandType
     private val dager: SortedSet<Dag> = sortedSetOf(Dag.Companion.eldsteDagFørst)
+    private var korrigerer: Rapporteringsperiode? = null
+    private var korrigertAv: Rapporteringsperiode? = null
     val dto: RapporteringsperiodeDTO
         get() {
             return RapporteringsperiodeDTO(
@@ -164,6 +182,8 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
                     Innsendt -> RapporteringsperiodeDTO.Status.Innsendt
                 },
                 dager = dager.mapIndexed { index, it -> DagMapper(index, it).dto },
+                korrigerer = korrigerer?.let { RapporteringsperiodeMapper(it).dto },
+                korrigertAv = korrigertAv?.let { RapporteringsperiodeMapper(it).dto },
             )
         }
 
@@ -201,10 +221,14 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
         periode: ClosedRange<LocalDate>,
         tilstand: Rapporteringsperiode.TilstandType,
         rapporteringsfrist: LocalDate,
+        korrigerer: Rapporteringsperiode?,
+        korrigertAv: Rapporteringsperiode?,
     ) {
         this.id = id
         this.periode = periode
         this.tilstand = tilstand
+        this.korrigerer = korrigerer
+        this.korrigertAv = korrigertAv
     }
 
     override fun visit(

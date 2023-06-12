@@ -130,6 +130,8 @@ class PersonTest {
             periode: ClosedRange<LocalDate>,
             tilstand: Rapporteringsperiode.TilstandType,
             rapporteringsfrist: LocalDate,
+            korrigerer: Rapporteringsperiode?,
+            korrigertAv: Rapporteringsperiode?,
         ) {
             rapporteringsperioder += rapporteringsperiode
         }

@@ -271,6 +271,8 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
         periode: ClosedRange<LocalDate>,
         tilstand: Rapporteringsperiode.TilstandType,
         rapporteringsfrist: LocalDate,
+        korrigerer: Rapporteringsperiode?,
+        korrigertAv: Rapporteringsperiode?,
     ) {
         this.rapporteringsperiodeId = id
         queries.add(

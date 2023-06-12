@@ -19,6 +19,8 @@ interface RapporteringsperiodVisitor : AktivitetstidslinjeVisitor {
         periode: ClosedRange<LocalDate>,
         tilstand: Rapporteringsperiode.TilstandType,
         rapporteringsfrist: LocalDate,
+        korrigerer: Rapporteringsperiode?,
+        korrigertAv: Rapporteringsperiode?,
     ) {
     }
 }
