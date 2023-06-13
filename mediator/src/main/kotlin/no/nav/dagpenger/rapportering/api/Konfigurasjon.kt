@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.api
 
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
@@ -9,8 +10,11 @@ import io.ktor.server.auth.AuthenticationConfig
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.path
+import io.ktor.server.response.respond
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.tokenX
+import no.nav.dagpenger.rapportering.api.models.ProblemDTO
 import no.nav.dagpenger.rapportering.serialisering.Jackson.config
 import org.slf4j.event.Level
 import java.util.UUID
@@ -31,6 +35,19 @@ fun Application.konfigurasjon(auth: AuthenticationConfig.() -> Unit = { jwt("tok
 
     install(Authentication) {
         auth()
+    }
+
+    install(StatusPages) {
+        exception<IllegalStateException> { call, cause ->
+            call.respond(
+                HttpStatusCode.MethodNotAllowed,
+                ProblemDTO(
+                    title = "Ulovlig tilstand",
+                    detail = cause.message,
+                    status = HttpStatusCode.MethodNotAllowed.value,
+                ),
+            )
+        }
     }
 }
 

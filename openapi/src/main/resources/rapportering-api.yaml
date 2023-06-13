@@ -165,7 +165,7 @@ paths:
         - Rapporteringsperiode
     parameters:
       - name: periodeId
-        description: ID of the reporting period to get or correct
+        description: ID til rapporteringsperioden
         schema:
           type: integer
         in: path
@@ -179,6 +179,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Rapporteringsperiode'
           description: OK
+        '405':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Bare innsendte rapporteringsperioder kan korrigeres
+                status: 405
+          description: Ulovlig tilstand
       summary: Lag en korrigering for en rapporteringsperiode
       description: Lager en korrigering for en rapporteringsperiode
       operationId: post-rapporteringsperiode-korrigering
@@ -186,7 +195,7 @@ paths:
         - Rapporteringsperiode
     parameters:
       - name: periodeId
-        description: ID of the reporting period to get or correct
+        description: ID til rapporteringsperioden
         schema:
           type: integer
         in: path
@@ -254,10 +263,12 @@ components:
           format: date
           type: string
         korrigerer:
-          $ref: '#/components/schemas/Rapporteringsperiode'
+          type: string
+          format: uuid
           nullable: true
         korrigertAv:
-          $ref: '#/components/schemas/Rapporteringsperiode'
+          type: string
+          format: uuid
           nullable: true
         status:
           type: string
@@ -304,6 +315,28 @@ components:
       example:
         fraOgMed: '2023-05-01'
         tilOgMed: '2023-05-15'
+    Problem:
+      type: object
+      description: Implementasjon av Problem Details for HTTP APIs [RFC 8707](https://datatracker.ietf.org/doc/html/rfc7807)
+      properties:
+        type:
+          type: string
+          format: uri
+          default: about:blank
+          description: URI som identifiserer problemet
+        title:
+          type: string
+          description: En kort oppsummering av problemet
+        status:
+          type: integer
+          description: HTTP status
+        detail:
+          type: string
+          description: Forklaring av problemet
+        instance:
+          type: string
+          format: uri
+          description: Hvor feilen oppstod
   securitySchemes:
     tokenx:
       type: http

@@ -168,24 +168,22 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
     private lateinit var periode: ClosedRange<LocalDate>
     private lateinit var tilstand: Rapporteringsperiode.TilstandType
     private val dager: SortedSet<Dag> = sortedSetOf(Dag.Companion.eldsteDagFørst)
-    private var korrigerer: Rapporteringsperiode? = null
-    private var korrigertAv: Rapporteringsperiode? = null
+    private var korrigerer: UUID? = null
+    private var korrigertAv: UUID? = null
     val dto: RapporteringsperiodeDTO
-        get() {
-            return RapporteringsperiodeDTO(
-                id = id,
-                fraOgMed = periode.start,
-                tilOgMed = periode.endInclusive,
-                status = when (tilstand) {
-                    TilUtfylling -> RapporteringsperiodeDTO.Status.TilUtfylling
-                    Godkjent -> RapporteringsperiodeDTO.Status.Godkjent
-                    Innsendt -> RapporteringsperiodeDTO.Status.Innsendt
-                },
-                dager = dager.mapIndexed { index, it -> DagMapper(index, it).dto },
-                korrigerer = korrigerer?.let { RapporteringsperiodeMapper(it).dto },
-                korrigertAv = korrigertAv?.let { RapporteringsperiodeMapper(it).dto },
-            )
-        }
+        get() = RapporteringsperiodeDTO(
+            id = id,
+            fraOgMed = periode.start,
+            tilOgMed = periode.endInclusive,
+            status = when (tilstand) {
+                TilUtfylling -> RapporteringsperiodeDTO.Status.TilUtfylling
+                Godkjent -> RapporteringsperiodeDTO.Status.Godkjent
+                Innsendt -> RapporteringsperiodeDTO.Status.Innsendt
+            },
+            dager = dager.mapIndexed { index, it -> DagMapper(index, it).dto },
+            korrigerer = korrigerer,
+            korrigertAv = korrigertAv,
+        )
 
     init {
         rapporteringsperiode.accept(this)
@@ -227,8 +225,8 @@ private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperi
         this.id = id
         this.periode = periode
         this.tilstand = tilstand
-        this.korrigerer = korrigerer
-        this.korrigertAv = korrigertAv
+        this.korrigerer = korrigerer?.rapporteringsperiodeId
+        this.korrigertAv = korrigertAv?.rapporteringsperiodeId
     }
 
     override fun visit(
