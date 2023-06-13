@@ -32,15 +32,16 @@ class UtsendingsObserverTest {
                 testRapid,
                 RapporteringsfristHendelse(UUID.randomUUID(), "123", LocalDate.now().plusDays(10)),
             )
-
+        val fom = 1.januar
+        val tom = 14.januar
         observer.rapporteringsperiodeInnsendt(
             RapporteringsperiodeObserver.RapporteringsperiodeInnsendt(
                 UUID.randomUUID(),
-                fom = 1.januar,
-                tom = 14.januar,
-                dager = listOf(
-                    Dag(5.januar, mutableListOf(Aktivitet.Arbeid(5.januar, 5))),
-                ),
+                fom = fom,
+                tom = tom,
+                dager = fom.datesUntil(tom.plusDays(1)).map {
+                    Dag(it, mutableListOf(Aktivitet.Arbeid(it, 5)))
+                }.toList(),
             ),
         )
 
@@ -52,11 +53,11 @@ class UtsendingsObserverTest {
             it["tom"].asLocalDate() shouldBe 14.januar
 
             it["dager"].let { dager ->
-                dager.size() shouldBe 1
-                dager.single()["dato"].asLocalDate() shouldBe 5.januar
+                dager.size() shouldBe 14
+                dager.first()["dato"].asLocalDate() shouldBe 1.januar
             }
 
-            it["dager"].single()["aktiviteter"].let { aktiviteter ->
+            it["dager"].first()["aktiviteter"].let { aktiviteter ->
                 aktiviteter.size() shouldBe 1
                 aktiviteter.single()["type"].asText() shouldBe "Arbeid"
                 Duration.parse(aktiviteter.single()["tid"].asText()) shouldBe 5.hours
