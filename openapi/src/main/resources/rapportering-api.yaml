@@ -317,7 +317,7 @@ components:
         tilOgMed: '2023-05-15'
     Problem:
       type: object
-      description: Implementasjon av Problem Details for HTTP APIs [RFC 8707](https://datatracker.ietf.org/doc/html/rfc7807)
+      description: Implementasjon av Problem Details for HTTP APIs [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807)
       properties:
         type:
           type: string
