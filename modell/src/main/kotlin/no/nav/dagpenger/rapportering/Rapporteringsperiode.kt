@@ -32,22 +32,7 @@ class Rapporteringsperiode private constructor(
     private val observers: MutableSet<RapporteringsperiodeObserver> = mutableSetOf()
     val gjelderFra = periode.start
 
-    fun finnSisteKorrigering(): Rapporteringsperiode = korrigertAv?.let { it.finnSisteKorrigering() } ?: this
-
     constructor(rapporteringspliktFom: LocalDate) : this(fom = rapporteringspliktFom.finnFørsteMandagIUken())
-
-    private fun lagKorrigering(): Rapporteringsperiode {
-        return Rapporteringsperiode(
-            UUID.randomUUID(),
-            rapporteringsfrist = periode.start,
-            periode = periode,
-            tilstand = TilUtfylling,
-            opprettet = LocalDateTime.now(),
-            oppdatert = LocalDateTime.now(),
-            tidslinje = tidslinje.kopier(),
-            korrigerer = this,
-        ).also { this.korrigertAv = it }
-    }
 
     internal constructor(
         fom: LocalDate,
@@ -91,6 +76,21 @@ class Rapporteringsperiode private constructor(
             }
         }
     }
+
+    private fun lagKorrigering(): Rapporteringsperiode {
+        return Rapporteringsperiode(
+            UUID.randomUUID(),
+            rapporteringsfrist = periode.start,
+            periode = periode,
+            tilstand = TilUtfylling,
+            opprettet = LocalDateTime.now(),
+            oppdatert = LocalDateTime.now(),
+            tidslinje = tidslinje.kopier(),
+            korrigerer = this,
+        ).also { this.korrigertAv = it }
+    }
+
+    fun finnSisteKorrigering(): Rapporteringsperiode = korrigertAv?.let { it.finnSisteKorrigering() } ?: this
 
     fun gjelderFor(dato: LocalDate) = dato in periode
 

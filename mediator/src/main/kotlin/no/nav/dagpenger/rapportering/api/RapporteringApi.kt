@@ -94,7 +94,7 @@ internal fun Application.rapporteringApi(
                     route("/korrigering") {
                         post {
                             mediator.behandle(KorrigerPeriodeHendelse(call.ident(), call.finnUUID("periodeId")))
-                            val gjeldende =
+                            val korrigering =
                                 rapporteringsperiodeRepository.hentRapporteringsperiode(
                                     call.ident(),
                                     call.finnUUID("periodeId"),
@@ -102,7 +102,7 @@ internal fun Application.rapporteringApi(
                                     RapporteringsperiodeMapper(it.finnSisteKorrigering()).dto
                                 }
 
-                            call.respond(HttpStatusCode.OK, gjeldende)
+                            call.respond(HttpStatusCode.OK, korrigering)
                         }
                     }
 

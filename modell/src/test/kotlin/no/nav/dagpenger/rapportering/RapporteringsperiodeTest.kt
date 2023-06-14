@@ -34,7 +34,6 @@ class RapporteringsperiodeTest {
     fun `kan korrigere innsendt periode`() {
         val innsendtPeriode = lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = Innsendt)
         innsendtPeriode.behandle(KorrigerPeriodeHendelse(testIdent, innsendtPeriode.rapporteringsperiodeId))
-
         val korrigertPeriode = innsendtPeriode.korrigertAv
 
         innsendtPeriode.tilstand shouldBe Innsendt
@@ -49,22 +48,25 @@ class RapporteringsperiodeTest {
     @Test
     fun `kan erstatte påbegynt korrigering`() {
         val innsendtPeriode = lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = Innsendt)
-        innsendtPeriode.behandle(KorrigerPeriodeHendelse(testIdent, innsendtPeriode.rapporteringsperiodeId))
 
+        // Opprett en korrigering og verifisert at det er korrigeringen som kommer tilbake
+        innsendtPeriode.behandle(KorrigerPeriodeHendelse(testIdent, innsendtPeriode.rapporteringsperiodeId))
         val korrigertPeriode1 = innsendtPeriode.korrigertAv
         korrigertPeriode1.tilstand shouldBe TilUtfylling
+        innsendtPeriode.finnSisteKorrigering() shouldBe korrigertPeriode1
 
+        // Opprett ny korrigering som erstatter forrige påbegynte korrigering
         innsendtPeriode.behandle(KorrigerPeriodeHendelse(testIdent, innsendtPeriode.rapporteringsperiodeId))
-
         val korrigertPeriode2 = innsendtPeriode.korrigertAv
+        innsendtPeriode.finnSisteKorrigering() shouldBe korrigertPeriode2
         korrigertPeriode2 shouldNotBe korrigertPeriode1
         korrigertPeriode2.korrigerer shouldBe innsendtPeriode
 
         korrigertPeriode2.behandle(nyAktivitetHendelse(korrigertPeriode2.rapporteringsperiodeId, 6.januar))
+        listOf(innsendtPeriode).hentGjeldende(5.januar) shouldBe null
+
         korrigertPeriode2.behandle(godkjennPeriodeHendelse(korrigertPeriode2.rapporteringsperiodeId))
         korrigertPeriode2.tilstand shouldBe Godkjent
-
-        innsendtPeriode.finnSisteKorrigering() shouldBe korrigertPeriode2
     }
 
     private val Rapporteringsperiode.tilstand get() = TestVisitor(this).tilstand
