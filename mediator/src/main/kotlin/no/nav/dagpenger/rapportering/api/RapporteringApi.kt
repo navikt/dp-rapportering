@@ -12,21 +12,13 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import no.nav.dagpenger.rapportering.AktivitetVisitor
-import no.nav.dagpenger.rapportering.DagVisitor
 import no.nav.dagpenger.rapportering.IHendelseMediator
-import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
-import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.Companion.hentGjeldende
-import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
-import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Innsendt
-import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.TilUtfylling
 import no.nav.dagpenger.rapportering.api.auth.ident
+import no.nav.dagpenger.rapportering.api.dto.RapporteringsperiodeMapper
 import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetInputDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
-import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDTO
-import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDagerInnerDTO
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
@@ -34,11 +26,8 @@ import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
-import no.nav.dagpenger.rapportering.tidslinje.Dag
 import java.time.LocalDate
-import java.util.SortedSet
 import java.util.UUID
-import kotlin.time.Duration
 
 internal fun Application.rapporteringApi(
     rapporteringsperiodeRepository: RapporteringsperiodeRepository,
@@ -162,114 +151,6 @@ private fun AktivitetInputDTO.toAktivitet() =
             dato = dato,
         )
     }
-
-private class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperiode) : RapporteringsperiodVisitor {
-    private lateinit var id: UUID
-    private lateinit var periode: ClosedRange<LocalDate>
-    private lateinit var tilstand: Rapporteringsperiode.TilstandType
-    private val dager: SortedSet<Dag> = sortedSetOf(Dag.Companion.eldsteDagFørst)
-    private var korrigerer: UUID? = null
-    private var korrigertAv: UUID? = null
-    val dto: RapporteringsperiodeDTO
-        get() = RapporteringsperiodeDTO(
-            id = id,
-            fraOgMed = periode.start,
-            tilOgMed = periode.endInclusive,
-            status = when (tilstand) {
-                TilUtfylling -> RapporteringsperiodeDTO.Status.TilUtfylling
-                Godkjent -> RapporteringsperiodeDTO.Status.Godkjent
-                Innsendt -> RapporteringsperiodeDTO.Status.Innsendt
-            },
-            dager = dager.mapIndexed { index, it -> DagMapper(index, it).dto },
-            korrigerer = korrigerer,
-            korrigertAv = korrigertAv,
-        )
-
-    init {
-        rapporteringsperiode.accept(this)
-    }
-
-    class AktivitetMapper(aktivitet: Aktivitet) : AktivitetVisitor {
-        lateinit var aktivitetDTO: AktivitetDTO
-
-        init {
-            aktivitet.accept(this)
-        }
-
-        override fun visit(
-            aktivitet: Aktivitet,
-            uuid: UUID,
-            dato: LocalDate,
-            tid: Duration,
-            type: Aktivitet.AktivitetType,
-            tilstand: Aktivitet.TilstandType,
-        ) {
-            aktivitetDTO = AktivitetDTO(
-                type = AktivitetTypeDTO.valueOf(type.name),
-                dato = dato,
-                id = uuid,
-                timer = tid.toIsoString(),
-            )
-        }
-    }
-
-    override fun visit(
-        rapporteringsperiode: Rapporteringsperiode,
-        id: UUID,
-        periode: ClosedRange<LocalDate>,
-        tilstand: Rapporteringsperiode.TilstandType,
-        rapporteringsfrist: LocalDate,
-        korrigerer: Rapporteringsperiode?,
-        korrigertAv: Rapporteringsperiode?,
-    ) {
-        this.id = id
-        this.periode = periode
-        this.tilstand = tilstand
-        this.korrigerer = korrigerer?.rapporteringsperiodeId
-        this.korrigertAv = korrigertAv?.rapporteringsperiodeId
-    }
-
-    override fun visit(
-        dag: Dag,
-        dato: LocalDate,
-        aktiviteter: List<Aktivitet>,
-        muligeAktiviter: List<Aktivitet.AktivitetType>,
-    ) {
-        // Legg til dager i et sortet set for å garantere rekkefølge
-        this.dager.add(dag)
-    }
-
-    private class DagMapper(private val index: Int, dag: Dag) :
-        DagVisitor {
-        lateinit var dto: RapporteringsperiodeDagerInnerDTO
-
-        init {
-            dag.accept(this)
-        }
-
-        override fun visit(
-            dag: Dag,
-            dato: LocalDate,
-            aktiviteter: List<Aktivitet>,
-            muligeAktiviter: List<Aktivitet.AktivitetType>,
-        ) {
-            dto = RapporteringsperiodeDagerInnerDTO(
-                dagIndex = index,
-                dato = dato,
-                muligeAktiviteter = muligeAktiviter.map {
-                    AktivitetTypeDTO.valueOf(
-                        it.name,
-                    )
-                },
-                aktiviteter = aktiviteter.tilDto(),
-            )
-        }
-
-        private fun List<Aktivitet>.tilDto() = this.map {
-            AktivitetMapper(it).aktivitetDTO
-        }
-    }
-}
 
 private fun Aktivitet.toAktivitetDTO(): AktivitetDTO {
     val aktivitetType = when (this) {
