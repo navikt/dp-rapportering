@@ -32,6 +32,8 @@ class Rapporteringsperiode private constructor(
     private val observers: MutableSet<RapporteringsperiodeObserver> = mutableSetOf()
     val gjelderFra = periode.start
 
+    fun finnSisteKorrigering(): Rapporteringsperiode = korrigertAv?.let { it.finnSisteKorrigering() } ?: this
+
     constructor(rapporteringspliktFom: LocalDate) : this(fom = rapporteringspliktFom.finnFørsteMandagIUken())
 
     private fun lagKorrigering(): Rapporteringsperiode {

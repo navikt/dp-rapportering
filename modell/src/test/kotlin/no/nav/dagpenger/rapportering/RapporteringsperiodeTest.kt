@@ -63,6 +63,8 @@ class RapporteringsperiodeTest {
         korrigertPeriode2.behandle(nyAktivitetHendelse(korrigertPeriode2.rapporteringsperiodeId, 6.januar))
         korrigertPeriode2.behandle(godkjennPeriodeHendelse(korrigertPeriode2.rapporteringsperiodeId))
         korrigertPeriode2.tilstand shouldBe Godkjent
+
+        innsendtPeriode.finnSisteKorrigering() shouldBe korrigertPeriode2
     }
 
     private val Rapporteringsperiode.tilstand get() = TestVisitor(this).tilstand
