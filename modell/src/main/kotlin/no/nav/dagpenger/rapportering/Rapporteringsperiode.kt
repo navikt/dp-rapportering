@@ -54,6 +54,8 @@ class Rapporteringsperiode private constructor(
             tilstand: TilstandType,
             opprettet: LocalDateTime,
             tidslinje: Aktivitetstidslinje,
+            korrigerer: Rapporteringsperiode?,
+            korrigertAv: Rapporteringsperiode?,
         ) = Rapporteringsperiode(
             rapporteringsperiodeId,
             rapporteringsfrist,
@@ -66,6 +68,8 @@ class Rapporteringsperiode private constructor(
             opprettet,
             opprettet,
             tidslinje,
+            korrigerer,
+            korrigertAv,
         )
 
         fun List<Rapporteringsperiode>.hentGjeldende(dato: LocalDate = LocalDate.now()): Rapporteringsperiode? {

@@ -10,7 +10,10 @@ import no.nav.dagpenger.rapportering.Rapporteringsplikt
 import no.nav.dagpenger.rapportering.RapporteringspliktType
 import no.nav.dagpenger.rapportering.db.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.dataSource
+import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
@@ -86,6 +89,32 @@ class PostgresRepositoryTest {
     }
 
     @Test
+    fun `lagring og henting av en rapporteringsperiode`() {
+        withMigratedDb {
+            val repository = PostgresRepository(dataSource)
+            val person = Person(testIdent).also { repository.lagre(it) }
+            person.apply {
+                behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent))
+            }
+            repository.lagre(person)
+            repository.hentEllerOpprettPerson(testIdent).let { person ->
+                person.behandle(GodkjennPeriodeHendelse(testIdent, person.aktivRapporteringsperiodeId))
+                person.behandle(RapporteringsfristHendelse(UUID.randomUUID(), testIdent, LocalDate.MAX))
+                repository.lagre(person)
+            }
+
+            repository.hentEllerOpprettPerson(testIdent).let { person ->
+                person.behandle(KorrigerPeriodeHendelse(testIdent, person.aktivRapporteringsperiodeId))
+                repository.lagre(person)
+            }
+
+            repository.hentEllerOpprettPerson(testIdent).let { person ->
+                person.aktivRapporteringsperiode.finnSisteKorrigering() shouldNotBe person.aktivRapporteringsperiode
+            }
+        }
+    }
+
+    @Test
     fun `kan slette en aktivitet`() {
         withMigratedDb {
             val repository = PostgresRepository(dataSource)
@@ -124,6 +153,7 @@ class PostgresRepositoryTest {
     }
 
     private val Person.aktivRapporteringsperiodeId get() = TestVisitor(this).rapporteringsperioder.last().rapporteringsperiodeId
+    private val Person.aktivRapporteringsperiode get() = TestVisitor(this).rapporteringsperioder.last()
     private val Person.aktivitetId get() = TestVisitor(this).aktivAktivitetId
     private val Person.antallAktiviteter get() = TestVisitor(this).aktiviteter.size
     private val Person.antallDager get() = TestVisitor(this).dager.size

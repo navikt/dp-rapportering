@@ -111,6 +111,8 @@ class RapporteringsperiodeTest {
             tilstand = tilstand,
             opprettet = LocalDateTime.now(),
             tidslinje = Aktivitetstidslinje(fom..tom),
+            korrigerer = null,
+            korrigertAv = null,
         )
     }
 }
