@@ -34,6 +34,10 @@ class Rapporteringsperiode private constructor(
 
     constructor(rapporteringspliktFom: LocalDate) : this(fom = rapporteringspliktFom.finnFørsteMandagIUken())
 
+    init {
+        korrigerer?.korrigertAv = this
+    }
+
     internal constructor(
         fom: LocalDate,
         tom: LocalDate = fom.plusDays(RAPPORTERINGSPERIODE_LENGDE - 1),
@@ -55,7 +59,6 @@ class Rapporteringsperiode private constructor(
             opprettet: LocalDateTime,
             tidslinje: Aktivitetstidslinje,
             korrigerer: Rapporteringsperiode?,
-            korrigertAv: Rapporteringsperiode?,
         ) = Rapporteringsperiode(
             rapporteringsperiodeId,
             rapporteringsfrist,
@@ -69,7 +72,7 @@ class Rapporteringsperiode private constructor(
             opprettet,
             tidslinje,
             korrigerer,
-            korrigertAv,
+            null,
         )
 
         fun List<Rapporteringsperiode>.hentGjeldende(dato: LocalDate = LocalDate.now()): Rapporteringsperiode? {
@@ -91,10 +94,10 @@ class Rapporteringsperiode private constructor(
             oppdatert = LocalDateTime.now(),
             tidslinje = tidslinje.kopier(),
             korrigerer = this,
-        ).also { this.korrigertAv = it }
+        )
     }
 
-    fun finnSisteKorrigering(): Rapporteringsperiode = korrigertAv?.let { it.finnSisteKorrigering() } ?: this
+    fun snabellaks(): Rapporteringsperiode = korrigertAv?.let { it.snabellaks() } ?: this
 
     fun gjelderFor(dato: LocalDate) = dato in periode
 

@@ -28,52 +28,45 @@ internal class PostgresRepository(private val ds: DataSource) :
     PersonRepository,
     RapporteringsperiodeRepository {
     override fun hentRapporteringsperiode(ident: String, uuid: UUID): Rapporteringsperiode? {
-        return using(sessionOf(ds)) { session ->
-            session.run(
-                queryOf(
-                    //language=PostgreSQL
-                    statement = """SELECT * FROM rapporteringsperiode WHERE person_ident = :ident AND uuid = :uuid""",
-                    paramMap = mapOf("ident" to ident, "uuid" to uuid),
-                ).map { it.toRapporteringsperiode() }.asSingle,
-            )
+        val kjede = hentKjede(ident, uuid)
+        return kjede.lagKjede { uuid, korrigerer ->
+            println("Lager periode $uuid som korrigerer ${korrigerer?.rapporteringsperiodeId}")
+            // Rapporteringsperiode.rehydrer(uuid, korrigerer)
+            hentRapporteringsperiodeMedKorrigering(ident, uuid, korrigerer)
         }
     }
 
-    override fun hentRapporteringsperioder(ident: String): List<Rapporteringsperiode> {
-        return using(sessionOf(ds)) { session ->
-            session.run(
-                queryOf(
-                    //language=PostgreSQL
-                    statement = """SELECT * FROM rapporteringsperiode WHERE person_ident = :ident""",
-                    paramMap = mapOf("ident" to ident),
-                ).map { it.toRapporteringsperiode() }.asList,
-            )
-        }
+    override fun hentRapporteringsperioder(ident: String) = using(sessionOf(ds)) { session ->
+        session.run(
+            queryOf(
+                //language=PostgreSQL
+                statement = """SELECT uuid FROM rapporteringsperiode WHERE person_ident = :ident AND korrigerer IS NULL""",
+                paramMap = mapOf("ident" to ident),
+            ).map { hentRapporteringsperiode(ident, it.uuid("uuid")) }.asList,
+        )
     }
 
-    override fun hentRapporteringspliktFor(ident: String): List<Rapporteringsplikt> {
-        return using(sessionOf(ds)) { session ->
-            session.run(
-                queryOf(
-                    //language=PostgreSQL
-                    statement = """SELECT uuid, gjelder_fra, type FROM rapporteringsplikt LEFT JOIN person p ON rapporteringsplikt.person_id = p.id WHERE p.ident = :ident""",
-                    paramMap = mapOf("ident" to ident),
-                ).map {
-                    val gjelderFra = it.localDateTime("gjelder_fra")
-                    val type = RapporteringspliktType.valueOf(it.string("type"))
-                    val uuid = it.uuid("uuid")
-                    when (type) {
-                        RapporteringspliktType.Ingen -> IngenRapporteringsplikt(uuid, gjelderFra)
-                        RapporteringspliktType.Søknad -> RapporteringspliktSøknad(uuid, gjelderFra)
-                        RapporteringspliktType.Vedtak -> RapporteringspliktVedtak(uuid, gjelderFra)
-                    }
-                }.asList,
-            )
-        }
+    override fun hentRapporteringspliktFor(ident: String) = using(sessionOf(ds)) { session ->
+        session.run(
+            queryOf(
+                //language=PostgreSQL
+                statement = """SELECT uuid, gjelder_fra, type FROM rapporteringsplikt LEFT JOIN person p ON rapporteringsplikt.person_id = p.id WHERE p.ident = :ident""",
+                paramMap = mapOf("ident" to ident),
+            ).map {
+                val gjelderFra = it.localDateTime("gjelder_fra")
+                val type = RapporteringspliktType.valueOf(it.string("type"))
+                val uuid = it.uuid("uuid")
+                when (type) {
+                    RapporteringspliktType.Ingen -> IngenRapporteringsplikt(uuid, gjelderFra)
+                    RapporteringspliktType.Søknad -> RapporteringspliktSøknad(uuid, gjelderFra)
+                    RapporteringspliktType.Vedtak -> RapporteringspliktVedtak(uuid, gjelderFra)
+                }
+            }.asList,
+        )
     }
 
-    override fun hentRapporteringsperiodeFor(ident: String, dato: LocalDate): Rapporteringsperiode? {
-        return using(sessionOf(ds)) { session ->
+    override fun hentRapporteringsperiodeFor(ident: String, dato: LocalDate) =
+        using(sessionOf(ds)) { session ->
             session.run(
                 queryOf(
                     //language=PostgreSQL
@@ -84,33 +77,28 @@ internal class PostgresRepository(private val ds: DataSource) :
                 }.asSingle,
             )
         }
+
+    private fun hentPerson(ident: String) = using(sessionOf(ds)) { session ->
+        session.run(
+            queryOf(
+                //language=PostgreSQL
+                statement = """SELECT ident FROM person WHERE ident = :ident""",
+                paramMap = mapOf("ident" to ident),
+            ).map { row ->
+                Person(
+                    row.string("ident"),
+                    hentRapporteringsperioder(ident),
+                    hentRapporteringspliktFor(ident),
+                )
+            }.asSingle,
+        )
     }
 
-    private fun hentPerson(ident: String): Person? {
-        return using(sessionOf(ds)) { session ->
-            session.run(
-                queryOf(
-                    //language=PostgreSQL
-                    statement = """SELECT ident FROM person WHERE ident = :ident""",
-                    paramMap = mapOf("ident" to ident),
-                ).map { row ->
-                    Person(
-                        row.string("ident"),
-                        hentRapporteringsperioder(ident),
-                        hentRapporteringspliktFor(ident),
-                    )
-                }.asSingle,
-            )
-        }
-    }
-
-    override fun hentEllerOpprettPerson(ident: String): Person {
-        return if (personFinnes(ident)) {
-            hentPerson(ident)!!
-        } else {
-            insertPerson(ident)
-            Person(ident)
-        }
+    override fun hentEllerOpprettPerson(ident: String) = if (personFinnes(ident)) {
+        hentPerson(ident)!!
+    } else {
+        insertPerson(ident)
+        Person(ident)
     }
 
     override fun lagre(person: Person) {
@@ -151,6 +139,22 @@ internal class PostgresRepository(private val ds: DataSource) :
         }
     }
 
+    private fun hentRapporteringsperiodeMedKorrigering(
+        ident: String,
+        uuid: UUID,
+        korrigerer: Rapporteringsperiode?,
+    ): Rapporteringsperiode? {
+        return using(sessionOf(ds)) { session ->
+            session.run(
+                queryOf(
+                    //language=PostgreSQL
+                    statement = """SELECT * FROM rapporteringsperiode WHERE person_ident = :ident AND uuid = :uuid""",
+                    paramMap = mapOf("ident" to ident, "uuid" to uuid),
+                ).map { it.toRapporteringsperiode(korrigerer) }.asSingle,
+            )
+        }
+    }
+
     private fun insertPerson(ident: String) {
         using(sessionOf(ds)) { session ->
             session.run(
@@ -175,17 +179,13 @@ internal class PostgresRepository(private val ds: DataSource) :
         )
     } ?: false
 
-    private fun Row.toRapporteringsperiode(): Rapporteringsperiode {
+    private fun Row.toRapporteringsperiode(korrigerer: Rapporteringsperiode? = null): Rapporteringsperiode {
         val rapporteringsperiodeId = uuid("uuid")
         val fraOgMed = localDate("fom")
         val tilOgMed = localDate("tom")
         val tidslinje = Aktivitetstidslinje(fraOgMed, tilOgMed).apply {
             hentAktiviteterFor(rapporteringsperiodeId).forEach { leggTilAktivitet(it) }
         }
-        val ident = string("person_ident")
-
-        val korrigerer = uuidOrNull("korrigerer")?.let { hentRapporteringsperiode(ident, it) }
-        val korrigertAv = uuidOrNull("korrigert_av")?.let { hentRapporteringsperiode(ident, it) }
 
         return Rapporteringsperiode.rehydrer(
             rapporteringsperiodeId,
@@ -196,8 +196,57 @@ internal class PostgresRepository(private val ds: DataSource) :
             localDateTime("opprettet"),
             tidslinje,
             korrigerer,
-            korrigertAv,
         )
+    }
+
+    private fun hentKjede(ident: String, uuid: UUID): List<UUID> {
+        return using(sessionOf(ds)) { session ->
+            session.run(
+                queryOf(
+                    /**
+                     * Denne spørringen henter hele kjeden av rapporteringsperioder og korrigeringer
+                     *
+                     * 1. Først bruker den CTE (WITH RECURSIVE) til å rekursivt hente ut perioden vi skal ha
+                     * 2. Så gjør den en UNION med perioden som korrigerer
+                     * 3. Så kjører den rekursivt til det er tomt
+                     * 4. Så henter vi ut alle IDene i (motsatt) rekkefølge vi må bygge de i
+                     */
+                    //language=PostgreSQL
+                    statement = """
+                    WITH RECURSIVE linked_structure AS (
+                        SELECT a.uuid, a.korrigert_av
+                        FROM rapporteringsperiode a
+                        WHERE a.person_ident=:ident AND a.uuid = :startUuid
+                    
+                        UNION ALL
+                    
+                        SELECT a.uuid, a.korrigert_av
+                        FROM rapporteringsperiode a
+                                 JOIN linked_structure ls ON a.uuid = ls.korrigert_av
+                    )
+                    SELECT uuid
+                    FROM linked_structure
+                    """.trimIndent(),
+                    mapOf(
+                        "ident" to ident,
+                        "startUuid" to uuid,
+                    ),
+                ).map {
+                    it.uuidOrNull("uuid")
+                }.asList,
+            )
+        }
+    }
+
+    private fun <T> List<UUID>.lagKjede(mapper: (UUID, T?) -> T): T? {
+        var periode: T? = null
+        this.reversed().foldRight(null) { uuid, previous: T? ->
+            mapper(uuid, previous).also {
+                if (periode == null) periode = it
+            }
+        }
+
+        return periode
     }
 
     private fun hentAktiviteterFor(rapporteringsperiodeId: UUID): List<Aktivitet> {

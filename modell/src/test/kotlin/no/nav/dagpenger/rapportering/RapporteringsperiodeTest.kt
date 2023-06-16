@@ -48,17 +48,15 @@ class RapporteringsperiodeTest {
     @Test
     fun `kan erstatte påbegynt korrigering`() {
         val innsendtPeriode = lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = Innsendt)
-
         // Opprett en korrigering og verifisert at det er korrigeringen som kommer tilbake
         innsendtPeriode.behandle(KorrigerPeriodeHendelse(testIdent, innsendtPeriode.rapporteringsperiodeId))
         val korrigertPeriode1 = innsendtPeriode.korrigertAv
         korrigertPeriode1.tilstand shouldBe TilUtfylling
-        innsendtPeriode.finnSisteKorrigering() shouldBe korrigertPeriode1
-
+        innsendtPeriode.snabellaks() shouldBe korrigertPeriode1
         // Opprett ny korrigering som erstatter forrige påbegynte korrigering
         innsendtPeriode.behandle(KorrigerPeriodeHendelse(testIdent, innsendtPeriode.rapporteringsperiodeId))
         val korrigertPeriode2 = innsendtPeriode.korrigertAv
-        innsendtPeriode.finnSisteKorrigering() shouldBe korrigertPeriode2
+        innsendtPeriode.snabellaks() shouldBe korrigertPeriode2
         korrigertPeriode2 shouldNotBe korrigertPeriode1
         korrigertPeriode2.korrigerer shouldBe innsendtPeriode
 
@@ -112,7 +110,6 @@ class RapporteringsperiodeTest {
             opprettet = LocalDateTime.now(),
             tidslinje = Aktivitetstidslinje(fom..tom),
             korrigerer = null,
-            korrigertAv = null,
         )
     }
 }
