@@ -21,6 +21,7 @@ import no.nav.dagpenger.rapportering.api.models.AktivitetInputDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.ManuellInnsendingHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
@@ -82,6 +83,18 @@ internal fun Application.rapporteringApi(
                     route("/godkjenn") {
                         post {
                             mediator.behandle(GodkjennPeriodeHendelse(call.ident(), call.finnUUID("periodeId")))
+                            val periode = rapporteringsperiodeRepository.hentRapporteringsperiode(
+                                call.ident(),
+                                call.finnUUID("periodeId"),
+                            )!!.let { RapporteringsperiodeMapper(it).dto }
+
+                            call.respond(HttpStatusCode.Created, periode)
+                        }
+                    }
+
+                    route("/innsending") {
+                        post {
+                            mediator.behandle(ManuellInnsendingHendelse(call.ident(), call.finnUUID("periodeId")))
                             val periode = rapporteringsperiodeRepository.hentRapporteringsperiode(
                                 call.ident(),
                                 call.finnUUID("periodeId"),

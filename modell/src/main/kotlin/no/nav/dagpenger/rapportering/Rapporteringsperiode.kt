@@ -5,6 +5,7 @@ import no.nav.dagpenger.aktivitetslogg.IAktivitetslogg
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.ManuellInnsendingHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
@@ -160,6 +161,12 @@ class Rapporteringsperiode private constructor(
         tilstand.behandle(hendelse, this)
     }
 
+    fun behandle(hendelse: ManuellInnsendingHendelse) {
+        hendelse.kontekst(this)
+
+        tilstand.behandle(hendelse, this)
+    }
+
     private sealed interface Rapporteringsperiodetilstand : Aktivitetskontekst {
         val type: TilstandType
 
@@ -195,6 +202,10 @@ class Rapporteringsperiode private constructor(
 
         override fun toSpesifikkKontekst() =
             SpesifikkKontekst("Tilstand", mapOf("tilstand" to type.name))
+
+        fun behandle(hendelse: ManuellInnsendingHendelse, rapporteringsperiode: Rapporteringsperiode) {
+            throw IllegalStateException("Forventer manuell innsending av rapporteringsperiode i tilstand ${type.name}")
+        }
     }
 
     private object TilUtfylling : Rapporteringsperiodetilstand {
@@ -242,7 +253,15 @@ class Rapporteringsperiode private constructor(
             hendelse.info("Sender inn godkjent periode", mapOf("rapporteringsfrist" to hendelse.rapporteringsfrist))
 
             rapporteringsperiode.tilstand(hendelse, Innsendt)
-            rapporteringsperiode.emitVedtaksperiodeGodkjent(hendelse)
+            rapporteringsperiode.emitVedtaksperiodeGodkjent()
+        }
+
+        override fun behandle(hendelse: ManuellInnsendingHendelse, rapporteringsperiode: Rapporteringsperiode) {
+            hendelse.kontekst(this)
+            hendelse.info("Sender inn godkjent periode manuelt")
+
+            rapporteringsperiode.tilstand(hendelse, Innsendt)
+            rapporteringsperiode.emitVedtaksperiodeGodkjent()
         }
     }
 
@@ -296,7 +315,7 @@ class Rapporteringsperiode private constructor(
         observers.forEach { it.rapporteringsperiodeEndret(event) }
     }
 
-    private fun emitVedtaksperiodeGodkjent(hendelse: RapporteringsfristHendelse) {
+    private fun emitVedtaksperiodeGodkjent() {
         val event = RapporteringsperiodeObserver.RapporteringsperiodeInnsendt(
             rapporteringsperiodeId = rapporteringsperiodeId,
             fom = periode.start,
