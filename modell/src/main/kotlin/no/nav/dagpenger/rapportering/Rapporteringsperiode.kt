@@ -97,7 +97,7 @@ class Rapporteringsperiode private constructor(
         )
     }
 
-    fun snabellaks(): Rapporteringsperiode = korrigertAv?.let { it.snabellaks() } ?: this
+    fun finnSisteKorrigering(): Rapporteringsperiode = korrigertAv?.let { it.finnSisteKorrigering() } ?: this
 
     fun gjelderFor(dato: LocalDate) = dato in periode
 

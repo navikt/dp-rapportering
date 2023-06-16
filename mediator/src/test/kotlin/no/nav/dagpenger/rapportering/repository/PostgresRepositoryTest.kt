@@ -114,19 +114,19 @@ class PostgresRepositoryTest {
             // Verifiser at innsendt periode har en korrigering
             val sisteKorrigering =
                 repository.hentEllerOpprettPerson(testIdent).let { person ->
-                    person.aktivRapporteringsperiode.snabellaks() shouldNotBe innsendtRapportering
-                    person.aktivRapporteringsperiode.snabellaks()
+                    person.aktivRapporteringsperiode.finnSisteKorrigering() shouldNotBe innsendtRapportering
+                    person.aktivRapporteringsperiode.finnSisteKorrigering()
                 }
             // Opprett en ny korrigering som skal erstatte forrige korrigering
             val nyKorrigering = repository.hentEllerOpprettPerson(testIdent).let { person ->
                 person.behandle(KorrigerPeriodeHendelse(testIdent, innsendtRapportering.rapporteringsperiodeId))
                 repository.lagre(person)
 
-                person.aktivRapporteringsperiode.snabellaks()
+                person.aktivRapporteringsperiode.finnSisteKorrigering()
             }
             // Verifiser at innsendt periode har en korrigering, men som har erstattet den forrige
             repository.hentEllerOpprettPerson(testIdent).let { person ->
-                person.aktivRapporteringsperiode.snabellaks().also {
+                person.aktivRapporteringsperiode.finnSisteKorrigering().also {
                     it.rapporteringsperiodeId shouldNotBe sisteKorrigering.rapporteringsperiodeId
                     it.rapporteringsperiodeId shouldNotBe innsendtRapportering.rapporteringsperiodeId
                     it.rapporteringsperiodeId shouldBe nyKorrigering.rapporteringsperiodeId

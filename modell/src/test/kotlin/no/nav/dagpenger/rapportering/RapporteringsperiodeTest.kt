@@ -52,11 +52,11 @@ class RapporteringsperiodeTest {
         innsendtPeriode.behandle(KorrigerPeriodeHendelse(testIdent, innsendtPeriode.rapporteringsperiodeId))
         val korrigertPeriode1 = innsendtPeriode.korrigertAv
         korrigertPeriode1.tilstand shouldBe TilUtfylling
-        innsendtPeriode.snabellaks() shouldBe korrigertPeriode1
+        innsendtPeriode.finnSisteKorrigering() shouldBe korrigertPeriode1
         // Opprett ny korrigering som erstatter forrige påbegynte korrigering
         innsendtPeriode.behandle(KorrigerPeriodeHendelse(testIdent, innsendtPeriode.rapporteringsperiodeId))
         val korrigertPeriode2 = innsendtPeriode.korrigertAv
-        innsendtPeriode.snabellaks() shouldBe korrigertPeriode2
+        innsendtPeriode.finnSisteKorrigering() shouldBe korrigertPeriode2
         korrigertPeriode2 shouldNotBe korrigertPeriode1
         korrigertPeriode2.korrigerer shouldBe innsendtPeriode
 

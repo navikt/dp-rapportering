@@ -99,7 +99,7 @@ internal fun Application.rapporteringApi(
                                     call.ident(),
                                     call.finnUUID("periodeId"),
                                 )!!.let {
-                                    RapporteringsperiodeMapper(it.snabellaks()).dto
+                                    RapporteringsperiodeMapper(it.finnSisteKorrigering()).dto
                                 }
 
                             call.respond(HttpStatusCode.OK, korrigering)
