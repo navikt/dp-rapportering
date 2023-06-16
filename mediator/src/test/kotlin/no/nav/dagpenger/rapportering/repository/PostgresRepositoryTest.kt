@@ -3,9 +3,6 @@ package no.nav.dagpenger.rapportering.repository
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import kotliquery.queryOf
-import kotliquery.sessionOf
-import kotliquery.using
 import no.nav.dagpenger.rapportering.Person
 import no.nav.dagpenger.rapportering.PersonVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
@@ -137,67 +134,6 @@ class PostgresRepositoryTest {
             }
         }
     }
-
-    @Test
-    fun lolrhino() {
-        withMigratedDb {
-            val repository = PostgresRepository(dataSource)
-            val rapporteringsperiodeId = UUID.fromString("ceb720f9-5afc-4608-badc-453fe890575f")
-            val korrigering1 = UUID.fromString("3c717d3d-6fd8-418e-bff9-f71043f03098")
-            val korrigering2 = UUID.fromString("b31b9bfe-ff00-44c3-a7a8-278fb8903691")
-            using(sessionOf(dataSource)) { session ->
-                session.run(
-                    queryOf(
-                        "INSERT INTO person (ident) VALUES (:ident)",
-                        mapOf("ident" to testIdent),
-                    ).asExecute,
-                )
-                session.run(nyRapporteringsperiode(rapporteringsperiodeId))
-                session.run(nyRapporteringsperiode(korrigering2))
-                session.run(nyRapporteringsperiode(korrigering1))
-                session.run(koblePerioder(rapporteringsperiodeId, null, korrigering1))
-                session.run(koblePerioder(korrigering1, rapporteringsperiodeId, korrigering2))
-                session.run(koblePerioder(korrigering2, korrigering1, null))
-            }
-            val p = repository.hentRapporteringsperiode(testIdent, rapporteringsperiodeId)
-
-            println(p)
-            /*p?.korrigerer shouldBe null
-            p?.korrigertAv?.rapporteringsperiodeId shouldBe korrigering1
-            p?.korrigertAv?.korrigertAv?.rapporteringsperiodeId shouldBe korrigering2
-            p?.korrigertAv?.korrigertAv?.korrigertAv shouldBe null*/
-        }
-    }
-
-    private fun koblePerioder(rapporteringsperiodeId: UUID?, korrigerer: UUID?, korrigertAv: UUID?) = queryOf(
-        //language=PostgreSQL
-        """UPDATE rapporteringsperiode SET korrigerer = :korrigerer, korrigert_av = :korrigertAv WHERE uuid = :uuid""",
-        mapOf(
-            "uuid" to rapporteringsperiodeId,
-            "korrigerer" to korrigerer,
-            "korrigertAv" to korrigertAv,
-        ),
-    ).asUpdate
-
-    private fun nyRapporteringsperiode(rapporteringsperiodeId: UUID?) = queryOf(
-        //language=PostgreSQL
-        """INSERT INTO rapporteringsperiode (uuid, person_ident, tilstand, rapporteringsfrist, fom, tom)
-        VALUES (:uuid,
-                :ident,
-                :tilstand,
-                :dato,
-                :fom,
-                :tom)
-        """.trimIndent(),
-        mapOf(
-            "uuid" to rapporteringsperiodeId,
-            "ident" to testIdent,
-            "tilstand" to Rapporteringsperiode.TilstandType.Innsendt.name,
-            "dato" to LocalDate.now(),
-            "fom" to LocalDate.now(),
-            "tom" to LocalDate.now(),
-        ),
-    ).asExecute
 
     @Test
     fun `kan slette en aktivitet`() {
