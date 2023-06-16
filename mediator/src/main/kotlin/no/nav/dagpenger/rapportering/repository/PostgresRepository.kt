@@ -30,8 +30,6 @@ internal class PostgresRepository(private val ds: DataSource) :
     override fun hentRapporteringsperiode(ident: String, uuid: UUID): Rapporteringsperiode? {
         val kjede = hentKjede(ident, uuid)
         return kjede.lagKjede { uuid, korrigerer ->
-            println("Lager periode $uuid som korrigerer ${korrigerer?.rapporteringsperiodeId}")
-            // Rapporteringsperiode.rehydrer(uuid, korrigerer)
             hentRapporteringsperiodeMedKorrigering(ident, uuid, korrigerer)
         }
     }
