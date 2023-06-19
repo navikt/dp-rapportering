@@ -153,4 +153,4 @@ class Person private constructor(
     }
 }
 
-private fun <E : Rapporteringsperiode> Collection<E>.accept(visitor: PersonVisitor) = forEach { it.accept(visitor) }
+private fun Collection<Rapporteringsperiode>.accept(visitor: PersonVisitor) = forEach { it.accept(visitor) }

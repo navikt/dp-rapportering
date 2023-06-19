@@ -8,5 +8,5 @@ interface RapporteringsperiodeRepository {
     fun hentRapporteringsperiode(ident: String, uuid: UUID): Rapporteringsperiode?
     fun hentRapporteringsperioder(ident: String): List<Rapporteringsperiode>
     fun hentRapporteringsperiodeFor(ident: String, dato: LocalDate): Rapporteringsperiode?
-    fun finnIdentForPeriode(finnUUID: UUID): String?
+    fun finnIdentForPeriode(periodeId: UUID): String?
 }

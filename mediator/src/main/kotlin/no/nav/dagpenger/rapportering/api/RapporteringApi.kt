@@ -22,7 +22,7 @@ import no.nav.dagpenger.rapportering.api.auth.AuthFactory.tokenXIssuer
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.dto.RapporteringsperiodeMapper
 import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
-import no.nav.dagpenger.rapportering.api.models.AktivitetInputDTO
+import no.nav.dagpenger.rapportering.api.models.AktivitetNyDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeNyDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeSokDTO
@@ -141,7 +141,7 @@ internal fun Application.rapporteringApi(
                     route("/aktivitet") {
                         post {
                             val ident = tilgangskontroll.verifiserTilgang(call)
-                            val aktivitetInput = call.receive<AktivitetInputDTO>()
+                            val aktivitetInput = call.receive<AktivitetNyDTO>()
                             val aktivitet = aktivitetInput.toAktivitet()
                             val periodeId = call.finnUUID("periodeId")
 
@@ -194,7 +194,7 @@ class RapporteringsperiodeTilgangskontroll(private val repository: Rapporterings
 
 class IkkeTilgangException(message: String) : Exception(message)
 
-private fun AktivitetInputDTO.toAktivitet() =
+private fun AktivitetNyDTO.toAktivitet() =
     when (type) {
         AktivitetTypeDTO.Arbeid -> Aktivitet.Arbeid(
             dato = dato,
