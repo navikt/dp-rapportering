@@ -20,6 +20,8 @@ import no.nav.dagpenger.rapportering.Mediator
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
 import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
+import no.nav.dagpenger.rapportering.api.TestApplication.testAzureAdToken
+import no.nav.dagpenger.rapportering.api.TestApplication.testTokenXToken
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
@@ -140,6 +142,40 @@ class RapporteringApiTest {
                 verify {
                     mediatorMock.behandle(any<NyAktivitetHendelse>())
                 }
+            }
+        }
+    }
+
+    @Test
+    fun `Skal som saksbehandler kunne søke etter rapporteringsperioder`() {
+        withRapporteringApi(rapporteringsperioder = listOf(testPeriode)) {
+            autentisert(
+                token = testAzureAdToken,
+                endepunkt = "/rapporteringsperioder/sok",
+                httpMethod = HttpMethod.Post,
+                //language=JSON
+                body = """{"ident": "12345" }""",
+            ).let { response ->
+                response.status shouldBe HttpStatusCode.OK
+                "${response.contentType()}" shouldContain "application/json"
+                response.bodyAsText().let { json ->
+                    json shouldContainJsonKey "[*].id"
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `Skal som bruker ikke kunne søke etter rapporteringsperioder`() {
+        withRapporteringApi(rapporteringsperioder = listOf(testPeriode)) {
+            autentisert(
+                token = testTokenXToken,
+                endepunkt = "/rapporteringsperioder/sok",
+                httpMethod = HttpMethod.Post,
+                //language=JSON
+                body = """{"ident": "12345" }""",
+            ).let { response ->
+                response.status shouldBe HttpStatusCode.Unauthorized
             }
         }
     }

@@ -1,6 +1,5 @@
 package no.nav.dagpenger.rapportering.api.auth
 
-import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.DeserializationFeature
@@ -14,6 +13,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.auth.jwt.JWTAuthenticationProvider
+import io.ktor.server.auth.jwt.JWTPrincipal
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
@@ -23,21 +23,32 @@ import java.util.concurrent.TimeUnit
 private val logger = KotlinLogging.logger {}
 
 object AuthFactory {
-
     @Suppress("ClassName")
     private object token_x : PropertyGroup() {
         val well_known_url by stringType
         val client_id by stringType
     }
 
-    private val tokenXConfiguration: AzureAdOpenIdConfiguration =
+    @Suppress("ClassName")
+    private object azure_app : PropertyGroup() {
+        val well_known_url by stringType
+        val client_id by stringType
+    }
+
+    private val azureAdConfiguration: OpenIdConfiguration by lazy {
+        runBlocking {
+            httpClient.get(Configuration.properties[azure_app.well_known_url]).body()
+        }
+    }
+    private val tokenXConfiguration: OpenIdConfiguration by lazy {
         runBlocking {
             httpClient.get(Configuration.properties[token_x.well_known_url]).body()
         }
+    }
 
     fun JWTAuthenticationProvider.Config.tokenX() {
-        verifier(jwkProvider, issuer) {
-            withAudience(tokenXclientId)
+        verifier(JwkProvider(URL(tokenXConfiguration.jwksUri)), tokenXConfiguration.issuer) {
+            withAudience(Configuration.properties[token_x.client_id])
         }
         realm = Configuration.appName
         validate { credentials ->
@@ -45,10 +56,19 @@ object AuthFactory {
         }
     }
 
-    val tokenXclientId: String = Configuration.properties[token_x.client_id]
-    val issuer = tokenXConfiguration.issuer
-    val jwkProvider: JwkProvider
-        get() = JwkProviderBuilder(URL(tokenXConfiguration.jwksUri))
+    fun JWTAuthenticationProvider.Config.azureAd() {
+        verifier(JwkProvider(URL(azureAdConfiguration.jwksUri)), azureAdConfiguration.issuer) {
+            withAudience(Configuration.properties[azure_app.client_id])
+        }
+        realm = Configuration.appName
+        validate { credentials ->
+            // TODO: Sjekk gruppetilgang(?)
+            JWTPrincipal(credentials.payload)
+        }
+    }
+
+    private fun JwkProvider(url: URL) =
+        JwkProviderBuilder(url)
             .cached(10, 24, TimeUnit.HOURS) // cache up to 10 JWKs for 24 hours
             .rateLimited(
                 10,
@@ -58,7 +78,7 @@ object AuthFactory {
             .build()
 }
 
-private data class AzureAdOpenIdConfiguration(
+private data class OpenIdConfiguration(
     @JsonProperty("jwks_uri")
     val jwksUri: String,
     @JsonProperty("issuer")

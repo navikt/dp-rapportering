@@ -37,6 +37,9 @@ spec:
     pool: {{ kafka.pool }}
   tokenx:
     enabled: true
+  azure:
+    application:
+      enabled: true
   gcp:
     sqlInstances:
       - type: POSTGRES_14
