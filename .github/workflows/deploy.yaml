@@ -34,7 +34,7 @@ jobs:
 
       - uses: gradle/gradle-build-action@v2.4.2
         with:
-          arguments: :medaitor:cyclonedxBom
+          arguments: :mediator:cyclonedxBom
 
       - name: docker-build-push
         uses: nais/docker-build-push@v0
