@@ -176,12 +176,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - ident
-              properties:
-                ident:
-                  type: string
+              $ref: '#/components/schemas/Rapporteringsperiode.Sok'
   /rapporteringsperioder/{periodeId}/godkjenn:
     post:
       responses:
@@ -276,6 +271,13 @@ components:
           format: ISO8601 Duration
         dato:
           format: date
+          type: string
+    Rapporteringsperiode.Sok:
+      type: object
+      required:
+        - ident
+      properties:
+        ident:
           type: string
     Rapporteringsperiode:
       required:

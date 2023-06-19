@@ -19,7 +19,7 @@ import no.nav.dagpenger.rapportering.api.dto.RapporteringsperiodeMapper
 import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetInputDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
-import no.nav.dagpenger.rapportering.api.models.PostRapporteringsperiodeSokRequestDTO
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeSokDTO
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.ManuellInnsendingHendelse
@@ -37,7 +37,7 @@ internal fun Application.rapporteringApi(
 ) {
     routing {
         authenticate("azureAd") {
-            post<PostRapporteringsperiodeSokRequestDTO>("/rapporteringsperioder/sok") {
+            post<RapporteringsperiodeSokDTO>("/rapporteringsperioder/sok") {
                 val rapporteringsperioder = rapporteringsperiodeRepository.hentRapporteringsperioder(it.ident)
                     .map { rapporteringsperiode -> RapporteringsperiodeMapper(rapporteringsperiode).dto }
 
