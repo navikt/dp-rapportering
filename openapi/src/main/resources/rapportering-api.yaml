@@ -31,6 +31,9 @@ paths:
       operationId: post-aktiviteter
       tags:
         - Aktivitet
+      security:
+        - azureAd: [ ]
+        - tokenX: [ ]
     parameters:
       - name: periodeId
         description: ID til rapporteringsperioden
@@ -51,6 +54,9 @@ paths:
       operationId: delete-aktivitet-id
       tags:
         - Aktivitet
+      security:
+        - azureAd: [ ]
+        - tokenX: [ ]
     parameters:
       - name: periodeId
         description: ID til rapporteringsperioden
@@ -81,6 +87,8 @@ paths:
       operationId: get-rapporteringsperiode
       tags:
         - Rapporteringsperiode
+      security:
+        - tokenX: [ ]
     parameters:
       - name: status
         description: Tilstand på rapporteringsperiode
@@ -99,12 +107,6 @@ paths:
         in: query
         required: false
     post:
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Rapporteringsperiode.Ny'
       responses:
         '200':
           content:
@@ -114,11 +116,19 @@ paths:
           description: OK
         '404':
           description: Not Found
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rapporteringsperiode.Ny'
       summary: Opprett en rapporteringsperiode
       description: Opprett ut en rapporteringsperiode.
       operationId: post-rapporteringsperiode
       tags:
         - Rapporteringsperiode
+      security:
+        - azureAd: [ ]
   /rapporteringsperioder/gjeldende:
     get:
       responses:
@@ -135,6 +145,8 @@ paths:
       operationId: get-rapporteringsperiode-gjeldende
       tags:
         - Rapporteringsperiode
+      security:
+        - tokenX: [ ]
   /rapporteringsperioder/{periodeId}:
     get:
       responses:
@@ -151,6 +163,9 @@ paths:
       operationId: get-rapporteringsperiode-id
       tags:
         - Rapporteringsperiode
+      security:
+        - azureAd: [ ]
+        - tokenX: [ ]
     parameters:
       - name: periodeId
         description: ID til rapporteringsperioden
@@ -161,8 +176,6 @@ paths:
         required: true
   /rapporteringsperioder/sok:
     post:
-      security:
-        - azuread: [ ]
       responses:
         '200':
           content:
@@ -177,6 +190,8 @@ paths:
       operationId: post-rapporteringsperiode-sok
       tags:
         - Rapporteringsperiode
+      security:
+        - azureAd: [ ]
       requestBody:
         required: true
         content:
@@ -197,6 +212,9 @@ paths:
       operationId: post-rapporteringsperiode-ferdigstill
       tags:
         - Rapporteringsperiode
+      security:
+        - azureAd: [ ]
+        - tokenX: [ ]
     parameters:
       - name: periodeId
         description: ID til rapporteringsperioden
@@ -227,6 +245,9 @@ paths:
       operationId: post-rapporteringsperiode-korrigering
       tags:
         - Rapporteringsperiode
+      security:
+        - azureAd: [ ]
+        - tokenX: [ ]
     parameters:
       - name: periodeId
         description: ID til rapporteringsperioden
@@ -389,7 +410,7 @@ components:
           format: uri
           description: Hvor feilen oppstod
   securitySchemes:
-    azuread:
+    azureAd:
       type: http
       scheme: bearer
       bearerFormat: JWT
@@ -399,7 +420,7 @@ components:
         
         For å teste APIet kan du lage et gyldig OBO-token ved å bruke wonderwalled:
         - [dev-gcp](https://wonderwalled-idporten.intern.dev.nav.no/api/obo?aud=dev-gcp:teamdagpenger:dp-rapportering)
-    tokenx:
+    tokenX:
       type: http
       scheme: bearer
       bearerFormat: JWT
@@ -421,6 +442,3 @@ tags:
     description: >-
       Lager en tidslinje med all aktivitet bruker har utført i en periode med
       rapporteringsplikt
-security:
-  - tokenx: [ ]
-  - azuread: [ ]
