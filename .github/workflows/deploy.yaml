@@ -32,10 +32,15 @@ jobs:
         with:
           junit_files: "**/build/test-results/test/TEST-*.xml"
 
+      - uses: gradle/gradle-build-action@v2.4.2
+        with:
+          arguments: :medaitor:cyclonedxBom
+
       - name: docker-build-push
         uses: nais/docker-build-push@v0
         id: docker-build-push
         with:
+          byosbom: mediator/build/reports/bom.json
           team: teamdagpenger
           push_image: true # optional, default true
           tag: ${{ github.sha }}

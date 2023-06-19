@@ -1,6 +1,7 @@
 plugins {
     id("common")
     application
+    id("org.cyclonedx.bom")
 }
 
 dependencies {
