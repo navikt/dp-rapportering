@@ -98,6 +98,21 @@ paths:
           type: boolean
         in: query
         required: false
+    post:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rapporteringsperiode'
+          description: OK
+        '404':
+          description: Not Found
+      summary: Opprett en rapporteringsperiode
+      description: Opprett ut en rapporteringsperiode.
+      operationId: post-rapporteringsperiode
+      tags:
+        - Rapporteringsperiode
   /rapporteringsperioder/gjeldende:
     get:
       responses:
@@ -138,6 +153,33 @@ paths:
           format: uuid
         in: path
         required: true
+  /rapporteringsperioder/sok:
+    post:
+      security:
+        - azuread: [ ]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rapporteringsperiode'
+          description: OK
+      summary: Søk etter rapporteringsperioder
+      description: Søker etter rapporteringsperioder
+      operationId: post-rapporteringsperiode-sok
+      tags:
+        - Rapporteringsperiode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ident:
+                  type: string
   /rapporteringsperioder/{periodeId}/godkjenn:
     post:
       responses:
@@ -327,6 +369,16 @@ components:
           format: uri
           description: Hvor feilen oppstod
   securitySchemes:
+    azuread:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Bruker [AzureAD](https://docs.nais.io/security/auth/azure-ad) til autentisering. 
+        Token må ha `audience` satt til `[cluster]:teamdagpenger:dp-rapportering`.
+        
+        For å teste APIet kan du lage et gyldig OBO-token ved å bruke wonderwalled:
+        - [dev-gcp](https://wonderwalled-idporten.intern.dev.nav.no/api/obo?aud=dev-gcp:teamdagpenger:dp-rapportering)
     tokenx:
       type: http
       scheme: bearer
@@ -351,3 +403,4 @@ tags:
       rapporteringsplikt
 security:
   - tokenx: [ ]
+  - azuread: [ ]
