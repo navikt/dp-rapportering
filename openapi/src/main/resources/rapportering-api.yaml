@@ -99,6 +99,12 @@ paths:
         in: query
         required: false
     post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rapporteringsperiode.Ny'
       responses:
         '200':
           content:
@@ -279,6 +285,16 @@ components:
       properties:
         ident:
           type: string
+    Rapporteringsperiode.Ny:
+      type: object
+      required:
+        - ident
+      properties:
+        ident:
+          type: string
+        fraOgMed:
+          type: string
+          format: date
     Rapporteringsperiode:
       required:
         - periodeId

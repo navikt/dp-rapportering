@@ -8,6 +8,7 @@ import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import java.util.UUID
 
 internal interface IHendelseMediator {
     fun behandle(hendelse: SøknadInnsendtHendelse)
@@ -18,4 +19,5 @@ internal interface IHendelseMediator {
     fun behandle(hendelse: NyRapporteringssyklusHendelse)
     fun behandle(hendelse: KorrigerPeriodeHendelse)
     fun behandle(hendelse: ManuellInnsendingHendelse)
+    fun finnIdentForPeriode(finnUUID: UUID): String?
 }

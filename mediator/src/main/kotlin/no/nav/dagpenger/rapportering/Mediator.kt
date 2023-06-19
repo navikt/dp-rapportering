@@ -11,13 +11,16 @@ import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.repository.PersonRepository
+import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.helse.rapids_rivers.RapidsConnection
+import java.util.UUID
 
 private val sikkerlogg = KotlinLogging.logger("tjenestekall.Mediator")
 
 internal class Mediator(
     private val rapidsConnection: RapidsConnection,
     private val personRepository: PersonRepository,
+    private val rapporteringsperiodeRepository: RapporteringsperiodeRepository,
 ) : IHendelseMediator, PersonRepository by personRepository {
     // TODO - override fun behandle(melding: SøknadInnsendtMelding, hendelse: SøknadInnsendtHendelse, context: MessageContext) {
     override fun behandle(hendelse: SøknadInnsendtHendelse) {
@@ -67,6 +70,8 @@ internal class Mediator(
             person.behandle(hendelse)
         }
     }
+
+    override fun finnIdentForPeriode(periodeId: UUID) = rapporteringsperiodeRepository.finnIdentForPeriode(periodeId)
 
     private fun <Hendelse : PersonHendelse> hentPersonOgHåndter(
         ident: String,

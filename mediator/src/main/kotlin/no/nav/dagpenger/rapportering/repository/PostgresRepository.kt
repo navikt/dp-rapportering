@@ -76,6 +76,19 @@ internal class PostgresRepository(private val ds: DataSource) :
             )
         }
 
+    override fun finnIdentForPeriode(periodeId: UUID) =
+        using(sessionOf(ds)) { session ->
+            session.run(
+                queryOf(
+                    //language=PostgreSQL
+                    statement = """SELECT person_ident FROM rapporteringsperiode WHERE uuid = :periodeId""",
+                    paramMap = mapOf("periodeId" to periodeId),
+                ).map { row ->
+                    row.string("person_ident")
+                }.asSingle,
+            )
+        }
+
     private fun hentPerson(ident: String) = using(sessionOf(ds)) { session ->
         session.run(
             queryOf(

@@ -11,16 +11,17 @@ import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
 
 internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsConnection.StatusListener {
-    private val personRepository = PostgresRepository(dataSource)
+    private val postgresRepository = PostgresRepository(dataSource)
     private val rapidsConnection: RapidsConnection =
         RapidApplication.Builder(RapidApplication.RapidApplicationConfig.fromEnv(configuration))
             .withKtorModule {
                 konfigurasjon()
-                rapporteringApi(personRepository, mediator)
+                rapporteringApi(postgresRepository, mediator)
             }.build()
     private val mediator = Mediator(
         rapidsConnection = rapidsConnection,
-        personRepository,
+        postgresRepository,
+        postgresRepository,
     )
 
     init {
