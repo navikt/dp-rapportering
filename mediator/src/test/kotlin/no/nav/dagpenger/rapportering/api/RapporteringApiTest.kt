@@ -208,6 +208,7 @@ private fun withRapporteringApi(
             konfigurasjon()
             rapporteringApi(
                 mockk<RapporteringsperiodeRepository>().apply {
+                    every { finnIdentForPeriode(any()) } answers { defaultDummyFodselsnummer }
                     every { hentRapporteringsperioder(defaultDummyFodselsnummer) } answers { rapporteringsperioder }
                     every {
                         hentRapporteringsperiode(

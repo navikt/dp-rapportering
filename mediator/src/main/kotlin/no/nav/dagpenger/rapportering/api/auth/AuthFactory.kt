@@ -40,11 +40,14 @@ object AuthFactory {
             httpClient.get(Configuration.properties[azure_app.well_known_url]).body()
         }
     }
+    val azureAdIssuer get() = azureAdConfiguration.issuer
+
     private val tokenXConfiguration: OpenIdConfiguration by lazy {
         runBlocking {
             httpClient.get(Configuration.properties[token_x.well_known_url]).body()
         }
     }
+    val tokenXIssuer get() = tokenXConfiguration.issuer
 
     fun JWTAuthenticationProvider.Config.tokenX() {
         verifier(JwkProvider(URL(tokenXConfiguration.jwksUri)), tokenXConfiguration.issuer) {

@@ -17,6 +17,8 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.IHendelseMediator
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.Companion.hentGjeldende
+import no.nav.dagpenger.rapportering.api.auth.AuthFactory.azureAdIssuer
+import no.nav.dagpenger.rapportering.api.auth.AuthFactory.tokenXIssuer
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.dto.RapporteringsperiodeMapper
 import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
@@ -87,77 +89,79 @@ internal fun Application.rapporteringApi(
         }
 
         authenticate("tokenX", "azureAd") {
-            route("/{periodeId}") {
-                get {
-                    val ident = tilgangskontroll.verifiserTilgang(call)
-                    val dto = rapporteringsperiodeRepository
-                        .hentRapporteringsperiode(ident, call.finnUUID("periodeId"))
-                        ?.let { RapporteringsperiodeMapper(it).dto }
-                        ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
-
-                    call.respond(HttpStatusCode.OK, dto)
-                }
-
-                route("/godkjenn") {
-                    post {
+            route("/rapporteringsperioder/") {
+                route("/{periodeId}") {
+                    get {
                         val ident = tilgangskontroll.verifiserTilgang(call)
-                        mediator.behandle(GodkjennPeriodeHendelse(ident, call.finnUUID("periodeId")))
-                        val periode = rapporteringsperiodeRepository
-                            .hentRapporteringsperiode(ident, call.finnUUID("periodeId"))!!
-                            .let { RapporteringsperiodeMapper(it).dto }
+                        val dto = rapporteringsperiodeRepository
+                            .hentRapporteringsperiode(ident, call.finnUUID("periodeId"))
+                            ?.let { RapporteringsperiodeMapper(it).dto }
+                            ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
 
-                        call.respond(HttpStatusCode.Created, periode)
-                    }
-                }
-
-                route("/innsending") {
-                    post {
-                        val ident = tilgangskontroll.verifiserTilgang(call)
-                        mediator.behandle(ManuellInnsendingHendelse(ident, call.finnUUID("periodeId")))
-                        val periode = rapporteringsperiodeRepository
-                            .hentRapporteringsperiode(ident, call.finnUUID("periodeId"))!!
-                            .let { RapporteringsperiodeMapper(it).dto }
-
-                        call.respond(HttpStatusCode.Created, periode)
-                    }
-                }
-
-                route("/korrigering") {
-                    post {
-                        val ident = tilgangskontroll.verifiserTilgang(call)
-
-                        mediator.behandle(KorrigerPeriodeHendelse(ident, call.finnUUID("periodeId")))
-                        val korrigering = rapporteringsperiodeRepository
-                            .hentRapporteringsperiode(ident, call.finnUUID("periodeId"))!!
-                            .let { RapporteringsperiodeMapper(it.finnSisteKorrigering()).dto }
-
-                        call.respond(HttpStatusCode.OK, korrigering)
-                    }
-                }
-
-                route("/aktivitet") {
-                    post {
-                        val ident = tilgangskontroll.verifiserTilgang(call)
-                        val aktivitetInput = call.receive<AktivitetInputDTO>()
-                        val aktivitet = aktivitetInput.toAktivitet()
-                        val periodeId = call.finnUUID("periodeId")
-
-                        mediator.behandle(NyAktivitetHendelse(ident, periodeId, aktivitet))
-
-                        call.respond(HttpStatusCode.Created, aktivitet.toAktivitetDTO())
+                        call.respond(HttpStatusCode.OK, dto)
                     }
 
-                    route("{aktivitetId}") {
-                        delete {
+                    route("/godkjenn") {
+                        post {
                             val ident = tilgangskontroll.verifiserTilgang(call)
-                            mediator.behandle(
-                                SlettAktivitetHendelse(
-                                    ident,
-                                    call.finnUUID("periodeId"),
-                                    call.finnUUID("aktivitetId"),
-                                ),
-                            )
-                            call.respond(HttpStatusCode.NoContent)
+                            mediator.behandle(GodkjennPeriodeHendelse(ident, call.finnUUID("periodeId")))
+                            val periode = rapporteringsperiodeRepository
+                                .hentRapporteringsperiode(ident, call.finnUUID("periodeId"))!!
+                                .let { RapporteringsperiodeMapper(it).dto }
+
+                            call.respond(HttpStatusCode.Created, periode)
+                        }
+                    }
+
+                    route("/innsending") {
+                        post {
+                            val ident = tilgangskontroll.verifiserTilgang(call)
+                            mediator.behandle(ManuellInnsendingHendelse(ident, call.finnUUID("periodeId")))
+                            val periode = rapporteringsperiodeRepository
+                                .hentRapporteringsperiode(ident, call.finnUUID("periodeId"))!!
+                                .let { RapporteringsperiodeMapper(it).dto }
+
+                            call.respond(HttpStatusCode.Created, periode)
+                        }
+                    }
+
+                    route("/korrigering") {
+                        post {
+                            val ident = tilgangskontroll.verifiserTilgang(call)
+
+                            mediator.behandle(KorrigerPeriodeHendelse(ident, call.finnUUID("periodeId")))
+                            val korrigering = rapporteringsperiodeRepository
+                                .hentRapporteringsperiode(ident, call.finnUUID("periodeId"))!!
+                                .let { RapporteringsperiodeMapper(it.finnSisteKorrigering()).dto }
+
+                            call.respond(HttpStatusCode.OK, korrigering)
+                        }
+                    }
+
+                    route("/aktivitet") {
+                        post {
+                            val ident = tilgangskontroll.verifiserTilgang(call)
+                            val aktivitetInput = call.receive<AktivitetInputDTO>()
+                            val aktivitet = aktivitetInput.toAktivitet()
+                            val periodeId = call.finnUUID("periodeId")
+
+                            mediator.behandle(NyAktivitetHendelse(ident, periodeId, aktivitet))
+
+                            call.respond(HttpStatusCode.Created, aktivitet.toAktivitetDTO())
+                        }
+
+                        route("{aktivitetId}") {
+                            delete {
+                                val ident = tilgangskontroll.verifiserTilgang(call)
+                                mediator.behandle(
+                                    SlettAktivitetHendelse(
+                                        ident,
+                                        call.finnUUID("periodeId"),
+                                        call.finnUUID("aktivitetId"),
+                                    ),
+                                )
+                                call.respond(HttpStatusCode.NoContent)
+                            }
                         }
                     }
                 }
@@ -177,12 +181,12 @@ class RapporteringsperiodeTilgangskontroll(private val repository: Rapporterings
             ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
 
         return when (call.authentication.principal<JWTPrincipal>()?.payload?.issuer) {
-            "tokenX" -> {
+            tokenXIssuer -> {
                 if (call.ident() != ident) throw IkkeTilgangException("Ikke tilgang")
                 call.ident()
             }
 
-            "azureAd" -> ident
+            azureAdIssuer -> ident
             else -> throw IkkeTilgangException("Ikke tilgang")
         }
     }
