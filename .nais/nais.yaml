@@ -55,4 +55,6 @@ spec:
         {{#if wonderwalled}}
         - application: wonderwalled-idporten
           namespace: aura
+        - application: wonderwalled-azure
+          namespace: aura
         {{/if}}
