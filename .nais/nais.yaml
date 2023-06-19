@@ -40,6 +40,7 @@ spec:
   azure:
     application:
       enabled: true
+      allowAllUsers: true # TODO
   gcp:
     sqlInstances:
       - type: POSTGRES_14
