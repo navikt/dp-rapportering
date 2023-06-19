@@ -11,66 +11,6 @@ servers:
   - url: https://dp-rapportering.intern.nav.no
     description: prod
 paths:
-  /rapporteringsperioder/{periodeId}/aktivitet:
-    post:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AktivitetInput'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Aktivitet'
-          description: Created
-      summary: Lagrer en aktivitet
-      description: Legger en ny aktivitet til i tidslinjen
-      operationId: post-aktiviteter
-      tags:
-        - Aktivitet
-      security:
-        - azureAd: [ ]
-        - tokenX: [ ]
-    parameters:
-      - name: periodeId
-        description: ID til rapporteringsperioden
-        schema:
-          type: string
-          format: uuid
-        in: path
-        required: true
-  /rapporteringsperioder/{periodeId}/aktivitet/{aktivitetId}:
-    delete:
-      responses:
-        '204':
-          description: No Content
-        '404':
-          description: Not Found
-      summary: Slett en aktivitet
-      description: ''
-      operationId: delete-aktivitet-id
-      tags:
-        - Aktivitet
-      security:
-        - azureAd: [ ]
-        - tokenX: [ ]
-    parameters:
-      - name: periodeId
-        description: ID til rapporteringsperioden
-        schema:
-          type: string
-          format: uuid
-        in: path
-        required: true
-      - name: aktivitetId
-        description: ID til aktiviteten som skal oppdateres eller slettes
-        schema:
-          type: integer
-        in: path
-        required: true
   /rapporteringsperioder:
     get:
       responses:
@@ -89,23 +29,6 @@ paths:
         - Rapporteringsperiode
       security:
         - tokenX: [ ]
-    parameters:
-      - name: status
-        description: Tilstand på rapporteringsperiode
-        schema:
-          type: string
-          enum:
-            - TilUtfylling
-            - Godkjent
-            - Innsendt
-        in: query
-        required: false
-      - name: fristPassert
-        description: Har fristdatoen passert?
-        schema:
-          type: boolean
-        in: query
-        required: false
     post:
       responses:
         '200':
@@ -129,6 +52,30 @@ paths:
         - Rapporteringsperiode
       security:
         - azureAd: [ ]
+  /rapporteringsperioder/sok:
+    post:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rapporteringsperiode'
+          description: OK
+      summary: Søk etter rapporteringsperioder
+      description: Søker etter rapporteringsperioder
+      operationId: post-rapporteringsperiode-sok
+      tags:
+        - Rapporteringsperiode
+      security:
+        - azureAd: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rapporteringsperiode.Sok'
   /rapporteringsperioder/gjeldende:
     get:
       responses:
@@ -174,30 +121,6 @@ paths:
           format: uuid
         in: path
         required: true
-  /rapporteringsperioder/sok:
-    post:
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Rapporteringsperiode'
-          description: OK
-      summary: Søk etter rapporteringsperioder
-      description: Søker etter rapporteringsperioder
-      operationId: post-rapporteringsperiode-sok
-      tags:
-        - Rapporteringsperiode
-      security:
-        - azureAd: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Rapporteringsperiode.Sok'
   /rapporteringsperioder/{periodeId}/godkjenn:
     post:
       responses:
@@ -255,6 +178,66 @@ paths:
           type: integer
         in: path
         required: true
+  /rapporteringsperioder/{periodeId}/aktivitet:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Aktivitet.Ny'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aktivitet'
+          description: Created
+      summary: Lagrer en aktivitet
+      description: Legger en ny aktivitet til i tidslinjen
+      operationId: post-aktiviteter
+      tags:
+        - Aktivitet
+      security:
+        - azureAd: [ ]
+        - tokenX: [ ]
+    parameters:
+      - name: periodeId
+        description: ID til rapporteringsperioden
+        schema:
+          type: string
+          format: uuid
+        in: path
+        required: true
+  /rapporteringsperioder/{periodeId}/aktivitet/{aktivitetId}:
+    delete:
+      responses:
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+      summary: Slett en aktivitet
+      description: ''
+      operationId: delete-aktivitet-id
+      tags:
+        - Aktivitet
+      security:
+        - azureAd: [ ]
+        - tokenX: [ ]
+    parameters:
+      - name: periodeId
+        description: ID til rapporteringsperioden
+        schema:
+          type: string
+          format: uuid
+        in: path
+        required: true
+      - name: aktivitetId
+        description: ID til aktiviteten som skal oppdateres eller slettes
+        schema:
+          type: integer
+        in: path
+        required: true
 components:
   schemas:
     AktivitetType:
@@ -285,7 +268,7 @@ components:
         type: Arbeid
         timer: PT8H30M
         dato: '2023-05-05'
-    AktivitetInput:
+    Aktivitet.Ny:
       required:
         - type
         - dato
