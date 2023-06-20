@@ -55,16 +55,16 @@ internal fun Application.rapporteringApi(
 
                     call.respond(HttpStatusCode.OK, rapporteringsperioder)
                 }
-            }
 
-            route("/gjeldende") {
-                get {
-                    val rapporteringsperiode =
-                        rapporteringsperiodeRepository.hentRapporteringsperioder(call.ident()).hentGjeldende()
-                            ?.let { RapporteringsperiodeMapper(it).dto }
-                            ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
+                route("/gjeldende") {
+                    get {
+                        val rapporteringsperiode =
+                            rapporteringsperiodeRepository.hentRapporteringsperioder(call.ident()).hentGjeldende()
+                                ?.let { RapporteringsperiodeMapper(it).dto }
+                                ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
 
-                    call.respond(HttpStatusCode.OK, rapporteringsperiode)
+                        call.respond(HttpStatusCode.OK, rapporteringsperiode)
+                    }
                 }
             }
         }
