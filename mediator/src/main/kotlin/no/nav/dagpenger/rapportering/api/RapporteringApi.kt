@@ -8,6 +8,7 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.authentication
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.plugins.NotFoundException
+import io.ktor.server.plugins.swagger.swaggerUI
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.delete
@@ -43,6 +44,8 @@ internal fun Application.rapporteringApi(
     tilgangskontroll: Tilgangskontroll = RapporteringsperiodeTilgangskontroll(rapporteringsperiodeRepository),
 ) {
     routing {
+        swaggerUI(path = "openapi", swaggerFile = "rapportering-api.yaml")
+
         authenticate("tokenX") {
             route("/rapporteringsperioder") {
                 get {
