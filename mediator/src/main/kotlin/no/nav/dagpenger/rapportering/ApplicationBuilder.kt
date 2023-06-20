@@ -44,7 +44,7 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
         logger.info { "Skrur av applikasjonen" }
     }
 
-    companion object {
+    private companion object {
         val logger = KotlinLogging.logger {}
     }
 }

@@ -1,5 +1,7 @@
 package no.nav.dagpenger.rapportering
 
+import mu.KotlinLogging
+import mu.withLoggingContext
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
@@ -11,27 +13,34 @@ import kotlin.time.Duration
 
 class UtsendingsObserver(private val rapidsConnection: RapidsConnection, private val hendelse: PersonHendelse) :
     PersonObserver {
+    private companion object {
+        private val logger = KotlinLogging.logger {}
+        private val sikkerlogg = KotlinLogging.logger("tjenestekall.UtsendingsObserver")
+    }
 
     override fun rapporteringsperiodeInnsendt(event: RapporteringsperiodeObserver.RapporteringsperiodeInnsendt) {
-        val ident = hendelse.ident()
-        val dager = event.dager.map { DagJsonBuilder(it).json }
-        rapidsConnection.publish(
-            key = ident,
-            message = JsonMessage.newMessage(
-                "rapporteringsperiode_innsendt_hendelse",
-                mapOf(
-                    "ident" to ident,
-                    "rapporteringsId" to event.rapporteringsperiodeId,
-                    "fom" to event.fom,
-                    "tom" to event.tom,
-                    "dager" to dager,
-                ),
-            ).toJson(),
+        val melding = JsonMessage.newMessage(
+            "rapporteringsperiode_innsendt_hendelse",
+            mapOf(
+                "ident" to hendelse.ident(),
+                "rapporteringsId" to event.rapporteringsperiodeId,
+                "fom" to event.fom,
+                "tom" to event.tom,
+                "dager" to event.dager.map { DagJsonBuilder(it).json },
+            ),
         )
+
+        withLoggingContext(
+            "rapporteringsId" to event.rapporteringsperiodeId.toString(),
+        ) {
+            logger.info { "Publiserer hendelse for innsendt rapporteringsperiode" }
+            sikkerlogg.info { "Publiserer hendelse for innsendt rapporteringsperiode. Melding: ${melding.toJson()}" }
+
+            rapidsConnection.publish(hendelse.ident(), melding.toJson())
+        }
     }
 
     private class DagJsonBuilder(dag: Dag) : DagVisitor {
-
         private lateinit var dato: LocalDate
         private val aktiviteter = mutableListOf<Map<String, Any>>()
 
