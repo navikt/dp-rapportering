@@ -124,13 +124,7 @@ paths:
         - azureAd: [ ]
         - tokenX: [ ]
     parameters:
-      - name: periodeId
-        description: ID til rapporteringsperioden
-        schema:
-          type: string
-          format: uuid
-        in: path
-        required: true
+      - $ref: '#/components/parameters/periodeId'
   /rapporteringsperioder/{periodeId}/godkjenn:
     post:
       responses:
@@ -181,13 +175,8 @@ paths:
       security:
         - azureAd: [ ]
         - tokenX: [ ]
-    parameters:
-      - name: periodeId
-        description: ID til rapporteringsperioden
-        schema:
-          type: integer
-        in: path
-        required: true
+      parameters:
+      - $ref: '#/components/parameters/periodeId'
   /rapporteringsperioder/{periodeId}/aktivitet:
     post:
       requestBody:
@@ -211,14 +200,8 @@ paths:
       security:
         - azureAd: [ ]
         - tokenX: [ ]
-    parameters:
-      - name: periodeId
-        description: ID til rapporteringsperioden
-        schema:
-          type: string
-          format: uuid
-        in: path
-        required: true
+      parameters:
+        - $ref: '#/components/parameters/periodeId'
   /rapporteringsperioder/{periodeId}/aktivitet/{aktivitetId}:
     delete:
       responses:
@@ -235,17 +218,12 @@ paths:
         - azureAd: [ ]
         - tokenX: [ ]
     parameters:
-      - name: periodeId
-        description: ID til rapporteringsperioden
-        schema:
-          type: string
-          format: uuid
-        in: path
-        required: true
+      - $ref: '#/components/parameters/periodeId'
       - name: aktivitetId
         description: ID til aktiviteten som skal oppdateres eller slettes
         schema:
-          type: integer
+          type: string
+          format: uuid
         in: path
         required: true
 components:
@@ -427,7 +405,16 @@ components:
         - [dev-gcp](https://wonderwalled-idporten.intern.dev.nav.no/api/obo?aud=dev-gcp:teamdagpenger:dp-rapportering)
   headers: { }
   responses: { }
-  parameters: { }
+  parameters:
+    periodeId:
+      name: periodeId
+      description: ID til rapporteringsperioden
+      schema:
+        type: string
+        format: uuid
+      in: path
+      required: true
+
 tags:
   - name: Rapporteringsperiode
     description: >-
