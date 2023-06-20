@@ -1,6 +1,7 @@
-package no.nav.dagpenger.rapportering
+package no.nav.dagpenger.rapportering.jobs
 
 import mu.KotlinLogging
+import no.nav.dagpenger.rapportering.Mediator
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -17,7 +18,9 @@ internal object NyRapporteringssyklusJobb {
     private val TIDSPUNKT_FOR_KJØRING = LocalTime.of(15, 0)
 
     private val nå = ZonedDateTime.now()
-    private val tidspunktForNesteKjøring = nå.with(TemporalAdjusters.nextOrSame(UKEDAG_FOR_KJØRING)).with(TIDSPUNKT_FOR_KJØRING)
+    private val tidspunktForNesteKjøring = nå.with(TemporalAdjusters.nextOrSame(UKEDAG_FOR_KJØRING)).with(
+        TIDSPUNKT_FOR_KJØRING,
+    )
     private val millisekunderTilNesteKjøring = tidspunktForNesteKjøring.toInstant().toEpochMilli() - nå.toInstant().toEpochMilli() // differansen i millisekunder mellom de to tidspunktene
 
     internal fun start(mediator: Mediator) {

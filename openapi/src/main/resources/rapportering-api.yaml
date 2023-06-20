@@ -43,6 +43,16 @@ paths:
         required: true
         content:
           application/json:
+            examples:
+              Uten fraOgMed:
+                description: Er det bare ident som settes vil fraOgMed bruke dagens dato som standardverdi
+                value:
+                  ident: "12312312311"
+              Med fraOgMed:
+                description: Skal rapporteringsperioden gjelde fra en bestemt dato settes fraOgMed
+                value:
+                  ident: "12312312311"
+                  fraOgMed: "2023-03-09"
             schema:
               $ref: '#/components/schemas/Rapporteringsperiode.Ny'
       summary: Opprett en rapporteringsperiode
@@ -260,6 +270,7 @@ components:
         timer:
           type: string
           format: ISO8601 Duration
+          description: Må representeres som en ISO8601 Duration
         dato:
           format: date
           type: string
@@ -299,6 +310,7 @@ components:
         fraOgMed:
           type: string
           format: date
+          description: Standardverdi er dagens dato
     Rapporteringsperiode:
       required:
         - periodeId

@@ -5,6 +5,8 @@ import no.nav.dagpenger.rapportering.api.konfigurasjon
 import no.nav.dagpenger.rapportering.api.rapporteringApi
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.runMigration
+import no.nav.dagpenger.rapportering.jobs.Innsendingsjobb
+import no.nav.dagpenger.rapportering.jobs.NyRapporteringssyklusJobb
 import no.nav.dagpenger.rapportering.repository.PostgresRepository
 import no.nav.dagpenger.rapportering.tjenester.SøknadMottak
 import no.nav.helse.rapids_rivers.RapidApplication

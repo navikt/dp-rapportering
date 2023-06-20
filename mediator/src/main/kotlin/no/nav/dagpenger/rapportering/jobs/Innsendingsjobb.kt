@@ -1,6 +1,7 @@
-package no.nav.dagpenger.rapportering
+package no.nav.dagpenger.rapportering.jobs
 
 import mu.KotlinLogging
+import no.nav.dagpenger.rapportering.Mediator
 import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import java.time.LocalDate
 import java.util.UUID
