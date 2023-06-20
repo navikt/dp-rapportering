@@ -177,7 +177,7 @@ interface Tilgangskontroll {
     fun verifiserTilgang(call: ApplicationCall): String
 }
 
-class RapporteringsperiodeTilgangskontroll(private val repository: RapporteringsperiodeRepository) : Tilgangskontroll {
+private class RapporteringsperiodeTilgangskontroll(private val repository: RapporteringsperiodeRepository) : Tilgangskontroll {
     override fun verifiserTilgang(call: ApplicationCall): String {
         val periodeId = call.finnUUID("periodeId")
         val ident = repository.finnIdentForPeriode(periodeId)
@@ -195,7 +195,7 @@ class RapporteringsperiodeTilgangskontroll(private val repository: Rapporterings
     }
 }
 
-class IkkeTilgangException(message: String) : Exception(message)
+private class IkkeTilgangException(message: String) : Exception(message)
 
 private fun AktivitetNyDTO.toAktivitet() =
     when (type) {
