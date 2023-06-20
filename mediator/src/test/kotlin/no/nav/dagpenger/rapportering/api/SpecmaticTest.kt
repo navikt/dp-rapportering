@@ -37,6 +37,11 @@ object SpecmaticTest : SpecmaticJUnitSupport() {
                             UserIdPrincipal("jetbrains")
                         }
                     }
+                    bearer("azureAd") {
+                        authenticate {
+                            UserIdPrincipal("jetbrains")
+                        }
+                    }
                 }
                 rapporteringApi(rapporteringsperiodeRepository, Mediator(TestRapid(), rapporteringsperiodeRepository))
             }.build(CIO).start()
