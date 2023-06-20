@@ -1,4 +1,2 @@
 kafka:
   pool: nav-prod
-ingresses:
-  - https://dp-rapportering.intern.nav.no
