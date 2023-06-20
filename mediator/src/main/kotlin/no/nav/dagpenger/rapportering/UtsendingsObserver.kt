@@ -11,8 +11,10 @@ import java.time.LocalDate
 import java.util.UUID
 import kotlin.time.Duration
 
-class UtsendingsObserver(private val rapidsConnection: RapidsConnection, private val hendelse: PersonHendelse) :
-    PersonObserver {
+class UtsendingsObserver(
+    private val rapidsConnection: RapidsConnection,
+    private val hendelse: PersonHendelse,
+) : PersonObserver {
     private companion object {
         private val logger = KotlinLogging.logger {}
         private val sikkerlogg = KotlinLogging.logger("tjenestekall.UtsendingsObserver")
@@ -40,6 +42,21 @@ class UtsendingsObserver(private val rapidsConnection: RapidsConnection, private
         }
     }
 
+    override fun rapporteringsperiodeEndret(event: RapporteringsperiodeObserver.RapporteringsperiodeEndret) {
+        rapidsConnection.publish(
+            hendelse.ident(),
+            JsonMessage.newMessage(
+                "rapporteringsperiode_endret",
+                mapOf(
+                    "rapporteringsperiodeId" to event.rapporteringsperiodeId,
+                    "gjeldendeTilstand" to event.gjeldendeTilstand,
+                    "fom" to event.fom,
+                    "tom" to event.tom,
+                ),
+            ).toJson(),
+        )
+    }
+
     private class DagJsonBuilder(dag: Dag) : DagVisitor {
         private lateinit var dato: LocalDate
         private val aktiviteter = mutableListOf<Map<String, Any>>()
@@ -48,7 +65,7 @@ class UtsendingsObserver(private val rapidsConnection: RapidsConnection, private
             dag.accept(this)
         }
 
-        val json: Map<String, Any>
+        val json
             get() = mapOf(
                 "dato" to dato,
                 "aktiviteter" to aktiviteter,
@@ -78,20 +95,5 @@ class UtsendingsObserver(private val rapidsConnection: RapidsConnection, private
                 ),
             )
         }
-    }
-
-    override fun rapporteringsperiodeEndret(event: RapporteringsperiodeObserver.RapporteringsperiodeEndret) {
-        rapidsConnection.publish(
-            hendelse.ident(),
-            JsonMessage.newMessage(
-                "rapporteringsperiode_endret",
-                mapOf(
-                    "rapporteringsperiodeId" to event.rapporteringsperiodeId,
-                    "gjeldendeTilstand" to event.gjeldendeTilstand,
-                    "fom" to event.fom,
-                    "tom" to event.tom,
-                ),
-            ).toJson(),
-        )
     }
 }
