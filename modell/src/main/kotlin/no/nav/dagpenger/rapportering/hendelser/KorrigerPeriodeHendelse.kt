@@ -6,7 +6,7 @@ import java.util.UUID
 class KorrigerPeriodeHendelse(
     meldingsreferanseId: UUID,
     ident: String,
-    val rapporteringId: UUID,
+    val rapporteringsperiodeId: UUID,
 ) : PersonHendelse(
     meldingsreferanseId,
     ident,

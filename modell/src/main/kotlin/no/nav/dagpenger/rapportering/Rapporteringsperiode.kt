@@ -124,14 +124,18 @@ class Rapporteringsperiode private constructor(
         hendelse.info("Opprettet ny rapporteringsperiode")
     }
 
-    fun behandle(hendelse: GodkjennPeriodeHendelse) {
+    fun behandle(hendelse: GodkjennPeriodeHendelse): Boolean {
+        if (korrigertAv != null) return korrigertAv!!.behandle(hendelse)
+        if (hendelse.rapporteringsperiodeId != rapporteringsperiodeId) return false
         hendelse.kontekst(this)
         hendelse.info("Sender inn ny rapportering")
 
         tilstand.behandle(hendelse, this)
+        return true
     }
 
     fun behandle(hendelse: NyAktivitetHendelse): Boolean {
+        if (korrigertAv != null) return korrigertAv!!.behandle(hendelse)
         if (hendelse.rapporteringsperiodeId != rapporteringsperiodeId) return false
         hendelse.kontekst(this)
         hendelse.info("Registrerer ny aktivitet")
@@ -141,6 +145,7 @@ class Rapporteringsperiode private constructor(
     }
 
     fun behandle(hendelse: SlettAktivitetHendelse): Boolean {
+        if (korrigertAv != null) return korrigertAv!!.behandle(hendelse)
         if (hendelse.rapporteringsperiodeId != rapporteringsperiodeId) return false
         hendelse.kontekst(this)
         hendelse.info("Sletter aktivitet")
@@ -155,16 +160,21 @@ class Rapporteringsperiode private constructor(
         tilstand.behandle(hendelse, this)
     }
 
-    fun behandle(hendelse: KorrigerPeriodeHendelse) {
+    fun behandle(hendelse: KorrigerPeriodeHendelse): Boolean {
+        if (korrigerer == null && hendelse.rapporteringsperiodeId != rapporteringsperiodeId) return false
         hendelse.kontekst(this)
 
         tilstand.behandle(hendelse, this)
+        return true
     }
 
-    fun behandle(hendelse: ManuellInnsendingHendelse) {
+    fun behandle(hendelse: ManuellInnsendingHendelse): Boolean {
+        if (korrigertAv != null) return korrigertAv!!.behandle(hendelse)
+        if (hendelse.rapporteringsperiodeId != rapporteringsperiodeId) return false
         hendelse.kontekst(this)
 
         tilstand.behandle(hendelse, this)
+        return true
     }
 
     private sealed interface Rapporteringsperiodetilstand : Aktivitetskontekst {

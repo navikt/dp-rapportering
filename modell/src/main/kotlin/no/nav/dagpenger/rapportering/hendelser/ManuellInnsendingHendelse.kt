@@ -9,7 +9,7 @@ import java.util.UUID
 class ManuellInnsendingHendelse(
     meldingsreferanseId: UUID,
     ident: String,
-    internal val rapporteringId: UUID,
+    internal val rapporteringsperiodeId: UUID,
 ) :
     PersonHendelse(
         meldingsreferanseId,

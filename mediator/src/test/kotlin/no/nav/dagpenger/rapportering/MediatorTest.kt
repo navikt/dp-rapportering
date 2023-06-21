@@ -2,9 +2,11 @@ package no.nav.dagpenger.rapportering
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import no.nav.dagpenger.rapportering.db.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
@@ -36,7 +38,7 @@ class MediatorTest {
         hendelse.aktivitetsteller() shouldBe 5
         hendelse.harAktiviteter() shouldBe true
         val person = mediator.hentEllerOpprettPerson(testIdent)
-        val rapporteringsperiodeId = person.aktivRapporteringsperiode
+        val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
         mediator.behandle(NyAktivitetHendelse(testIdent, rapporteringsperiodeId, Aktivitet.Arbeid(LocalDate.now(), 2)))
 
         mediator.hentEllerOpprettPerson(testIdent).antallAktiviteter shouldBe 1
@@ -52,7 +54,7 @@ class MediatorTest {
 
         mediator.behandle(hendelse)
         val person = mediator.hentEllerOpprettPerson(testIdent)
-        val rapporteringsperiodeId = person.aktivRapporteringsperiode
+        val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
         mediator.behandle(NyAktivitetHendelse(testIdent, rapporteringsperiodeId, Aktivitet.Arbeid(LocalDate.now(), 2)))
 
         mediator.hentEllerOpprettPerson(testIdent).antallAktiviteter shouldBe 1
@@ -80,9 +82,8 @@ class MediatorTest {
         val hendelse = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent)
         mediator.behandle(hendelse)
         val person = mediator.hentEllerOpprettPerson(testIdent)
-        val rapporteringsperiodeId = person.aktivRapporteringsperiode
+        val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
         mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))
-
         val frist = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusDays(14)
 
         mediator.behandle(RapporteringsfristHendelse(UUID.randomUUID(), testIdent, frist.minusDays(3)))
@@ -92,7 +93,31 @@ class MediatorTest {
         rapid.inspektør.size shouldBe 3
     }
 
-    private val Person.aktivRapporteringsperiode get() = TestVisitor(this).rapporteringsperioder.last().rapporteringsperiodeId
+    @Test
+    fun `godkjente rapporteringsperioder kan korrigeres`() = withMigratedDb {
+        val testIdent = "12312312311"
+        val hendelse = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent)
+        mediator.behandle(hendelse)
+        val person = mediator.hentEllerOpprettPerson(testIdent)
+        val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
+        mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))
+        val frist = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusDays(14)
+
+        mediator.behandle(RapporteringsfristHendelse(UUID.randomUUID(), testIdent, frist.minusDays(3)))
+        rapid.inspektør.size shouldBe 1
+
+        mediator.behandle(RapporteringsfristHendelse(UUID.randomUUID(), testIdent, frist))
+        rapid.inspektør.size shouldBe 3
+
+        person.aktivRapporteringsperiode.finnSisteKorrigering() shouldBe person.aktivRapporteringsperiode
+        mediator.behandle(KorrigerPeriodeHendelse(UUID.randomUUID(), testIdent, rapporteringsperiodeId))
+        with(mediator.hentEllerOpprettPerson(testIdent)) {
+            aktivRapporteringsperiode.finnSisteKorrigering() shouldNotBe person.aktivRapporteringsperiode
+        }
+    }
+
+    private val Person.aktivRapporteringsperiodeId get() = aktivRapporteringsperiode.rapporteringsperiodeId
+    private val Person.aktivRapporteringsperiode get() = TestVisitor(this).rapporteringsperioder.last()
     private val Person.antallAktiviteter get() = TestVisitor(this).aktiviteter.size
     private val Person.sisteAktivitet get() = TestVisitor(this).aktiviteter.last()
 

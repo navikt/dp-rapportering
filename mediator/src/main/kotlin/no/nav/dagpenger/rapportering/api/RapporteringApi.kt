@@ -173,10 +173,6 @@ internal fun Application.rapporteringApi(
     }
 }
 
-interface Tilgangskontroll {
-    fun verifiserTilgang(call: ApplicationCall): String
-}
-
 private class RapporteringsperiodeTilgangskontroll(private val repository: RapporteringsperiodeRepository) : Tilgangskontroll {
     override fun verifiserTilgang(call: ApplicationCall): String {
         val periodeId = call.finnUUID("periodeId")

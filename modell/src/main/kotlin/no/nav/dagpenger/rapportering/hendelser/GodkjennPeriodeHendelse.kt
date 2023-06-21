@@ -6,7 +6,7 @@ import java.util.UUID
 class GodkjennPeriodeHendelse(
     meldingsreferanseId: UUID,
     ident: String,
-    val rapporteringId: UUID,
+    val rapporteringsperiodeId: UUID,
 ) : PersonHendelse(
     meldingsreferanseId,
     ident,

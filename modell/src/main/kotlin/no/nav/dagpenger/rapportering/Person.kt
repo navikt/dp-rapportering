@@ -91,25 +91,21 @@ class Person private constructor(
         hendelse.kontekst(this)
         hendelse.info("Tar imot ny aktivitet utført av bruker")
 
-        if (rapporteringsperioder.none { it.behandle(hendelse) }) {
-            hendelse.logiskFeil("Ingen rapporteringsperiode håndterte aktiviteten")
-        }
+        rapporteringsperioder.behandle(hendelse) { it.behandle(hendelse) }
     }
 
     fun behandle(hendelse: SlettAktivitetHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Sletter aktivitet utført av bruker")
 
-        if (rapporteringsperioder.none { it.behandle(hendelse) }) {
-            hendelse.logiskFeil("Ingen rapporteringsperiode håndterte aktiviteten")
-        }
+        rapporteringsperioder.behandle(hendelse) { it.behandle(hendelse) }
     }
 
     fun behandle(hendelse: GodkjennPeriodeHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Behandler ny innrapportering")
 
-        rapporteringsperioder.single { it.rapporteringsperiodeId == hendelse.rapporteringId }.behandle(hendelse)
+        rapporteringsperioder.behandle(hendelse) { it.behandle(hendelse) }
     }
 
     fun behandle(hendelse: RapporteringsfristHendelse) {
@@ -120,13 +116,14 @@ class Person private constructor(
         hendelse.kontekst(this)
         hendelse.info("Korrigerer rapporteringsperiode")
 
-        rapporteringsperioder.single { it.rapporteringsperiodeId == hendelse.rapporteringId }.behandle(hendelse)
+        rapporteringsperioder.behandle(hendelse) { it.behandle(hendelse) }
     }
+
     fun behandle(hendelse: ManuellInnsendingHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Manuelt sender inn en rapporteringsperiode")
 
-        rapporteringsperioder.single { it.rapporteringsperiodeId == hendelse.rapporteringId }.behandle(hendelse)
+        rapporteringsperioder.behandle(hendelse) { it.behandle(hendelse) }
     }
 
     fun registrer(observer: PersonObserver) {
@@ -154,3 +151,11 @@ class Person private constructor(
 }
 
 private fun Collection<Rapporteringsperiode>.accept(visitor: PersonVisitor) = forEach { it.accept(visitor) }
+private fun Collection<Rapporteringsperiode>.behandle(
+    hendelse: PersonHendelse,
+    block: (Rapporteringsperiode) -> Boolean,
+) {
+    if (none { block(it) }) {
+        hendelse.logiskFeil("Ingen rapporteringsperiode håndterte aktiviteten")
+    }
+}
