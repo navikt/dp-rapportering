@@ -107,6 +107,7 @@ class Rapporteringsperiode private constructor(
     fun leggTilFritak(dato: LocalDate) {}
 
     fun accept(visitor: RapporteringsperiodVisitor) {
+        korrigertAv?.accept(visitor)
         visitor.visit(
             this,
             rapporteringsperiodeId,

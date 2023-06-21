@@ -97,6 +97,9 @@ internal fun Application.rapporteringApi(
                     get {
                         val ident = tilgangskontroll.verifiserTilgang(call)
                         val dto = rapporteringsperiodeRepository
+                            // TODO: Denne bugger når vi henter ut en rapporteringsperiode midt i en kjede
+                            // Korrigering settes alltid av at vi setter korrigertAv på forrige periode i kjeden
+                            // Konsekvensen er at når man hente ren korrigering direkte med ID så har den `korrigerer: null`
                             .hentRapporteringsperiode(ident, call.finnUUID("periodeId"))
                             ?.let { RapporteringsperiodeMapper(it).dto }
                             ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
@@ -149,7 +152,7 @@ internal fun Application.rapporteringApi(
                             val periodeId = call.finnUUID("periodeId")
 
                             mediator.behandle(NyAktivitetHendelse(ident, periodeId, aktivitet))
-
+                            // TODO: Bør hente ut faktisk aktivitet
                             call.respond(HttpStatusCode.Created, aktivitet.toAktivitetDTO())
                         }
 

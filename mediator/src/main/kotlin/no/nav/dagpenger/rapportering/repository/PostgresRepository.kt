@@ -286,67 +286,6 @@ internal class PostgresRepository(private val ds: DataSource) :
     }
 }
 
-private class LagreRapporteringsperiodeStatementBuilder(
-    rapporteringsperiode: Rapporteringsperiode,
-    private val ident: String,
-    private val visited: MutableSet<UUID> = mutableSetOf(),
-) : RapporteringsperiodVisitor {
-    var queries = mutableListOf<Query>()
-
-    init {
-        rapporteringsperiode.accept(this)
-    }
-
-    override fun visit(
-        rapporteringsperiode: Rapporteringsperiode,
-        id: UUID,
-        periode: ClosedRange<LocalDate>,
-        tilstand: Rapporteringsperiode.TilstandType,
-        rapporteringsfrist: LocalDate,
-        korrigerer: Rapporteringsperiode?,
-        korrigertAv: Rapporteringsperiode?,
-    ) {
-        if (visited.contains(rapporteringsperiode.rapporteringsperiodeId)) return
-        visited.add(rapporteringsperiode.rapporteringsperiodeId)
-
-        korrigerer?.let {
-            queries.addAll(LagreRapporteringsperiodeStatementBuilder(it, ident, visited).queries)
-        }
-
-        korrigertAv?.let {
-            queries.addAll(LagreRapporteringsperiodeStatementBuilder(it, ident, visited).queries)
-        }
-
-        queries.add(
-            queryOf(
-                //language=PostgreSQL
-                statement = """
-                    INSERT INTO rapporteringsperiode (uuid, person_ident, tilstand, rapporteringsfrist, fom, tom, korrigerer, korrigert_av)
-                    VALUES (:uuid,
-                            :ident,
-                            :tilstand,
-                            :rapporteringsfrist,
-                            :fraOgMed,
-                            :tilOgMed,
-                            :korrigerer,
-                            :korrigertAv)
-                    ON CONFLICT (uuid) DO UPDATE SET tilstand = :tilstand, korrigerer = :korrigerer, korrigert_av = :korrigertAv
-                """.trimIndent(),
-                paramMap = mapOf(
-                    "uuid" to id,
-                    "ident" to ident,
-                    "rapporteringsfrist" to rapporteringsfrist,
-                    "tilstand" to tilstand.name,
-                    "fraOgMed" to periode.start,
-                    "tilOgMed" to periode.endInclusive,
-                    "korrigerer" to korrigerer?.rapporteringsperiodeId,
-                    "korrigertAv" to korrigertAv?.rapporteringsperiodeId,
-                ),
-            ),
-        )
-    }
-}
-
 private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, RapporteringsperiodVisitor, DagVisitor {
     private lateinit var rapporteringsperiodeId: UUID
     private lateinit var rapporteringspliktId: UUID
@@ -403,7 +342,33 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
         korrigertAv: Rapporteringsperiode?,
     ) {
         this.rapporteringsperiodeId = id
-        queries.addAll(LagreRapporteringsperiodeStatementBuilder(rapporteringsperiode, ident).queries)
+        queries.add(
+            queryOf(
+                //language=PostgreSQL
+                statement = """
+                    INSERT INTO rapporteringsperiode (uuid, person_ident, tilstand, rapporteringsfrist, fom, tom, korrigerer, korrigert_av)
+                    VALUES (:uuid,
+                            :ident,
+                            :tilstand,
+                            :rapporteringsfrist,
+                            :fraOgMed,
+                            :tilOgMed,
+                            :korrigerer,
+                            :korrigertAv)
+                    ON CONFLICT (uuid) DO UPDATE SET tilstand = :tilstand, korrigerer = :korrigerer, korrigert_av = :korrigertAv
+                """.trimIndent(),
+                paramMap = mapOf(
+                    "uuid" to id,
+                    "ident" to ident,
+                    "rapporteringsfrist" to rapporteringsfrist,
+                    "tilstand" to tilstand.name,
+                    "fraOgMed" to periode.start,
+                    "tilOgMed" to periode.endInclusive,
+                    "korrigerer" to korrigerer?.rapporteringsperiodeId,
+                    "korrigertAv" to korrigertAv?.rapporteringsperiodeId,
+                ),
+            ),
+        )
     }
 
     override fun visit(
