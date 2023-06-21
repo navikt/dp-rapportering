@@ -15,8 +15,8 @@ import java.util.SortedSet
 import java.util.UUID
 import kotlin.time.Duration
 
-internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperiode) : RapporteringsperiodVisitor {
-    private lateinit var id: UUID
+internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperiode, private var id: UUID? = null) :
+    RapporteringsperiodVisitor {
     private lateinit var periode: ClosedRange<LocalDate>
     private lateinit var tilstand: Rapporteringsperiode.TilstandType
     private val dager: SortedSet<Dag> = sortedSetOf(Dag.eldsteDagFørst)
@@ -41,30 +41,6 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
         rapporteringsperiode.accept(this)
     }
 
-    class AktivitetMapper(aktivitet: Aktivitet) : AktivitetVisitor {
-        lateinit var aktivitetDTO: AktivitetDTO
-
-        init {
-            aktivitet.accept(this)
-        }
-
-        override fun visit(
-            aktivitet: Aktivitet,
-            uuid: UUID,
-            dato: LocalDate,
-            tid: Duration,
-            type: Aktivitet.AktivitetType,
-            tilstand: Aktivitet.TilstandType,
-        ) {
-            aktivitetDTO = AktivitetDTO(
-                type = AktivitetTypeDTO.valueOf(type.name),
-                dato = dato,
-                id = uuid,
-                timer = tid.toIsoString(),
-            )
-        }
-    }
-
     override fun visit(
         rapporteringsperiode: Rapporteringsperiode,
         id: UUID,
@@ -74,6 +50,7 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
         korrigerer: Rapporteringsperiode?,
         korrigertAv: Rapporteringsperiode?,
     ) {
+        if (this.id != null && this.id != id) return
         this.id = id
         this.periode = periode
         this.tilstand = tilstand
@@ -87,6 +64,7 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
         aktiviteter: List<Aktivitet>,
         muligeAktiviter: List<Aktivitet.AktivitetType>,
     ) {
+        if (this.id == null) return
         // Legg til dager i et sortet set for å garantere rekkefølge
         this.dager.add(dag)
     }
@@ -119,6 +97,30 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
 
         private fun List<Aktivitet>.tilDto() = this.map {
             AktivitetMapper(it).aktivitetDTO
+        }
+
+        private class AktivitetMapper(aktivitet: Aktivitet) : AktivitetVisitor {
+            lateinit var aktivitetDTO: AktivitetDTO
+
+            init {
+                aktivitet.accept(this)
+            }
+
+            override fun visit(
+                aktivitet: Aktivitet,
+                uuid: UUID,
+                dato: LocalDate,
+                tid: Duration,
+                type: Aktivitet.AktivitetType,
+                tilstand: Aktivitet.TilstandType,
+            ) {
+                aktivitetDTO = AktivitetDTO(
+                    type = AktivitetTypeDTO.valueOf(type.name),
+                    dato = dato,
+                    id = uuid,
+                    timer = tid.toIsoString(),
+                )
+            }
         }
     }
 }

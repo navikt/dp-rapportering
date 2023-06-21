@@ -96,9 +96,10 @@ internal fun Application.rapporteringApi(
                 route("/{periodeId}") {
                     get {
                         val ident = tilgangskontroll.verifiserTilgang(call)
+                        val periodeId = call.finnUUID("periodeId")
                         val dto = rapporteringsperiodeRepository
-                            .hentRapporteringsperiode(ident, call.finnUUID("periodeId"))
-                            ?.let { RapporteringsperiodeMapper(it).dto }
+                            .hentRapporteringsperiode(ident, periodeId)
+                            ?.let { RapporteringsperiodeMapper(it, periodeId).dto }
                             ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
 
                         call.respond(HttpStatusCode.OK, dto)
@@ -107,10 +108,12 @@ internal fun Application.rapporteringApi(
                     route("/godkjenn") {
                         post {
                             val ident = tilgangskontroll.verifiserTilgang(call)
-                            mediator.behandle(GodkjennPeriodeHendelse(ident, call.finnUUID("periodeId")))
+                            val periodeId = call.finnUUID("periodeId")
+
+                            mediator.behandle(GodkjennPeriodeHendelse(ident, periodeId))
                             val periode = rapporteringsperiodeRepository
-                                .hentRapporteringsperiode(ident, call.finnUUID("periodeId"))!!
-                                .let { RapporteringsperiodeMapper(it).dto }
+                                .hentRapporteringsperiode(ident, periodeId)!!
+                                .let { RapporteringsperiodeMapper(it, periodeId).dto }
 
                             call.respond(HttpStatusCode.Created, periode)
                         }
@@ -119,10 +122,12 @@ internal fun Application.rapporteringApi(
                     route("/innsending") {
                         post {
                             val ident = tilgangskontroll.verifiserTilgang(call)
-                            mediator.behandle(ManuellInnsendingHendelse(ident, call.finnUUID("periodeId")))
+                            val periodeId = call.finnUUID("periodeId")
+
+                            mediator.behandle(ManuellInnsendingHendelse(ident, periodeId))
                             val periode = rapporteringsperiodeRepository
-                                .hentRapporteringsperiode(ident, call.finnUUID("periodeId"))!!
-                                .let { RapporteringsperiodeMapper(it).dto }
+                                .hentRapporteringsperiode(ident, periodeId)!!
+                                .let { RapporteringsperiodeMapper(it, periodeId).dto }
 
                             call.respond(HttpStatusCode.Created, periode)
                         }
@@ -131,10 +136,10 @@ internal fun Application.rapporteringApi(
                     route("/korrigering") {
                         post {
                             val ident = tilgangskontroll.verifiserTilgang(call)
-
-                            mediator.behandle(KorrigerPeriodeHendelse(ident, call.finnUUID("periodeId")))
+                            val periodeId = call.finnUUID("periodeId")
+                            mediator.behandle(KorrigerPeriodeHendelse(ident, periodeId))
                             val korrigering = rapporteringsperiodeRepository
-                                .hentRapporteringsperiode(ident, call.finnUUID("periodeId"))!!
+                                .hentRapporteringsperiode(ident, periodeId)!!
                                 .let { RapporteringsperiodeMapper(it.finnSisteKorrigering()).dto }
 
                             call.respond(HttpStatusCode.OK, korrigering)
@@ -149,7 +154,7 @@ internal fun Application.rapporteringApi(
                             val periodeId = call.finnUUID("periodeId")
 
                             mediator.behandle(NyAktivitetHendelse(ident, periodeId, aktivitet))
-                            // TODO: Bør hente ut faktisk aktivitet
+
                             call.respond(HttpStatusCode.Created, aktivitet.toAktivitetDTO())
                         }
 
