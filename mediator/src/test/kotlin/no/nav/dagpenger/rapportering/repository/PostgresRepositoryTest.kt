@@ -124,6 +124,7 @@ class PostgresRepositoryTest {
 
                 person.aktivRapporteringsperiode.finnSisteKorrigering()
             }
+
             // Verifiser at innsendt periode har en korrigering, men som har erstattet den forrige
             repository.hentEllerOpprettPerson(testIdent).let { person ->
                 person.aktivRapporteringsperiode.finnSisteKorrigering().also {
@@ -131,6 +132,11 @@ class PostgresRepositoryTest {
                     it.rapporteringsperiodeId shouldNotBe innsendtRapportering.rapporteringsperiodeId
                     it.rapporteringsperiodeId shouldBe nyKorrigering.rapporteringsperiodeId
                 }
+            }
+
+            repository.hentRapporteringsperiode(testIdent, sisteKorrigering.rapporteringsperiodeId).let { periode ->
+                periode!!.rapporteringsperiodeId shouldNotBe sisteKorrigering.rapporteringsperiodeId
+                periode.finnSisteKorrigering().rapporteringsperiodeId shouldBe nyKorrigering.rapporteringsperiodeId
             }
         }
     }

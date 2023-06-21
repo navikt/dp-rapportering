@@ -28,10 +28,36 @@ internal class PostgresRepository(private val ds: DataSource) :
     PersonRepository,
     RapporteringsperiodeRepository {
     override fun hentRapporteringsperiode(ident: String, uuid: UUID): Rapporteringsperiode? {
-        val kjede = hentKjede(ident, uuid)
+        val root = requireNotNull(finnRoot(uuid))
+        val kjede = hentKjede(ident, root)
         return kjede.lagKjede { uuid, korrigerer ->
             hentRapporteringsperiodeMedKorrigering(ident, uuid, korrigerer)
         }
+    }
+
+    private fun finnRoot(uuid: UUID) = using(sessionOf(ds)) { session ->
+        session.run(
+            queryOf(
+                //language=PostgreSQL
+                statement = """
+                WITH RECURSIVE find_root(uuid, korrigerer, root_uuid) AS (
+                    SELECT uuid, korrigerer, uuid AS root_uuid
+                    FROM rapporteringsperiode
+                    WHERE uuid = :startUuid
+                    
+                    UNION ALL
+                    
+                    SELECT rp.uuid, rp.korrigerer, fr.root_uuid
+                    FROM rapporteringsperiode rp
+                    JOIN find_root fr ON rp.uuid = fr.korrigerer
+                )
+                SELECT uuid 
+                FROM find_root 
+                WHERE korrigerer IS NULL
+                """.trimIndent(),
+                paramMap = mapOf("startUuid" to uuid),
+            ).map { it.uuidOrNull("uuid") }.asSingle,
+        )
     }
 
     override fun hentRapporteringsperioder(ident: String) = using(sessionOf(ds)) { session ->
@@ -225,17 +251,17 @@ internal class PostgresRepository(private val ds: DataSource) :
                     //language=PostgreSQL
                     statement = """
                     WITH RECURSIVE linked_structure AS (
-                        SELECT a.uuid, a.korrigert_av
+                        SELECT a.uuid, a.korrigerer, a.korrigert_av
                         FROM rapporteringsperiode a
                         WHERE a.person_ident=:ident AND a.uuid = :startUuid
                     
                         UNION ALL
                     
-                        SELECT a.uuid, a.korrigert_av
+                        SELECT a.uuid, a.korrigerer, a.korrigert_av
                         FROM rapporteringsperiode a
                                  JOIN linked_structure ls ON a.uuid = ls.korrigert_av
                     )
-                    SELECT uuid
+                    SELECT uuid, korrigerer
                     FROM linked_structure
                     """.trimIndent(),
                     mapOf(
