@@ -74,7 +74,10 @@ paths:
                   $ref: '#/components/schemas/Rapporteringsperiode'
           description: OK
       summary: Søk etter rapporteringsperioder
-      description: Søker etter rapporteringsperioder
+      description: |
+        Lister ut alle rapporteringsperioder som treffer søket. Har en periode blitt korrigert så er det den siste korrigeringen som blir vist. 
+      
+        Ønsker man perioden som har blitt korrigert må man hente ut denne via `/rapporteringsperioder/{periodeId}`.
       operationId: post-rapporteringsperiode-sok
       tags:
         - Rapporteringsperiode
