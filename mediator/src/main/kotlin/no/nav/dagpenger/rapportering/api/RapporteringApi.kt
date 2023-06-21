@@ -97,9 +97,6 @@ internal fun Application.rapporteringApi(
                     get {
                         val ident = tilgangskontroll.verifiserTilgang(call)
                         val dto = rapporteringsperiodeRepository
-                            // TODO: Denne bugger når vi henter ut en rapporteringsperiode midt i en kjede
-                            // Korrigering settes alltid av at vi setter korrigertAv på forrige periode i kjeden
-                            // Konsekvensen er at når man hente ren korrigering direkte med ID så har den `korrigerer: null`
                             .hentRapporteringsperiode(ident, call.finnUUID("periodeId"))
                             ?.let { RapporteringsperiodeMapper(it).dto }
                             ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
@@ -176,7 +173,8 @@ internal fun Application.rapporteringApi(
     }
 }
 
-private class RapporteringsperiodeTilgangskontroll(private val repository: RapporteringsperiodeRepository) : Tilgangskontroll {
+private class RapporteringsperiodeTilgangskontroll(private val repository: RapporteringsperiodeRepository) :
+    Tilgangskontroll {
     override fun verifiserTilgang(call: ApplicationCall): String {
         val periodeId = call.finnUUID("periodeId")
         val ident = repository.finnIdentForPeriode(periodeId)

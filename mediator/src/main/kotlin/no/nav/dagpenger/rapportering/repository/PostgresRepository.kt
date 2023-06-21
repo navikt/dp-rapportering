@@ -40,14 +40,14 @@ internal class PostgresRepository(private val ds: DataSource) :
             queryOf(
                 //language=PostgreSQL
                 statement = """
-                WITH RECURSIVE find_root(uuid, korrigerer, root_uuid) AS (
-                    SELECT uuid, korrigerer, uuid AS root_uuid
+                WITH RECURSIVE find_root AS (
+                    SELECT uuid, korrigerer
                     FROM rapporteringsperiode
                     WHERE uuid = :startUuid
                     
                     UNION ALL
                     
-                    SELECT rp.uuid, rp.korrigerer, fr.root_uuid
+                    SELECT rp.uuid, rp.korrigerer
                     FROM rapporteringsperiode rp
                     JOIN find_root fr ON rp.uuid = fr.korrigerer
                 )
