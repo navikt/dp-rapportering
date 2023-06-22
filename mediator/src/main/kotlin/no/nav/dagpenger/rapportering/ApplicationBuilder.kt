@@ -20,9 +20,7 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
             .withKtorModule {
                 konfigurasjon()
                 rapporteringApi(postgresRepository, mediator)
-            }.build { _, kafka ->
-                kafka.seekToBeginning()
-            }
+            }.build()
     private val mediator = Mediator(
         rapidsConnection = rapidsConnection,
         postgresRepository,
