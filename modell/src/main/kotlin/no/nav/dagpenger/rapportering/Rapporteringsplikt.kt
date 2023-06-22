@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering
 import no.nav.dagpenger.aktivitetslogg.Aktivitetskontekst
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import java.time.LocalDateTime
 import java.util.UUID
@@ -10,9 +11,13 @@ import java.util.UUID
 interface Rapporteringsplikt : Aktivitetskontekst {
     val uuid: UUID
     val type: RapporteringspliktType
-    val gjelderFra: LocalDateTime
+    val rapporteringspliktFra: LocalDateTime
     fun behandle(person: Person, hendelse: SøknadInnsendtHendelse)
     fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse)
+    fun behandle(person: Person, hendelse: RapporteringspliktDatoHendelse) {
+        throw IllegalStateException("Forventer ikke ${RapporteringspliktDatoHendelse::class.java.simpleName}")
+    }
+
     override fun toSpesifikkKontekst() = SpesifikkKontekst("Rapporteringsplikt", mapOf("type" to type.name))
     fun accept(visitor: RapporteringspliktVisitor) {
         visitor.visit(this, this.uuid, this.type)
@@ -27,31 +32,45 @@ enum class RapporteringspliktType {
 
 class IngenRapporteringsplikt(
     override val uuid: UUID = UUID.randomUUID(),
-    override val gjelderFra: LocalDateTime = LocalDateTime.now(),
+    override val rapporteringspliktFra: LocalDateTime = LocalDateTime.now(),
 ) : Rapporteringsplikt {
     override val type = RapporteringspliktType.Ingen
 
     override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {
         hendelse.kontekst(this)
+        hendelse.behov(MineBehov.Virkningsdatoer, "Trenger virkningsdatoer for å opprette rapporteringsplikt")
+        hendelse.behov(MineBehov.Innsendingstidspunkt, "Trenger innsendingstidspunkt for å opprette rapporteringsplikt")
+    }
+
+    override fun behandle(person: Person, hendelse: RapporteringspliktDatoHendelse) {
+        hendelse.kontekst(this)
         hendelse.info("Oppretter rapporteringsplikt")
 
-        person.nyRapporteringsplikt(RapporteringspliktSøknad(gjelderFra = hendelse.fom.atStartOfDay()))
-        person.behandle(hendelse)
+        person.nyRapporteringsplikt(
+            RapporteringspliktSøknad(rapporteringspliktFra = hendelse.gjelderFra.atStartOfDay()).also {
+                it.behandle(person, hendelse)
+            },
+        )
     }
 
     override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {}
 }
 
-class RapporteringspliktSøknad(override val uuid: UUID = UUID.randomUUID(), override val gjelderFra: LocalDateTime) :
+class RapporteringspliktSøknad(override val uuid: UUID = UUID.randomUUID(), override val rapporteringspliktFra: LocalDateTime) :
     Rapporteringsplikt {
     override val type = RapporteringspliktType.Søknad
 
     override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {
         hendelse.kontekst(this)
+        hendelse.info("Har allerede rapporteringsplikt, oppretter ikke ny")
+    }
+
+    override fun behandle(person: Person, hendelse: RapporteringspliktDatoHendelse) {
+        hendelse.kontekst(this)
         hendelse.info("Oppretter ny rapporteringsperiode på grunn av innsendt søknad")
 
-        Rapporteringsperiode(hendelse.fom).also { periode ->
-            periode.gjelderFra.datesUntil(hendelse.fom).forEach {
+        Rapporteringsperiode(rapporteringspliktFra.toLocalDate()).also { periode ->
+            periode.gjelderFra.datesUntil(rapporteringspliktFra.toLocalDate()).forEach {
                 periode.leggTilFritak(it)
             }
 
@@ -71,7 +90,7 @@ class RapporteringspliktSøknad(override val uuid: UUID = UUID.randomUUID(), ove
 
 class RapporteringspliktVedtak(
     override val uuid: UUID = UUID.randomUUID(),
-    override val gjelderFra: LocalDateTime,
+    override val rapporteringspliktFra: LocalDateTime,
 ) : Rapporteringsplikt {
     override val type = RapporteringspliktType.Vedtak
 

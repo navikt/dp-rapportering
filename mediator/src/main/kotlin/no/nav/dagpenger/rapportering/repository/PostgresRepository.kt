@@ -352,7 +352,7 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
                     "ident" to ident,
                     "type" to type.name,
                     "rapporteringspliktId" to rapporteringspliktId,
-                    "gjelderFra" to rapporteringsplikt.gjelderFra,
+                    "gjelderFra" to rapporteringsplikt.rapporteringspliktFra,
                 ),
             ),
         )

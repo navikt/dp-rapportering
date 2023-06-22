@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.repository.PostgresRepository
@@ -19,6 +20,7 @@ import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.junit.jupiter.api.Test
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.temporal.TemporalAdjusters
 import java.util.UUID
 
@@ -32,11 +34,13 @@ class MediatorTest {
         val hendelse = SøknadInnsendtHendelse(
             UUID.randomUUID(),
             testIdent,
+            LocalDateTime.now(),
         )
 
         mediator.behandle(hendelse)
+        mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
 
-        hendelse.aktivitetsteller() shouldBe 5
+        hendelse.aktivitetsteller() shouldBe 3
         hendelse.harAktiviteter() shouldBe true
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
@@ -51,9 +55,12 @@ class MediatorTest {
         val hendelse = SøknadInnsendtHendelse(
             UUID.randomUUID(),
             testIdent,
+            LocalDateTime.now(),
         )
 
         mediator.behandle(hendelse)
+        mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
+
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
         mediator.behandle(NyAktivitetHendelse(testIdent, rapporteringsperiodeId, Aktivitet.Arbeid(LocalDate.now(), 2)))
@@ -80,8 +87,10 @@ class MediatorTest {
     @Test
     fun `godkjente rapporteringsperioder publiseres når fristen har passert`() = withMigratedDb {
         val testIdent = "12312312311"
-        val hendelse = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent)
+        val hendelse = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now())
         mediator.behandle(hendelse)
+        mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
+
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
         mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))
@@ -97,8 +106,10 @@ class MediatorTest {
     @Test
     fun `godkjente rapporteringsperioder kan korrigeres`() = withMigratedDb {
         val testIdent = "12312312311"
-        val hendelse = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent)
+        val hendelse = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now())
         mediator.behandle(hendelse)
+        mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
+
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
         mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))

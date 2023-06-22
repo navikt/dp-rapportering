@@ -14,12 +14,14 @@ import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.time.Duration
 
@@ -60,7 +62,8 @@ class PostgresRepositoryTest {
             val repository = PostgresRepository(dataSource)
             val person = Person(testIdent).also { repository.lagre(it) }
             person.apply {
-                behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent))
+                behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now()))
+                person.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
                 behandle(
                     NyAktivitetHendelse(
                         testIdent,
@@ -94,7 +97,8 @@ class PostgresRepositoryTest {
             val repository = PostgresRepository(dataSource)
             // Opprett person med innsendt søknad og rapporteringsperiode
             Person(testIdent).let { person ->
-                person.behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent))
+                person.behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now()))
+                person.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
                 repository.lagre(person)
             }
             // Godkjenn perioden og send den inn
@@ -146,7 +150,8 @@ class PostgresRepositoryTest {
         withMigratedDb {
             val repository = PostgresRepository(dataSource)
             val person = Person(testIdent).apply {
-                behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent))
+                behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now()))
+                behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
                 behandle(
                     NyAktivitetHendelse(
                         testIdent,

@@ -7,13 +7,14 @@ import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 internal object TestData {
     val testIdent = "01010125255"
     val testPerson get() = Person(testIdent)
 
-    fun søknadInnsendtHendelse() = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent)
+    fun søknadInnsendtHendelse() = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now())
 
     fun nyAktivitetHendelse(rapporteringsperiodeId: UUID, aktivitet: Aktivitet) =
         NyAktivitetHendelse(testIdent, rapporteringsperiodeId, aktivitet)

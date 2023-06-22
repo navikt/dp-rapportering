@@ -31,11 +31,12 @@ import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.ManuellInnsendingHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
-import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 internal fun Application.rapporteringApi(
@@ -79,12 +80,14 @@ internal fun Application.rapporteringApi(
                 }
 
                 post<RapporteringsperiodeNyDTO> {
+                    val fom = it.fraOgMed?.let { fraOgMed -> fraOgMed.atStartOfDay() } ?: LocalDateTime.now()
                     val harGjeldende = rapporteringsperiodeRepository
-                        .hentRapporteringsperiodeFor(it.ident, it.fraOgMed ?: LocalDate.now())
+                        .hentRapporteringsperiodeFor(it.ident, fom.toLocalDate())
                         ?.let { true } ?: false
                     if (harGjeldende) call.respond(HttpStatusCode.Conflict)
 
-                    mediator.behandle(SøknadInnsendtHendelse(UUID.randomUUID(), ident = it.ident))
+                    mediator.behandle(SøknadInnsendtHendelse(UUID.randomUUID(), ident = it.ident, fom))
+                    mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), it.ident, fom, fom.toLocalDate(), fom.toLocalDate()))
 
                     call.respond(HttpStatusCode.Created)
                 }

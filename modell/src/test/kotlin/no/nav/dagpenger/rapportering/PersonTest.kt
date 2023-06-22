@@ -9,6 +9,7 @@ import no.nav.dagpenger.rapportering.helpers.TestData.søknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.testIdent
 import no.nav.dagpenger.rapportering.helpers.TestData.testPerson
 import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
@@ -28,10 +29,11 @@ class PersonTest {
         val hendelse = SøknadInnsendtHendelse(
             UUID.randomUUID(),
             testIdent,
+            LocalDateTime.now(),
         )
         person.behandle(hendelse)
 
-        assertSame(5, hendelse.aktivitetsteller())
+        assertSame(3, hendelse.aktivitetsteller())
         assertTrue(hendelse.harAktiviteter())
     }
 
@@ -40,6 +42,7 @@ class PersonTest {
         val person = testPerson
         val observer = TestObserver().also { person.registrer(it) }
         person.behandle(søknadInnsendtHendelse())
+        person.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
         val rapporteringsperiodeId = person.aktivRapporteringsperiode
         // Bruker melder inn aktiviteter
         person.behandle(
@@ -91,9 +94,9 @@ class PersonTest {
 
         // Personer begynner uten rapporertingsplikt
         person.rapporteringsplikt shouldBe RapporteringspliktType.Ingen
-        person.nyRapporteringsplikt(RapporteringspliktSøknad(gjelderFra = LocalDateTime.now()))
+        person.nyRapporteringsplikt(RapporteringspliktSøknad(rapporteringspliktFra = LocalDateTime.now()))
         person.rapporteringsplikt shouldBe RapporteringspliktType.Søknad
-        person.nyRapporteringsplikt(RapporteringspliktVedtak(gjelderFra = LocalDateTime.now()))
+        person.nyRapporteringsplikt(RapporteringspliktVedtak(rapporteringspliktFra = LocalDateTime.now()))
         person.rapporteringsplikt shouldBe RapporteringspliktType.Vedtak
 
         person.rapporteringsplikter.size shouldBe 3

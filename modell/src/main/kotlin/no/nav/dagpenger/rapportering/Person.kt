@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import java.time.LocalDate
@@ -39,7 +40,7 @@ class Person private constructor(
         ident,
         rapporteringsperioder.toMutableList(),
         rapporteringsplikt.fold(TemporalCollection<Rapporteringsplikt>()) { acc, rapporteringsplikt ->
-            acc.also { it.put(rapporteringsplikt.gjelderFra, rapporteringsplikt) }
+            acc.also { it.put(rapporteringsplikt.rapporteringspliktFra, rapporteringsplikt) }
         },
         Aktivitetslogg(),
     )
@@ -50,7 +51,7 @@ class Person private constructor(
     }
 
     fun nyRapporteringsplikt(rapporteringsplikt: Rapporteringsplikt) {
-        this.rapporteringsplikt.put(rapporteringsplikt.gjelderFra, rapporteringsplikt)
+        this.rapporteringsplikt.put(rapporteringsplikt.rapporteringspliktFra, rapporteringsplikt)
     }
 
     fun leggTilRapporteringsperiode(rapporteringsperiode: Rapporteringsperiode, hendelse: PersonHendelse) {
@@ -72,7 +73,13 @@ class Person private constructor(
     fun behandle(hendelse: SøknadInnsendtHendelse) {
         hendelse.kontekst(this)
         hendelse.info("Behandler søknad innsendt")
-        rapporteringsplikt.get(hendelse.fom).behandle(this, hendelse)
+        rapporteringsplikt.get(hendelse.opprettet).behandle(this, hendelse)
+    }
+
+    fun behandle(hendelse: RapporteringspliktDatoHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Behandler dato for rapporteringsplikt")
+        rapporteringsplikt.get(hendelse.opprettet).behandle(this, hendelse)
     }
 
     fun behandle(hendelse: NyRapporteringssyklusHendelse) {
