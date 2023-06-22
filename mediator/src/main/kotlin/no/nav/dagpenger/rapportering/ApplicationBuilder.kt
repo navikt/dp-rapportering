@@ -8,6 +8,7 @@ import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.runMigration
 import no.nav.dagpenger.rapportering.jobs.Innsendingsjobb
 import no.nav.dagpenger.rapportering.jobs.NyRapporteringssyklusJobb
 import no.nav.dagpenger.rapportering.repository.PostgresRepository
+import no.nav.dagpenger.rapportering.tjenester.RapporteringspliktDatoMottak
 import no.nav.dagpenger.rapportering.tjenester.SøknadMottak
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
@@ -31,6 +32,7 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
     init {
         rapidsConnection.register(this)
         SøknadMottak(rapidsConnection, mediator)
+        RapporteringspliktDatoMottak(rapidsConnection, mediator)
     }
 
     fun start() {
