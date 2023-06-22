@@ -21,11 +21,6 @@ class Person private constructor(
     override val aktivitetslogg: Aktivitetslogg,
 ) : Subaktivitetskontekst, RapporteringsperiodeObserver {
     private val observers = mutableListOf<PersonObserver>()
-    private val localDate: LocalDate?
-        get() {
-            val fom = LocalDate.now()
-            return fom
-        }
 
     constructor(
         ident: String,
