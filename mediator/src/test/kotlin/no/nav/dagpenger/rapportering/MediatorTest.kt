@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.mockk.mockk
 import no.nav.dagpenger.rapportering.db.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
@@ -23,7 +24,7 @@ import java.util.UUID
 
 class MediatorTest {
     private val rapid = TestRapid()
-    private val mediator get() = Mediator(rapid, PostgresRepository(dataSource))
+    private val mediator get() = Mediator(rapid, PostgresRepository(dataSource), mockk(relaxed = true))
 
     @Test
     fun `mediatorflyt`() = withMigratedDb {
@@ -110,7 +111,8 @@ class MediatorTest {
         rapid.inspektør.size shouldBe 3
 
         person.aktivRapporteringsperiode.finnSisteKorrigering() shouldBe person.aktivRapporteringsperiode
-        mediator.behandle(KorrigerPeriodeHendelse(UUID.randomUUID(), testIdent, rapporteringsperiodeId))
+        val hendelse1 = KorrigerPeriodeHendelse(UUID.randomUUID(), testIdent, rapporteringsperiodeId)
+        mediator.behandle(hendelse1)
         with(mediator.hentEllerOpprettPerson(testIdent)) {
             aktivRapporteringsperiode.finnSisteKorrigering() shouldNotBe person.aktivRapporteringsperiode
         }

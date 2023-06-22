@@ -25,6 +25,7 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
     private val mediator = Mediator(
         rapidsConnection = rapidsConnection,
         postgresRepository,
+        BehovMediator(rapidsConnection),
     )
 
     init {

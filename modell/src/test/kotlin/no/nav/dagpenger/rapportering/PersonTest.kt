@@ -31,7 +31,6 @@ class PersonTest {
         )
         person.behandle(hendelse)
 
-        println(hendelse.kontekster())
         assertSame(5, hendelse.aktivitetsteller())
         assertTrue(hendelse.harAktiviteter())
     }

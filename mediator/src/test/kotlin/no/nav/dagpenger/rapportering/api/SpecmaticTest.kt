@@ -5,6 +5,7 @@ import io.ktor.server.auth.UserIdPrincipal
 import io.ktor.server.auth.bearer
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.ApplicationEngine
+import io.mockk.mockk
 import no.nav.dagpenger.rapportering.Mediator
 import no.nav.dagpenger.rapportering.db.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder
@@ -28,7 +29,6 @@ object SpecmaticTest : SpecmaticJUnitSupport() {
             System.setProperty("endpointsAPI", "http://0.0.0.0:8081/")
 
             System.setProperty("SPECMATIC_GENERATIVE_TESTS", "true")
-
             val rapporteringsperiodeRepository = PostgresRepository(PostgresDataSourceBuilder.dataSource)
             server = KtorBuilder().port(8081).module {
                 konfigurasjon {
@@ -43,7 +43,10 @@ object SpecmaticTest : SpecmaticJUnitSupport() {
                         }
                     }
                 }
-                rapporteringApi(rapporteringsperiodeRepository, Mediator(TestRapid(), rapporteringsperiodeRepository))
+                rapporteringApi(
+                    rapporteringsperiodeRepository,
+                    Mediator(TestRapid(), rapporteringsperiodeRepository, mockk(relaxed = true)),
+                )
             }.build(CIO).start()
         }
     }

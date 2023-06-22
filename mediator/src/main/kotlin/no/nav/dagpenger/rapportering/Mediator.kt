@@ -18,10 +18,12 @@ private val sikkerlogg = KotlinLogging.logger("tjenestekall.Mediator")
 internal class Mediator(
     private val rapidsConnection: RapidsConnection,
     private val personRepository: PersonRepository,
+    private val behovMediator: BehovMediator,
 ) : IHendelseMediator, PersonRepository by personRepository {
     // TODO - override fun behandle(melding: SøknadInnsendtMelding, hendelse: SøknadInnsendtHendelse, context: MessageContext) {
     override fun behandle(hendelse: SøknadInnsendtHendelse) {
         hentPersonOgHåndter(hendelse.ident(), hendelse) { person ->
+
             person.behandle(hendelse)
         }
     }
@@ -83,10 +85,11 @@ internal class Mediator(
         lagre(person)
         if (!hendelse.harAktiviteter()) return
         if (hendelse.harFunksjonelleFeilEllerVerre()) {
-            sikkerlogg.info("aktivitetslogg inneholder feil:\n${hendelse.toLogString()}")
+            sikkerlogg.error("aktivitetslogg inneholder feil:\n${hendelse.toLogString()}")
         } else {
             sikkerlogg.info("aktivitetslogg inneholder meldinger:\n${hendelse.toLogString()}")
         }
-        // TODO: behovMediator.håndter(context, hendelse)
+        hendelse.behov()
+        behovMediator.håndter(hendelse)
     }
 }

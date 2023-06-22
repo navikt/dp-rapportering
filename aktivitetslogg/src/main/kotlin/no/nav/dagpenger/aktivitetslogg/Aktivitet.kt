@@ -106,7 +106,7 @@ sealed class Aktivitet(
 
     class Behov private constructor(
         id: UUID,
-        private val type: Behovtype,
+        val type: Behovtype,
         kontekster: List<SpesifikkKontekst>,
         private val melding: String,
         private val detaljer: Map<String, Any?> = emptyMap(),
@@ -147,7 +147,9 @@ sealed class Aktivitet(
             visitor.visitBehov(id, kontekster, this, type, melding, detaljer, tidsstempel)
         }
 
-        interface Behovtype
+        interface Behovtype {
+            val name: String
+        }
     }
 
     class FunksjonellFeil private constructor(
