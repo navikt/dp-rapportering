@@ -17,7 +17,7 @@ class RapporteringspliktDatoMottakTest {
     private val mottak = RapporteringspliktDatoMottak(rapid, mediator)
 
     @Test
-    fun foobar() {
+    fun `vi tar imot og håndterer rapporteringspliktdato hendelser`() {
         rapid.sendTestMessage(løstBehovJSON)
 
         verify {
