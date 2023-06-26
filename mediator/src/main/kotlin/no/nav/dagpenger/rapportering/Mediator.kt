@@ -11,6 +11,8 @@ import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import no.nav.dagpenger.rapportering.hendelser.VedtakAvslåttHendelse
+import no.nav.dagpenger.rapportering.hendelser.VedtakInnvilgetHendelse
 import no.nav.dagpenger.rapportering.repository.PersonRepository
 import no.nav.helse.rapids_rivers.RapidsConnection
 
@@ -71,6 +73,18 @@ internal class Mediator(
     }
 
     override fun behandle(hendelse: RapporteringspliktDatoHendelse) {
+        hentPersonOgHåndter(hendelse.ident(), hendelse) { person ->
+            person.behandle(hendelse)
+        }
+    }
+
+    override fun behandle(hendelse: VedtakInnvilgetHendelse) {
+        hentPersonOgHåndter(hendelse.ident(), hendelse) { person ->
+            person.behandle(hendelse)
+        }
+    }
+
+    override fun behandle(hendelse: VedtakAvslåttHendelse) {
         hentPersonOgHåndter(hendelse.ident(), hendelse) { person ->
             person.behandle(hendelse)
         }

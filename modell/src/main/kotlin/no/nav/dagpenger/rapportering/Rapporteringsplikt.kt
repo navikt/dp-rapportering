@@ -5,6 +5,7 @@ import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import no.nav.dagpenger.rapportering.hendelser.VedtakInnvilgetHendelse
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -17,6 +18,7 @@ interface Rapporteringsplikt : Aktivitetskontekst {
     fun behandle(person: Person, hendelse: RapporteringspliktDatoHendelse) {
         throw IllegalStateException("Forventer ikke ${RapporteringspliktDatoHendelse::class.java.simpleName}")
     }
+    fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse)
 
     override fun toSpesifikkKontekst() = SpesifikkKontekst("Rapporteringsplikt", mapOf("type" to type.name))
     fun accept(visitor: RapporteringspliktVisitor) {
@@ -53,6 +55,10 @@ class IngenRapporteringsplikt(
         )
     }
 
+    override fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse) {
+        throw IllegalStateException("Kan ikke behandle vedtak for person uten rapporteringsplikt")
+    }
+
     override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {}
 }
 
@@ -76,6 +82,13 @@ class RapporteringspliktSøknad(override val uuid: UUID = UUID.randomUUID(), ove
 
             person.leggTilRapporteringsperiode(periode, hendelse)
         }
+    }
+
+    override fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Innvilgelse gir person rapporteringsplikt type Vedtak.")
+
+        person.nyRapporteringsplikt(RapporteringspliktVedtak(rapporteringspliktFra = hendelse.virkningsdato.atStartOfDay()))
     }
 
     override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {
@@ -102,5 +115,10 @@ class RapporteringspliktVedtak(
         Rapporteringsperiode(hendelse.fom).also {
             person.leggTilRapporteringsperiode(it, hendelse)
         }
+    }
+
+    override fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Har allerede rapporteringsplikt type Vedtak.")
     }
 }

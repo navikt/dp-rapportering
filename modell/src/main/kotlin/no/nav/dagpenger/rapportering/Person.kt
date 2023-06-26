@@ -13,6 +13,8 @@ import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import no.nav.dagpenger.rapportering.hendelser.VedtakAvslåttHendelse
+import no.nav.dagpenger.rapportering.hendelser.VedtakInnvilgetHendelse
 import java.time.LocalDate
 
 class Person private constructor(
@@ -126,6 +128,20 @@ class Person private constructor(
         hendelse.info("Manuelt sender inn en rapporteringsperiode")
 
         rapporteringsperioder.behandle(hendelse) { it.behandle(hendelse) }
+    }
+
+    fun behandle(hendelse: VedtakInnvilgetHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Behandler vedtak med utfall innvilget")
+
+        rapporteringsplikt.get(hendelse.virkningsdato).behandle(this, hendelse)
+    }
+
+    fun behandle(hendelse: VedtakAvslåttHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Behandler vedtak med utfall avslått")
+
+        nyRapporteringsplikt(IngenRapporteringsplikt(rapporteringspliktFra = hendelse.virkningsdato.atStartOfDay()))
     }
 
     fun registrer(observer: PersonObserver) {
