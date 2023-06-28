@@ -1,9 +1,11 @@
 package no.nav.dagpenger.rapportering
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Innsendt
+import no.nav.dagpenger.rapportering.RapporteringspliktType.Ingen
+import no.nav.dagpenger.rapportering.RapporteringspliktType.Søknad
+import no.nav.dagpenger.rapportering.RapporteringspliktType.Vedtak
 import no.nav.dagpenger.rapportering.helpers.TestData.godkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.nyAktivitetHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.søknadInnsendtHendelse
@@ -105,89 +107,79 @@ class PersonTest {
         val person = Person(testIdent)
 
         // Personer begynner uten rapporertingsplikt
-        person.rapporteringsplikt shouldBe RapporteringspliktType.Ingen
+        person.rapporteringspliktType shouldBe Ingen
         person.nyRapporteringsplikt(RapporteringspliktSøknad(rapporteringspliktFra = LocalDateTime.now()))
-        person.rapporteringsplikt shouldBe RapporteringspliktType.Søknad
+        person.rapporteringspliktType shouldBe Søknad
         person.nyRapporteringsplikt(RapporteringspliktVedtak(rapporteringspliktFra = LocalDateTime.now()))
-        person.rapporteringsplikt shouldBe RapporteringspliktType.Vedtak
+        person.rapporteringspliktType shouldBe Vedtak
 
         person.rapporteringsplikter.size shouldBe 3
     }
 
     @Test
-    fun `vedtak med utfall avslag fjerner rapporteringsplikt uavhengig av nåværende rapporteringsplikt`() {
+    fun `vedtak med utfall avslag gir IngenRapporteringsplikt fom virkningsdato uavhengig av nåværende rapporteringsplikt`() {
         val person = Person(testIdent)
 
-        person.nyRapporteringsplikt(RapporteringspliktSøknad(rapporteringspliktFra = 1.januar.atStartOfDay()))
-        person.rapporteringsplikt shouldBe RapporteringspliktType.Søknad
+        person.rapporteringspliktType shouldBe Ingen
         person.behandle(
             VedtakAvslåttHendelse(
                 UUID.randomUUID(),
                 testIdent,
                 virkningsdato = 1.januar,
+                opprettet = 4.januar.atStartOfDay(),
             ),
         )
-        person.rapporteringsplikt shouldBe RapporteringspliktType.Ingen
+        person.rapporteringspliktType shouldBe Ingen
+
+        person.nyRapporteringsplikt(RapporteringspliktSøknad(rapporteringspliktFra = 1.januar.atStartOfDay()))
+        person.rapporteringspliktType shouldBe Søknad
+        person.behandle(
+            VedtakAvslåttHendelse(
+                UUID.randomUUID(),
+                testIdent,
+                virkningsdato = 1.januar,
+                opprettet = 4.januar.atStartOfDay(),
+            ),
+        )
+        person.rapporteringspliktType shouldBe Ingen
 
         person.nyRapporteringsplikt(RapporteringspliktVedtak(rapporteringspliktFra = 1.januar.atStartOfDay()))
-        person.rapporteringsplikt shouldBe RapporteringspliktType.Vedtak
+        person.rapporteringspliktType shouldBe Vedtak
         person.behandle(
             VedtakAvslåttHendelse(
                 UUID.randomUUID(),
                 testIdent,
                 virkningsdato = 1.januar,
+                opprettet = 4.januar.atStartOfDay(),
             ),
         )
-        person.rapporteringsplikt shouldBe RapporteringspliktType.Ingen
-
-        person.nyRapporteringsplikt(IngenRapporteringsplikt(rapporteringspliktFra = 1.januar.atStartOfDay()))
-        person.rapporteringsplikt shouldBe RapporteringspliktType.Ingen
-        person.behandle(
-            VedtakAvslåttHendelse(
-                UUID.randomUUID(),
-                testIdent,
-                virkningsdato = 1.januar,
-            ),
-        )
-        person.rapporteringsplikt shouldBe RapporteringspliktType.Ingen
+        person.rapporteringspliktType shouldBe Ingen
+        person.rapporteringsplikt.rapporteringspliktFra shouldBe 1.januar.atStartOfDay()
     }
 
     @Test
-    fun `Det er ikke mulig å behandle en innvilgelse for en person uten rapporteringsplikt`() {
-        val person = Person(testIdent)
-        person.nyRapporteringsplikt(IngenRapporteringsplikt(rapporteringspliktFra = 1.januar.atStartOfDay()))
-
-        shouldThrow<IllegalStateException> {
-            person.behandle(
-                VedtakInnvilgetHendelse(
-                    UUID.randomUUID(),
-                    testIdent,
-                    virkningsdato = 1.januar,
-                ),
-            )
-        }
-    }
-
-    @Test
-    fun `En innvilgelse for person med RapporteringspliktSøknad gir RapporteringspliktVedtak`() {
+    fun `En innvilgelse for person med RapporteringspliktSøknad gir RapporteringspliktVedtak fom virkningsdato`() {
         val person = Person(testIdent)
 
         person.nyRapporteringsplikt(RapporteringspliktSøknad(rapporteringspliktFra = 1.januar.atStartOfDay()))
-        person.rapporteringsplikt shouldBe RapporteringspliktType.Søknad
+        person.rapporteringspliktType shouldBe Søknad
         person.behandle(
             VedtakInnvilgetHendelse(
                 UUID.randomUUID(),
                 testIdent,
                 virkningsdato = 1.januar,
+                opprettet = 4.januar.atStartOfDay(),
             ),
         )
 
-        person.rapporteringsplikt shouldBe RapporteringspliktType.Vedtak
+        person.rapporteringspliktType shouldBe Vedtak
+        person.rapporteringsplikt.rapporteringspliktFra shouldBe 1.januar.atStartOfDay()
     }
 
     private val Person.aktivRapporteringsperiode get() = TestVisitor(this).rapporteringsperioder.last().rapporteringsperiodeId
     private val Person.antallAktiviteter get() = TestVisitor(this).aktiviteter.size
-    private val Person.rapporteringsplikt get() = TestVisitor(this).rapporteringspliktType
+    private val Person.rapporteringspliktType get() = TestVisitor(this).rapporteringspliktType
+    private val Person.rapporteringsplikt get() = TestVisitor(this).rapporteringsplikter.last()
     private val Person.rapporteringsplikter get() = TestVisitor(this).rapporteringsplikter
 
     private class TestObserver : PersonObserver {

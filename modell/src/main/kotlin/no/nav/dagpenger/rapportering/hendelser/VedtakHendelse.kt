@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.hendelser
 
 import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 sealed class VedtakHendelse(
@@ -9,6 +10,7 @@ sealed class VedtakHendelse(
     ident: String,
     internal val utfall: Utfall,
     internal val virkningsdato: LocalDate,
+    internal val opprettet: LocalDateTime,
 ) : PersonHendelse(
     meldingsreferanseId,
     ident,
@@ -19,13 +21,15 @@ class VedtakInnvilgetHendelse(
     meldingsreferanseId: UUID,
     ident: String,
     virkningsdato: LocalDate,
-) : VedtakHendelse(meldingsreferanseId, ident, Utfall.Innvilget, virkningsdato)
+    opprettet: LocalDateTime,
+) : VedtakHendelse(meldingsreferanseId, ident, Utfall.Innvilget, virkningsdato, opprettet)
 
 class VedtakAvslåttHendelse(
     meldingsreferanseId: UUID,
     ident: String,
     virkningsdato: LocalDate,
-) : VedtakHendelse(meldingsreferanseId, ident, Utfall.Avslått, virkningsdato)
+    opprettet: LocalDateTime,
+) : VedtakHendelse(meldingsreferanseId, ident, Utfall.Avslått, virkningsdato, opprettet)
 
 enum class Utfall {
     Innvilget,

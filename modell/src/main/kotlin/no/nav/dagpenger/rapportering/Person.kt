@@ -134,7 +134,7 @@ class Person private constructor(
         hendelse.kontekst(this)
         hendelse.info("Behandler vedtak med utfall innvilget")
 
-        rapporteringsplikt.get(hendelse.virkningsdato).behandle(this, hendelse)
+        rapporteringsplikt.get(hendelse.opprettet).behandle(this, hendelse)
     }
 
     fun behandle(hendelse: VedtakAvslåttHendelse) {

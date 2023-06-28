@@ -19,8 +19,8 @@ internal class VedtakMelding(
 
     override fun behandle(mediator: IHendelseMediator, context: MessageContext) {
         when (packet.utfall()) {
-            "Innvilget" -> mediator.behandle(VedtakInnvilgetHendelse(id, ident, virkningsdato))
-            "Avslått" -> mediator.behandle(VedtakAvslåttHendelse(id, ident, virkningsdato))
+            "Innvilget" -> mediator.behandle(VedtakInnvilgetHendelse(id, ident, virkningsdato, opprettet))
+            "Avslått" -> mediator.behandle(VedtakAvslåttHendelse(id, ident, virkningsdato, opprettet))
             else -> throw IllegalArgumentException("Ugyldig utfall, kan ikke mappe ${packet.utfall()}")
         }
     }

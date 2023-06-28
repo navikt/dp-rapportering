@@ -55,9 +55,8 @@ class IngenRapporteringsplikt(
         )
     }
 
-    override fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse) {
-        throw IllegalStateException("Kan ikke behandle vedtak for person uten rapporteringsplikt")
-    }
+    // TODO: Hva vil vi gjøre her? Ingenting, opprette rapporteringsplikt på virkningsdato, opprette rp fra dagens dato
+    override fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse) {}
 
     override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {}
 }
