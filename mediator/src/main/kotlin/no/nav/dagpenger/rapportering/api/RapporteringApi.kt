@@ -86,7 +86,7 @@ internal fun Application.rapporteringApi(
                         ?.let { true } ?: false
                     if (harGjeldende) call.respond(HttpStatusCode.Conflict)
 
-                    mediator.behandle(SøknadInnsendtHendelse(UUID.randomUUID(), ident = it.ident, fom))
+                    mediator.behandle(SøknadInnsendtHendelse(UUID.randomUUID(), ident = it.ident, fom, søknadId = UUID.randomUUID()))
                     mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), it.ident, fom, fom.toLocalDate(), fom.toLocalDate()))
 
                     call.respond(HttpStatusCode.Created)

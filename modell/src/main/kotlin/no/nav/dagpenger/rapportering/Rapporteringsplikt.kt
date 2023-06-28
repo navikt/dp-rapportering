@@ -40,7 +40,13 @@ class IngenRapporteringsplikt(
 
     override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {
         hendelse.kontekst(this)
-        hendelse.behov(MineBehov.Virkningsdatoer, "Trenger virkningsdatoer for å opprette rapporteringsplikt")
+        hendelse.behov(
+            MineBehov.Virkningsdatoer,
+            "Trenger virkningsdatoer for å opprette rapporteringsplikt",
+            mapOf(
+                "søknad_uuid" to hendelse.søknadId,
+            ),
+        )
         hendelse.behov(MineBehov.Innsendingstidspunkt, "Trenger innsendingstidspunkt for å opprette rapporteringsplikt")
     }
 

@@ -41,7 +41,7 @@ internal class SøknadMottak(
         withLoggingContext(
             "søknadId" to søknadID.toString(),
         ) {
-            val søknadInnsendtMelding = SøknadInnsendtMelding(packet, ident)
+            val søknadInnsendtMelding = SøknadInnsendtMelding(packet, ident, søknadID)
             søknadInnsendtMelding.behandle(mediator, context)
 
             logger.info { "Fått SøknadInnsendtHendelse for $søknadID" }

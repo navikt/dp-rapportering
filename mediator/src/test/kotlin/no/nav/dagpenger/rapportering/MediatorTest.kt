@@ -35,6 +35,7 @@ class MediatorTest {
             UUID.randomUUID(),
             testIdent,
             LocalDateTime.now(),
+            søknadId = UUID.randomUUID(),
         )
 
         mediator.behandle(hendelse)
@@ -56,6 +57,7 @@ class MediatorTest {
             UUID.randomUUID(),
             testIdent,
             LocalDateTime.now(),
+            søknadId = UUID.randomUUID(),
         )
 
         mediator.behandle(hendelse)
@@ -87,7 +89,7 @@ class MediatorTest {
     @Test
     fun `godkjente rapporteringsperioder publiseres når fristen har passert`() = withMigratedDb {
         val testIdent = "12312312311"
-        val hendelse = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now())
+        val hendelse = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID())
         mediator.behandle(hendelse)
         mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
 
@@ -106,7 +108,7 @@ class MediatorTest {
     @Test
     fun `godkjente rapporteringsperioder kan korrigeres`() = withMigratedDb {
         val testIdent = "12312312311"
-        val hendelse = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now())
+        val hendelse = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID())
         mediator.behandle(hendelse)
         mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
 

@@ -14,7 +14,7 @@ internal object TestData {
     val testIdent = "01010125255"
     val testPerson get() = Person(testIdent)
 
-    fun søknadInnsendtHendelse() = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now())
+    fun søknadInnsendtHendelse() = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), UUID.randomUUID())
 
     fun nyAktivitetHendelse(rapporteringsperiodeId: UUID, aktivitet: Aktivitet) =
         NyAktivitetHendelse(testIdent, rapporteringsperiodeId, aktivitet)

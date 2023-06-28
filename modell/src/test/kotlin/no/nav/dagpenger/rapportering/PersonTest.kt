@@ -14,7 +14,6 @@ import no.nav.dagpenger.rapportering.helpers.TestData.testPerson
 import no.nav.dagpenger.rapportering.helpers.januar
 import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
-import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.hendelser.VedtakAvslåttHendelse
 import no.nav.dagpenger.rapportering.hendelser.VedtakInnvilgetHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
@@ -32,11 +31,7 @@ class PersonTest {
     @Test
     fun `person håndterer hendelser`() {
         val person = testPerson
-        val hendelse = SøknadInnsendtHendelse(
-            UUID.randomUUID(),
-            testIdent,
-            LocalDateTime.now(),
-        )
+        val hendelse = søknadInnsendtHendelse()
         person.behandle(hendelse)
 
         assertSame(3, hendelse.aktivitetsteller())

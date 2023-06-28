@@ -62,7 +62,7 @@ class PostgresRepositoryTest {
             val repository = PostgresRepository(dataSource)
             val person = Person(testIdent).also { repository.lagre(it) }
             person.apply {
-                behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now()))
+                behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID()))
                 person.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
                 behandle(
                     NyAktivitetHendelse(
@@ -97,7 +97,7 @@ class PostgresRepositoryTest {
             val repository = PostgresRepository(dataSource)
             // Opprett person med innsendt søknad og rapporteringsperiode
             Person(testIdent).let { person ->
-                person.behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now()))
+                person.behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID()))
                 person.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
                 repository.lagre(person)
             }
@@ -150,7 +150,7 @@ class PostgresRepositoryTest {
         withMigratedDb {
             val repository = PostgresRepository(dataSource)
             val person = Person(testIdent).apply {
-                behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now()))
+                behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID()))
                 behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
                 behandle(
                     NyAktivitetHendelse(
