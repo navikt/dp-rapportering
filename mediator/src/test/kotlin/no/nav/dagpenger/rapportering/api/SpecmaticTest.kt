@@ -45,7 +45,7 @@ object SpecmaticTest : SpecmaticJUnitSupport() {
                 }
                 rapporteringApi(
                     rapporteringsperiodeRepository,
-                    Mediator(TestRapid(), rapporteringsperiodeRepository, mockk(relaxed = true)),
+                    Mediator(TestRapid(), rapporteringsperiodeRepository, mockk(relaxed = true), mockk(relaxed = true)),
                 )
             }.build(CIO).start()
         }

@@ -27,6 +27,7 @@ ktor-server-logging-jvm = { group = "io.ktor", name = "ktor-server-call-logging-
 jackson-datatype-jsr310 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310", version.ref = "jackson" }
 jackson-annotation = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jackson" }
 jackson-core = { group = "com.fasterxml.jackson.core", name = "jackson-core", version.ref = "jackson" }
+jackson-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
 urnlib = { group = "de.slub-dresden", name = "urnlib", version = "2.0.1" }
 rapids-and-rivers = { group = "com.github.navikt", name = "rapids-and-rivers", version = "2023060108511685602318.b6acfa4d79a1" }
 kotlin-logging = { group = "io.github.microutils", name = "kotlin-logging", version = "3.0.5" }
@@ -53,6 +54,6 @@ ktor-server = ["ktor-server", "ktor-server-auth", "ktor-server-auth-jwt", "ktor-
 ktor-client = ["ktor-client-auth-jvm", "ktor-client-cio", "ktor-serialization-jackson", "ktor-client-logging-jvm", "ktor-client-content-negotiation"]
 postgres = ["flywaydb", "postgresql-driver", "hikariCP", "kotlinquery"]
 postgres-test = ["testContainer", "testContainer-postgresql"]
-jackson = ["jackson-core", "jackson-datatype-jsr310", "jackson-annotation"]
+jackson = ["jackson-core", "jackson-datatype-jsr310", "jackson-annotation", "jackson-kotlin"]
 kotest-assertions = ["kotest-assertions-core", "kotest-assertions-json"]
 

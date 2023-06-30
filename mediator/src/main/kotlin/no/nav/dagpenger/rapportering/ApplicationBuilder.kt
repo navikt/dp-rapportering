@@ -26,6 +26,7 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
         rapidsConnection = rapidsConnection,
         postgresRepository,
         BehovMediator(rapidsConnection),
+        AktivitetsloggMediator(rapidsConnection),
     )
 
     init {

@@ -26,7 +26,7 @@ import java.util.UUID
 
 class MediatorTest {
     private val rapid = TestRapid()
-    private val mediator get() = Mediator(rapid, PostgresRepository(dataSource), mockk(relaxed = true))
+    private val mediator get() = Mediator(rapid, PostgresRepository(dataSource), mockk(relaxed = true), mockk(relaxed = true))
 
     @Test
     fun `mediatorflyt`() = withMigratedDb {

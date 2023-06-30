@@ -108,7 +108,7 @@ class Aktivitetslogg(
             .groupBy { it.kontekst(null) }
             .map { Aktivitetslogg(this).apply { aktiviteter.addAll(it.value) } }
 
-    fun accept(visitor: AktivitetsloggVisitor) {
+    override fun accept(visitor: AktivitetsloggVisitor) {
         visitor.preVisitAktivitetslogg(this)
         aktiviteter.forEach { it.accept(visitor) }
         visitor.postVisitAktivitetslogg(this)

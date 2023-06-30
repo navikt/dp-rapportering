@@ -22,6 +22,7 @@ internal class Mediator(
     private val rapidsConnection: RapidsConnection,
     private val personRepository: PersonRepository,
     private val behovMediator: BehovMediator,
+    private val aktivitetsloggMediator: AktivitetsloggMediator,
 ) : IHendelseMediator, PersonRepository by personRepository {
     // TODO - override fun behandle(melding: SøknadInnsendtMelding, hendelse: SøknadInnsendtHendelse, context: MessageContext) {
     override fun behandle(hendelse: SøknadInnsendtHendelse) {
@@ -111,5 +112,6 @@ internal class Mediator(
         }
         hendelse.behov()
         behovMediator.håndter(hendelse)
+        aktivitetsloggMediator.håndter(hendelse)
     }
 }
