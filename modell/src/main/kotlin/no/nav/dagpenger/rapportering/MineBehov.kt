@@ -4,5 +4,5 @@ import no.nav.dagpenger.aktivitetslogg.Aktivitet
 
 enum class MineBehov : Aktivitet.Behov.Behovtype {
     Virkningsdatoer,
-    Innsendingstidspunkt,
+    Søknadstidspunkt,
 }

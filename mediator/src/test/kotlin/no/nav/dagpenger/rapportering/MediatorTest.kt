@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.mockk
@@ -26,7 +27,13 @@ import java.util.UUID
 
 class MediatorTest {
     private val rapid = TestRapid()
-    private val mediator get() = Mediator(rapid, PostgresRepository(dataSource), mockk(relaxed = true), mockk(relaxed = true))
+    private val mediator
+        get() = Mediator(
+            rapid,
+            PostgresRepository(dataSource),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+        )
 
     @Test
     fun `mediatorflyt`() = withMigratedDb {
@@ -39,7 +46,19 @@ class MediatorTest {
         )
 
         mediator.behandle(hendelse)
-        mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
+        hendelse.behov().map {
+            it.type
+        } shouldContainExactly listOf(MineBehov.Virkningsdatoer, MineBehov.Søknadstidspunkt)
+
+        mediator.behandle(
+            RapporteringspliktDatoHendelse(
+                UUID.randomUUID(),
+                testIdent,
+                LocalDateTime.now(),
+                LocalDate.now(),
+                LocalDate.now(),
+            ),
+        )
 
         hendelse.aktivitetsteller() shouldBe 3
         hendelse.harAktiviteter() shouldBe true
@@ -61,7 +80,15 @@ class MediatorTest {
         )
 
         mediator.behandle(hendelse)
-        mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
+        mediator.behandle(
+            RapporteringspliktDatoHendelse(
+                UUID.randomUUID(),
+                testIdent,
+                LocalDateTime.now(),
+                LocalDate.now(),
+                LocalDate.now(),
+            ),
+        )
 
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
@@ -89,9 +116,18 @@ class MediatorTest {
     @Test
     fun `godkjente rapporteringsperioder publiseres når fristen har passert`() = withMigratedDb {
         val testIdent = "12312312311"
-        val hendelse = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID())
+        val hendelse =
+            SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID())
         mediator.behandle(hendelse)
-        mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
+        mediator.behandle(
+            RapporteringspliktDatoHendelse(
+                UUID.randomUUID(),
+                testIdent,
+                LocalDateTime.now(),
+                LocalDate.now(),
+                LocalDate.now(),
+            ),
+        )
 
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
@@ -108,9 +144,18 @@ class MediatorTest {
     @Test
     fun `godkjente rapporteringsperioder kan korrigeres`() = withMigratedDb {
         val testIdent = "12312312311"
-        val hendelse = SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID())
+        val hendelse =
+            SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID())
         mediator.behandle(hendelse)
-        mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
+        mediator.behandle(
+            RapporteringspliktDatoHendelse(
+                UUID.randomUUID(),
+                testIdent,
+                LocalDateTime.now(),
+                LocalDate.now(),
+                LocalDate.now(),
+            ),
+        )
 
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId

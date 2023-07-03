@@ -25,8 +25,8 @@ class BehovMediatorTest {
             ),
         )
         hendelse.behov(
-            MineBehov.Innsendingstidspunkt,
-            "Trenger innsendingstidspunkt",
+            MineBehov.Søknadstidspunkt,
+            "Trenger søknadstidspunkt",
             mapOf(
                 "felt_fra_B" to "B",
                 "overlappMedLikVerdi" to "C",
@@ -38,9 +38,9 @@ class BehovMediatorTest {
 
         with(rapid.inspektør) {
             size shouldBe 1
-            message(0)["@behov"].map { it.asText() } shouldBe listOf("Virkningsdatoer", "Innsendingstidspunkt")
+            message(0)["@behov"].map { it.asText() } shouldBe listOf("Virkningsdatoer", "Søknadstidspunkt")
             field(0, "Virkningsdatoer")["felt_fra_A"].asText() shouldBe "A"
-            field(0, "Innsendingstidspunkt")["felt_fra_B"].asText() shouldBe "B"
+            field(0, "Søknadstidspunkt")["felt_fra_B"].asText() shouldBe "B"
         }
     }
 
@@ -48,13 +48,13 @@ class BehovMediatorTest {
     fun `feiler om samme hendelse fører til to behov av samme type med ulike detaljer`() {
         val hendelse = TestHendelse()
         hendelse.behov(
-            MineBehov.Innsendingstidspunkt,
-            "Trenger innsendingstidspunkt",
+            MineBehov.Søknadstidspunkt,
+            "Trenger søknadstidspunkt",
             mapOf("overlappMedUlikVerdi" to "D"),
         )
         hendelse.behov(
-            MineBehov.Innsendingstidspunkt,
-            "Trenger innsendingstidspunkt",
+            MineBehov.Søknadstidspunkt,
+            "Trenger søknadstidspunkt",
             mapOf("overlappMedUlikVerdi" to "E"),
         )
 

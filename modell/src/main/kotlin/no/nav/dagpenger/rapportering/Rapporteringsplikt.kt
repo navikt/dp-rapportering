@@ -18,6 +18,7 @@ interface Rapporteringsplikt : Aktivitetskontekst {
     fun behandle(person: Person, hendelse: RapporteringspliktDatoHendelse) {
         throw IllegalStateException("Forventer ikke ${RapporteringspliktDatoHendelse::class.java.simpleName}")
     }
+
     fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse)
 
     override fun toSpesifikkKontekst() = SpesifikkKontekst("Rapporteringsplikt", mapOf("type" to type.name))
@@ -47,7 +48,13 @@ class IngenRapporteringsplikt(
                 "søknad_uuid" to hendelse.søknadId,
             ),
         )
-        hendelse.behov(MineBehov.Innsendingstidspunkt, "Trenger innsendingstidspunkt for å opprette rapporteringsplikt")
+        hendelse.behov(
+            MineBehov.Søknadstidspunkt,
+            "Trenger søknadstidspunkt for å opprette rapporteringsplikt",
+            mapOf(
+                "søknad_uuid" to hendelse.søknadId,
+            ),
+        )
     }
 
     override fun behandle(person: Person, hendelse: RapporteringspliktDatoHendelse) {
@@ -67,7 +74,10 @@ class IngenRapporteringsplikt(
     override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {}
 }
 
-class RapporteringspliktSøknad(override val uuid: UUID = UUID.randomUUID(), override val rapporteringspliktFra: LocalDateTime) :
+class RapporteringspliktSøknad(
+    override val uuid: UUID = UUID.randomUUID(),
+    override val rapporteringspliktFra: LocalDateTime,
+) :
     Rapporteringsplikt {
     override val type = RapporteringspliktType.Søknad
 
