@@ -51,6 +51,9 @@ internal class Mediator(
     }
 
     override fun behandle(hendelse: AvgodkjennPeriodeHendelse) {
+        hentPersonOgHåndter(hendelse.ident(), hendelse) { person ->
+            person.behandle(hendelse)
+        }
     }
 
     override fun behandle(hendelse: RapporteringsfristHendelse) {

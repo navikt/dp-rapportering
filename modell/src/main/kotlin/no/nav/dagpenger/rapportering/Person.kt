@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering
 import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.aktivitetslogg.Subaktivitetskontekst
+import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.ManuellInnsendingHendelse
@@ -107,7 +108,14 @@ class Person private constructor(
 
     fun behandle(hendelse: GodkjennPeriodeHendelse) {
         hendelse.kontekst(this)
-        hendelse.info("Behandler ny innrapportering")
+        hendelse.info("Behandler godkjenning av periode")
+
+        rapporteringsperioder.behandle(hendelse) { it.behandle(hendelse) }
+    }
+
+    fun behandle(hendelse: AvgodkjennPeriodeHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Behandler avgodkjenning av periode")
 
         rapporteringsperioder.behandle(hendelse) { it.behandle(hendelse) }
     }
