@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering
 import no.nav.dagpenger.aktivitetslogg.Aktivitetskontekst
 import no.nav.dagpenger.aktivitetslogg.IAktivitetslogg
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
+import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.ManuellInnsendingHendelse
@@ -135,6 +136,16 @@ class Rapporteringsperiode private constructor(
         return true
     }
 
+    fun behandle(hendelse: AvgodkjennPeriodeHendelse): Boolean {
+        if (korrigertAv != null) return korrigertAv!!.behandle(hendelse)
+        if (hendelse.rapporteringsperiodeId != rapporteringsperiodeId) return false
+        hendelse.kontekst(this)
+        hendelse.info("Avgodkjenner periode")
+
+        tilstand.behandle(hendelse, this)
+        return true
+    }
+
     fun behandle(hendelse: NyAktivitetHendelse): Boolean {
         if (korrigertAv != null) return korrigertAv!!.behandle(hendelse)
         if (hendelse.rapporteringsperiodeId != rapporteringsperiodeId) return false
@@ -188,6 +199,13 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiode: Rapporteringsperiode,
         ) {
             throw IllegalStateException("Forventet ikke ny rapportering tilstand ${type.name}")
+        }
+
+        fun behandle(
+            hendelse: AvgodkjennPeriodeHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
+            throw IllegalStateException("Kan ikke avgodkjenne periode i tilstand ${type.name}")
         }
 
         fun behandle(
@@ -273,6 +291,14 @@ class Rapporteringsperiode private constructor(
 
             rapporteringsperiode.tilstand(hendelse, Innsendt)
             rapporteringsperiode.emitVedtaksperiodeGodkjent()
+        }
+
+        override fun behandle(hendelse: AvgodkjennPeriodeHendelse, rapporteringsperiode: Rapporteringsperiode) {
+            hendelse.kontekst(this)
+            hendelse.info("Avgodkjenner periode")
+
+            rapporteringsperiode.tilstand(hendelse, TilUtfylling)
+            // TODO: Emit something?
         }
     }
 

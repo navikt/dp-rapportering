@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.Companion.hentGjeldende
@@ -10,6 +11,8 @@ import no.nav.dagpenger.rapportering.helpers.TestData.godkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.nyAktivitetHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.testIdent
 import no.nav.dagpenger.rapportering.helpers.januar
+import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import org.junit.jupiter.api.Test
@@ -65,6 +68,32 @@ class RapporteringsperiodeTest {
 
         korrigertPeriode2.behandle(godkjennPeriodeHendelse(korrigertPeriode2.rapporteringsperiodeId))
         korrigertPeriode2.tilstand shouldBe Godkjent
+    }
+
+    @Test
+    fun `Kan godkjenne og avgodkjenne en periode`() {
+        val periode = lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = TilUtfylling)
+
+        val avgodkjennHendelse = AvgodkjennPeriodeHendelse(
+            ident = testIdent,
+            rapporteringId = periode.rapporteringsperiodeId,
+        )
+
+        shouldThrow<IllegalStateException> {
+            periode.behandle(avgodkjennHendelse)
+        }
+
+        periode.behandle(
+            GodkjennPeriodeHendelse(
+                ident = testIdent,
+                rapporteringId = periode.rapporteringsperiodeId,
+            ),
+        )
+        periode.tilstand shouldBe Godkjent
+
+        periode.behandle(avgodkjennHendelse)
+
+        periode.tilstand shouldBe TilUtfylling
     }
 
     private val Rapporteringsperiode.tilstand get() = TestVisitor(this).tilstand
