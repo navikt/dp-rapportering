@@ -152,6 +152,26 @@ paths:
           type: integer
         in: path
         required: true
+  /rapporteringsperioder/{periodeId}/avgodkjenn:
+    put:
+      responses:
+        '200':
+          description: OK
+      summary: Avgodkjenner en rapporteringsperiode
+      description: Avgodkjenner en rapporteringsperiode
+      operationId: post-rapporteringsperiode-ferdigstill
+      tags:
+        - Rapporteringsperiode
+      security:
+        - azureAd: [ ]
+        - tokenX: [ ]
+    parameters:
+      - name: periodeId
+        description: ID til rapporteringsperioden
+        schema:
+          type: integer
+        in: path
+        required: true
   /rapporteringsperioder/{periodeId}/korrigering:
     post:
       responses:
