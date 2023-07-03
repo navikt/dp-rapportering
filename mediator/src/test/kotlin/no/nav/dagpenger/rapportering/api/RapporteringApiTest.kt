@@ -101,12 +101,10 @@ class RapporteringApiTest {
         withRapporteringApi(
             rapporteringsperioder = listOf(testPeriode),
         ) {
-            client.post("/rapporteringsperioder/$testPeriodeId/godkjenn") {
+            client.put("/rapporteringsperioder/$testPeriodeId/godkjenn") {
                 autentisert()
-                contentType(ContentType.Application.Json)
             }.also { response ->
-                response.status shouldBe HttpStatusCode.Created
-                "${response.contentType()}" shouldContain "application/json"
+                response.status shouldBe HttpStatusCode.OK
                 verify {
                     mediatorMock.behandle(any<GodkjennPeriodeHendelse>())
                 }

@@ -111,16 +111,13 @@ internal fun Application.rapporteringApi(
                     }
 
                     route("/godkjenn") {
-                        post {
+                        put {
                             val ident = tilgangskontroll.verifiserTilgang(call)
                             val periodeId = call.finnUUID("periodeId")
 
                             mediator.behandle(GodkjennPeriodeHendelse(ident, periodeId))
-                            val periode = rapporteringsperiodeRepository
-                                .hentRapporteringsperiode(ident, periodeId)!!
-                                .let { RapporteringsperiodeMapper(it, periodeId).dto }
 
-                            call.respond(HttpStatusCode.Created, periode)
+                            call.respond(HttpStatusCode.OK)
                         }
                     }
 
