@@ -36,7 +36,7 @@ class MediatorTest {
         )
 
     @Test
-    fun `mediatorflyt`() = withMigratedDb {
+    fun mediatorflyt() = withMigratedDb {
         val testIdent = "12312312311"
         val hendelse = SøknadInnsendtHendelse(
             UUID.randomUUID(),
