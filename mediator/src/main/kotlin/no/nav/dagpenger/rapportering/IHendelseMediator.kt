@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering
 
+import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.ManuellInnsendingHendelse
@@ -24,4 +25,5 @@ internal interface IHendelseMediator {
     fun behandle(hendelse: RapporteringspliktDatoHendelse)
     fun behandle(hendelse: VedtakInnvilgetHendelse)
     fun behandle(hendelse: VedtakAvslåttHendelse)
+    fun behandle(hendelse: AvgodkjennPeriodeHendelse)
 }

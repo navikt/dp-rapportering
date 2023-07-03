@@ -159,7 +159,7 @@ paths:
           description: OK
       summary: Avgodkjenner en rapporteringsperiode
       description: Avgodkjenner en rapporteringsperiode
-      operationId: post-rapporteringsperiode-ferdigstill
+      operationId: put-rapporteringsperiode-avgodkjenn
       tags:
         - Rapporteringsperiode
       security:

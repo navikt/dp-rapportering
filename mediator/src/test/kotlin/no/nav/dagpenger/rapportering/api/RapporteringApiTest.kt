@@ -6,6 +6,7 @@ import io.kotest.matchers.string.shouldContain
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
@@ -22,6 +23,7 @@ import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
 import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
 import no.nav.dagpenger.rapportering.api.TestApplication.testAzureAdToken
 import no.nav.dagpenger.rapportering.api.TestApplication.testTokenXToken
+import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
@@ -107,6 +109,22 @@ class RapporteringApiTest {
                 "${response.contentType()}" shouldContain "application/json"
                 verify {
                     mediatorMock.behandle(any<GodkjennPeriodeHendelse>())
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `Skal kunne avgodkjenne en rapporteringsperiode`() {
+        withRapporteringApi(
+            rapporteringsperioder = listOf(testPeriode),
+        ) {
+            client.put("/rapporteringsperioder/$testPeriodeId/avgodkjenn") {
+                autentisert()
+            }.also { response ->
+                response.status shouldBe HttpStatusCode.OK
+                verify {
+                    mediatorMock.behandle(any<AvgodkjennPeriodeHendelse>())
                 }
             }
         }

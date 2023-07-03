@@ -14,6 +14,7 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.IHendelseMediator
@@ -27,6 +28,7 @@ import no.nav.dagpenger.rapportering.api.models.AktivitetNyDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeNyDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeSokDTO
+import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.ManuellInnsendingHendelse
@@ -119,6 +121,17 @@ internal fun Application.rapporteringApi(
                                 .let { RapporteringsperiodeMapper(it, periodeId).dto }
 
                             call.respond(HttpStatusCode.Created, periode)
+                        }
+                    }
+
+                    route("/avgodkjenn") {
+                        put {
+                            val ident = tilgangskontroll.verifiserTilgang(call)
+                            val periodeId = call.finnUUID("periodeId")
+
+                            mediator.behandle(AvgodkjennPeriodeHendelse(ident, periodeId))
+
+                            call.respond(HttpStatusCode.OK)
                         }
                     }
 
