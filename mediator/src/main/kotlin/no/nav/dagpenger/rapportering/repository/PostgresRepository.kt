@@ -153,7 +153,7 @@ internal class PostgresRepository(private val ds: DataSource) :
         session.run(
             queryOf(
                 //language=PostgreSQL
-                statement = """SELECT ident FROM person LEFT JOIN rapporteringsperiode r ON person.ident = r.person_ident WHERE r.tilstand=:tilstand""",
+                statement = """SELECT person_ident FROM rapporteringsperiode WHERE tilstand = :tilstand""",
                 paramMap = mapOf(
                     "tilstand" to Godkjent.name,
                 ),
@@ -168,7 +168,7 @@ internal class PostgresRepository(private val ds: DataSource) :
             session.run(
                 queryOf(
                     //language=PostgreSQL
-                    statement = """SELECT ident FROM person LEFT JOIN rapporteringsplikt r ON person.id = r.person_id WHERE r.type!='Ingen'""",
+                    statement = """SELECT ident FROM person LEFT JOIN rapporteringsplikt r ON person.id = r.person_id WHERE r.type != 'Ingen'""",
                 ).map { row ->
                     row.string("ident")
                 }.asList,
@@ -226,7 +226,7 @@ internal class PostgresRepository(private val ds: DataSource) :
 
         return Rapporteringsperiode.rehydrer(
             rapporteringsperiodeId,
-            localDate("rapporteringsfrist"),
+            localDate("beregnes_etter"),
             fraOgMed,
             tilOgMed,
             Rapporteringsperiode.TilstandType.valueOf(this.string("tilstand")),
@@ -363,7 +363,7 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
         id: UUID,
         periode: ClosedRange<LocalDate>,
         tilstand: Rapporteringsperiode.TilstandType,
-        rapporteringsfrist: LocalDate,
+        beregnesEtter: LocalDate,
         korrigerer: Rapporteringsperiode?,
         korrigertAv: Rapporteringsperiode?,
     ) {
@@ -372,11 +372,11 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
             queryOf(
                 //language=PostgreSQL
                 statement = """
-                    INSERT INTO rapporteringsperiode (uuid, person_ident, tilstand, rapporteringsfrist, fom, tom, korrigerer, korrigert_av)
+                    INSERT INTO rapporteringsperiode (uuid, person_ident, tilstand, beregnes_etter, fom, tom, korrigerer, korrigert_av)
                     VALUES (:uuid,
                             :ident,
                             :tilstand,
-                            :rapporteringsfrist,
+                            :beregnesEtter,
                             :fraOgMed,
                             :tilOgMed,
                             :korrigerer,
@@ -386,7 +386,7 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
                 paramMap = mapOf(
                     "uuid" to id,
                     "ident" to ident,
-                    "rapporteringsfrist" to rapporteringsfrist,
+                    "beregnesEtter" to beregnesEtter,
                     "tilstand" to tilstand.name,
                     "fraOgMed" to periode.start,
                     "tilOgMed" to periode.endInclusive,

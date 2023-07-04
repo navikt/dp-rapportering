@@ -114,7 +114,7 @@ class RapporteringsperiodeTest {
             id: UUID,
             periode: ClosedRange<LocalDate>,
             tilstand: Rapporteringsperiode.TilstandType,
-            rapporteringsfrist: LocalDate,
+            beregnesEtter: LocalDate,
             korrigerer: Rapporteringsperiode?,
             korrigertAv: Rapporteringsperiode?,
         ) {
