@@ -62,8 +62,23 @@ class PostgresRepositoryTest {
             val repository = PostgresRepository(dataSource)
             val person = Person(testIdent).also { repository.lagre(it) }
             person.apply {
-                behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID()))
-                person.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
+                behandle(
+                    SøknadInnsendtHendelse(
+                        UUID.randomUUID(),
+                        testIdent,
+                        LocalDateTime.now(),
+                        søknadId = UUID.randomUUID(),
+                    ),
+                )
+                person.behandle(
+                    RapporteringspliktDatoHendelse(
+                        UUID.randomUUID(),
+                        testIdent,
+                        LocalDateTime.now(),
+                        LocalDate.now(),
+                        LocalDate.now(),
+                    ) { _, tom -> tom },
+                )
                 behandle(
                     NyAktivitetHendelse(
                         testIdent,
@@ -97,8 +112,23 @@ class PostgresRepositoryTest {
             val repository = PostgresRepository(dataSource)
             // Opprett person med innsendt søknad og rapporteringsperiode
             Person(testIdent).let { person ->
-                person.behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID()))
-                person.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
+                person.behandle(
+                    SøknadInnsendtHendelse(
+                        UUID.randomUUID(),
+                        testIdent,
+                        LocalDateTime.now(),
+                        søknadId = UUID.randomUUID(),
+                    ),
+                )
+                person.behandle(
+                    RapporteringspliktDatoHendelse(
+                        UUID.randomUUID(),
+                        testIdent,
+                        LocalDateTime.now(),
+                        LocalDate.now(),
+                        LocalDate.now(),
+                    ) { _, tom -> tom },
+                )
                 repository.lagre(person)
             }
             // Godkjenn perioden og send den inn
@@ -128,7 +158,6 @@ class PostgresRepositoryTest {
 
                 person.aktivRapporteringsperiode.finnSisteKorrigering()
             }
-
             // Verifiser at innsendt periode har en korrigering, men som har erstattet den forrige
             repository.hentEllerOpprettPerson(testIdent).let { person ->
                 person.aktivRapporteringsperiode.finnSisteKorrigering().also {
@@ -150,8 +179,23 @@ class PostgresRepositoryTest {
         withMigratedDb {
             val repository = PostgresRepository(dataSource)
             val person = Person(testIdent).apply {
-                behandle(SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID()))
-                behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), LocalDate.now(), LocalDate.now()))
+                behandle(
+                    SøknadInnsendtHendelse(
+                        UUID.randomUUID(),
+                        testIdent,
+                        LocalDateTime.now(),
+                        søknadId = UUID.randomUUID(),
+                    ),
+                )
+                behandle(
+                    RapporteringspliktDatoHendelse(
+                        UUID.randomUUID(),
+                        testIdent,
+                        LocalDateTime.now(),
+                        LocalDate.now(),
+                        LocalDate.now(),
+                    ) { _, tom -> tom },
+                )
                 behandle(
                     NyAktivitetHendelse(
                         testIdent,

@@ -50,7 +50,7 @@ class PersonTest {
                 LocalDateTime.now(),
                 LocalDate.now(),
                 LocalDate.now(),
-            ),
+            ) { _, tom -> tom },
         )
         val rapporteringsperiodeId = person.aktivRapporteringsperiode
         // Bruker melder inn aktiviteter
@@ -100,7 +100,6 @@ class PersonTest {
     @Test
     fun `håndterer endringer i rapporteringsplikt`() {
         val person = Person(testIdent)
-
         // Personer begynner uten rapporertingsplikt
         person.rapporteringspliktType shouldBe Ingen
         person.nyRapporteringsplikt(RapporteringspliktSøknad(rapporteringspliktFra = LocalDateTime.now()))

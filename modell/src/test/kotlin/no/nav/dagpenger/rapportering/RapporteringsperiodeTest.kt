@@ -132,7 +132,7 @@ class RapporteringsperiodeTest {
     ): Rapporteringsperiode {
         return Rapporteringsperiode.rehydrer(
             rapporteringsperiodeId = id,
-            rapporteringsfrist = tom,
+            beregnesEtter = tom,
             fraOgMed = fom,
             tilOgMed = tom,
             tilstand = tilstand,

@@ -90,7 +90,7 @@ class RapporteringspliktSøknad(
         hendelse.kontekst(this)
         hendelse.info("Oppretter ny rapporteringsperiode på grunn av innsendt søknad")
 
-        Rapporteringsperiode(rapporteringspliktFra.toLocalDate()).also { periode ->
+        Rapporteringsperiode(rapporteringspliktFra.toLocalDate(), hendelse.beregningsdatoStrategi).also { periode ->
             periode.gjelderFra.datesUntil(rapporteringspliktFra.toLocalDate()).forEach {
                 periode.leggTilFritak(it)
             }
@@ -110,7 +110,7 @@ class RapporteringspliktSøknad(
         hendelse.kontekst(this)
         hendelse.info("Oppretter ny rapporteringsperiode")
 
-        Rapporteringsperiode(hendelse.fom).also {
+        Rapporteringsperiode(hendelse.fom, hendelse.beregningsdatoStrategi).also {
             person.leggTilRapporteringsperiode(it, hendelse)
         }
     }
@@ -127,7 +127,7 @@ class RapporteringspliktVedtak(
         hendelse.kontekst(this)
         hendelse.info("Oppretter ny rapporteringsperiode")
 
-        Rapporteringsperiode(hendelse.fom).also {
+        Rapporteringsperiode(hendelse.fom, hendelse.beregningsdatoStrategi).also {
             person.leggTilRapporteringsperiode(it, hendelse)
         }
     }

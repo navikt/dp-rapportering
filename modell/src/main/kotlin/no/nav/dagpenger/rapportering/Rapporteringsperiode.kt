@@ -18,11 +18,13 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
-private const val RAPPORTERINGSPERIODE_LENGDE = 14L
+fun interface FastsettBeregningsdatoStrategi {
+    fun beregn(fom: LocalDate, tom: LocalDate): LocalDate
+}
 
 class Rapporteringsperiode private constructor(
     val rapporteringsperiodeId: UUID,
-    private val rapporteringsfrist: LocalDate,
+    private val beregnesEtter: LocalDate,
     private val periode: ClosedRange<LocalDate>,
     private var tilstand: Rapporteringsperiodetilstand,
     private val opprettet: LocalDateTime,
@@ -34,27 +36,36 @@ class Rapporteringsperiode private constructor(
     private val observers: MutableSet<RapporteringsperiodeObserver> = mutableSetOf()
     val gjelderFra = periode.start
 
-    constructor(rapporteringspliktFom: LocalDate) : this(fom = rapporteringspliktFom.finnFørsteMandagIUken())
-
-    init {
-        korrigerer?.korrigertAv = this
-    }
+    constructor(
+        rapporteringspliktFom: LocalDate,
+        beregningsdato: FastsettBeregningsdatoStrategi,
+    ) : this(
+        fom = rapporteringspliktFom.finnFørsteMandagIUken(),
+        beregningsdato = beregningsdato,
+    )
 
     internal constructor(
         fom: LocalDate,
         tom: LocalDate = fom.plusDays(RAPPORTERINGSPERIODE_LENGDE - 1),
+        beregningsdato: FastsettBeregningsdatoStrategi,
     ) : this(
         rapporteringsperiodeId = UUID.randomUUID(),
-        rapporteringsfrist = tom,
+        beregnesEtter = beregningsdato.beregn(fom, tom),
         periode = fom..tom,
         tilstand = TilUtfylling,
         opprettet = LocalDateTime.now(),
     )
 
+    init {
+        korrigerer?.korrigertAv = this
+    }
+
     companion object {
+        private const val RAPPORTERINGSPERIODE_LENGDE = 14L
+
         fun rehydrer(
             rapporteringsperiodeId: UUID,
-            rapporteringsfrist: LocalDate,
+            beregnesEtter: LocalDate,
             fraOgMed: LocalDate,
             tilOgMed: LocalDate,
             tilstand: TilstandType,
@@ -63,7 +74,7 @@ class Rapporteringsperiode private constructor(
             korrigerer: Rapporteringsperiode?,
         ) = Rapporteringsperiode(
             rapporteringsperiodeId,
-            rapporteringsfrist,
+            beregnesEtter,
             fraOgMed..tilOgMed,
             when (tilstand) {
                 TilstandType.TilUtfylling -> TilUtfylling
@@ -89,7 +100,7 @@ class Rapporteringsperiode private constructor(
     private fun lagKorrigering(): Rapporteringsperiode {
         return Rapporteringsperiode(
             UUID.randomUUID(),
-            rapporteringsfrist = periode.start,
+            beregnesEtter = periode.start,
             periode = periode,
             tilstand = TilUtfylling,
             opprettet = LocalDateTime.now(),
@@ -114,7 +125,7 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiodeId,
             periode,
             this.tilstand.type,
-            rapporteringsfrist,
+            beregnesEtter,
             korrigerer,
             korrigertAv,
         )
@@ -276,7 +287,7 @@ class Rapporteringsperiode private constructor(
     private object Godkjent : Rapporteringsperiodetilstand {
         override val type = TilstandType.Godkjent
         override fun behandle(hendelse: RapporteringsfristHendelse, rapporteringsperiode: Rapporteringsperiode) {
-            if (rapporteringsperiode.rapporteringsfrist.isAfter(hendelse.rapporteringsfrist)) return
+            if (rapporteringsperiode.beregnesEtter.isAfter(hendelse.rapporteringsfrist)) return
             // TODO: Sjekk at perioden overlapper med et gyldig vedtak
             hendelse.kontekst(this)
             hendelse.info("Sender inn godkjent periode", mapOf("rapporteringsfrist" to hendelse.rapporteringsfrist))

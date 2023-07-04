@@ -16,7 +16,7 @@ class RapporteringspliktDatoHendelseTest {
             LocalDateTime.now(),
             1.januar,
             2.januar,
-        )
+        ) { _, tom -> tom }
 
         hendelse.gjelderFra shouldBe 2.januar
     }

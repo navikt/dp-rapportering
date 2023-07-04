@@ -39,6 +39,9 @@ spec:
     pool: {{ kafka.pool }}
   tokenx:
     enabled: true
+  env:
+    - name: BEREGNINGSDATO_STRATEGI
+      value: {{beregningsdato.strategi}}
   azure:
     application:
       enabled: true

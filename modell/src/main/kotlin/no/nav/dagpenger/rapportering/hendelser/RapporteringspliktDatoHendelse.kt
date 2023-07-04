@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.hendelser
 
 import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
+import no.nav.dagpenger.rapportering.FastsettBeregningsdatoStrategi
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -11,6 +12,7 @@ class RapporteringspliktDatoHendelse(
     internal val opprettet: LocalDateTime,
     ønsketDato: LocalDate,
     søknadInnsendtDato: LocalDate,
+    internal val beregningsdatoStrategi: FastsettBeregningsdatoStrategi,
 ) : PersonHendelse(
     meldingsreferanseId,
     ident,

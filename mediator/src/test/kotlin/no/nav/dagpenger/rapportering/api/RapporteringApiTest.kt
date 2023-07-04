@@ -34,7 +34,8 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class RapporteringApiTest {
-    private val testPeriode = Rapporteringsperiode(rapporteringspliktFom = LocalDate.now().minusDays(1))
+    private val testPeriode =
+        Rapporteringsperiode(rapporteringspliktFom = LocalDate.now().minusDays(1)) { _, tom -> tom }
     private val testPeriodeId = testPeriode.rapporteringsperiodeId
 
     @Test
@@ -56,7 +57,7 @@ class RapporteringApiTest {
 
     @Test
     fun `skal hente en liste med alle rapportingsperioder`() {
-        val periode2 = Rapporteringsperiode(rapporteringspliktFom = LocalDate.now().minusDays(2))
+        val periode2 = Rapporteringsperiode(rapporteringspliktFom = LocalDate.now().minusDays(2)) { _, tom -> tom }
         withRapporteringApi(
             rapporteringsperioder = listOf(testPeriode, periode2),
         ) {

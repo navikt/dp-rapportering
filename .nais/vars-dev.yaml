@@ -3,3 +3,6 @@ kafka:
 ingresses:
   - https://dp-rapportering.intern.dev.nav.no
 wonderwalled: true
+
+beregningsdato:
+  strategi: fom

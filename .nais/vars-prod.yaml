@@ -1,2 +1,5 @@
 kafka:
   pool: nav-prod
+
+beregningsdato:
+  strategi: tom

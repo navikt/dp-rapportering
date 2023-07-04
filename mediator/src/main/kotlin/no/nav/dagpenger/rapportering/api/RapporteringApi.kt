@@ -37,6 +37,7 @@ import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
+import no.nav.dagpenger.rapportering.strategiForBeregningsdato
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import java.time.LocalDateTime
 import java.util.UUID
@@ -81,6 +82,7 @@ internal fun Application.rapporteringApi(
                     call.respond(HttpStatusCode.OK, rapporteringsperioder)
                 }
 
+                // TODO: Endepunkt for å manuelt opprette rapporteringsplikt. Vi burde nok inneføre en egen hendelse istedenfor SøknadInnsendt + RapporteringspliktDato
                 post<RapporteringsperiodeNyDTO> {
                     val fom = it.fraOgMed?.let { fraOgMed -> fraOgMed.atStartOfDay() } ?: LocalDateTime.now()
                     val harGjeldende = rapporteringsperiodeRepository
@@ -89,7 +91,7 @@ internal fun Application.rapporteringApi(
                     if (harGjeldende) call.respond(HttpStatusCode.Conflict)
 
                     mediator.behandle(SøknadInnsendtHendelse(UUID.randomUUID(), ident = it.ident, fom, søknadId = UUID.randomUUID()))
-                    mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), it.ident, fom, fom.toLocalDate(), fom.toLocalDate()))
+                    mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), it.ident, fom, fom.toLocalDate(), fom.toLocalDate(), strategiForBeregningsdato))
 
                     call.respond(HttpStatusCode.Created)
                 }

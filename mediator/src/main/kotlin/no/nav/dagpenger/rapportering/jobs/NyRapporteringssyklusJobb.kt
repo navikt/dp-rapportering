@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.jobs
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Mediator
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
+import no.nav.dagpenger.rapportering.strategiForBeregningsdato
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -16,12 +17,12 @@ internal object NyRapporteringssyklusJobb {
     private val logger = KotlinLogging.logger {}
     private val UKEDAG_FOR_KJØRING = DayOfWeek.MONDAY
     private val TIDSPUNKT_FOR_KJØRING = LocalTime.of(15, 0)
-
     private val nå = ZonedDateTime.now()
     private val tidspunktForNesteKjøring = nå.with(TemporalAdjusters.nextOrSame(UKEDAG_FOR_KJØRING)).with(
         TIDSPUNKT_FOR_KJØRING,
     )
-    private val millisekunderTilNesteKjøring = tidspunktForNesteKjøring.toInstant().toEpochMilli() - nå.toInstant().toEpochMilli() // differansen i millisekunder mellom de to tidspunktene
+    private val millisekunderTilNesteKjøring = tidspunktForNesteKjøring.toInstant().toEpochMilli() - nå.toInstant()
+        .toEpochMilli() // differansen i millisekunder mellom de to tidspunktene
 
     internal fun start(mediator: Mediator) {
         fixedRateTimer(
@@ -44,7 +45,14 @@ internal object NyRapporteringssyklusJobb {
         val identer: List<String> = hentIdenterMedRapporteringsplikt()
 
         identer.forEach { ident ->
-            behandle(NyRapporteringssyklusHendelse(UUID.randomUUID(), ident, LocalDate.now()))
+            behandle(
+                NyRapporteringssyklusHendelse(
+                    UUID.randomUUID(),
+                    ident,
+                    LocalDate.now(),
+                    strategiForBeregningsdato,
+                ),
+            )
         }
     }
 }
