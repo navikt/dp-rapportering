@@ -61,9 +61,11 @@ class RapporteringApiTest {
 
     @Test
     fun `skal hente en liste med alle rapportingsperioder`() {
-        val periodeTilUtfylling = Rapporteringsperiode(rapporteringspliktFom = LocalDate.now().minusDays(2)) { _, tom -> tom }
+        val periodeTilUtfylling =
+            Rapporteringsperiode(rapporteringspliktFom = LocalDate.now().minusDays(2)) { _, tom -> tom }
         val korrigert = rapporteringsperiode(Rapporteringsperiode.TilstandType.Innsendt)
-        val korrigering = rapporteringsperiode(Rapporteringsperiode.TilstandType.TilUtfylling, korrigert) // Skal ikke med
+        val korrigering =
+            rapporteringsperiode(Rapporteringsperiode.TilstandType.TilUtfylling, korrigert) // Skal ikke med
         val korrigertInnsendt = rapporteringsperiode(Rapporteringsperiode.TilstandType.Innsendt)
         val korrigeringInnsendt = rapporteringsperiode(Rapporteringsperiode.TilstandType.Innsendt, korrigertInnsendt)
 
@@ -88,7 +90,41 @@ class RapporteringApiTest {
         }
     }
 
-    private fun rapporteringsperiode(tilstandType: Rapporteringsperiode.TilstandType, korrigert: Rapporteringsperiode? = null) =
+    @Test
+    fun `skal gi 404 Not Found på gjeldende uten periode`() {
+        withRapporteringApi(
+            rapporteringsperioder = listOf(),
+        ) {
+            client.get("/rapporteringsperioder/gjeldende") {
+                autentisert()
+            }.also { response ->
+                response.status shouldBe HttpStatusCode.NotFound
+                response.bodyAsText() shouldBe ""
+            }
+        }
+    }
+
+    @Test
+    fun `skal gi 200 OK på gjeldende med periode`() {
+        withRapporteringApi(
+            rapporteringsperioder = listOf(testPeriode),
+        ) {
+            client.get("/rapporteringsperioder/gjeldende") {
+                autentisert()
+            }.also { response ->
+                response.status shouldBe HttpStatusCode.OK
+                "${response.contentType()}" shouldContain "application/json"
+                response.bodyAsText().let { json ->
+                    json shouldContainJsonKey "$.status"
+                }
+            }
+        }
+    }
+
+    private fun rapporteringsperiode(
+        tilstandType: Rapporteringsperiode.TilstandType,
+        korrigert: Rapporteringsperiode? = null,
+    ) =
         Rapporteringsperiode.rehydrer(
             UUID.randomUUID(),
             beregnesEtter = LocalDate.now(),

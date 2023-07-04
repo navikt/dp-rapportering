@@ -65,9 +65,11 @@ internal fun Application.rapporteringApi(
                         val rapporteringsperiode =
                             rapporteringsperiodeRepository.hentRapporteringsperioder(call.ident()).hentGjeldende()
                                 ?.let { RapporteringsperiodeMapper(it).dto }
-                                ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
 
-                        call.respond(HttpStatusCode.OK, rapporteringsperiode)
+                        when (rapporteringsperiode) {
+                            null -> call.respond(HttpStatusCode.NotFound)
+                            else -> call.respond(HttpStatusCode.OK, rapporteringsperiode)
+                        }
                     }
                 }
             }
@@ -81,7 +83,6 @@ internal fun Application.rapporteringApi(
 
                     call.respond(HttpStatusCode.OK, rapporteringsperioder)
                 }
-
                 // TODO: Endepunkt for å manuelt opprette rapporteringsplikt. Vi burde nok inneføre en egen hendelse istedenfor SøknadInnsendt + RapporteringspliktDato
                 post<RapporteringsperiodeNyDTO> {
                     val fom = it.fraOgMed?.let { fraOgMed -> fraOgMed.atStartOfDay() } ?: LocalDateTime.now()
@@ -90,8 +91,24 @@ internal fun Application.rapporteringApi(
                         ?.let { true } ?: false
                     if (harGjeldende) call.respond(HttpStatusCode.Conflict)
 
-                    mediator.behandle(SøknadInnsendtHendelse(UUID.randomUUID(), ident = it.ident, fom, søknadId = UUID.randomUUID()))
-                    mediator.behandle(RapporteringspliktDatoHendelse(UUID.randomUUID(), it.ident, fom, fom.toLocalDate(), fom.toLocalDate(), strategiForBeregningsdato))
+                    mediator.behandle(
+                        SøknadInnsendtHendelse(
+                            UUID.randomUUID(),
+                            ident = it.ident,
+                            fom,
+                            søknadId = UUID.randomUUID(),
+                        ),
+                    )
+                    mediator.behandle(
+                        RapporteringspliktDatoHendelse(
+                            UUID.randomUUID(),
+                            it.ident,
+                            fom,
+                            fom.toLocalDate(),
+                            fom.toLocalDate(),
+                            strategiForBeregningsdato,
+                        ),
+                    )
 
                     call.respond(HttpStatusCode.Created)
                 }
