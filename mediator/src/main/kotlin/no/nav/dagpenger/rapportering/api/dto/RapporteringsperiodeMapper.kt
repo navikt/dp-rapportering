@@ -52,7 +52,7 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
         korrigertAv: Rapporteringsperiode?,
     ) {
         if (this.id != null && this.id != id) return
-        if (this.korrigerer != null && tilstand == TilUtfylling && this.id == null) return
+        if (korrigerer != null && tilstand == TilUtfylling && this.id == null) return
         this.id = id
         this.periode = periode
         this.tilstand = tilstand

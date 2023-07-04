@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.api
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.kotest.assertions.json.shouldContainJsonKey
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -30,8 +31,11 @@ import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.UUID
 
 class RapporteringApiTest {
     private val testPeriode =
@@ -57,9 +61,14 @@ class RapporteringApiTest {
 
     @Test
     fun `skal hente en liste med alle rapportingsperioder`() {
-        val periode2 = Rapporteringsperiode(rapporteringspliktFom = LocalDate.now().minusDays(2)) { _, tom -> tom }
+        val periodeTilUtfylling = Rapporteringsperiode(rapporteringspliktFom = LocalDate.now().minusDays(2)) { _, tom -> tom }
+        val korrigert = rapporteringsperiode(Rapporteringsperiode.TilstandType.Innsendt)
+        val korrigering = rapporteringsperiode(Rapporteringsperiode.TilstandType.TilUtfylling, korrigert) // Skal ikke med
+        val korrigertInnsendt = rapporteringsperiode(Rapporteringsperiode.TilstandType.Innsendt)
+        val korrigeringInnsendt = rapporteringsperiode(Rapporteringsperiode.TilstandType.Innsendt, korrigertInnsendt)
+
         withRapporteringApi(
-            rapporteringsperioder = listOf(testPeriode, periode2),
+            rapporteringsperioder = listOf(periodeTilUtfylling, korrigert, korrigertInnsendt),
         ) {
             client.get("/rapporteringsperioder") {
                 autentisert()
@@ -67,11 +76,29 @@ class RapporteringApiTest {
                 response.status shouldBe HttpStatusCode.OK
                 "${response.contentType()}" shouldContain "application/json"
                 response.bodyAsText().let { json ->
+                    val data = jacksonObjectMapper().readTree(json)
+                    data.size() shouldBe 3
+                    data.any { it["id"].asText() == korrigering.rapporteringsperiodeId.toString() } shouldBe false
+                    data.any { it["id"].asText() == korrigeringInnsendt.rapporteringsperiodeId.toString() } shouldBe true
+                    data.count { it["status"].asText() == "TilUtfylling" } shouldBe 1
+                    data.count { it["status"].asText() == "Innsendt" } shouldBe 2
                     json shouldContainJsonKey "$.[0].status"
                 }
             }
         }
     }
+
+    private fun rapporteringsperiode(tilstandType: Rapporteringsperiode.TilstandType, korrigert: Rapporteringsperiode? = null) =
+        Rapporteringsperiode.rehydrer(
+            UUID.randomUUID(),
+            beregnesEtter = LocalDate.now(),
+            fraOgMed = LocalDate.now(),
+            tilOgMed = LocalDate.now(),
+            tilstand = tilstandType,
+            opprettet = LocalDateTime.now(),
+            tidslinje = Aktivitetstidslinje(LocalDate.now(), LocalDate.now()),
+            korrigerer = korrigert,
+        )
 
     @Test
     fun `Skal kunne hente ut en rapporteringsperiode med en gitt id`() {
