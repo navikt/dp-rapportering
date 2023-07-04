@@ -37,15 +37,18 @@ private val løstBehovJSON = """
       ],
       "@opprettet": "${LocalDateTime.now()}",
       "ident": "123",
-      "søknad_uuid": "${UUID.randomUUID()}",
+      "Virkningsdatoer": {
+        "søknad_uuid": "${UUID.randomUUID()}"
+      },
+      "Søknadstidspunkt": {
+        "søknad_uuid": "${UUID.randomUUID()}"
+      },
       "@løsning": {
         "Virkningsdatoer": {
           "ønsketdato": "${LocalDate.now()}"
         },
         "Søknadstidspunkt": "${LocalDate.now()}"
       },
-      "@ferdig": true
+      "@final": true
     }
-    
-    
 """.trimIndent()

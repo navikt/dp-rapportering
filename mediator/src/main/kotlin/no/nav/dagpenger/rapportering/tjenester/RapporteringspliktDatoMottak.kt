@@ -23,16 +23,16 @@ internal class RapporteringspliktDatoMottak(
         River(rapidsConnection).apply {
             validate { it.demandValue("@event_name", "behov") }
             validate { it.demandAll("@behov", listOf("Virkningsdatoer", "Søknadstidspunkt")) }
-            validate { it.requireKey("ident", "søknad_uuid") }
+            validate { it.requireKey("ident", "Søknadstidspunkt.søknad_uuid") }
             validate { it.requireKey("@løsning") }
-            validate { it.requireValue("@ferdig", true) }
+            validate { it.requireValue("@final", true) }
             validate { it.interestedIn("@id", "@opprettet") }
         }.register(this)
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val ident = packet["ident"].asText()
-        val søknadID = packet["søknad_uuid"].asText()
+        val søknadID = packet["Søknadstidspunkt.søknad_uuid"].asText()
 
         withLoggingContext(
             "søknadId" to søknadID.toString(),
