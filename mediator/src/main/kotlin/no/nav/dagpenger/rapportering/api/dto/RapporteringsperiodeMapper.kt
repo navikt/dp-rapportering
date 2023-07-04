@@ -4,6 +4,7 @@ import no.nav.dagpenger.rapportering.AktivitetVisitor
 import no.nav.dagpenger.rapportering.DagVisitor
 import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.TilUtfylling
 import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDTO
@@ -28,7 +29,7 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
             fraOgMed = periode.start,
             tilOgMed = periode.endInclusive,
             status = when (tilstand) {
-                Rapporteringsperiode.TilstandType.TilUtfylling -> RapporteringsperiodeDTO.Status.TilUtfylling
+                TilUtfylling -> RapporteringsperiodeDTO.Status.TilUtfylling
                 Rapporteringsperiode.TilstandType.Godkjent -> RapporteringsperiodeDTO.Status.Godkjent
                 Rapporteringsperiode.TilstandType.Innsendt -> RapporteringsperiodeDTO.Status.Innsendt
             },
@@ -51,6 +52,7 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
         korrigertAv: Rapporteringsperiode?,
     ) {
         if (this.id != null && this.id != id) return
+        if (this.korrigerer != null && tilstand == TilUtfylling && this.id == null) return
         this.id = id
         this.periode = periode
         this.tilstand = tilstand
