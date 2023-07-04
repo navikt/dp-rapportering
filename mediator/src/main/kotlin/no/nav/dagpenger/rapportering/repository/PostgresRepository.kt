@@ -64,7 +64,7 @@ internal class PostgresRepository(private val ds: DataSource) :
         session.run(
             queryOf(
                 //language=PostgreSQL
-                statement = """SELECT uuid FROM rapporteringsperiode WHERE person_ident = :ident AND korrigerer IS NULL""",
+                statement = """SELECT uuid FROM rapporteringsperiode WHERE person_ident = :ident AND korrigerer IS NULL ORDER BY fom DESC""",
                 paramMap = mapOf("ident" to ident),
             ).map { hentRapporteringsperiode(ident, it.uuid("uuid")) }.asList,
         )
