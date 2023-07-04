@@ -45,8 +45,7 @@ spec:
   azure:
     application:
       enabled: true
-      allowAllUsers: true # TODO
-  gcp:
+  cp:
     sqlInstances:
       - type: POSTGRES_14
         databases:
