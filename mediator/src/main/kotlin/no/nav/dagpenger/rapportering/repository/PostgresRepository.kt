@@ -158,7 +158,7 @@ internal class PostgresRepository(private val ds: DataSource) :
                     "tilstand" to Godkjent.name,
                 ),
             ).map { row ->
-                row.string("ident")
+                row.string("person_ident")
             }.asList,
         )
     }
