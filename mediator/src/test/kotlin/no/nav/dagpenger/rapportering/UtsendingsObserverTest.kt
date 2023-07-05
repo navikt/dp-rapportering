@@ -2,7 +2,7 @@ package no.nav.dagpenger.rapportering
 
 import io.kotest.matchers.shouldBe
 import no.nav.dagpenger.rapportering.helpers.januar
-import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
+import no.nav.dagpenger.rapportering.hendelser.BeregningsdatoPassertHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
 import no.nav.helse.rapids_rivers.asLocalDate
@@ -30,7 +30,7 @@ class UtsendingsObserverTest {
         val observer =
             UtsendingsObserver(
                 testRapid,
-                RapporteringsfristHendelse(UUID.randomUUID(), "123", LocalDate.now().plusDays(10)),
+                BeregningsdatoPassertHendelse(UUID.randomUUID(), "123", LocalDate.now().plusDays(10)),
             )
         val fom = 1.januar
         val tom = 14.januar

@@ -12,7 +12,7 @@ import no.nav.dagpenger.rapportering.helpers.TestData.søknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.testIdent
 import no.nav.dagpenger.rapportering.helpers.TestData.testPerson
 import no.nav.dagpenger.rapportering.helpers.januar
-import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
+import no.nav.dagpenger.rapportering.hendelser.BeregningsdatoPassertHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.VedtakAvslåttHendelse
 import no.nav.dagpenger.rapportering.hendelser.VedtakInnvilgetHendelse
@@ -89,7 +89,7 @@ class PersonTest {
         }
 
         observer.tilstand shouldBe Godkjent.name
-        val fristHendelse = RapporteringsfristHendelse(UUID.randomUUID(), testIdent, LocalDate.now().plusDays(14))
+        val fristHendelse = BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, LocalDate.now().plusDays(14))
         person.behandle(fristHendelse)
 
         observer.tilstand shouldBe Innsendt.name

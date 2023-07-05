@@ -10,10 +10,10 @@ import no.nav.dagpenger.rapportering.Rapporteringsplikt
 import no.nav.dagpenger.rapportering.RapporteringspliktType
 import no.nav.dagpenger.rapportering.db.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.dataSource
+import no.nav.dagpenger.rapportering.hendelser.BeregningsdatoPassertHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
-import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
@@ -135,7 +135,7 @@ class PostgresRepositoryTest {
             val innsendtRapportering =
                 repository.hentEllerOpprettPerson(testIdent).let { person ->
                     person.behandle(GodkjennPeriodeHendelse(testIdent, person.aktivRapporteringsperiodeId))
-                    person.behandle(RapporteringsfristHendelse(UUID.randomUUID(), testIdent, LocalDate.MAX))
+                    person.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, LocalDate.MAX))
                     repository.lagre(person)
 
                     person.aktivRapporteringsperiode

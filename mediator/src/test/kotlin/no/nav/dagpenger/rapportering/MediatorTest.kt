@@ -7,10 +7,10 @@ import io.kotest.matchers.shouldNotBe
 import io.mockk.mockk
 import no.nav.dagpenger.rapportering.db.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.dataSource
+import no.nav.dagpenger.rapportering.hendelser.BeregningsdatoPassertHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
-import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
@@ -114,10 +114,10 @@ class MediatorTest {
         mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))
         val frist = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusDays(14)
 
-        mediator.behandle(RapporteringsfristHendelse(UUID.randomUUID(), testIdent, frist.minusDays(3)))
+        mediator.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, frist.minusDays(3)))
         rapid.inspektør.size shouldBe 1
 
-        mediator.behandle(RapporteringsfristHendelse(UUID.randomUUID(), testIdent, frist))
+        mediator.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, frist))
         rapid.inspektør.size shouldBe 3
     }
 
@@ -132,10 +132,10 @@ class MediatorTest {
         mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))
         val frist = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusDays(14)
 
-        mediator.behandle(RapporteringsfristHendelse(UUID.randomUUID(), testIdent, frist.minusDays(3)))
+        mediator.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, frist.minusDays(3)))
         rapid.inspektør.size shouldBe 1
 
-        mediator.behandle(RapporteringsfristHendelse(UUID.randomUUID(), testIdent, frist))
+        mediator.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, frist))
         rapid.inspektør.size shouldBe 3
 
         person.aktivRapporteringsperiode.finnSisteKorrigering() shouldBe person.aktivRapporteringsperiode

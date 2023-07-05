@@ -4,13 +4,13 @@ import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.aktivitetslogg.Subaktivitetskontekst
 import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.BeregningsdatoPassertHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.ManuellInnsendingHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
-import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
@@ -120,7 +120,7 @@ class Person private constructor(
         rapporteringsperioder.behandle(hendelse) { it.behandle(hendelse) }
     }
 
-    fun behandle(hendelse: RapporteringsfristHendelse) {
+    fun behandle(hendelse: BeregningsdatoPassertHendelse) {
         rapporteringsperioder.forEach { it.behandle(hendelse) }
     }
 

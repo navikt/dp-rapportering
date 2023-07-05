@@ -5,7 +5,7 @@ import no.nav.dagpenger.rapportering.api.konfigurasjon
 import no.nav.dagpenger.rapportering.api.rapporteringApi
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.runMigration
-import no.nav.dagpenger.rapportering.jobs.Innsendingsjobb
+import no.nav.dagpenger.rapportering.jobs.InnsendingsJobb
 import no.nav.dagpenger.rapportering.jobs.NyRapporteringssyklusJobb
 import no.nav.dagpenger.rapportering.repository.PostgresRepository
 import no.nav.dagpenger.rapportering.tjenester.RapporteringspliktDatoMottak
@@ -44,7 +44,7 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
         runMigration()
         logger.info { "Starter appen ${Configuration.appName}" }
 
-        Innsendingsjobb.start(mediator)
+        InnsendingsJobb.start(mediator)
         NyRapporteringssyklusJobb.start(mediator)
     }
 

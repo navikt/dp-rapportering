@@ -4,10 +4,10 @@ import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
 import java.time.LocalDate
 import java.util.UUID
 
-class RapporteringsfristHendelse(
+class BeregningsdatoPassertHendelse(
     meldingsreferanseId: UUID,
     ident: String,
-    internal val rapporteringsfrist: LocalDate,
+    internal val beregningsdato: LocalDate,
 ) :
     PersonHendelse(
         meldingsreferanseId,

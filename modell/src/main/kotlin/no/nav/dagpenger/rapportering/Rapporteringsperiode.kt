@@ -4,13 +4,13 @@ import no.nav.dagpenger.aktivitetslogg.Aktivitetskontekst
 import no.nav.dagpenger.aktivitetslogg.IAktivitetslogg
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.BeregningsdatoPassertHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.ManuellInnsendingHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
-import no.nav.dagpenger.rapportering.hendelser.RapporteringsfristHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import no.nav.dagpenger.rapportering.utils.finnFørsteMandagIUken
@@ -177,7 +177,7 @@ class Rapporteringsperiode private constructor(
         return true
     }
 
-    fun behandle(hendelse: RapporteringsfristHendelse) {
+    fun behandle(hendelse: BeregningsdatoPassertHendelse) {
         hendelse.kontekst(this)
 
         tilstand.behandle(hendelse, this)
@@ -230,7 +230,7 @@ class Rapporteringsperiode private constructor(
             throw IllegalStateException("Forventet ikke sletting av aktivitet i tilstand ${type.name}")
         }
 
-        fun behandle(hendelse: RapporteringsfristHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        fun behandle(hendelse: BeregningsdatoPassertHendelse, rapporteringsperiode: Rapporteringsperiode) {
             // noop
         }
 
@@ -286,11 +286,14 @@ class Rapporteringsperiode private constructor(
     // Bruker har godkjent, men ikke sendt videre
     private object Godkjent : Rapporteringsperiodetilstand {
         override val type = TilstandType.Godkjent
-        override fun behandle(hendelse: RapporteringsfristHendelse, rapporteringsperiode: Rapporteringsperiode) {
-            if (rapporteringsperiode.beregnesEtter.isAfter(hendelse.rapporteringsfrist)) return
-            // TODO: Sjekk at perioden overlapper med et gyldig vedtak
+        override fun behandle(hendelse: BeregningsdatoPassertHendelse, rapporteringsperiode: Rapporteringsperiode) {
             hendelse.kontekst(this)
-            hendelse.info("Sender inn godkjent periode", mapOf("rapporteringsfrist" to hendelse.rapporteringsfrist))
+            if (rapporteringsperiode.beregnesEtter.isAfter(hendelse.beregningsdato)) {
+                hendelse.info("Dato for beregning har ikke passert, sender ikke perioden til innsending", mapOf("rapporteringsfrist" to hendelse.beregningsdato))
+                return
+            }
+            // TODO: Sjekk at perioden overlapper med et gyldig vedtak
+            hendelse.info("Sender inn godkjent periode", mapOf("rapporteringsfrist" to hendelse.beregningsdato))
 
             rapporteringsperiode.tilstand(hendelse, Innsendt)
             rapporteringsperiode.emitRapporteringsperiodeInnsendt()
