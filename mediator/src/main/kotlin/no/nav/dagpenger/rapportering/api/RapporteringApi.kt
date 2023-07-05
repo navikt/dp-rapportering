@@ -169,10 +169,16 @@ internal fun Application.rapporteringApi(
                         post {
                             val ident = tilgangskontroll.verifiserTilgang(call)
                             val periodeId = call.finnUUID("periodeId")
+
                             mediator.behandle(KorrigerPeriodeHendelse(ident, periodeId))
                             val korrigering = rapporteringsperiodeRepository
                                 .hentRapporteringsperiode(ident, periodeId)!!
-                                .let { RapporteringsperiodeMapper(it.finnSisteKorrigering()).dto }
+                                .let {
+                                    RapporteringsperiodeMapper(
+                                        it,
+                                        it.finnSisteKorrigering().rapporteringsperiodeId,
+                                    ).dto
+                                }
 
                             call.respond(HttpStatusCode.OK, korrigering)
                         }
