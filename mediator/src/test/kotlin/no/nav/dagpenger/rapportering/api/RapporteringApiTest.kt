@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.api
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.kotest.assertions.json.shouldContainJsonKey
+import io.kotest.assertions.json.shouldContainJsonKeyValue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.ktor.client.request.get
@@ -194,8 +195,11 @@ class RapporteringApiTest {
 
     @Test
     fun `Skal kunne korrigere en rapporteringsperiode`() {
-        withRapporteringApi(rapporteringsperioder = listOf(testPeriode)) {
-            client.post("/rapporteringsperioder/$testPeriodeId/korrigering") {
+        val korrigert = rapporteringsperiode(Rapporteringsperiode.TilstandType.Innsendt)
+        val korrigering = rapporteringsperiode(Rapporteringsperiode.TilstandType.TilUtfylling, korrigert)
+
+        withRapporteringApi(rapporteringsperioder = listOf(korrigert)) {
+            client.post("/rapporteringsperioder/${korrigert.rapporteringsperiodeId}/korrigering") {
                 autentisert()
                 contentType(ContentType.Application.Json)
             }.also { response ->
@@ -205,7 +209,7 @@ class RapporteringApiTest {
                     mediatorMock.behandle(any<KorrigerPeriodeHendelse>())
                 }
                 response.bodyAsText().let { json ->
-                    json shouldContainJsonKey "$.id"
+                    json.shouldContainJsonKeyValue("$.id", korrigering.rapporteringsperiodeId.toString())
                 }
             }
         }
