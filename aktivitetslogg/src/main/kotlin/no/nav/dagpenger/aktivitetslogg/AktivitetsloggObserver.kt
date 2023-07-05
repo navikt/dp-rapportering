@@ -30,5 +30,5 @@ interface AktivitetsloggObserver {
         melding: String,
         kontekster: List<SpesifikkKontekst>,
         tidsstempel: LocalDateTime,
-    )
+    ) {}
 }

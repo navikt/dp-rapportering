@@ -117,7 +117,6 @@ internal class Mediator(
         } else {
             sikkerlogg.info("aktivitetslogg inneholder meldinger:\n${hendelse.toLogString()}")
         }
-        hendelse.behov()
         behovMediator.håndter(hendelse)
         aktivitetsloggMediator.håndter(hendelse)
     }
