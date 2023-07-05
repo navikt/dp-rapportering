@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.tidslinje
 
 import no.nav.dagpenger.rapportering.AktivitetVisitor
+import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import java.time.LocalDate
@@ -21,6 +22,7 @@ sealed class Aktivitet(
 
     companion object {
         fun perDag(aktiviteter: Collection<Aktivitet>) = aktiviteter.associateBy { it.dato }
+        fun erLåst(aktivitet: Aktivitet) = aktivitet.tilstand == Låst
 
         fun rehydrer(
             uuid: UUID,
@@ -48,6 +50,9 @@ sealed class Aktivitet(
     fun håndter(hendelse: GodkjennPeriodeHendelse) {
         tilstand.behandle(hendelse, this)
     }
+    fun håndter(hendelse: AvgodkjennPeriodeHendelse) {
+        tilstand.behandle(hendelse, this)
+    }
 
     fun håndter(hendelse: SlettAktivitetHendelse) {
         if (hendelse.aktivitetId != uuid) return
@@ -61,6 +66,10 @@ sealed class Aktivitet(
     interface Tilstand {
         val type: TilstandType
         fun behandle(hendelse: GodkjennPeriodeHendelse, aktivitet: Aktivitet) {
+            throw IllegalStateException("Kan ikke håndtere ${hendelse::class.java.simpleName} i denne tilstanden")
+        }
+
+        fun behandle(hendelse: AvgodkjennPeriodeHendelse, aktivitet: Aktivitet) {
             throw IllegalStateException("Kan ikke håndtere ${hendelse::class.java.simpleName} i denne tilstanden")
         }
 
@@ -82,6 +91,10 @@ sealed class Aktivitet(
 
     private object Låst : Tilstand {
         override val type = TilstandType.Låst
+
+        override fun behandle(hendelse: AvgodkjennPeriodeHendelse, aktivitet: Aktivitet) {
+            aktivitet.tilstand = Åpen
+        }
     }
 
     private object Slettet : Tilstand {

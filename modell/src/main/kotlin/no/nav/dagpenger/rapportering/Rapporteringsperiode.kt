@@ -293,7 +293,7 @@ class Rapporteringsperiode private constructor(
             hendelse.info("Sender inn godkjent periode", mapOf("rapporteringsfrist" to hendelse.rapporteringsfrist))
 
             rapporteringsperiode.tilstand(hendelse, Innsendt)
-            rapporteringsperiode.emitVedtaksperiodeGodkjent()
+            rapporteringsperiode.emitRapporteringsperiodeInnsendt()
         }
 
         override fun behandle(hendelse: ManuellInnsendingHendelse, rapporteringsperiode: Rapporteringsperiode) {
@@ -301,15 +301,15 @@ class Rapporteringsperiode private constructor(
             hendelse.info("Sender inn godkjent periode manuelt")
 
             rapporteringsperiode.tilstand(hendelse, Innsendt)
-            rapporteringsperiode.emitVedtaksperiodeGodkjent()
+            rapporteringsperiode.emitRapporteringsperiodeInnsendt()
         }
 
         override fun behandle(hendelse: AvgodkjennPeriodeHendelse, rapporteringsperiode: Rapporteringsperiode) {
             hendelse.kontekst(this)
             hendelse.info("Avgodkjenner periode")
 
+            rapporteringsperiode.tidslinje.forEach { it.håndter(hendelse) }
             rapporteringsperiode.tilstand(hendelse, TilUtfylling)
-            // TODO: Emit something?
         }
     }
 
@@ -344,11 +344,11 @@ class Rapporteringsperiode private constructor(
         block()
 
         hendelse.kontekst(tilstand)
-        emitVedtaksperiodeEndret(hendelse, forrigeTilstand)
+        emitRapporteringsperiodeEndret(hendelse, forrigeTilstand)
         tilstand.entering(this, hendelse)
     }
 
-    private fun emitVedtaksperiodeEndret(
+    private fun emitRapporteringsperiodeEndret(
         hendelse: PersonHendelse,
         forrigeTilstand: Rapporteringsperiodetilstand = tilstand,
     ) {
@@ -363,7 +363,7 @@ class Rapporteringsperiode private constructor(
         observers.forEach { it.rapporteringsperiodeEndret(event) }
     }
 
-    private fun emitVedtaksperiodeGodkjent() {
+    private fun emitRapporteringsperiodeInnsendt() {
         val event = RapporteringsperiodeObserver.RapporteringsperiodeInnsendt(
             rapporteringsperiodeId = rapporteringsperiodeId,
             fom = periode.start,

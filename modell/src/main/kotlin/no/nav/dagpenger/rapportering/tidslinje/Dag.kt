@@ -4,6 +4,7 @@ import no.nav.dagpenger.aktivitetslogg.Aktivitetskontekst
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
 import no.nav.dagpenger.rapportering.DagVisitor
 import no.nav.dagpenger.rapportering.Kalender
+import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Arbeid
@@ -47,6 +48,11 @@ class Dag(
     }
 
     fun håndter(hendelse: GodkjennPeriodeHendelse) {
+        hendelse.kontekst(this)
+        aktiviteter.forEach { it.håndter(hendelse) }
+    }
+
+    fun håndter(hendelse: AvgodkjennPeriodeHendelse) {
         hendelse.kontekst(this)
         aktiviteter.forEach { it.håndter(hendelse) }
     }

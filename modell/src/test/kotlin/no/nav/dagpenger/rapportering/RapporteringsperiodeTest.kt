@@ -14,11 +14,14 @@ import no.nav.dagpenger.rapportering.helpers.januar
 import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Companion.erLåst
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
+import kotlin.time.Duration
 
 class RapporteringsperiodeTest {
     @Test
@@ -73,6 +76,7 @@ class RapporteringsperiodeTest {
     @Test
     fun `Kan godkjenne og avgodkjenne en periode`() {
         val periode = lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = TilUtfylling)
+        periode.behandle(nyAktivitetHendelse(periode.rapporteringsperiodeId, 5.januar))
 
         val avgodkjennHendelse = AvgodkjennPeriodeHendelse(
             ident = testIdent,
@@ -89,21 +93,26 @@ class RapporteringsperiodeTest {
                 rapporteringId = periode.rapporteringsperiodeId,
             ),
         )
+
+        periode.aktiviteter.all { erLåst(it) } shouldBe true
         periode.tilstand shouldBe Godkjent
 
         periode.behandle(avgodkjennHendelse)
 
+        periode.aktiviteter.all { erLåst(it) } shouldBe false
         periode.tilstand shouldBe TilUtfylling
     }
 
     private val Rapporteringsperiode.tilstand get() = TestVisitor(this).tilstand
     private val Rapporteringsperiode.korrigerer get() = TestVisitor(this).korrigerer!!
     private val Rapporteringsperiode.korrigertAv get() = TestVisitor(this).korrigertAv!!
+    private val Rapporteringsperiode.aktiviteter get() = TestVisitor(this).aktiviteter
 
     private class TestVisitor(rapporteringsperiode: Rapporteringsperiode) : RapporteringsperiodVisitor {
         lateinit var tilstand: Rapporteringsperiode.TilstandType
         var korrigerer: Rapporteringsperiode? = null
         var korrigertAv: Rapporteringsperiode? = null
+        val aktiviteter = mutableListOf<Aktivitet>()
 
         init {
             rapporteringsperiode.accept(this)
@@ -121,6 +130,17 @@ class RapporteringsperiodeTest {
             this.tilstand = tilstand
             this.korrigerer = korrigerer
             this.korrigertAv = korrigertAv
+        }
+
+        override fun visit(
+            aktivitet: Aktivitet,
+            uuid: UUID,
+            dato: LocalDate,
+            tid: Duration,
+            type: Aktivitet.AktivitetType,
+            tilstand: Aktivitet.TilstandType,
+        ) {
+            this.aktiviteter.add(aktivitet)
         }
     }
 
