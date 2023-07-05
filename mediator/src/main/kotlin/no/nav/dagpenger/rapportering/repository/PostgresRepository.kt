@@ -19,6 +19,7 @@ import no.nav.dagpenger.rapportering.RapporteringspliktVedtak
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
+import no.nav.dagpenger.rapportering.tidslinje.Dag
 import java.time.LocalDate
 import java.util.UUID
 import javax.sql.DataSource
@@ -220,8 +221,14 @@ internal class PostgresRepository(private val ds: DataSource) :
         val rapporteringsperiodeId = uuid("uuid")
         val fraOgMed = localDate("fom")
         val tilOgMed = localDate("tom")
-        val tidslinje = Aktivitetstidslinje(fraOgMed, tilOgMed).apply {
-            hentAktiviteterFor(rapporteringsperiodeId).forEach { leggTilAktivitet(it) }
+        val eksisterendeDager = hentDager(rapporteringsperiodeId)
+        val aktiviteter = hentAktiviteterFor(rapporteringsperiodeId)
+        val tidslinje = Aktivitetstidslinje(fraOgMed..tilOgMed) { dato ->
+            Dag(
+                dato = dato,
+                aktiviteter = aktiviteter.filter { it.dato == dato }.toMutableList(),
+                strategiType = eksisterendeDager[dato],
+            )
         }
 
         return Rapporteringsperiode.rehydrer(
@@ -234,6 +241,20 @@ internal class PostgresRepository(private val ds: DataSource) :
             tidslinje,
             korrigerer,
         )
+    }
+
+    private fun hentDager(rapporteringsperiodeId: UUID) = using(sessionOf(ds)) { session ->
+        session.run(
+            queryOf(
+                // language=PostgreSQL
+                "SELECT dato, strategi FROM dag WHERE rapporteringsperiode_id = :rapporteringsperiodeId",
+                mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
+            ).map { row ->
+                val dato = row.localDate("dato")
+                // Pair(dato, Dag(dato, strategiType = Dag.StrategiType.valueOf(row.string("strategi"))))
+                Pair(dato, Dag.StrategiType.valueOf(row.string("strategi")))
+            }.asList,
+        ).associate { it }
     }
 
     private fun hentKjede(ident: String, uuid: UUID): List<UUID> {
@@ -294,7 +315,7 @@ internal class PostgresRepository(private val ds: DataSource) :
                     //language=PostgreSQL
                     statement = """
                         |SELECT * FROM aktivitet 
-                        |LEFT JOIN dag d ON aktivitet.uuid = d.aktivitet_id
+                        |LEFT JOIN dag_aktivitet d ON aktivitet.uuid = d.aktivitet_id
                         |WHERE d.rapporteringsperiode_id = :rapporteringsperiodeId
                     """.trimMargin(),
                     paramMap = mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
@@ -398,6 +419,30 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
     }
 
     override fun visit(
+        dag: Dag,
+        dato: LocalDate,
+        aktiviteter: List<Aktivitet>,
+        muligeAktiviter: List<AktivitetType>,
+        strategi: Dag.StrategiType,
+    ) {
+        queries.add(
+            queryOf(
+                //language=PostgreSQL
+                statement = """
+                    INSERT INTO dag (rapporteringsperiode_id, dato, strategi)
+                    VALUES (:rapporteringsperiodeId, :dato, :strategi)
+                    ON CONFLICT (rapporteringsperiode_id, dato) DO UPDATE SET strategi = :strategi
+                """.trimIndent(),
+                paramMap = mapOf(
+                    "rapporteringsperiodeId" to rapporteringsperiodeId,
+                    "dato" to dato,
+                    "strategi" to strategi.name,
+                ),
+            ),
+        )
+    }
+
+    override fun visit(
         aktivitet: Aktivitet,
         uuid: UUID,
         dato: LocalDate,
@@ -447,7 +492,7 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
             queryOf(
                 //language=PostgreSQL
                 statement = """
-                    INSERT INTO dag(rapporteringsperiode_id, aktivitet_id)
+                    INSERT INTO dag_aktivitet (rapporteringsperiode_id, aktivitet_id)
                     VALUES (:rapporteringsperiodeId, :aktivitetId)
                     ON CONFLICT DO NOTHING
                 """.trimIndent(),

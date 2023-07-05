@@ -212,6 +212,7 @@ class PersonTest {
             dato: LocalDate,
             aktiviteter: List<Aktivitet>,
             muligeAktiviter: List<Aktivitet.AktivitetType>,
+            strategi: Dag.StrategiType,
         ) {
             this.aktiviteter += aktiviteter
         }

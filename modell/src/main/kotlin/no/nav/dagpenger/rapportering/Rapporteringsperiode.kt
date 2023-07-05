@@ -114,8 +114,6 @@ class Rapporteringsperiode private constructor(
 
     fun gjelderFor(dato: LocalDate) = dato in periode
 
-    fun erGyldig() = tidslinje.all { it.gyldig() }
-
     fun leggTilFritak(dato: LocalDate) {}
 
     fun accept(visitor: RapporteringsperiodVisitor) {
@@ -256,8 +254,6 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiode: Rapporteringsperiode,
         ) {
             hendelse.kontekst(this)
-            if (!rapporteringsperiode.erGyldig()) throw IllegalStateException("Kan ikke godkjenne en ugyldig periode")
-
             rapporteringsperiode.tidslinje.forEach { it.håndter(hendelse) }
             rapporteringsperiode.tilstand(hendelse, Godkjent)
         }

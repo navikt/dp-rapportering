@@ -15,18 +15,22 @@ import java.time.LocalDate
 class Dag(
     internal val dato: LocalDate,
     private val aktiviteter: MutableList<Aktivitet>,
-    private var harRapporteringslikt: Boolean = true,
+    strategiType: StrategiType? = null,
 ) : Aktivitetskontekst {
+    private var strategi: MuligeAktiviteterStrategi = when (strategiType) {
+        StrategiType.EnAktivitet -> EnAktivitetStrategi
+        StrategiType.IngentingErMulig -> IngentingErMulig
+        else -> EnAktivitetStrategi
+    }
+
     constructor(dato: LocalDate) : this(dato, mutableListOf())
 
     companion object {
         val eldsteDagFørst = Comparator<Dag> { a, b -> a.dato.compareTo(b.dato) }
     }
 
-    private val muligeAktiviteter get() = if (aktiviteter.isEmpty()) listOf(Arbeid, Syk, Ferie) else emptyList()
-    private val rapporteringspliktig get() = harRapporteringslikt || erHelligdag
-    private val erHelligdag: Boolean
-        get() = Kalender.erHelligdag(dato)
+    private val muligeAktiviteter get() = if (erHelligdag) emptyList() else strategi.mulige(aktiviteter)
+    private val erHelligdag = Kalender.erHelligdag(dato)
 
     internal fun sammenfallerMed(other: Dag) = this.dato == other.dato
 
@@ -35,26 +39,27 @@ class Dag(
     internal fun dekkesAv(periode: ClosedRange<LocalDate>) = dato in periode
 
     fun leggTilAktivitet(aktivitet: Aktivitet): Boolean {
-        if (!rapporteringspliktig) throw IllegalStateException("Kan ikke legge til aktivitet på dager uten rapporteringsplikt")
-        // TODO: Logikk for om det er mulig å legge til aktivitet
+        if (aktivitet.type !in muligeAktiviteter) throw IllegalStateException("Ikke lov å legge til ${aktivitet.type}. Lovlige aktivtiteter: $muligeAktiviteter")
+
         return aktiviteter.add(aktivitet)
     }
 
-    fun gyldig() = true
-
     fun harAktivitet() = aktiviteter.isNotEmpty()
+
     fun leggTilFritak() {
-        harRapporteringslikt = false
+        strategi = IngentingErMulig
     }
 
     fun håndter(hendelse: GodkjennPeriodeHendelse) {
         hendelse.kontekst(this)
         aktiviteter.forEach { it.håndter(hendelse) }
+        strategi = IngentingErMulig
     }
 
     fun håndter(hendelse: AvgodkjennPeriodeHendelse) {
         hendelse.kontekst(this)
         aktiviteter.forEach { it.håndter(hendelse) }
+        strategi = EnAktivitetStrategi
     }
 
     fun håndter(hendelse: SlettAktivitetHendelse) {
@@ -63,7 +68,7 @@ class Dag(
     }
 
     fun accept(visitor: DagVisitor) {
-        visitor.visit(this, dato, aktiviteter, muligeAktiviteter)
+        visitor.visit(this, dato, aktiviteter, muligeAktiviteter, strategi.type)
         aktiviteter.forEach { it.accept(visitor) }
     }
 
@@ -71,7 +76,29 @@ class Dag(
         return SpesifikkKontekst("dag", mapOf("dato" to dato.toString()))
     }
 
-    fun kopier() = Dag(dato, aktiviteter.kopier(), harRapporteringslikt)
+    fun kopier() = Dag(dato, aktiviteter.kopier())
+
+    enum class StrategiType {
+        EnAktivitet,
+        IngentingErMulig,
+    }
+
+    private interface MuligeAktiviteterStrategi {
+        val type: StrategiType
+        fun mulige(aktiviteter: List<Aktivitet>): List<Aktivitet.AktivitetType>
+    }
+
+    private object EnAktivitetStrategi : MuligeAktiviteterStrategi {
+        override val type = StrategiType.EnAktivitet
+        override fun mulige(aktiviteter: List<Aktivitet>) =
+            if (aktiviteter.isEmpty()) listOf(Arbeid, Syk, Ferie) else emptyList()
+    }
+
+    private object IngentingErMulig : MuligeAktiviteterStrategi {
+        override val type = StrategiType.IngentingErMulig
+
+        override fun mulige(aktiviteter: List<Aktivitet>) = emptyList<Aktivitet.AktivitetType>()
+    }
 }
 
 private fun List<Aktivitet>.kopier() = this.map { it.kopier() }.toMutableList()

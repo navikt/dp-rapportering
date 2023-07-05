@@ -133,7 +133,7 @@ class RapporteringApiTest {
             tilOgMed = LocalDate.now(),
             tilstand = tilstandType,
             opprettet = LocalDateTime.now(),
-            tidslinje = Aktivitetstidslinje(LocalDate.now(), LocalDate.now()),
+            tidslinje = Aktivitetstidslinje(LocalDate.now()..LocalDate.now()),
             korrigerer = korrigert,
         )
 

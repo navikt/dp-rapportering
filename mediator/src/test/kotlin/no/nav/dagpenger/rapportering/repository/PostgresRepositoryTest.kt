@@ -263,6 +263,7 @@ class PostgresRepositoryTest {
             dato: LocalDate,
             aktiviteter: List<Aktivitet>,
             muligeAktiviter: List<Aktivitet.AktivitetType>,
+            strategi: Dag.StrategiType,
         ) {
             this.aktiviteter += aktiviteter
             this.dager += dag

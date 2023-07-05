@@ -65,6 +65,7 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
         dato: LocalDate,
         aktiviteter: List<Aktivitet>,
         muligeAktiviter: List<Aktivitet.AktivitetType>,
+        strategi: Dag.StrategiType,
     ) {
         if (this.id == null) return
         // Legg til dager i et sortet set for å garantere rekkefølge
@@ -84,6 +85,7 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
             dato: LocalDate,
             aktiviteter: List<Aktivitet>,
             muligeAktiviter: List<Aktivitet.AktivitetType>,
+            strategi: Dag.StrategiType,
         ) {
             dto = RapporteringsperiodeDagerInnerDTO(
                 dagIndex = index,

@@ -28,7 +28,6 @@ class AktivitetstidslinjeTest {
         // Legg til aktiviteter
         tidslinje.leggTilAktivitet(Arbeid(3.januar, "PT3H20M"))
         tidslinje.leggTilAktivitet(Arbeid(4.januar, "PT2H30M"))
-        tidslinje.leggTilAktivitet(Arbeid(4.januar, "PT4H25M"))
         tidslinje.leggTilAktivitet(Syk(5.januar))
         tidslinje.leggTilAktivitet(Ferie(6.januar))
 

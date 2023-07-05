@@ -6,12 +6,11 @@ import java.time.LocalDate
 data class Aktivitetstidslinje internal constructor(
     private val dager: MutableSet<Dag> = mutableSetOf(),
 ) : MutableCollection<Dag> by dager {
-    constructor(fraOgMed: LocalDate, tilOgMed: LocalDate) : this(fraOgMed..tilOgMed)
-    constructor(periode: ClosedRange<LocalDate>) : this(
+    constructor(periode: ClosedRange<LocalDate>, lagDag: (LocalDate) -> Dag = { Dag(it) }) : this(
         mutableSetOf<Dag>().apply {
             val datesUntil = periode.start.datesUntil(periode.endInclusive.plusDays(1))
             datesUntil.forEach {
-                add(Dag(it))
+                add(lagDag(it))
             }
         },
     )
