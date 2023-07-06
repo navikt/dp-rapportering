@@ -77,7 +77,6 @@ class RapporteringsperiodeTest {
     fun `Kan godkjenne og avgodkjenne en periode`() {
         val periode = lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = TilUtfylling)
         periode.behandle(nyAktivitetHendelse(periode.rapporteringsperiodeId, 5.januar))
-
         val avgodkjennHendelse = AvgodkjennPeriodeHendelse(
             ident = testIdent,
             rapporteringId = periode.rapporteringsperiodeId,

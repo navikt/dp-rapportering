@@ -37,5 +37,5 @@ internal object TestData {
     ) { _, tom -> tom }
 
     fun godkjennPeriodeHendelse(rapporteringId: UUID = UUID.randomUUID()) =
-        GodkjennPeriodeHendelse(UUID.randomUUID(), testIdent, rapporteringId)
+        GodkjennPeriodeHendelse(testIdent, rapporteringId)
 }

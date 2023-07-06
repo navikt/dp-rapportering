@@ -30,6 +30,7 @@ class Rapporteringsperiode private constructor(
     private val opprettet: LocalDateTime,
     private var oppdatert: LocalDateTime = opprettet,
     private val tidslinje: Aktivitetstidslinje = Aktivitetstidslinje(periode),
+    private val godkjenningslogg: Godkjenningslogg = Godkjenningslogg(),
     private val korrigerer: Rapporteringsperiode? = null,
     private var korrigertAv: Rapporteringsperiode? = null,
 ) : Aktivitetskontekst {
@@ -84,6 +85,7 @@ class Rapporteringsperiode private constructor(
             opprettet,
             opprettet,
             tidslinje,
+            Godkjenningslogg(), // TODO serde
             korrigerer,
             null,
         )
@@ -254,6 +256,7 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiode: Rapporteringsperiode,
         ) {
             hendelse.kontekst(this)
+            rapporteringsperiode.godkjenningslogg.leggTil(hendelse.godkjenning)
             rapporteringsperiode.tidslinje.forEach { it.håndter(hendelse) }
             rapporteringsperiode.tilstand(hendelse, Godkjent)
         }
@@ -305,6 +308,7 @@ class Rapporteringsperiode private constructor(
             hendelse.kontekst(this)
             hendelse.info("Avgodkjenner periode")
 
+            rapporteringsperiode.godkjenningslogg.avgodkjenn()
             rapporteringsperiode.tidslinje.forEach { it.håndter(hendelse) }
             rapporteringsperiode.tilstand(hendelse, TilUtfylling)
         }

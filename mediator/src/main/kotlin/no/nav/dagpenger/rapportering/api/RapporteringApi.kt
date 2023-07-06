@@ -134,9 +134,13 @@ internal fun Application.rapporteringApi(
                             val ident = tilgangskontroll.verifiserTilgang(call)
                             val periodeId = call.finnUUID("periodeId")
 
-                            mediator.behandle(GodkjennPeriodeHendelse(ident, periodeId))
+                            val hendelse = GodkjennPeriodeHendelse(
+                                ident,
+                                periodeId,
+                            )
+                            mediator.behandle(hendelse)
 
-                            call.respond(HttpStatusCode.OK)
+                            call.respond(HttpStatusCode.OK, hendelse.godkjenning)
                         }
                     }
 

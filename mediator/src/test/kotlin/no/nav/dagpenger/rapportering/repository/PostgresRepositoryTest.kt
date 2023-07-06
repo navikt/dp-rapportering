@@ -134,7 +134,12 @@ class PostgresRepositoryTest {
             // Godkjenn perioden og send den inn
             val innsendtRapportering =
                 repository.hentEllerOpprettPerson(testIdent).let { person ->
-                    person.behandle(GodkjennPeriodeHendelse(testIdent, person.aktivRapporteringsperiodeId))
+                    person.behandle(
+                        GodkjennPeriodeHendelse(
+                            testIdent,
+                            person.aktivRapporteringsperiodeId,
+                        ),
+                    )
                     person.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, LocalDate.MAX))
                     repository.lagre(person)
 

@@ -173,6 +173,9 @@ class RapporteringApiTest {
                 verify {
                     mediatorMock.behandle(any<GodkjennPeriodeHendelse>())
                 }
+                response.bodyAsText().let { json ->
+                    json shouldContainJsonKey "$.id"
+                }
             }
         }
     }
