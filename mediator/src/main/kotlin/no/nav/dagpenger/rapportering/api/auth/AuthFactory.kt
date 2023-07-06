@@ -49,6 +49,19 @@ object AuthFactory {
     }
     val tokenXIssuer get() = tokenXConfiguration.issuer
 
+    enum class Issuer {
+        AzureAD,
+        TokenX,
+    }
+
+    fun issuerFromString(issuer: String?) = when (issuer) {
+        azureAdConfiguration.issuer -> Issuer.AzureAD
+        tokenXConfiguration.issuer -> Issuer.TokenX
+        else -> {
+            throw IllegalArgumentException("Ikke støttet issuer: $issuer")
+        }
+    }
+
     fun JWTAuthenticationProvider.Config.tokenX() {
         verifier(JwkProvider(URL(tokenXConfiguration.jwksUri)), tokenXConfiguration.issuer) {
             withAudience(Configuration.properties[token_x.client_id])

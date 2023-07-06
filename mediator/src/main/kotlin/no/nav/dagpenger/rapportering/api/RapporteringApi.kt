@@ -5,8 +5,6 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
-import io.ktor.server.auth.authentication
-import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.plugins.swagger.swaggerUI
 import io.ktor.server.request.receive
@@ -17,11 +15,14 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import no.nav.dagpenger.rapportering.Godkjenning
 import no.nav.dagpenger.rapportering.IHendelseMediator
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.Companion.hentGjeldende
-import no.nav.dagpenger.rapportering.api.auth.AuthFactory.azureAdIssuer
-import no.nav.dagpenger.rapportering.api.auth.AuthFactory.tokenXIssuer
+import no.nav.dagpenger.rapportering.api.auth.AuthFactory.Issuer.AzureAD
+import no.nav.dagpenger.rapportering.api.auth.AuthFactory.Issuer.TokenX
 import no.nav.dagpenger.rapportering.api.auth.ident
+import no.nav.dagpenger.rapportering.api.auth.issuer
+import no.nav.dagpenger.rapportering.api.auth.saksbehandlerId
 import no.nav.dagpenger.rapportering.api.dto.RapporteringsperiodeMapper
 import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetNyDTO
@@ -134,10 +135,14 @@ internal fun Application.rapporteringApi(
                             val ident = tilgangskontroll.verifiserTilgang(call)
                             val periodeId = call.finnUUID("periodeId")
 
-                            val hendelse = GodkjennPeriodeHendelse(
-                                ident,
-                                periodeId,
-                            )
+                            val hendelse = when (call.issuer()) {
+                                AzureAD -> GodkjennPeriodeHendelse(ident, periodeId, Godkjenning.Saksbehandler(call.saksbehandlerId()), "")
+                                TokenX -> GodkjennPeriodeHendelse(
+                                    ident,
+                                    periodeId,
+                                )
+                            }
+
                             mediator.behandle(hendelse)
 
                             call.respond(HttpStatusCode.OK, hendelse.godkjenning)
@@ -227,14 +232,12 @@ private class RapporteringsperiodeTilgangskontroll(private val repository: Rappo
         val ident = repository.finnIdentForPeriode(periodeId)
             ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
 
-        return when (call.authentication.principal<JWTPrincipal>()?.payload?.issuer) {
-            tokenXIssuer -> {
+        return when (call.issuer()) {
+            TokenX -> {
                 if (call.ident() != ident) throw IkkeTilgangException("Ikke tilgang")
                 call.ident()
             }
-
-            azureAdIssuer -> ident
-            else -> throw IkkeTilgangException("Ikke tilgang")
+            AzureAD -> ident
         }
     }
 }

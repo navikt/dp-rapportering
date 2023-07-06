@@ -9,6 +9,7 @@ import io.ktor.server.auth.jwt.JWTPayloadHolder
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.parseAuthorizationHeader
 import io.ktor.server.request.ApplicationRequest
+import no.nav.dagpenger.rapportering.api.auth.AuthFactory.issuerFromString
 
 internal fun validator(jwtCredential: JWTCredential): Principal {
     requirePid(jwtCredential)
@@ -20,8 +21,20 @@ internal fun ApplicationCall.ident(): String =
 
 internal val JWTPrincipal.fnr get(): String = requirePid(this)
 
+internal fun ApplicationCall.saksbehandlerId() =
+    requireNotNull(this.authentication.principal<JWTPrincipal>()) { "Ikke autentisert" }.saksbehandlerId()
+
 private fun requirePid(credential: JWTPayloadHolder): String =
     requireNotNull(credential.payload.claims["pid"]?.asString()) { "Token må inneholde fødselsnummer for personen i claim 'pid'" }
+
+private fun JWTPrincipal.saksbehandlerId(): String =
+    requireNotNull(this.payload.claims["NAVident"]?.asString())
+
+private fun JWTPrincipal.saksbehandlerApp(): String =
+    requireNotNull(this.payload.claims["azp_name"]?.asString())
+
+private fun JWTPrincipal.saksbehandlerEpostAdresse(): String =
+    requireNotNull(this.payload.claims["preferred_username"]?.asString())
 
 internal fun ApplicationRequest.jwt(): String = this.parseAuthorizationHeader().let { authHeader ->
     (authHeader as? HttpAuthHeader.Single)?.blob ?: throw IllegalArgumentException("JWT not found")
@@ -29,3 +42,5 @@ internal fun ApplicationRequest.jwt(): String = this.parseAuthorizationHeader().
 
 internal fun ApplicationCall.optionalIdent(): String? =
     requireNotNull(this.authentication.principal<JWTPrincipal>()).payload.claims["pid"]?.asString()
+
+internal fun ApplicationCall.issuer() = issuerFromString(this.authentication.principal<JWTPrincipal>()?.payload?.issuer)
