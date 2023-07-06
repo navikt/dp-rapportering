@@ -6,6 +6,8 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
 import no.nav.dagpenger.rapportering.DagVisitor
+import no.nav.dagpenger.rapportering.Godkjenning
+import no.nav.dagpenger.rapportering.Godkjenningslogg
 import no.nav.dagpenger.rapportering.IngenRapporteringsplikt
 import no.nav.dagpenger.rapportering.Person
 import no.nav.dagpenger.rapportering.PersonVisitor
@@ -21,6 +23,7 @@ import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import no.nav.dagpenger.rapportering.tidslinje.Dag
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 import javax.sql.DataSource
 import kotlin.time.Duration
@@ -230,6 +233,7 @@ internal class PostgresRepository(private val ds: DataSource) :
                 strategiType = eksisterendeDager[dato],
             )
         }
+        val godkjenningslogg = hentGodkjenningslogg(rapporteringsperiodeId)
 
         return Rapporteringsperiode.rehydrer(
             rapporteringsperiodeId,
@@ -239,9 +243,43 @@ internal class PostgresRepository(private val ds: DataSource) :
             Rapporteringsperiode.TilstandType.valueOf(this.string("tilstand")),
             localDateTime("opprettet"),
             tidslinje,
+            godkjenningslogg,
             korrigerer,
         )
     }
+
+    private fun hentGodkjenningslogg(rapporteringsperiodeId: UUID) = using(sessionOf(ds)) { session ->
+        session.run(
+            queryOf(
+                // language=PostgreSQL
+                """
+                SELECT g.*, s.saksbehandler_id, sb.ident AS sluttbruker_ident
+                FROM godkjenning g
+                JOIN godkjenning_utført_av gu ON gu.godkjenning_id = g.uuid
+                LEFT JOIN saksbehandler s ON s.id = gu.id
+                LEFT JOIN sluttbruker sb ON sb.id = gu.id
+                WHERE g.rapporteringsperiode_id = :rapporteringsperiodeId
+                """.trimIndent(),
+                mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
+            ).map { row ->
+                val saksbehandlerId = row.stringOrNull("saksbehandler_id")
+                val sluttbrukerIdent = row.stringOrNull("sluttbruker_ident")
+                val kilde = when {
+                    sluttbrukerIdent != null -> Godkjenning.Sluttbruker(sluttbrukerIdent)
+                    saksbehandlerId != null -> Godkjenning.Saksbehandler(saksbehandlerId)
+                    else -> throw IllegalStateException("")
+                }
+
+                Godkjenning(
+                    row.uuid("uuid"),
+                    kilde,
+                    row.localDateTime("opprettet"),
+                    row.localDateTimeOrNull("avgodkjent"),
+                    row.stringOrNull("begrunnelse"),
+                )
+            }.asList,
+        )
+    }.let { Godkjenningslogg(it) }
 
     private fun hentDager(rapporteringsperiodeId: UUID) = using(sessionOf(ds)) { session ->
         session.run(
@@ -250,9 +288,7 @@ internal class PostgresRepository(private val ds: DataSource) :
                 "SELECT dato, strategi FROM dag WHERE rapporteringsperiode_id = :rapporteringsperiodeId",
                 mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
             ).map { row ->
-                val dato = row.localDate("dato")
-                // Pair(dato, Dag(dato, strategiType = Dag.StrategiType.valueOf(row.string("strategi"))))
-                Pair(dato, Dag.StrategiType.valueOf(row.string("strategi")))
+                Pair(row.localDate("dato"), Dag.StrategiType.valueOf(row.string("strategi")))
             }.asList,
         ).associate { it }
     }
@@ -416,6 +452,58 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
                 ),
             ),
         )
+    }
+
+    override fun visit(
+        godkjenning: Godkjenning,
+        id: UUID,
+        utførtAv: Godkjenning.Kilde,
+        opprettet: LocalDateTime,
+        avgodkjent: LocalDateTime?,
+        begrunnelse: String?,
+    ) {
+        queries.add(
+            queryOf(
+                //language=PostgreSQL
+                """
+                INSERT INTO godkjenning (uuid, rapporteringsperiode_id, opprettet, avgodkjent, begrunnelse)
+                VALUES (:uuid, :rapporteringsperiodeId, :opprettet, :avgodkjent, :begrunnelse)
+                ON CONFLICT (uuid) DO UPDATE SET avgodkjent = :avgodkjent
+                """.trimIndent(),
+                mapOf(
+                    "uuid" to id,
+                    "rapporteringsperiodeId" to rapporteringsperiodeId,
+                    "opprettet" to opprettet,
+                    "avgodkjent" to avgodkjent,
+                    "begrunnelse" to begrunnelse,
+                ),
+            ),
+        )
+
+        queries.add(
+            queryOf(
+                //language=PostgreSQL
+                """INSERT INTO godkjenning_utført_av (godkjenning_id) VALUES (:godkjenningId) ON CONFLICT DO NOTHING """,
+                mapOf("godkjenningId" to id),
+            ),
+        )
+        when (utførtAv) {
+            is Godkjenning.Saksbehandler -> queries.add(
+                queryOf(
+                    //language=PostgreSQL
+                    """INSERT INTO saksbehandler (id, saksbehandler_id) VALUES ((SELECT id FROM godkjenning_utført_av WHERE godkjenning_id = :godkjenningId), :saksbehandlerId) ON CONFLICT DO NOTHING""",
+                    mapOf("godkjenningId" to id, "saksbehandlerId" to utførtAv.id),
+                ),
+            )
+
+            is Godkjenning.Sluttbruker -> queries.add(
+                queryOf(
+                    //language=PostgreSQL
+                    """INSERT INTO sluttbruker (id, ident) VALUES ((SELECT id FROM godkjenning_utført_av WHERE godkjenning_id = :godkjenningId), :ident) ON CONFLICT DO NOTHING""",
+                    mapOf("godkjenningId" to id, "ident" to utførtAv.id),
+                ),
+            )
+        }
     }
 
     override fun visit(

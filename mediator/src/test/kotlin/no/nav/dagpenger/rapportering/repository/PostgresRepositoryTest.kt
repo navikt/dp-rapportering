@@ -3,8 +3,11 @@ package no.nav.dagpenger.rapportering.repository
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import no.nav.dagpenger.rapportering.Godkjenning
+import no.nav.dagpenger.rapportering.Godkjenning.Sluttbruker
 import no.nav.dagpenger.rapportering.Person
 import no.nav.dagpenger.rapportering.PersonVisitor
+import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.Rapporteringsplikt
 import no.nav.dagpenger.rapportering.RapporteringspliktType
@@ -150,6 +153,14 @@ class PostgresRepositoryTest {
                 person.behandle(KorrigerPeriodeHendelse(testIdent, innsendtRapportering.rapporteringsperiodeId))
                 repository.lagre(person)
             }
+            // Verifiser at det føres logg over godkjenning
+            repository.hentEllerOpprettPerson(testIdent).let { person ->
+                with(person.aktivRapporteringsperiode.godkjenningslogg) {
+                    size shouldBe 1
+                    first().kanEndre(Sluttbruker(testIdent)) shouldBe true
+                    first().kanEndre(Sluttbruker("fjas")) shouldBe false
+                }
+            }
             // Verifiser at innsendt periode har en korrigering
             val sisteKorrigering =
                 repository.hentEllerOpprettPerson(testIdent).let { person ->
@@ -238,6 +249,27 @@ class PostgresRepositoryTest {
     private val Person.aktivitetId get() = TestVisitor(this).aktivAktivitetId
     private val Person.antallAktiviteter get() = TestVisitor(this).aktiviteter.size
     private val Person.antallDager get() = TestVisitor(this).dager.size
+    private val Rapporteringsperiode.godkjenningslogg get() = TestRapporteringsperiodeVisitor(this).godkjenninger
+
+    private class TestRapporteringsperiodeVisitor(rapporteringsperiode: Rapporteringsperiode) :
+        RapporteringsperiodVisitor {
+        internal val godkjenninger = mutableListOf<Godkjenning>()
+
+        init {
+            rapporteringsperiode.accept(this)
+        }
+
+        override fun visit(
+            godkjenning: Godkjenning,
+            id: UUID,
+            utførtAv: Godkjenning.Kilde,
+            opprettet: LocalDateTime,
+            avgodkjent: LocalDateTime?,
+            begrunnelse: String?,
+        ) {
+            godkjenninger.add(godkjenning)
+        }
+    }
 
     private class TestVisitor(person: Person) : PersonVisitor {
         lateinit var aktivAktivitetId: UUID

@@ -72,6 +72,7 @@ class Rapporteringsperiode private constructor(
             tilstand: TilstandType,
             opprettet: LocalDateTime,
             tidslinje: Aktivitetstidslinje,
+            godkjenningslogg: Godkjenningslogg,
             korrigerer: Rapporteringsperiode?,
         ) = Rapporteringsperiode(
             rapporteringsperiodeId,
@@ -85,7 +86,7 @@ class Rapporteringsperiode private constructor(
             opprettet,
             opprettet,
             tidslinje,
-            Godkjenningslogg(), // TODO serde
+            godkjenningslogg,
             korrigerer,
             null,
         )
@@ -129,6 +130,7 @@ class Rapporteringsperiode private constructor(
             korrigerer,
             korrigertAv,
         )
+        godkjenningslogg.accept(visitor)
         tidslinje.accept(visitor)
     }
 

@@ -12,7 +12,7 @@ interface PersonVisitor : RapporteringsperiodVisitor, AktivitetstidslinjeVisitor
     fun visit(person: Person, ident: String) {}
 }
 
-interface RapporteringsperiodVisitor : AktivitetstidslinjeVisitor {
+interface RapporteringsperiodVisitor : AktivitetstidslinjeVisitor, GodkjenningsloggVisitor {
     fun visit(
         rapporteringsperiode: Rapporteringsperiode,
         id: UUID,
@@ -21,6 +21,18 @@ interface RapporteringsperiodVisitor : AktivitetstidslinjeVisitor {
         beregnesEtter: LocalDate,
         korrigerer: Rapporteringsperiode?,
         korrigertAv: Rapporteringsperiode?,
+    ) {
+    }
+}
+
+interface GodkjenningsloggVisitor {
+    fun visit(
+        godkjenning: Godkjenning,
+        id: UUID,
+        utførtAv: Godkjenning.Kilde,
+        opprettet: LocalDateTime,
+        avgodkjent: LocalDateTime?,
+        begrunnelse: String?,
     ) {
     }
 }

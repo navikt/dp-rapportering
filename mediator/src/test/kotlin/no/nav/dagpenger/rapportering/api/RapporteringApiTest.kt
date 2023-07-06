@@ -19,6 +19,7 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import no.nav.dagpenger.rapportering.Godkjenningslogg
 import no.nav.dagpenger.rapportering.Mediator
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
@@ -135,6 +136,7 @@ class RapporteringApiTest {
             tilstand = tilstandType,
             opprettet = LocalDateTime.now(),
             tidslinje = Aktivitetstidslinje(LocalDate.now()..LocalDate.now()),
+            godkjenningslogg = Godkjenningslogg(),
             korrigerer = korrigert,
         )
 

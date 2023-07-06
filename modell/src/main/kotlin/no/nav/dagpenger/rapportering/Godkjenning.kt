@@ -18,6 +18,9 @@ class Godkjenningslogg(godkjenninger: List<Godkjenning> = emptyList()) {
 
     private fun gjeldende() = godkjenninger.last()
     fun godkjent() = godkjenninger.lastOrNull()?.godkjent() ?: false
+    fun accept(visitor: RapporteringsperiodVisitor) {
+        godkjenninger.forEach { it.accept(visitor) }
+    }
 }
 
 class Godkjenning(
@@ -42,6 +45,9 @@ class Godkjenning(
 
     fun godkjent() = avgodkjent == null
     fun kanEndre(kilde: Kilde) = kilde == utførtAv
+    fun accept(visitor: RapporteringsperiodVisitor) {
+        visitor.visit(this, id, utførtAv, opprettet, avgodkjent, begrunnelse)
+    }
 
     sealed class Kilde(val id: String) {
         abstract fun kanEndre(godkjenning: Godkjenning): Boolean

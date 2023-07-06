@@ -157,6 +157,7 @@ class RapporteringsperiodeTest {
             tilstand = tilstand,
             opprettet = LocalDateTime.now(),
             tidslinje = Aktivitetstidslinje(fom..tom),
+            Godkjenningslogg(),
             korrigerer = null,
         )
     }
