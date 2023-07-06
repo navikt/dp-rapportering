@@ -135,13 +135,10 @@ internal fun Application.rapporteringApi(
                         post {
                             val ident = tilgangskontroll.verifiserTilgang(call)
                             val periodeId = call.finnUUID("periodeId")
-
                             val hendelse = when (call.issuer()) {
                                 AzureAD -> {
                                     val godkjenning = call.receive<GodkjennNyDTO>()
-                                    require(godkjenning.begrunnelse.isNotEmpty()) {
-                                        "Saksbehandler må oppgi begrunnelse"
-                                    }
+                                    require(godkjenning.begrunnelse.isNotEmpty()) { "Saksbehandler må oppgi begrunnelse" }
 
                                     GodkjennPeriodeHendelse(
                                         ident,
@@ -151,10 +148,7 @@ internal fun Application.rapporteringApi(
                                     )
                                 }
 
-                                TokenX -> GodkjennPeriodeHendelse(
-                                    ident,
-                                    periodeId,
-                                )
+                                TokenX -> GodkjennPeriodeHendelse(ident, periodeId)
                             }
 
                             mediator.behandle(hendelse)

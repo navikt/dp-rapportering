@@ -141,7 +141,7 @@ class Rapporteringsperiode private constructor(
         if (korrigertAv != null) return korrigertAv!!.behandle(hendelse)
         if (hendelse.rapporteringsperiodeId != rapporteringsperiodeId) return false
         hendelse.kontekst(this)
-        hendelse.info("Sender inn ny rapportering")
+        hendelse.info("Godkjenner rapporteringsperiode")
 
         tilstand.behandle(hendelse, this)
         return true
@@ -209,7 +209,7 @@ class Rapporteringsperiode private constructor(
             hendelse: GodkjennPeriodeHendelse,
             rapporteringsperiode: Rapporteringsperiode,
         ) {
-            throw IllegalStateException("Forventet ikke ny rapportering tilstand ${type.name}")
+            throw IllegalStateException("Forventet ikke godkjenning i tilstand ${type.name}")
         }
 
         fun behandle(
