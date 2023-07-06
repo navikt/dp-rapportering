@@ -129,7 +129,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/periodeId'
   /rapporteringsperioder/{periodeId}/godkjenn:
-    put:
+    post:
       responses:
         '200':
           description: OK
@@ -141,6 +141,12 @@ paths:
       security:
         - azureAd: [ ]
         - tokenX: [ ]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Godkjenn.Ny'
     parameters:
       - name: periodeId
         description: ID til rapporteringsperioden
@@ -308,6 +314,13 @@ components:
           type: string
           format: date
           description: Standardverdi er dagens dato
+    Godkjenn.Ny:
+      type: object
+      required:
+        - begrunnelse
+      properties:
+        begrunnelse:
+          type: string
     Rapporteringsperiode:
       required:
         - periodeId

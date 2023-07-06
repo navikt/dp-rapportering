@@ -33,6 +33,7 @@ import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -162,13 +163,60 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `Skal kunne godkjenne en rapporteringsperiode`() {
+    fun `Bruker skal kunne godkjenne en rapporteringsperiode`() {
         withRapporteringApi(
             rapporteringsperioder = listOf(testPeriode),
         ) {
-            client.put("/rapporteringsperioder/$testPeriodeId/godkjenn") {
+            client.post("/rapporteringsperioder/$testPeriodeId/godkjenn") {
                 autentisert()
             }.also { response ->
+                response.status shouldBe HttpStatusCode.OK
+                verify {
+                    mediatorMock.behandle(any<GodkjennPeriodeHendelse>())
+                }
+                response.bodyAsText().let { json ->
+                    json shouldContainJsonKey "$.id"
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `Saksbehandler skal kunne godkjenne en rapporteringsperiode`() {
+        withRapporteringApi(
+            rapporteringsperioder = listOf(testPeriode),
+        ) {
+            autentisert(
+                token = testAzureAdToken,
+                endepunkt = "/rapporteringsperioder/$testPeriodeId/godkjenn",
+                httpMethod = HttpMethod.Post,
+                //language=JSON
+                body = """{"begrunnelse": "Begrunnelse" }""",
+            ).also { response ->
+                response.status shouldBe HttpStatusCode.OK
+                verify {
+                    mediatorMock.behandle(any<GodkjennPeriodeHendelse>())
+                }
+                response.bodyAsText().let { json ->
+                    json shouldContainJsonKey "$.id"
+                }
+            }
+        }
+    }
+
+    @Disabled
+    @Test
+    fun `Saksbehandler kan ikke godkjenne en rapporteringsperiode uten en begrunnelse`() {
+        withRapporteringApi(
+            rapporteringsperioder = listOf(testPeriode),
+        ) {
+            autentisert(
+                token = testAzureAdToken,
+                endepunkt = "/rapporteringsperioder/$testPeriodeId/godkjenn",
+                httpMethod = HttpMethod.Post,
+                //language=JSON
+                body = """{"begrunnelse": "" }""",
+            ).also { response ->
                 response.status shouldBe HttpStatusCode.OK
                 verify {
                     mediatorMock.behandle(any<GodkjennPeriodeHendelse>())

@@ -27,6 +27,7 @@ import no.nav.dagpenger.rapportering.api.dto.RapporteringsperiodeMapper
 import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetNyDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
+import no.nav.dagpenger.rapportering.api.models.GodkjennNyDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeNyDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeSokDTO
 import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
@@ -131,12 +132,25 @@ internal fun Application.rapporteringApi(
                     }
 
                     route("/godkjenn") {
-                        put {
+                        post {
                             val ident = tilgangskontroll.verifiserTilgang(call)
                             val periodeId = call.finnUUID("periodeId")
 
                             val hendelse = when (call.issuer()) {
-                                AzureAD -> GodkjennPeriodeHendelse(ident, periodeId, Godkjenning.Saksbehandler(call.saksbehandlerId()), "")
+                                AzureAD -> {
+                                    val godkjenning = call.receive<GodkjennNyDTO>()
+                                    require(godkjenning.begrunnelse.isNotEmpty()) {
+                                        "Saksbehandler må oppgi begrunnelse"
+                                    }
+
+                                    GodkjennPeriodeHendelse(
+                                        ident,
+                                        periodeId,
+                                        Godkjenning.Saksbehandler(call.saksbehandlerId()),
+                                        godkjenning.begrunnelse,
+                                    )
+                                }
+
                                 TokenX -> GodkjennPeriodeHendelse(
                                     ident,
                                     periodeId,
@@ -237,6 +251,7 @@ private class RapporteringsperiodeTilgangskontroll(private val repository: Rappo
                 if (call.ident() != ident) throw IkkeTilgangException("Ikke tilgang")
                 call.ident()
             }
+
             AzureAD -> ident
         }
     }

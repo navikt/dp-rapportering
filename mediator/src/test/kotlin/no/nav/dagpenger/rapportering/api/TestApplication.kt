@@ -38,7 +38,7 @@ object TestApplication {
         mockOAuth2Server.issueToken(
             issuerId = AZUREAD_ISSUER_ID,
             audience = CLIENT_ID,
-            claims = mapOf(),
+            claims = mapOf("NAVident" to "123"),
         ).serialize()
     }
 
