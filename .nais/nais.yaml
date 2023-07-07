@@ -56,6 +56,7 @@ spec:
         highAvailability: true
         diskAutoresize: true
         pointInTimeRecovery: true
+        tier: {{gcp.sql.tier}}
         databases:
           - name: rapportering
             envVarPrefix: DB

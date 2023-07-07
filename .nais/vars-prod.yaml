@@ -4,6 +4,10 @@ kafka:
 beregningsdato:
   strategi: tom
 
+gcp:
+  sql:
+    tier: db-custom-1-3840
+
 azure:
   tenant: nav.no
   grupper:
