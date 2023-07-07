@@ -9,7 +9,7 @@ beregningsdato:
 
 gcp:
   sql:
-    tier: db-custom-1-512
+    tier: db-custom-1-3840
 
 azure:
   tenant: trygdeetaten.no
