@@ -32,15 +32,15 @@ CREATE TABLE IF NOT EXISTS rapporteringsperiode
 
 CREATE TABLE IF NOT EXISTS dag_aktivitet
 (
-    rapporteringsperiode_id uuid REFERENCES rapporteringsperiode (uuid),
-    aktivitet_id            uuid REFERENCES aktivitet (uuid) ON DELETE CASCADE,
+    rapporteringsperiode_id uuid NOT NULL REFERENCES rapporteringsperiode (uuid),
+    aktivitet_id            uuid NOT NULL REFERENCES aktivitet (uuid) ON DELETE CASCADE,
     UNIQUE (rapporteringsperiode_id, aktivitet_id)
 );
 
 CREATE TABLE IF NOT EXISTS dag
 (
     id                      BIGSERIAL PRIMARY KEY,
-    rapporteringsperiode_id uuid REFERENCES rapporteringsperiode (uuid) ON DELETE CASCADE,
+    rapporteringsperiode_id uuid NOT NULL REFERENCES rapporteringsperiode (uuid) ON DELETE CASCADE,
     dato                    DATE NOT NULL,
     strategi                TEXT NOT NULL,
     UNIQUE (rapporteringsperiode_id, dato)
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS godkjenning
 (
     id                      BIGSERIAL PRIMARY KEY,
     uuid                    uuid UNIQUE NOT NULL,
-    rapporteringsperiode_id uuid REFERENCES rapporteringsperiode (uuid) ON DELETE CASCADE,
+    rapporteringsperiode_id uuid        NOT NULL REFERENCES rapporteringsperiode (uuid) ON DELETE CASCADE,
     opprettet               TIMESTAMP   NOT NULL,
     avgodkjent              TIMESTAMP,
     begrunnelse             TEXT
