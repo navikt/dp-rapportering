@@ -18,21 +18,32 @@ CREATE TABLE IF NOT EXISTS aktivitet
 
 CREATE TABLE IF NOT EXISTS rapporteringsperiode
 (
-    id                 BIGSERIAL PRIMARY KEY,
-    uuid               uuid                                                              NOT NULL UNIQUE,
-    person_ident       VARCHAR(11)                                                       NOT NULL REFERENCES person (ident),
-    tilstand           TEXT                                                              NOT NULL,
-    opprettet          TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'::TEXT) NOT NULL,
-    rapporteringsfrist DATE                                                              NOT NULL,
-    fom                DATE                                                              NOT NULL,
-    tom                DATE                                                              NOT NULL
+    id             BIGSERIAL PRIMARY KEY,
+    uuid           uuid                                                              NOT NULL UNIQUE,
+    person_ident   VARCHAR(11)                                                       NOT NULL REFERENCES person (ident),
+    tilstand       TEXT                                                              NOT NULL,
+    opprettet      TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'::TEXT) NOT NULL,
+    beregnes_etter DATE                                                              NOT NULL,
+    fom            DATE                                                              NOT NULL,
+    tom            DATE                                                              NOT NULL,
+    korrigerer     uuid                                                              NULL REFERENCES rapporteringsperiode (uuid),
+    korrigert_av   uuid                                                              NULL REFERENCES rapporteringsperiode (uuid)
 );
 
-CREATE TABLE IF NOT EXISTS dag
+CREATE TABLE IF NOT EXISTS dag_aktivitet
 (
     rapporteringsperiode_id uuid REFERENCES rapporteringsperiode (uuid),
     aktivitet_id            uuid REFERENCES aktivitet (uuid) ON DELETE CASCADE,
     UNIQUE (rapporteringsperiode_id, aktivitet_id)
+);
+
+CREATE TABLE IF NOT EXISTS dag
+(
+    id                      BIGSERIAL PRIMARY KEY,
+    rapporteringsperiode_id uuid REFERENCES rapporteringsperiode (uuid) ON DELETE CASCADE,
+    dato                    DATE NOT NULL,
+    strategi                TEXT NOT NULL,
+    UNIQUE (rapporteringsperiode_id, dato)
 );
 
 CREATE TABLE IF NOT EXISTS rapporteringsplikt
@@ -45,3 +56,32 @@ CREATE TABLE IF NOT EXISTS rapporteringsplikt
     gjelder_fra TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'::TEXT) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS godkjenning
+(
+    id                      BIGSERIAL PRIMARY KEY,
+    uuid                    uuid UNIQUE NOT NULL,
+    rapporteringsperiode_id uuid REFERENCES rapporteringsperiode (uuid) ON DELETE CASCADE,
+    opprettet               TIMESTAMP   NOT NULL,
+    avgodkjent              TIMESTAMP,
+    begrunnelse             TEXT
+
+);
+
+
+CREATE TABLE godkjenning_utført_av
+(
+    id             BIGSERIAL PRIMARY KEY,
+    godkjenning_id uuid UNIQUE REFERENCES godkjenning (uuid) ON DELETE CASCADE
+);
+
+CREATE TABLE saksbehandler
+(
+    id               BIGINT PRIMARY KEY REFERENCES godkjenning_utført_av (id) ON DELETE CASCADE,
+    saksbehandler_id TEXT UNIQUE
+);
+
+CREATE TABLE sluttbruker
+(
+    id    BIGINT PRIMARY KEY REFERENCES godkjenning_utført_av (id) ON DELETE CASCADE,
+    ident TEXT UNIQUE
+);
