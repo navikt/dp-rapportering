@@ -16,7 +16,7 @@ import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.hendelser.VedtakAvslåttHendelse
 import no.nav.dagpenger.rapportering.hendelser.VedtakInnvilgetHendelse
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 class Person private constructor(
     val ident: String,
@@ -31,7 +31,7 @@ class Person private constructor(
     ) : this(
         ident,
         mutableListOf(),
-        TemporalCollection<Rapporteringsplikt>().apply { put(LocalDate.now(), IngenRapporteringsplikt()) },
+        TemporalCollection<Rapporteringsplikt>().apply { put(LocalDateTime.now(), IngenRapporteringsplikt()) },
         Aktivitetslogg(),
     )
 
