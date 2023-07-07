@@ -50,6 +50,8 @@ spec:
         groups:
           - id: {{azure.grupper.saksbehandler}}
           - id: {{azure.grupper.beslutter}}
+        extra:
+        - NAVident
   gcp:
     sqlInstances:
       - type: POSTGRES_14
