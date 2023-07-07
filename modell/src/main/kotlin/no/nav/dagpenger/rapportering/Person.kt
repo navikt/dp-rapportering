@@ -17,6 +17,7 @@ import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.hendelser.VedtakAvslåttHendelse
 import no.nav.dagpenger.rapportering.hendelser.VedtakInnvilgetHendelse
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 class Person private constructor(
     val ident: String,
@@ -38,12 +39,12 @@ class Person private constructor(
     constructor(
         ident: String,
         rapporteringsperioder: List<Rapporteringsperiode>,
-        rapporteringsplikt: List<Rapporteringsplikt>,
+        rapporteringsplikt: List<Pair<LocalDateTime, Rapporteringsplikt>>,
     ) : this(
         ident,
         rapporteringsperioder.toMutableList(),
-        rapporteringsplikt.fold(TemporalCollection<Rapporteringsplikt>()) { acc, rapporteringsplikt ->
-            acc.also { it.put(rapporteringsplikt.rapporteringspliktFra, rapporteringsplikt) }
+        rapporteringsplikt.fold(TemporalCollection<Rapporteringsplikt>()) { acc, (opprettet, rapporteringsplikt) ->
+            acc.also { it.put(opprettet, rapporteringsplikt) }
         },
         Aktivitetslogg(),
     )

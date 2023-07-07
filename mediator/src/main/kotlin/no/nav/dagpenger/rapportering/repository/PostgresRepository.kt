@@ -78,17 +78,19 @@ internal class PostgresRepository(private val ds: DataSource) :
         session.run(
             queryOf(
                 //language=PostgreSQL
-                statement = """SELECT uuid, gjelder_fra, type FROM rapporteringsplikt LEFT JOIN person p ON rapporteringsplikt.person_id = p.id WHERE p.ident = :ident""",
+                statement = """SELECT uuid, opprettet, gjelder_fra, type FROM rapporteringsplikt LEFT JOIN person p ON rapporteringsplikt.person_id = p.id WHERE p.ident = :ident""",
                 paramMap = mapOf("ident" to ident),
             ).map {
+                val opprettet = it.localDateTime("opprettet")
                 val gjelderFra = it.localDateTime("gjelder_fra")
                 val type = RapporteringspliktType.valueOf(it.string("type"))
                 val uuid = it.uuid("uuid")
-                when (type) {
+                val rapporteringsplikt = when (type) {
                     RapporteringspliktType.Ingen -> IngenRapporteringsplikt(uuid, gjelderFra)
                     RapporteringspliktType.Søknad -> RapporteringspliktSøknad(uuid, gjelderFra)
                     RapporteringspliktType.Vedtak -> RapporteringspliktVedtak(uuid, gjelderFra)
                 }
+                Pair(opprettet, rapporteringsplikt)
             }.asList,
         )
     }
@@ -370,6 +372,7 @@ internal class PostgresRepository(private val ds: DataSource) :
 }
 
 private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, RapporteringsperiodVisitor, DagVisitor {
+    private lateinit var rapporteringspliktOpprettet: LocalDateTime
     private lateinit var rapporteringsperiodeId: UUID
     private lateinit var rapporteringspliktId: UUID
     private lateinit var ident: String
@@ -390,6 +393,11 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
         )
     }
 
+    override fun visit(at: LocalDateTime, item: Rapporteringsplikt) {
+        this.rapporteringspliktOpprettet = at
+        super<PersonVisitor>.visit(at, item)
+    }
+
     override fun visit(
         rapporteringsplikt: Rapporteringsplikt,
         rapporteringspliktId: UUID,
@@ -400,8 +408,8 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
             queryOf(
                 //language=PostgreSQL
                 statement = """
-                    INSERT INTO rapporteringsplikt(uuid, person_id, type, gjelder_fra) 
-                    SELECT :rapporteringspliktId, id, :type, :gjelderFra 
+                    INSERT INTO rapporteringsplikt(uuid, person_id, type, opprettet, gjelder_fra) 
+                    SELECT :rapporteringspliktId, id, :type, :opprettet, :gjelderFra 
                     FROM person WHERE ident = :ident 
                     ON CONFLICT (uuid) DO NOTHING 
                 """.trimIndent(),
@@ -409,6 +417,7 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
                     "ident" to ident,
                     "type" to type.name,
                     "rapporteringspliktId" to rapporteringspliktId,
+                    "opprettet" to rapporteringspliktOpprettet,
                     "gjelderFra" to rapporteringsplikt.rapporteringspliktFra,
                 ),
             ),
