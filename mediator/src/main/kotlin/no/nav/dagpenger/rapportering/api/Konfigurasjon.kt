@@ -54,6 +54,16 @@ fun Application.konfigurasjon(
                 ),
             )
         }
+        exception<java.lang.IllegalArgumentException> { call, cause ->
+            call.respond(
+                HttpStatusCode.BadRequest,
+                ProblemDTO(
+                    title = "Ulovlig kall",
+                    detail = cause.message,
+                    status = HttpStatusCode.MethodNotAllowed.value,
+                ),
+            )
+        }
     }
 }
 

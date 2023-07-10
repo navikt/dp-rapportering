@@ -34,7 +34,6 @@ import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -206,7 +205,6 @@ class RapporteringApiTest {
         }
     }
 
-    @Disabled
     @Test
     fun `Saksbehandler kan ikke godkjenne en rapporteringsperiode uten en begrunnelse`() {
         withRapporteringApi(
@@ -219,12 +217,9 @@ class RapporteringApiTest {
                 //language=JSON
                 body = """{"begrunnelse": "" }""",
             ).also { response ->
-                response.status shouldBe HttpStatusCode.OK
-                verify {
-                    mediatorMock.behandle(any<GodkjennPeriodeHendelse>())
-                }
+                response.status shouldBe HttpStatusCode.BadRequest
                 response.bodyAsText().let { json ->
-                    json shouldContainJsonKey "$.id"
+                    json.shouldContainJsonKeyValue("$.detail", "Saksbehandler må oppgi begrunnelse")
                 }
             }
         }
