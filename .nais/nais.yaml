@@ -42,6 +42,8 @@ spec:
   env:
     - name: BEREGNINGSDATO_STRATEGI
       value: {{beregningsdato.strategi}}
+    - name: GRUPPER_SAKSBEHANDLER
+      value: {{azure.grupper.saksbehandler}}
   azure:
     application:
       enabled: true
@@ -51,7 +53,7 @@ spec:
           - id: {{azure.grupper.saksbehandler}}
           - id: {{azure.grupper.beslutter}}
         extra:
-        - NAVident
+          - NAVident
   gcp:
     sqlInstances:
       - type: POSTGRES_14

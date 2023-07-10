@@ -70,12 +70,16 @@ object AuthFactory {
     }
 
     fun JWTAuthenticationProvider.Config.azureAd() {
+        val saksbehandlerGruppe = Configuration.properties[Configuration.Grupper.saksbehandler]
         verifier(JwkProvider(URL(azureAdConfiguration.jwksUri)), azureAdConfiguration.issuer) {
             withAudience(Configuration.properties[azure_app.client_id])
         }
         realm = Configuration.appName
         validate { credentials ->
-            // TODO: Sjekk gruppetilgang(?)
+            require(
+                credentials.payload.claims["groups"]?.asList(String::class.java)?.contains(saksbehandlerGruppe)
+                    ?: false,
+            )
             JWTPrincipal(credentials.payload)
         }
     }

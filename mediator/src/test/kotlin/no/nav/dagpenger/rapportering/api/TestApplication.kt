@@ -12,6 +12,7 @@ import io.ktor.http.content.TextContent
 import io.ktor.server.application.Application
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
+import no.nav.dagpenger.rapportering.Configuration
 import no.nav.security.mock.oauth2.MockOAuth2Server
 
 object TestApplication {
@@ -38,7 +39,12 @@ object TestApplication {
         mockOAuth2Server.issueToken(
             issuerId = AZUREAD_ISSUER_ID,
             audience = CLIENT_ID,
-            claims = mapOf("NAVident" to "123"),
+            claims = mapOf(
+                "NAVident" to "123",
+                "groups" to listOf(
+                    Configuration.properties[Configuration.Grupper.saksbehandler],
+                ),
+            ),
         ).serialize()
     }
 
