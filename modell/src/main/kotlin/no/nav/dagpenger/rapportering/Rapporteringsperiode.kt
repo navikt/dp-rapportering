@@ -299,7 +299,6 @@ class Rapporteringsperiode private constructor(
             if (!skalBeregnesStrategi.skalBeregnes(rapporteringsperiode.periode)) return
 
             hendelse.kontekst(this)
-            // TODO: Sjekk at perioden overlapper med et gyldig vedtak
             hendelse.info("Sender inn godkjent periode", mapOf("rapporteringsfrist" to hendelse.beregningsdato))
 
             rapporteringsperiode.tilstand(hendelse, Innsendt)
