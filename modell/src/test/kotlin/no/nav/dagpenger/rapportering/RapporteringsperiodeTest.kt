@@ -14,6 +14,7 @@ import no.nav.dagpenger.rapportering.helpers.januar
 import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
+import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Companion.erLåst
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
@@ -49,6 +50,36 @@ class RapporteringsperiodeTest {
         korrigertPeriode.behandle(nyAktivitetHendelse(korrigertPeriode.rapporteringsperiodeId, 6.januar))
         korrigertPeriode.behandle(godkjennPeriodeHendelse(korrigertPeriode.rapporteringsperiodeId))
         korrigertPeriode.tilstand shouldBe Godkjent
+    }
+
+    @Test
+    fun `kan ikke godkjenne korrigeringer som ikke er faktisk endring`() {
+        val innsendtPeriode = lagRapporteringsperiode(
+            fom = 1.januar,
+            tom = 14.januar,
+            tilstand = Innsendt,
+            aktiviteter = listOf(
+                Aktivitet.Arbeid(6.januar, 3),
+            ),
+        )
+        innsendtPeriode.behandle(KorrigerPeriodeHendelse(testIdent, innsendtPeriode.rapporteringsperiodeId))
+        val korrigertPeriode = innsendtPeriode.korrigertAv
+
+        innsendtPeriode.tilstand shouldBe Innsendt
+        korrigertPeriode.tilstand shouldBe TilUtfylling
+        korrigertPeriode.korrigerer shouldBe innsendtPeriode
+
+        korrigertPeriode.behandle(
+            SlettAktivitetHendelse(
+                testIdent,
+                korrigertPeriode.rapporteringsperiodeId,
+                korrigertPeriode.sisteAktivitet.uuid,
+            ),
+        )
+        korrigertPeriode.behandle(nyAktivitetHendelse(korrigertPeriode.rapporteringsperiodeId, 6.januar))
+        shouldThrow<IllegalStateException> {
+            korrigertPeriode.behandle(godkjennPeriodeHendelse(korrigertPeriode.rapporteringsperiodeId))
+        }
     }
 
     @Test
@@ -107,6 +138,8 @@ class RapporteringsperiodeTest {
     private val Rapporteringsperiode.korrigertAv get() = TestVisitor(this).korrigertAv!!
     private val Rapporteringsperiode.aktiviteter get() = TestVisitor(this).aktiviteter
 
+    private val Rapporteringsperiode.sisteAktivitet get() = TestVisitor(this).aktiviteter.last()
+
     private class TestVisitor(rapporteringsperiode: Rapporteringsperiode) : RapporteringsperiodVisitor {
         lateinit var tilstand: Rapporteringsperiode.TilstandType
         var korrigerer: Rapporteringsperiode? = null
@@ -148,6 +181,7 @@ class RapporteringsperiodeTest {
         tom: LocalDate,
         tilstand: Rapporteringsperiode.TilstandType,
         id: UUID = UUID.randomUUID(),
+        aktiviteter: List<Aktivitet> = emptyList(),
     ): Rapporteringsperiode {
         return Rapporteringsperiode.rehydrer(
             rapporteringsperiodeId = id,
@@ -156,7 +190,9 @@ class RapporteringsperiodeTest {
             tilOgMed = tom,
             tilstand = tilstand,
             opprettet = LocalDateTime.now(),
-            tidslinje = Aktivitetstidslinje(fom..tom),
+            tidslinje = Aktivitetstidslinje(fom..tom).also {
+                aktiviteter.forEach(it::leggTilAktivitet)
+            },
             Godkjenningslogg(),
             korrigerer = null,
         )

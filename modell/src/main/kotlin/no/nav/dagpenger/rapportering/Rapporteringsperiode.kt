@@ -119,7 +119,7 @@ class Rapporteringsperiode private constructor(
 
     fun leggTilFritak(dato: LocalDate) {}
 
-    private fun harEndring() = korrigerer?.tidslinje == this.tidslinje
+    private fun harEndring() = korrigerer?.tidslinje != this.tidslinje
 
     fun accept(visitor: RapporteringsperiodVisitor) {
         korrigertAv?.accept(visitor)
@@ -263,7 +263,11 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiode: Rapporteringsperiode,
         ) {
             hendelse.kontekst(this)
-            if (rapporteringsperiode.korrigerer != null && !rapporteringsperiode.harEndring()) throw IllegalStateException("Kan ikke godkjenne korrigering uten endringer")
+            if (rapporteringsperiode.korrigerer != null && !rapporteringsperiode.harEndring()) {
+                throw IllegalStateException(
+                    "Kan ikke godkjenne korrigering uten endringer",
+                )
+            }
             rapporteringsperiode.godkjenningslogg.leggTil(hendelse.godkjenning)
             rapporteringsperiode.tidslinje.forEach { it.håndter(hendelse) }
             rapporteringsperiode.tilstand(hendelse, Godkjent)

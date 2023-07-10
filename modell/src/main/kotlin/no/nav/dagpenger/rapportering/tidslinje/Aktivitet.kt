@@ -24,6 +24,7 @@ sealed class Aktivitet(
     companion object {
         fun perDag(aktiviteter: Collection<Aktivitet>) = aktiviteter.associateBy { it.dato }
         fun erLåst(aktivitet: Aktivitet) = aktivitet.tilstand == Låst
+        fun erSlettet(aktivitet: Aktivitet) = aktivitet.tilstand == Slettet
 
         fun rehydrer(
             uuid: UUID,
@@ -51,6 +52,7 @@ sealed class Aktivitet(
     fun håndter(hendelse: GodkjennPeriodeHendelse) {
         tilstand.behandle(hendelse, this)
     }
+
     fun håndter(hendelse: AvgodkjennPeriodeHendelse) {
         tilstand.behandle(hendelse, this)
     }
@@ -60,7 +62,8 @@ sealed class Aktivitet(
         tilstand.behandle(hendelse, this)
     }
 
-    override fun equals(other: Any?) = other is Aktivitet && dato == other.dato && tid == other.tid && type == other.type
+    override fun equals(other: Any?) =
+        other is Aktivitet && dato == other.dato && tid == other.tid && type == other.type
 
     override fun hashCode() = Objects.hash(dato, tid, type)
 

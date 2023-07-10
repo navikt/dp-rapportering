@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Arbeid
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Ferie
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Syk
+import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Companion.erSlettet
 import java.time.LocalDate
 import java.util.Objects
 
@@ -84,8 +85,7 @@ class Dag(
     override fun hashCode() = Objects.hash(dato, aktiviteter)
 
     enum class StrategiType {
-        EnAktivitet,
-        IngentingErMulig,
+        EnAktivitet, IngentingErMulig,
     }
 
     private interface MuligeAktiviteterStrategi {
@@ -96,7 +96,7 @@ class Dag(
     private object EnAktivitetStrategi : MuligeAktiviteterStrategi {
         override val type = StrategiType.EnAktivitet
         override fun mulige(aktiviteter: List<Aktivitet>) =
-            if (aktiviteter.isEmpty()) listOf(Arbeid, Syk, Ferie) else emptyList()
+            if (aktiviteter.filterNot { erSlettet(it) }.isEmpty()) listOf(Arbeid, Syk, Ferie) else emptyList()
     }
 
     private object IngentingErMulig : MuligeAktiviteterStrategi {
