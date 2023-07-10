@@ -37,4 +37,6 @@ data class Aktivitetstidslinje internal constructor(
             it.kopier()
         }.toMutableSet(),
     )
+
+    override fun equals(other: Any?) = other is Aktivitetstidslinje && dager == other.dager
 }

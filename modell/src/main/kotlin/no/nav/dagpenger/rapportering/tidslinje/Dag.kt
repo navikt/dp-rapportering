@@ -11,6 +11,7 @@ import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Arbeid
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Ferie
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.AktivitetType.Syk
 import java.time.LocalDate
+import java.util.Objects
 
 class Dag(
     internal val dato: LocalDate,
@@ -77,6 +78,10 @@ class Dag(
     }
 
     fun kopier() = Dag(dato, aktiviteter.kopier())
+
+    override fun equals(other: Any?) = other is Dag && dato == other.dato && aktiviteter == other.aktiviteter
+
+    override fun hashCode() = Objects.hash(dato, aktiviteter)
 
     enum class StrategiType {
         EnAktivitet,

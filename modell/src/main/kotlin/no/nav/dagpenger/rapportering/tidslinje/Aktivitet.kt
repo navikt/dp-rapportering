@@ -5,6 +5,7 @@ import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import java.time.LocalDate
+import java.util.Objects
 import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
@@ -58,6 +59,10 @@ sealed class Aktivitet(
         if (hendelse.aktivitetId != uuid) return
         tilstand.behandle(hendelse, this)
     }
+
+    override fun equals(other: Any?) = other is Aktivitet && dato == other.dato && tid == other.tid && type == other.type
+
+    override fun hashCode() = Objects.hash(dato, tid, type)
 
     enum class TilstandType {
         Åpen, Låst, Slettet
