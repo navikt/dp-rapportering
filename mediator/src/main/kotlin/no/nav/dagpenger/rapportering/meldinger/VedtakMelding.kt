@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.meldinger
 import no.nav.dagpenger.rapportering.IHendelseMediator
 import no.nav.dagpenger.rapportering.hendelser.VedtakAvslåttHendelse
 import no.nav.dagpenger.rapportering.hendelser.VedtakInnvilgetHendelse
+import no.nav.dagpenger.rapportering.strategiForBeregningsdato
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.asLocalDate
@@ -19,7 +20,7 @@ internal class VedtakMelding(
 
     override fun behandle(mediator: IHendelseMediator, context: MessageContext) {
         when (packet.utfall()) {
-            "Innvilget" -> mediator.behandle(VedtakInnvilgetHendelse(id, ident, virkningsdato, opprettet))
+            "Innvilget" -> mediator.behandle(VedtakInnvilgetHendelse(id, ident, virkningsdato, opprettet, strategiForBeregningsdato))
             "Avslått" -> mediator.behandle(VedtakAvslåttHendelse(id, ident, virkningsdato, opprettet))
             else -> throw IllegalArgumentException("Ugyldig utfall, kan ikke mappe ${packet.utfall()}")
         }

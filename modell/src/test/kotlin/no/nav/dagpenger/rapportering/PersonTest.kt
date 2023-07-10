@@ -8,6 +8,7 @@ import no.nav.dagpenger.rapportering.RapporteringspliktType.Søknad
 import no.nav.dagpenger.rapportering.RapporteringspliktType.Vedtak
 import no.nav.dagpenger.rapportering.helpers.TestData.godkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.nyAktivitetHendelse
+import no.nav.dagpenger.rapportering.helpers.TestData.nyVedtakInnvilgetHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.søknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.testIdent
 import no.nav.dagpenger.rapportering.helpers.TestData.testPerson
@@ -15,7 +16,6 @@ import no.nav.dagpenger.rapportering.helpers.januar
 import no.nav.dagpenger.rapportering.hendelser.BeregningsdatoPassertHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.VedtakAvslåttHendelse
-import no.nav.dagpenger.rapportering.hendelser.VedtakInnvilgetHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -94,9 +94,7 @@ class PersonTest {
         person.behandle(fristHendelse)
 
         observer.tilstand shouldBe Godkjent.name
-        person.behandle(
-            VedtakInnvilgetHendelse(UUID.randomUUID(), testIdent, LocalDate.now(), LocalDateTime.now()),
-        )
+        person.behandle(nyVedtakInnvilgetHendelse())
         person.behandle(
             BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, LocalDate.now().plusDays(14)),
         )
@@ -163,17 +161,12 @@ class PersonTest {
 
         person.nyRapporteringsplikt(RapporteringspliktSøknad(rapporteringspliktFra = 1.januar.atStartOfDay()))
         person.rapporteringspliktType shouldBe Søknad
-        person.behandle(
-            VedtakInnvilgetHendelse(
-                UUID.randomUUID(),
-                testIdent,
-                virkningsdato = 1.januar,
-                opprettet = 4.januar.atStartOfDay(),
-            ),
-        )
+        person.rapporteringsplikt.rapporteringspliktFra shouldBe 1.januar.atStartOfDay()
+
+        person.behandle(nyVedtakInnvilgetHendelse(2.januar))
 
         person.rapporteringspliktType shouldBe Vedtak
-        person.rapporteringsplikt.rapporteringspliktFra shouldBe 1.januar.atStartOfDay()
+        person.rapporteringsplikt.rapporteringspliktFra shouldBe 2.januar.atStartOfDay()
     }
 
     private val Person.aktivRapporteringsperiode get() = TestVisitor(this).rapporteringsperioder.last().rapporteringsperiodeId

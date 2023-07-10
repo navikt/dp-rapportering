@@ -110,7 +110,14 @@ class MediatorTest {
             SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID())
         mediator.behandle(hendelse)
         mediator.behandle(rapporteringspliktDatoHendelse)
-        mediator.behandle(VedtakInnvilgetHendelse(UUID.randomUUID(), testIdent, LocalDate.now(), LocalDateTime.now()))
+        mediator.behandle(
+            VedtakInnvilgetHendelse(
+                UUID.randomUUID(),
+                testIdent,
+                LocalDate.now(),
+                LocalDateTime.now(),
+            ) { _, tom -> tom },
+        )
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
         mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))
@@ -129,7 +136,14 @@ class MediatorTest {
             SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID())
         mediator.behandle(hendelse)
         mediator.behandle(rapporteringspliktDatoHendelse)
-        mediator.behandle(VedtakInnvilgetHendelse(UUID.randomUUID(), testIdent, LocalDate.now(), LocalDateTime.now()))
+        mediator.behandle(
+            VedtakInnvilgetHendelse(
+                UUID.randomUUID(),
+                testIdent,
+                LocalDate.now(),
+                LocalDateTime.now(),
+            ) { _, tom -> tom },
+        )
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
         mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))

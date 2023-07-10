@@ -143,8 +143,7 @@ class RapporteringspliktVedtak(
         hendelse.kontekst(this)
         hendelse.info("Oppretter ny rapporteringsperiode på grunn av vedtak")
 
-        // TODO: Strategi for beregningsdato bør komme sammen med hendelsen
-        Rapporteringsperiode(rapporteringspliktFra.toLocalDate()) { _, tom -> tom }.also { periode ->
+        Rapporteringsperiode(rapporteringspliktFra.toLocalDate(), hendelse.beregningsdatoStrategi).also { periode ->
             periode.gjelderFra.datesUntil(rapporteringspliktFra.toLocalDate()).forEach {
                 periode.leggTilFritak(it)
             }

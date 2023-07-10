@@ -122,7 +122,7 @@ class PostgresRepositoryTest {
                         testIdent,
                         LocalDate.now(),
                         LocalDateTime.now(),
-                    ),
+                    ) { _, tom -> tom },
                 )
                 repository.lagre(person)
             }

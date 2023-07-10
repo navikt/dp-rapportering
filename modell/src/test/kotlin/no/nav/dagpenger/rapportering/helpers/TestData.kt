@@ -6,6 +6,7 @@ import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import no.nav.dagpenger.rapportering.hendelser.VedtakInnvilgetHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -27,6 +28,13 @@ internal object TestData {
     fun nyRapporteringsperiodeHendelse(
         fom: LocalDate = LocalDate.now().minusDays(14),
     ) = NyRapporteringssyklusHendelse(UUID.randomUUID(), testIdent, fom) { _, tom -> tom }
+
+    fun nyVedtakInnvilgetHendelse(virkningsdato: LocalDate = LocalDate.now()) = VedtakInnvilgetHendelse(
+        meldingsreferanseId = UUID.randomUUID(),
+        ident = testIdent,
+        virkningsdato = virkningsdato,
+        opprettet = LocalDateTime.now(),
+    ) { _, tom -> tom }
 
     fun nyRapporteringspliktDatoHendelse() = RapporteringspliktDatoHendelse(
         UUID.randomUUID(),
