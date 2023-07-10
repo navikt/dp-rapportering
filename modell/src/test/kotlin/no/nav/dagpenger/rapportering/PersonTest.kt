@@ -88,13 +88,19 @@ class PersonTest {
             person.behandle(hendelse)
         }
 
+        // Rapporteringsperioder skal ikke sendes inn før person har rapporteringsplikt pga vedtak i perioden
         observer.tilstand shouldBe Godkjent.name
         val fristHendelse = BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, LocalDate.now().plusDays(14))
         person.behandle(fristHendelse)
 
+        observer.tilstand shouldBe Godkjent.name
+        person.behandle(
+            VedtakInnvilgetHendelse(UUID.randomUUID(), testIdent, LocalDate.now(), LocalDateTime.now()),
+        )
+        person.behandle(
+            BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, LocalDate.now().plusDays(14)),
+        )
         observer.tilstand shouldBe Innsendt.name
-
-        println(person)
     }
 
     @Test

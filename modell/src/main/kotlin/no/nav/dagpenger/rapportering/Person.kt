@@ -122,7 +122,11 @@ class Person private constructor(
     }
 
     fun behandle(hendelse: BeregningsdatoPassertHendelse) {
-        rapporteringsperioder.forEach { it.behandle(hendelse) }
+        rapporteringsperioder.forEach { rapporteringsperiode ->
+            rapporteringsperiode.behandle(hendelse) { periode ->
+                rapporteringsplikt.any(periode) { it is RapporteringspliktVedtak }
+            }
+        }
     }
 
     fun behandle(hendelse: KorrigerPeriodeHendelse) {

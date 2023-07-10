@@ -179,10 +179,10 @@ class Rapporteringsperiode private constructor(
         return true
     }
 
-    fun behandle(hendelse: BeregningsdatoPassertHendelse) {
+    fun behandle(hendelse: BeregningsdatoPassertHendelse, skalBeregnesStrategi: SkalBeregnesStrategi) {
         hendelse.kontekst(this)
 
-        tilstand.behandle(hendelse, this)
+        tilstand.behandle(hendelse, this, skalBeregnesStrategi)
     }
 
     fun behandle(hendelse: KorrigerPeriodeHendelse): Boolean {
@@ -232,7 +232,11 @@ class Rapporteringsperiode private constructor(
             throw IllegalStateException("Forventet ikke sletting av aktivitet i tilstand ${type.name}")
         }
 
-        fun behandle(hendelse: BeregningsdatoPassertHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        fun behandle(
+            hendelse: BeregningsdatoPassertHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+            skalBeregnesStrategi: SkalBeregnesStrategi,
+        ) {
             // noop
         }
 
@@ -242,8 +246,7 @@ class Rapporteringsperiode private constructor(
 
         fun leaving(rapporteringsperiode: Rapporteringsperiode, hendelse: IAktivitetslogg) {}
 
-        override fun toSpesifikkKontekst() =
-            SpesifikkKontekst("Tilstand", mapOf("tilstand" to type.name))
+        override fun toSpesifikkKontekst() = SpesifikkKontekst("Tilstand", mapOf("tilstand" to type.name))
 
         fun behandle(hendelse: ManuellInnsendingHendelse, rapporteringsperiode: Rapporteringsperiode) {
             throw IllegalStateException("Forventer manuell innsending av rapporteringsperiode i tilstand ${type.name}")
@@ -287,8 +290,13 @@ class Rapporteringsperiode private constructor(
     // Bruker har godkjent, men ikke sendt videre
     private object Godkjent : Rapporteringsperiodetilstand {
         override val type = TilstandType.Godkjent
-        override fun behandle(hendelse: BeregningsdatoPassertHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        override fun behandle(
+            hendelse: BeregningsdatoPassertHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+            skalBeregnesStrategi: SkalBeregnesStrategi,
+        ) {
             if (rapporteringsperiode.beregnesEtter.isAfter(hendelse.beregningsdato)) return
+            if (!skalBeregnesStrategi.skalBeregnes(rapporteringsperiode.periode)) return
 
             hendelse.kontekst(this)
             // TODO: Sjekk at perioden overlapper med et gyldig vedtak
@@ -388,8 +396,11 @@ class Rapporteringsperiode private constructor(
     fun registrer(observer: RapporteringsperiodeObserver) = observers.add(observer)
 
     enum class TilstandType {
-        TilUtfylling,
-        Godkjent,
-        Innsendt,
+        TilUtfylling, Godkjent, Innsendt,
     }
+}
+
+fun interface SkalBeregnesStrategi {
+
+    fun skalBeregnes(periode: ClosedRange<LocalDate>): Boolean
 }

@@ -59,7 +59,7 @@ class IngenRapporteringsplikt(
 
     override fun behandle(person: Person, hendelse: RapporteringspliktDatoHendelse) {
         hendelse.kontekst(this)
-        hendelse.info("Oppretter rapporteringsplikt")
+        hendelse.info("Oppretter rapporteringsplikt på grunn av søknad")
 
         person.nyRapporteringsplikt(
             RapporteringspliktSøknad(rapporteringspliktFra = hendelse.gjelderFra.atStartOfDay()).also {
@@ -68,8 +68,16 @@ class IngenRapporteringsplikt(
         )
     }
 
-    // TODO: Hva vil vi gjøre her? Ingenting, opprette rapporteringsplikt på virkningsdato, opprette rp fra dagens dato
-    override fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse) {}
+    override fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Oppretter rapporteringsplikt på grunn av vedtak")
+
+        person.nyRapporteringsplikt(
+            RapporteringspliktVedtak(rapporteringspliktFra = hendelse.virkningsdato.atStartOfDay()).also {
+                it.behandle(person, hendelse)
+            },
+        )
+    }
 
     override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {}
 }
@@ -77,8 +85,7 @@ class IngenRapporteringsplikt(
 class RapporteringspliktSøknad(
     override val uuid: UUID = UUID.randomUUID(),
     override val rapporteringspliktFra: LocalDateTime,
-) :
-    Rapporteringsplikt {
+) : Rapporteringsplikt {
     override val type = RapporteringspliktType.Søknad
 
     override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {
@@ -134,6 +141,15 @@ class RapporteringspliktVedtak(
 
     override fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse) {
         hendelse.kontekst(this)
-        hendelse.info("Har allerede rapporteringsplikt type Vedtak.")
+        hendelse.info("Oppretter ny rapporteringsperiode på grunn av vedtak")
+
+        // TODO: Strategi for beregningsdato bør komme sammen med hendelsen
+        Rapporteringsperiode(rapporteringspliktFra.toLocalDate()) { _, tom -> tom }.also { periode ->
+            periode.gjelderFra.datesUntil(rapporteringspliktFra.toLocalDate()).forEach {
+                periode.leggTilFritak(it)
+            }
+
+            person.leggTilRapporteringsperiode(periode, hendelse)
+        }
     }
 }

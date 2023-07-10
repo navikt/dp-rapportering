@@ -14,6 +14,7 @@ import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import no.nav.dagpenger.rapportering.hendelser.VedtakInnvilgetHendelse
 import no.nav.dagpenger.rapportering.repository.PostgresRepository
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
@@ -109,6 +110,7 @@ class MediatorTest {
             SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID())
         mediator.behandle(hendelse)
         mediator.behandle(rapporteringspliktDatoHendelse)
+        mediator.behandle(VedtakInnvilgetHendelse(UUID.randomUUID(), testIdent, LocalDate.now(), LocalDateTime.now()))
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
         mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))
@@ -127,6 +129,7 @@ class MediatorTest {
             SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID())
         mediator.behandle(hendelse)
         mediator.behandle(rapporteringspliktDatoHendelse)
+        mediator.behandle(VedtakInnvilgetHendelse(UUID.randomUUID(), testIdent, LocalDate.now(), LocalDateTime.now()))
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
         mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))

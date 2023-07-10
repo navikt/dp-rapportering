@@ -20,6 +20,7 @@ import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
+import no.nav.dagpenger.rapportering.hendelser.VedtakInnvilgetHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
 import org.junit.jupiter.api.Test
@@ -116,21 +117,12 @@ class PostgresRepositoryTest {
             // Opprett person med innsendt søknad og rapporteringsperiode
             Person(testIdent).let { person ->
                 person.behandle(
-                    SøknadInnsendtHendelse(
+                    VedtakInnvilgetHendelse(
                         UUID.randomUUID(),
                         testIdent,
+                        LocalDate.now(),
                         LocalDateTime.now(),
-                        søknadId = UUID.randomUUID(),
                     ),
-                )
-                person.behandle(
-                    RapporteringspliktDatoHendelse(
-                        UUID.randomUUID(),
-                        testIdent,
-                        LocalDateTime.now(),
-                        LocalDate.now(),
-                        LocalDate.now(),
-                    ) { _, tom -> tom },
                 )
                 repository.lagre(person)
             }

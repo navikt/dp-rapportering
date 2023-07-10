@@ -34,6 +34,10 @@ internal open class TemporalCollection<R> {
             visitor.visit(it.key, it.value)
         }
     }
+
+    fun any(periode: ClosedRange<LocalDate>, block: (R) -> Boolean) = contents.filter {
+        periode.contains(it.key.toLocalDate())
+    }.any { block(it.value) }
 }
 
 interface TemporalCollectionVisitor<R> {
