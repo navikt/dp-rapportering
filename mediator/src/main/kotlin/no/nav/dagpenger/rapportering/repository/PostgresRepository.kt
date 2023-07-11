@@ -269,7 +269,7 @@ internal class PostgresRepository(private val ds: DataSource) :
                 val kilde = when {
                     sluttbrukerIdent != null -> Godkjenning.Sluttbruker(sluttbrukerIdent)
                     saksbehandlerId != null -> Godkjenning.Saksbehandler(saksbehandlerId)
-                    else -> throw IllegalStateException("")
+                    else -> throw IllegalStateException("Ukjent kilde.")
                 }
 
                 Godkjenning(
