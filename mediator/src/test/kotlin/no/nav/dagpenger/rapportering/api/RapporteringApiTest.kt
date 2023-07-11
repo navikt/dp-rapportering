@@ -8,7 +8,6 @@ import io.kotest.matchers.string.shouldContain
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
-import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
@@ -183,7 +182,23 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `Saksbehandler skal kunne godkjenne en rapporteringsperiode`() {
+    fun `Bruker skal kunne avgodkjenne en rapporteringsperiode`() {
+        withRapporteringApi(
+            rapporteringsperioder = listOf(testPeriode),
+        ) {
+            client.post("/rapporteringsperioder/$testPeriodeId/avgodkjenn") {
+                autentisert()
+            }.also { response ->
+                response.status shouldBe HttpStatusCode.OK
+                verify {
+                    mediatorMock.behandle(any<AvgodkjennPeriodeHendelse>())
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `Saksbehandler skal kunne godkjenne og avgodkjenne en rapporteringsperiode`() {
         withRapporteringApi(
             rapporteringsperioder = listOf(testPeriode),
         ) {
@@ -202,11 +217,27 @@ class RapporteringApiTest {
                     json shouldContainJsonKey "$.id"
                 }
             }
+
+            autentisert(
+                token = testAzureAdToken,
+                endepunkt = "/rapporteringsperioder/$testPeriodeId/avgodkjenn",
+                httpMethod = HttpMethod.Post,
+                //language=JSON
+                body = """{"begrunnelse": "Begrunnelse" }""",
+            ).also { response ->
+                response.status shouldBe HttpStatusCode.OK
+                verify {
+                    mediatorMock.behandle(any<AvgodkjennPeriodeHendelse>())
+                }
+                response.bodyAsText().let { json ->
+                    json shouldContainJsonKey "$.id"
+                }
+            }
         }
     }
 
     @Test
-    fun `Saksbehandler kan ikke godkjenne en rapporteringsperiode uten en begrunnelse`() {
+    fun `Saksbehandler kan ikke godkjenne eller avgodkjenne en rapporteringsperiode uten en begrunnelse`() {
         withRapporteringApi(
             rapporteringsperioder = listOf(testPeriode),
         ) {
@@ -222,20 +253,17 @@ class RapporteringApiTest {
                     json.shouldContainJsonKeyValue("$.detail", "Saksbehandler må oppgi begrunnelse")
                 }
             }
-        }
-    }
 
-    @Test
-    fun `Skal kunne avgodkjenne en rapporteringsperiode`() {
-        withRapporteringApi(
-            rapporteringsperioder = listOf(testPeriode),
-        ) {
-            client.put("/rapporteringsperioder/$testPeriodeId/avgodkjenn") {
-                autentisert()
-            }.also { response ->
-                response.status shouldBe HttpStatusCode.OK
-                verify {
-                    mediatorMock.behandle(any<AvgodkjennPeriodeHendelse>())
+            autentisert(
+                token = testAzureAdToken,
+                endepunkt = "/rapporteringsperioder/$testPeriodeId/avgodkjenn",
+                httpMethod = HttpMethod.Post,
+                //language=JSON
+                body = """{"begrunnelse": "" }""",
+            ).also { response ->
+                response.status shouldBe HttpStatusCode.BadRequest
+                response.bodyAsText().let { json ->
+                    json.shouldContainJsonKeyValue("$.detail", "Saksbehandler må oppgi begrunnelse")
                 }
             }
         }

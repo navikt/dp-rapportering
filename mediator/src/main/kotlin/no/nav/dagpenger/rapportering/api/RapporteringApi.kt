@@ -12,7 +12,6 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
-import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.Godkjenningsendring
@@ -158,14 +157,28 @@ internal fun Application.rapporteringApi(
                     }
 
                     route("/avgodkjenn") {
-                        put {
+                        post {
                             val ident = tilgangskontroll.verifiserTilgang(call)
                             val periodeId = call.finnUUID("periodeId")
 
-                            // TODO: Fiks riktig hendelse her
-                            mediator.behandle(AvgodkjennPeriodeHendelse(ident, periodeId))
+                            val hendelse = when (call.issuer()) {
+                                AzureAD -> {
+                                    val avgodkjenning = call.receive<GodkjennNyDTO>()
+                                    require(avgodkjenning.begrunnelse.isNotEmpty()) { "Saksbehandler må oppgi begrunnelse" }
 
-                            call.respond(HttpStatusCode.OK)
+                                    AvgodkjennPeriodeHendelse(
+                                        ident,
+                                        periodeId,
+                                        Godkjenningsendring.Saksbehandler(call.saksbehandlerId()),
+                                        avgodkjenning.begrunnelse,
+                                    )
+                                }
+
+                                TokenX -> AvgodkjennPeriodeHendelse(ident, periodeId)
+                            }
+
+                            mediator.behandle(hendelse)
+                            call.respond(HttpStatusCode.OK, hendelse.godkjenningsendring)
                         }
                     }
 
