@@ -155,7 +155,7 @@ paths:
         in: path
         required: true
   /rapporteringsperioder/{periodeId}/avgodkjenn:
-    put:
+    post:
       responses:
         '200':
           description: OK
@@ -167,6 +167,12 @@ paths:
       security:
         - azureAd: [ ]
         - tokenX: [ ]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Godkjenn.Ny'
     parameters:
       - name: periodeId
         description: ID til rapporteringsperioden
