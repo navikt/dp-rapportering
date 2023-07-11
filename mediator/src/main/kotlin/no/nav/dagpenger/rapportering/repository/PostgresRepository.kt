@@ -257,7 +257,7 @@ internal class PostgresRepository(private val ds: DataSource) :
                 """
                 SELECT g.*, s.saksbehandler_id, sb.ident AS sluttbruker_ident
                 FROM godkjenningsendring g
-                JOIN godkjenning_utført_av gu ON g.utført_av = gu.id
+                JOIN godkjenning_utført_av gu ON gu.godkjenningsendring_id = g.uuid
                 LEFT JOIN saksbehandler s ON s.id = gu.saksbehandler
                 LEFT JOIN sluttbruker sb ON sb.id = gu.sluttbruker
                 WHERE g.rapporteringsperiode_id = :rapporteringsperiodeId
@@ -488,20 +488,13 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
                 ),
             )
         }
-        // TODO: Legg til godkjennings id i godkjenning_utført_av med unique constraint
         queries.add(
             queryOf(
                 //language=PostgreSQL
                 """
-                WITH utført_av_insert AS (
-                    INSERT INTO godkjenning_utført_av (kilde, saksbehandler, sluttbruker)
-                        VALUES (:kilde,
-                                (SELECT id FROM saksbehandler WHERE saksbehandler_id = :saksbehandler),
-                                (SELECT id FROM sluttbruker WHERE ident = :sluttbruker))
-                        RETURNING id)
                 INSERT
-                INTO godkjenningsendring (uuid, rapporteringsperiode_id, opprettet, begrunnelse, utført_av)
-                VALUES (:uuid, :rapporteringsperiodeId, :opprettet, :begrunnelse, (SELECT id FROM utført_av_insert))
+                INTO godkjenningsendring (uuid, rapporteringsperiode_id, opprettet, begrunnelse)
+                VALUES (:uuid, :rapporteringsperiodeId, :opprettet, :begrunnelse)
                 ON CONFLICT (uuid) DO UPDATE SET avgodkjent_av = :avgodkjent
                 """.trimIndent(),
                 mapOf(
@@ -510,7 +503,23 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
                     "opprettet" to opprettet,
                     "begrunnelse" to begrunnelse,
                     "avgodkjent" to avgodkjent,
+                ),
+            ),
+        )
+
+        queries.add(
+            queryOf(
+                //language=PostgreSQL
+                """
+                   INSERT INTO godkjenning_utført_av (kilde, godkjenningsendring_id, saksbehandler, sluttbruker)
+                        VALUES (:kilde, :godkjenningsendring_id,
+                                (SELECT id FROM saksbehandler WHERE saksbehandler_id = :saksbehandler),
+                                (SELECT id FROM sluttbruker WHERE ident = :sluttbruker))
+                        ON CONFLICT (godkjenningsendring_id) DO NOTHING
+                """.trimIndent(),
+                mapOf(
                     "kilde" to utførtAv::class.java.simpleName,
+                    "godkjenningsendring_id" to id,
                     "saksbehandler" to utførtAv.id,
                     "sluttbruker" to utførtAv.id,
                 ),

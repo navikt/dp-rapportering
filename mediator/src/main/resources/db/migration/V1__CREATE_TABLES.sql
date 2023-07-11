@@ -68,15 +68,6 @@ CREATE TABLE sluttbruker
     ident TEXT NOT NULL UNIQUE
 );
 
-CREATE TABLE godkjenning_utført_av
-(
-    id            BIGSERIAL PRIMARY KEY,
-    kilde         TEXT NOT NULL,
-    saksbehandler BIGINT REFERENCES saksbehandler (id),
-    sluttbruker   BIGINT REFERENCES sluttbruker (id),
-    CONSTRAINT minst_en_utfører CHECK (saksbehandler IS NOT NULL OR sluttbruker IS NOT NULL)
-);
-
 CREATE TABLE godkjenningsendring
 (
     id                      BIGSERIAL PRIMARY KEY,
@@ -84,6 +75,15 @@ CREATE TABLE godkjenningsendring
     rapporteringsperiode_id uuid        NOT NULL REFERENCES rapporteringsperiode (uuid) ON DELETE CASCADE,
     opprettet               TIMESTAMP   NOT NULL,
     avgodkjent_av           BIGINT      NULL REFERENCES godkjenningsendring (id) ON DELETE CASCADE,
-    begrunnelse             TEXT,
-    utført_av               BIGINT      NOT NULL REFERENCES godkjenning_utført_av (id)
+    begrunnelse             TEXT
+);
+
+CREATE TABLE godkjenning_utført_av
+(
+    id            BIGSERIAL PRIMARY KEY,
+    kilde         TEXT NOT NULL,
+    godkjenningsendring_id uuid UNIQUE NOT NULL REFERENCES godkjenningsendring (uuid) ON DELETE CASCADE,
+    saksbehandler BIGINT REFERENCES saksbehandler (id),
+    sluttbruker   BIGINT REFERENCES sluttbruker (id),
+    CONSTRAINT minst_en_utfører CHECK (saksbehandler IS NOT NULL OR sluttbruker IS NOT NULL)
 );
