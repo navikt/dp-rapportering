@@ -22,7 +22,7 @@ jobs:
           distribution: temurin
           java-version: 19
 
-      - uses: gradle/gradle-build-action@v2.5.1
+      - uses: gradle/gradle-build-action@v2.6.0
         with:
           arguments: --configuration-cache build installDist
           gradle-home-cache-cleanup: true
@@ -33,7 +33,7 @@ jobs:
         with:
           junit_files: "**/build/test-results/test/TEST-*.xml"
 
-      - uses: gradle/gradle-build-action@v2.5.1
+      - uses: gradle/gradle-build-action@v2.6.0
         with:
           arguments: --init-script cyclonedx.gradle :mediator:cyclonedxBom
 
