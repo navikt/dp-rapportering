@@ -86,6 +86,7 @@ internal fun Application.rapporteringApi(
                 }
                 // TODO: Endepunkt for å manuelt opprette rapporteringsplikt. Vi burde nok inneføre en egen hendelse istedenfor SøknadInnsendt + RapporteringspliktDato
                 post<RapporteringsperiodeNyDTO> {
+                    throw IllegalAccessError("Ikke bruk denne :)")
                     val fom = it.fraOgMed?.let { fraOgMed -> fraOgMed.atStartOfDay() } ?: LocalDateTime.now()
                     val harGjeldende = rapporteringsperiodeRepository
                         .hentRapporteringsperiodeFor(it.ident, fom.toLocalDate())
