@@ -488,6 +488,7 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
                 ),
             )
         }
+        // TODO: Legg til godkjennings id i godkjenning_utført_av med unique constraint
         queries.add(
             queryOf(
                 //language=PostgreSQL

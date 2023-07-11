@@ -162,6 +162,7 @@ internal fun Application.rapporteringApi(
                             val ident = tilgangskontroll.verifiserTilgang(call)
                             val periodeId = call.finnUUID("periodeId")
 
+                            // TODO: Fiks riktig hendelse her
                             mediator.behandle(AvgodkjennPeriodeHendelse(ident, periodeId))
 
                             call.respond(HttpStatusCode.OK)
