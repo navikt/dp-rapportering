@@ -268,7 +268,7 @@ class Rapporteringsperiode private constructor(
                     "Kan ikke godkjenne korrigering uten endringer",
                 )
             }
-            rapporteringsperiode.godkjenningslogg.leggTil(hendelse.godkjenning)
+            rapporteringsperiode.godkjenningslogg.leggTil(hendelse.godkjenningsendring)
             rapporteringsperiode.tidslinje.forEach { it.håndter(hendelse) }
             rapporteringsperiode.tilstand(hendelse, Godkjent)
         }
@@ -324,7 +324,7 @@ class Rapporteringsperiode private constructor(
             hendelse.kontekst(this)
             hendelse.info("Avgodkjenner periode")
 
-            rapporteringsperiode.godkjenningslogg.avgodkjenn()
+            rapporteringsperiode.godkjenningslogg.avgodkjenn(hendelse.godkjenningsendring)
             rapporteringsperiode.tidslinje.forEach { it.håndter(hendelse) }
             rapporteringsperiode.tilstand(hendelse, TilUtfylling)
         }

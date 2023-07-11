@@ -6,4 +6,4 @@ CREATE INDEX ON rapporteringsplikt (person_id, type);
 
 CREATE INDEX ON dag (rapporteringsperiode_id);
 
-CREATE INDEX ON godkjenning (rapporteringsperiode_id);
+CREATE INDEX ON godkjenningsendring (rapporteringsperiode_id);

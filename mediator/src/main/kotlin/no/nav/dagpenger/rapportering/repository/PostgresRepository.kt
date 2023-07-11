@@ -6,7 +6,7 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
 import no.nav.dagpenger.rapportering.DagVisitor
-import no.nav.dagpenger.rapportering.Godkjenning
+import no.nav.dagpenger.rapportering.Godkjenningsendring
 import no.nav.dagpenger.rapportering.Godkjenningslogg
 import no.nav.dagpenger.rapportering.IngenRapporteringsplikt
 import no.nav.dagpenger.rapportering.Person
@@ -256,10 +256,10 @@ internal class PostgresRepository(private val ds: DataSource) :
                 // language=PostgreSQL
                 """
                 SELECT g.*, s.saksbehandler_id, sb.ident AS sluttbruker_ident
-                FROM godkjenning g
-                JOIN godkjenning_utført_av gu ON gu.godkjenning_id = g.uuid
-                LEFT JOIN saksbehandler s ON s.id = gu.id
-                LEFT JOIN sluttbruker sb ON sb.id = gu.id
+                FROM godkjenningsendring g
+                JOIN godkjenning_utført_av gu ON g.utført_av = gu.id
+                LEFT JOIN saksbehandler s ON s.id = gu.saksbehandler
+                LEFT JOIN sluttbruker sb ON sb.id = gu.sluttbruker
                 WHERE g.rapporteringsperiode_id = :rapporteringsperiodeId
                 """.trimIndent(),
                 mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
@@ -267,17 +267,17 @@ internal class PostgresRepository(private val ds: DataSource) :
                 val saksbehandlerId = row.stringOrNull("saksbehandler_id")
                 val sluttbrukerIdent = row.stringOrNull("sluttbruker_ident")
                 val kilde = when {
-                    sluttbrukerIdent != null -> Godkjenning.Sluttbruker(sluttbrukerIdent)
-                    saksbehandlerId != null -> Godkjenning.Saksbehandler(saksbehandlerId)
+                    sluttbrukerIdent != null -> Godkjenningsendring.Sluttbruker(sluttbrukerIdent)
+                    saksbehandlerId != null -> Godkjenningsendring.Saksbehandler(saksbehandlerId)
                     else -> throw IllegalStateException("Ukjent kilde.")
                 }
 
-                Godkjenning(
+                Godkjenningsendring(
                     row.uuid("uuid"),
                     kilde,
                     row.localDateTime("opprettet"),
-                    row.localDateTimeOrNull("avgodkjent"),
                     row.stringOrNull("begrunnelse"),
+                    // TODO: Rekursiv henting av Godkjenningsendring
                 )
             }.asList,
         )
@@ -464,55 +464,57 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
     }
 
     override fun visit(
-        godkjenning: Godkjenning,
+        godkjenningsendring: Godkjenningsendring,
         id: UUID,
-        utførtAv: Godkjenning.Kilde,
+        utførtAv: Godkjenningsendring.Kilde,
         opprettet: LocalDateTime,
         avgodkjent: LocalDateTime?,
         begrunnelse: String?,
     ) {
+        when (utførtAv) {
+            is Godkjenningsendring.Saksbehandler -> queries.add(
+                queryOf(
+                    //language=PostgreSQL
+                    """INSERT INTO saksbehandler (saksbehandler_id) VALUES (:saksbehandlerId) ON CONFLICT DO NOTHING""",
+                    mapOf("godkjenningId" to id, "saksbehandlerId" to utførtAv.id),
+                ),
+            )
+
+            is Godkjenningsendring.Sluttbruker -> queries.add(
+                queryOf(
+                    //language=PostgreSQL
+                    """INSERT INTO sluttbruker (ident) VALUES (:ident) ON CONFLICT DO NOTHING""",
+                    mapOf("godkjenningId" to id, "ident" to utførtAv.id),
+                ),
+            )
+        }
         queries.add(
             queryOf(
                 //language=PostgreSQL
                 """
-                INSERT INTO godkjenning (uuid, rapporteringsperiode_id, opprettet, avgodkjent, begrunnelse)
-                VALUES (:uuid, :rapporteringsperiodeId, :opprettet, :avgodkjent, :begrunnelse)
-                ON CONFLICT (uuid) DO UPDATE SET avgodkjent = :avgodkjent
+                WITH utført_av_insert AS (
+                    INSERT INTO godkjenning_utført_av (kilde, saksbehandler, sluttbruker)
+                        VALUES (:kilde,
+                                (SELECT id FROM saksbehandler WHERE saksbehandler_id = :saksbehandler),
+                                (SELECT id FROM sluttbruker WHERE ident = :sluttbruker))
+                        RETURNING id)
+                INSERT
+                INTO godkjenningsendring (uuid, rapporteringsperiode_id, opprettet, begrunnelse, utført_av)
+                VALUES (:uuid, :rapporteringsperiodeId, :opprettet, :begrunnelse, (SELECT id FROM utført_av_insert))
+                ON CONFLICT (uuid) DO UPDATE SET avgodkjent_av = :avgodkjent
                 """.trimIndent(),
                 mapOf(
                     "uuid" to id,
                     "rapporteringsperiodeId" to rapporteringsperiodeId,
                     "opprettet" to opprettet,
-                    "avgodkjent" to avgodkjent,
                     "begrunnelse" to begrunnelse,
+                    "avgodkjent" to avgodkjent,
+                    "kilde" to utførtAv::class.java.simpleName,
+                    "saksbehandler" to utførtAv.id,
+                    "sluttbruker" to utførtAv.id,
                 ),
             ),
         )
-
-        queries.add(
-            queryOf(
-                //language=PostgreSQL
-                """INSERT INTO godkjenning_utført_av (godkjenning_id) VALUES (:godkjenningId) ON CONFLICT DO NOTHING """,
-                mapOf("godkjenningId" to id),
-            ),
-        )
-        when (utførtAv) {
-            is Godkjenning.Saksbehandler -> queries.add(
-                queryOf(
-                    //language=PostgreSQL
-                    """INSERT INTO saksbehandler (id, saksbehandler_id) VALUES ((SELECT id FROM godkjenning_utført_av WHERE godkjenning_id = :godkjenningId), :saksbehandlerId) ON CONFLICT DO NOTHING""",
-                    mapOf("godkjenningId" to id, "saksbehandlerId" to utførtAv.id),
-                ),
-            )
-
-            is Godkjenning.Sluttbruker -> queries.add(
-                queryOf(
-                    //language=PostgreSQL
-                    """INSERT INTO sluttbruker (id, ident) VALUES ((SELECT id FROM godkjenning_utført_av WHERE godkjenning_id = :godkjenningId), :ident) ON CONFLICT DO NOTHING""",
-                    mapOf("godkjenningId" to id, "ident" to utførtAv.id),
-                ),
-            )
-        }
     }
 
     override fun visit(

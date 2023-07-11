@@ -15,7 +15,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import no.nav.dagpenger.rapportering.Godkjenning
+import no.nav.dagpenger.rapportering.Godkjenningsendring
 import no.nav.dagpenger.rapportering.IHendelseMediator
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.Companion.hentGjeldende
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.Issuer.AzureAD
@@ -143,7 +143,7 @@ internal fun Application.rapporteringApi(
                                     GodkjennPeriodeHendelse(
                                         ident,
                                         periodeId,
-                                        Godkjenning.Saksbehandler(call.saksbehandlerId()),
+                                        Godkjenningsendring.Saksbehandler(call.saksbehandlerId()),
                                         godkjenning.begrunnelse,
                                     )
                                 }
@@ -153,7 +153,7 @@ internal fun Application.rapporteringApi(
 
                             mediator.behandle(hendelse)
 
-                            call.respond(HttpStatusCode.OK, hendelse.godkjenning)
+                            call.respond(HttpStatusCode.OK, hendelse.godkjenningsendring)
                         }
                     }
 

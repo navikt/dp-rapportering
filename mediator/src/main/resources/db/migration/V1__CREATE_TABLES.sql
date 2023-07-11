@@ -56,32 +56,34 @@ CREATE TABLE IF NOT EXISTS rapporteringsplikt
     gjelder_fra TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'::TEXT) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS godkjenning
+CREATE TABLE saksbehandler
+(
+    id               BIGSERIAL PRIMARY KEY,
+    saksbehandler_id TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE sluttbruker
+(
+    id    BIGSERIAL PRIMARY KEY,
+    ident TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE godkjenning_utført_av
+(
+    id            BIGSERIAL PRIMARY KEY,
+    kilde         TEXT NOT NULL,
+    saksbehandler BIGINT REFERENCES saksbehandler (id),
+    sluttbruker   BIGINT REFERENCES sluttbruker (id),
+    CONSTRAINT minst_en_utfører CHECK (saksbehandler IS NOT NULL OR sluttbruker IS NOT NULL)
+);
+
+CREATE TABLE godkjenningsendring
 (
     id                      BIGSERIAL PRIMARY KEY,
     uuid                    uuid UNIQUE NOT NULL,
     rapporteringsperiode_id uuid        NOT NULL REFERENCES rapporteringsperiode (uuid) ON DELETE CASCADE,
     opprettet               TIMESTAMP   NOT NULL,
-    avgodkjent              TIMESTAMP,
-    begrunnelse             TEXT
-
-);
-
-
-CREATE TABLE godkjenning_utført_av
-(
-    id             BIGSERIAL PRIMARY KEY,
-    godkjenning_id uuid UNIQUE REFERENCES godkjenning (uuid) ON DELETE CASCADE
-);
-
-CREATE TABLE saksbehandler
-(
-    id               BIGINT PRIMARY KEY REFERENCES godkjenning_utført_av (id) ON DELETE CASCADE,
-    saksbehandler_id TEXT UNIQUE
-);
-
-CREATE TABLE sluttbruker
-(
-    id    BIGINT PRIMARY KEY REFERENCES godkjenning_utført_av (id) ON DELETE CASCADE,
-    ident TEXT UNIQUE
+    avgodkjent_av           BIGINT      NULL REFERENCES godkjenningsendring (id) ON DELETE CASCADE,
+    begrunnelse             TEXT,
+    utført_av               BIGINT      NOT NULL REFERENCES godkjenning_utført_av (id)
 );

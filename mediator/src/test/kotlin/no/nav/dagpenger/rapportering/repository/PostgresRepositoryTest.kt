@@ -3,8 +3,8 @@ package no.nav.dagpenger.rapportering.repository
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import no.nav.dagpenger.rapportering.Godkjenning
-import no.nav.dagpenger.rapportering.Godkjenning.Sluttbruker
+import no.nav.dagpenger.rapportering.Godkjenningsendring
+import no.nav.dagpenger.rapportering.Godkjenningsendring.Sluttbruker
 import no.nav.dagpenger.rapportering.Person
 import no.nav.dagpenger.rapportering.PersonVisitor
 import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
@@ -245,21 +245,21 @@ class PostgresRepositoryTest {
 
     private class TestRapporteringsperiodeVisitor(rapporteringsperiode: Rapporteringsperiode) :
         RapporteringsperiodVisitor {
-        internal val godkjenninger = mutableListOf<Godkjenning>()
+        internal val godkjenninger = mutableListOf<Godkjenningsendring>()
 
         init {
             rapporteringsperiode.accept(this)
         }
 
         override fun visit(
-            godkjenning: Godkjenning,
+            godkjenningsendring: Godkjenningsendring,
             id: UUID,
-            utførtAv: Godkjenning.Kilde,
+            utførtAv: Godkjenningsendring.Kilde,
             opprettet: LocalDateTime,
             avgodkjent: LocalDateTime?,
             begrunnelse: String?,
         ) {
-            godkjenninger.add(godkjenning)
+            godkjenninger.add(godkjenningsendring)
         }
     }
 

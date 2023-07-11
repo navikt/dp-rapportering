@@ -27,9 +27,9 @@ interface RapporteringsperiodVisitor : AktivitetstidslinjeVisitor, Godkjenningsl
 
 interface GodkjenningsloggVisitor {
     fun visit(
-        godkjenning: Godkjenning,
+        godkjenningsendring: Godkjenningsendring,
         id: UUID,
-        utførtAv: Godkjenning.Kilde,
+        utførtAv: Godkjenningsendring.Kilde,
         opprettet: LocalDateTime,
         avgodkjent: LocalDateTime?,
         begrunnelse: String?,

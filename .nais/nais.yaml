@@ -44,6 +44,8 @@ spec:
       value: {{beregningsdato.strategi}}
     - name: GRUPPER_SAKSBEHANDLER
       value: {{azure.grupper.saksbehandler}}
+    - name: flyway.cleanDisabled
+      value: "false"
   azure:
     application:
       enabled: true
