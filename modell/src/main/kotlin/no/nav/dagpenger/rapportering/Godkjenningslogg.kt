@@ -48,8 +48,8 @@ class Godkjenningsendring(
     fun godkjent() = avgodkjentAv == null
     fun kanEndre(kilde: Kilde) = kilde == utførtAv
     fun accept(visitor: RapporteringsperiodVisitor) {
-        visitor.visit(this, id, utførtAv, opprettet, avgodkjent, begrunnelse)
         avgodkjentAv?.accept(visitor)
+        visitor.visit(this, id, utførtAv, opprettet, avgodkjentAv, begrunnelse)
     }
 
     sealed class Kilde(val id: String) {

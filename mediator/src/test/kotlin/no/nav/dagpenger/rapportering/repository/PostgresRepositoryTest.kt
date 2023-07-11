@@ -13,6 +13,7 @@ import no.nav.dagpenger.rapportering.Rapporteringsplikt
 import no.nav.dagpenger.rapportering.RapporteringspliktType
 import no.nav.dagpenger.rapportering.db.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.db.PostgresDataSourceBuilder.dataSource
+import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.BeregningsdatoPassertHendelse
 import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
@@ -126,7 +127,43 @@ class PostgresRepositoryTest {
                 )
                 repository.lagre(person)
             }
-            // Godkjenn perioden og send den inn
+            // Godkjenn perioden
+            repository.hentEllerOpprettPerson(testIdent).let { person ->
+                person.behandle(
+                    GodkjennPeriodeHendelse(
+                        testIdent,
+                        person.aktivRapporteringsperiodeId,
+                    ),
+                )
+                repository.lagre(person)
+            }
+            // Verifiser at det føres logg over godkjenning
+            repository.hentEllerOpprettPerson(testIdent).let { person ->
+                with(person.aktivRapporteringsperiode.godkjenningslogg) {
+                    size shouldBe 1
+                    first().godkjent() shouldBe true
+                    first().kanEndre(Sluttbruker(testIdent)) shouldBe true
+                    first().kanEndre(Sluttbruker("fjas")) shouldBe false
+                }
+
+                person.behandle(
+                    AvgodkjennPeriodeHendelse(
+                        testIdent,
+                        person.aktivRapporteringsperiode.rapporteringsperiodeId,
+                    ),
+                )
+                repository.lagre((person))
+            }
+
+            // Verifiser at det føres logg over avgodkjenning
+            repository.hentEllerOpprettPerson(testIdent).let { person ->
+                with(person.aktivRapporteringsperiode.godkjenningslogg) {
+                    size shouldBe 2
+                    last().godkjent() shouldBe false
+                    last().kanEndre(Sluttbruker(testIdent)) shouldBe true
+                    last().kanEndre(Sluttbruker("fjas")) shouldBe false
+                }
+            }
             val innsendtRapportering =
                 repository.hentEllerOpprettPerson(testIdent).let { person ->
                     person.behandle(
@@ -144,14 +181,6 @@ class PostgresRepositoryTest {
             repository.hentEllerOpprettPerson(testIdent).let { person ->
                 person.behandle(KorrigerPeriodeHendelse(testIdent, innsendtRapportering.rapporteringsperiodeId))
                 repository.lagre(person)
-            }
-            // Verifiser at det føres logg over godkjenning
-            repository.hentEllerOpprettPerson(testIdent).let { person ->
-                with(person.aktivRapporteringsperiode.godkjenningslogg) {
-                    size shouldBe 1
-                    first().kanEndre(Sluttbruker(testIdent)) shouldBe true
-                    first().kanEndre(Sluttbruker("fjas")) shouldBe false
-                }
             }
             // Verifiser at innsendt periode har en korrigering
             val sisteKorrigering =
@@ -256,7 +285,7 @@ class PostgresRepositoryTest {
             id: UUID,
             utførtAv: Godkjenningsendring.Kilde,
             opprettet: LocalDateTime,
-            avgodkjent: LocalDateTime?,
+            avgodkjent: Godkjenningsendring?,
             begrunnelse: String?,
         ) {
             godkjenninger.add(godkjenningsendring)

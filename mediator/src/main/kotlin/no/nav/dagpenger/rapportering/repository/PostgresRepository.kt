@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.repository
 
 import kotliquery.Query
 import kotliquery.Row
+import kotliquery.TransactionalSession
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
@@ -251,18 +252,35 @@ internal class PostgresRepository(private val ds: DataSource) :
     }
 
     private fun hentGodkjenningslogg(rapporteringsperiodeId: UUID) = using(sessionOf(ds)) { session ->
-        session.run(
+        session.transaction { tx: TransactionalSession ->
+            tx.run(
+                queryOf(
+                    // language=PostgreSQL
+                    """
+                    SELECT g.uuid
+                    FROM godkjenningsendring g
+                    LEFT JOIN godkjenningsendring g2 ON g.id = g2.avgodkjent_av
+                    WHERE g.rapporteringsperiode_id = :rapporteringsperiodeId  AND g2.avgodkjent_av IS NULl
+                    """.trimIndent(),
+                    mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
+                ).map { tx.hentGodkjenningsendring(it.uuid("uuid")) }.asList,
+            )
+        }
+    }.let { Godkjenningslogg(it) }
+
+    private fun TransactionalSession.hentGodkjenningsendring(godkjenningsId: UUID): Godkjenningsendring =
+        run(
             queryOf(
-                // language=PostgreSQL
+                //language=PostgreSQL
                 """
-                SELECT g.*, s.saksbehandler_id, sb.ident AS sluttbruker_ident
+                SELECT g.*, s.saksbehandler_id, sb.ident AS sluttbruker_ident, (SELECT uuid FROM godkjenningsendring WHERE g.avgodkjent_av=id) AS avgodkjent_av_uuid
                 FROM godkjenningsendring g
                 JOIN godkjenning_utført_av gu ON gu.godkjenningsendring_id = g.uuid
                 LEFT JOIN saksbehandler s ON s.id = gu.saksbehandler
                 LEFT JOIN sluttbruker sb ON sb.id = gu.sluttbruker
-                WHERE g.rapporteringsperiode_id = :rapporteringsperiodeId
+                WHERE g.uuid = :uuid
                 """.trimIndent(),
-                mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
+                mapOf("uuid" to godkjenningsId),
             ).map { row ->
                 val saksbehandlerId = row.stringOrNull("saksbehandler_id")
                 val sluttbrukerIdent = row.stringOrNull("sluttbruker_ident")
@@ -272,16 +290,16 @@ internal class PostgresRepository(private val ds: DataSource) :
                     else -> throw IllegalStateException("Ukjent kilde.")
                 }
 
+                val avgodkjentAv = row.uuidOrNull("avgodkjent_av_uuid")?.let { hentGodkjenningsendring(it) }
                 Godkjenningsendring(
                     row.uuid("uuid"),
                     kilde,
                     row.localDateTime("opprettet"),
                     row.stringOrNull("begrunnelse"),
-                    // TODO: Rekursiv henting av Godkjenningsendring
+                    avgodkjentAv,
                 )
-            }.asList,
-        )
-    }.let { Godkjenningslogg(it) }
+            }.asSingle,
+        ) ?: throw IllegalArgumentException("Kan ikke hente godkjenningsendring som ikke finnes. UUID=$godkjenningsId")
 
     private fun hentDager(rapporteringsperiodeId: UUID) = using(sessionOf(ds)) { session ->
         session.run(
@@ -468,7 +486,7 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
         id: UUID,
         utførtAv: Godkjenningsendring.Kilde,
         opprettet: LocalDateTime,
-        avgodkjent: LocalDateTime?,
+        avgodkjent: Godkjenningsendring?,
         begrunnelse: String?,
     ) {
         when (utførtAv) {
@@ -495,14 +513,14 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
                 INSERT
                 INTO godkjenningsendring (uuid, rapporteringsperiode_id, opprettet, begrunnelse)
                 VALUES (:uuid, :rapporteringsperiodeId, :opprettet, :begrunnelse)
-                ON CONFLICT (uuid) DO UPDATE SET avgodkjent_av = :avgodkjent
+                ON CONFLICT (uuid) DO UPDATE SET avgodkjent_av = (SELECT id FROM godkjenningsendring WHERE uuid = :avgodkjent_id)
                 """.trimIndent(),
                 mapOf(
                     "uuid" to id,
                     "rapporteringsperiodeId" to rapporteringsperiodeId,
                     "opprettet" to opprettet,
                     "begrunnelse" to begrunnelse,
-                    "avgodkjent" to avgodkjent,
+                    "avgodkjent_id" to avgodkjent?.id,
                 ),
             ),
         )

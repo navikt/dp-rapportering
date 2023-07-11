@@ -31,7 +31,7 @@ interface GodkjenningsloggVisitor {
         id: UUID,
         utførtAv: Godkjenningsendring.Kilde,
         opprettet: LocalDateTime,
-        avgodkjent: LocalDateTime?,
+        avgodkjent: Godkjenningsendring?,
         begrunnelse: String?,
     ) {
     }
