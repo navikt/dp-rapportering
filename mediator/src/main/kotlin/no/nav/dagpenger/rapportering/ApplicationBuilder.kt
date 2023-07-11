@@ -42,6 +42,7 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
     }
 
     override fun onStartup(rapidsConnection: RapidsConnection) {
+        clean()
         runMigration()
         logger.info { "Starter appen ${Configuration.appName}" }
 
