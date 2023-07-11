@@ -117,7 +117,9 @@ class Rapporteringsperiode private constructor(
 
     fun gjelderFor(dato: LocalDate) = dato in periode
 
-    fun leggTilFritak(dato: LocalDate) {}
+    fun leggTilFritak(dato: LocalDate) {
+        tidslinje.leggTilFritak(dato)
+    }
 
     private fun harEndring() = korrigerer?.tidslinje != this.tidslinje
 
