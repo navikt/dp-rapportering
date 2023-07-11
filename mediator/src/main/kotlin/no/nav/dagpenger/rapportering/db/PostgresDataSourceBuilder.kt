@@ -5,7 +5,6 @@ import ch.qos.logback.core.util.OptionHelper.getSystemProperty
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.configuration.FluentConfiguration
-import org.flywaydb.core.internal.configuration.ConfigUtils
 
 // Understands how to create a data source from environment variables
 internal object PostgresDataSourceBuilder {
@@ -37,7 +36,7 @@ internal object PostgresDataSourceBuilder {
     private val flyWayBuilder: FluentConfiguration = Flyway.configure().connectRetries(10)
 
     fun clean() = flyWayBuilder.cleanDisabled(
-        false || getOrThrow(ConfigUtils.CLEAN_DISABLED).toBooleanStrict(),
+        false, // || getOrThrow(ConfigUtils.CLEAN_DISABLED).toBooleanStrict(),
     ).dataSource(dataSource).load().clean()
 
     internal fun runMigration(initSql: String? = null): Int =
