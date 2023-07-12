@@ -1,0 +1,21 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: dp-rapportering-alerts
+  namespace: teamdagpenger
+  labels:
+    team: teamdagpenger
+spec:
+  groups:
+    - name: applikasjon-alerts
+      rules:
+        - alert: JobFeilet
+          expr: sum(dp_rapportering_job_errors_total{namespace="teamdagpenger"}) by (navn, namespace) > 0
+          for: 1m
+          annotations:
+            consequence: 'Jobb *{{ $labels.navn }}* i *{{ $labels.app }}* fikk feil ved kjøring'
+            action: '`kubectl describe pod -l app={{ $labels.deployment}}` -> `kubectl logs -l app={{ $labels.deployment}}`'
+          labels:
+            namespace: teamdagpenger
+            severity: critical

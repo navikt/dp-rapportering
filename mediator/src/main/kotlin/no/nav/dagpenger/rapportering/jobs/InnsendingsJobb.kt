@@ -28,6 +28,7 @@ internal object InnsendingsJobb {
                     var innsendtePerioder = 0
                     val tidBrukt = measureTime {
                         innsendtePerioder = mediator.beregningsdatoPassert()
+                        throw Exception("Jobben feilet")
                     }
                     metrics.jobbFullført(tidBrukt, innsendtePerioder)
                 } catch (e: Exception) {
