@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.jobs
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Mediator
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
+import no.nav.dagpenger.rapportering.metrikker.JobbKjøringMetrikker
 import no.nav.dagpenger.rapportering.strategiForBeregningsdato
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -12,9 +13,13 @@ import java.time.temporal.TemporalAdjusters
 import java.util.UUID
 import kotlin.concurrent.fixedRateTimer
 import kotlin.time.Duration.Companion.days
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 internal object NyRapporteringssyklusJobb {
     private val logger = KotlinLogging.logger {}
+    private val metrics = JobbKjøringMetrikker(this::class.java.simpleName)
+
     private val UKEDAG_FOR_KJØRING = DayOfWeek.MONDAY
     private val TIDSPUNKT_FOR_KJØRING = LocalTime.of(15, 0)
     private val nå = ZonedDateTime.now()
@@ -24,6 +29,7 @@ internal object NyRapporteringssyklusJobb {
     private val millisekunderTilNesteKjøring = tidspunktForNesteKjøring.toInstant().toEpochMilli() - nå.toInstant()
         .toEpochMilli() // differansen i millisekunder mellom de to tidspunktene
 
+    @OptIn(ExperimentalTime::class)
     internal fun start(mediator: Mediator) {
         fixedRateTimer(
             name = "Fast opprettelse av ny rapporteringssyklus",
@@ -33,15 +39,20 @@ internal object NyRapporteringssyklusJobb {
             action = {
                 try {
                     logger.info { "Starter opprettelse av ny rapporteringssyklus" }
-                    mediator.nyRapporteringssyklus()
+                    var antallIdenterMedRapporteringsplikt = 0
+                    val tidBrukt = measureTime {
+                        antallIdenterMedRapporteringsplikt = mediator.nyRapporteringssyklus()
+                    }
+                    metrics.jobbFullført(tidBrukt, antallIdenterMedRapporteringsplikt)
                 } catch (e: Exception) {
                     logger.error(e) { "Opprettelse av ny rapporteringssyklus feilet" }
+                    metrics.jobbFeilet()
                 }
             },
         )
     }
 
-    private fun Mediator.nyRapporteringssyklus() {
+    private fun Mediator.nyRapporteringssyklus(): Int {
         val identer: List<String> = hentIdenterMedRapporteringsplikt()
 
         identer.forEach { ident ->
@@ -54,5 +65,7 @@ internal object NyRapporteringssyklusJobb {
                 ),
             )
         }
+
+        return identer.size
     }
 }
