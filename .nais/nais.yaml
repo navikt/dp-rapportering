@@ -11,7 +11,7 @@ spec:
   port: 8080
   prometheus:
     enabled: true
-    path: /internal/metrics
+    path: /metrics
   liveness:
     path: /isalive
   readiness:
