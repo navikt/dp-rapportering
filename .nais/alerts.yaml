@@ -11,11 +11,11 @@ spec:
     - name: applikasjon-alerts
       rules:
         - alert: JobFeilet
-          expr: sum(dp_rapportering_job_errors_total{namespace="teamdagpenger"}) by (navn, namespace) > 0
+          expr: sum(rate(dp_rapportering_job_errors_total{namespace="teamdagpenger"}[10m])) by (navn, app) > 0
           for: 1m
           annotations:
             consequence: 'Jobb *\{{ $labels.navn }}* i *\{{ $labels.app }}* fikk feil ved kjøring'
-            action: '`kubectl describe pod -l app=\{{ $labels.deployment}}` -> `kubectl logs -l app=\{{ $labels.deployment}}`'
+            action: '`kubectl describe pod -l app=\{{ $labels.app}}` -> `kubectl logs -l app=\{{ $labels.app}}`'
           labels:
             namespace: teamdagpenger
             severity: critical
