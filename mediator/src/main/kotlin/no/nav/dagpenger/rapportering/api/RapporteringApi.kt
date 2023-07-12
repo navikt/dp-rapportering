@@ -27,6 +27,7 @@ import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetNyDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
 import no.nav.dagpenger.rapportering.api.models.GodkjennNyDTO
+import no.nav.dagpenger.rapportering.api.models.ProblemDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeNyDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeSokDTO
 import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
@@ -86,7 +87,15 @@ internal fun Application.rapporteringApi(
                 }
                 // TODO: Endepunkt for å manuelt opprette rapporteringsplikt. Vi burde nok inneføre en egen hendelse istedenfor SøknadInnsendt + RapporteringspliktDato
                 post<RapporteringsperiodeNyDTO> {
-                    throw IllegalAccessError("Ikke bruk denne :)")
+                    call.respond(
+                        HttpStatusCode.Forbidden,
+                        ProblemDTO(
+                            title = "Ikke implementert",
+                            detail = "Ikke bruk denne :)",
+                            status = HttpStatusCode.Forbidden.value,
+                        ),
+                    )
+                    return@post
                     val fom = it.fraOgMed?.let { fraOgMed -> fraOgMed.atStartOfDay() } ?: LocalDateTime.now()
                     val harGjeldende = rapporteringsperiodeRepository
                         .hentRapporteringsperiodeFor(it.ident, fom.toLocalDate())
