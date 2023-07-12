@@ -18,6 +18,7 @@ import kotlin.time.Duration
 
 internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsperiode, private var id: UUID? = null) :
     RapporteringsperiodVisitor {
+    private lateinit var beregnesEtter: LocalDate
     private lateinit var periode: ClosedRange<LocalDate>
     private lateinit var tilstand: Rapporteringsperiode.TilstandType
     private val dager: SortedSet<Dag> = sortedSetOf(Dag.eldsteDagFørst)
@@ -26,6 +27,7 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
     val dto: RapporteringsperiodeDTO
         get() = RapporteringsperiodeDTO(
             id = id,
+            beregnesEtter = beregnesEtter,
             fraOgMed = periode.start,
             tilOgMed = periode.endInclusive,
             status = when (tilstand) {
@@ -54,6 +56,7 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
         if (this.id != null && this.id != id) return
         if (korrigerer != null && tilstand == TilUtfylling && this.id == null) return
         this.id = id
+        this.beregnesEtter = beregnesEtter
         this.periode = periode
         this.tilstand = tilstand
         this.korrigerer = korrigerer?.rapporteringsperiodeId
