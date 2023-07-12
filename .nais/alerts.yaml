@@ -12,7 +12,7 @@ spec:
       rules:
         - alert: JobFeilet
           expr: sum(rate(dp_rapportering_job_errors_total{namespace="teamdagpenger"}[10m])) by (navn, app) > 0
-          for: 1m
+          for: 0s
           annotations:
             consequence: 'Jobb *\{{ $labels.navn }}* i *\{{ $labels.app }}* fikk feil ved kjøring'
             action: '`kubectl describe pod -l app=\{{ $labels.app}}` -> `kubectl logs -l app=\{{ $labels.app}}`'
