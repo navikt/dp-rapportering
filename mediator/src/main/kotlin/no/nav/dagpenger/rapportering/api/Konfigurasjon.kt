@@ -29,7 +29,7 @@ fun Application.konfigurasjon(
     install(CallLogging) {
         disableDefaultColors()
         filter {
-            !it.request.path().startsWith("/internal")
+            it.request.path() !in setOf("/metrics", "/isalive", "/isready")
         }
         level = Level.INFO
     }
