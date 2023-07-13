@@ -183,12 +183,12 @@ paths:
   /rapporteringsperioder/{periodeId}/korrigering:
     post:
       responses:
-        '200':
+        '201':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Rapporteringsperiode'
-          description: OK
+          description: Created
         '405':
           content:
             application/json:

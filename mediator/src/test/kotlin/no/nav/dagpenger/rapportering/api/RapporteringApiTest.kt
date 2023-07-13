@@ -282,7 +282,7 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `Skal kunne korrigere en rapporteringsperiode`() {
+    fun `Skal kunne opprette en korrigering av en rapporteringsperiode`() {
         val korrigert = rapporteringsperiode(Rapporteringsperiode.TilstandType.Innsendt)
         val korrigering = rapporteringsperiode(Rapporteringsperiode.TilstandType.TilUtfylling, korrigert)
 
@@ -291,7 +291,7 @@ class RapporteringApiTest {
                 autentisert()
                 contentType(ContentType.Application.Json)
             }.also { response ->
-                response.status shouldBe HttpStatusCode.OK
+                response.status shouldBe HttpStatusCode.Created
                 "${response.contentType()}" shouldContain "application/json"
                 verify {
                     mediatorMock.behandle(any<KorrigerPeriodeHendelse>())

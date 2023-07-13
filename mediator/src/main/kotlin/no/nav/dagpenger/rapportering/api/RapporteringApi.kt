@@ -206,7 +206,7 @@ internal fun Application.rapporteringApi(
                                     ).dto
                                 }
 
-                            call.respond(HttpStatusCode.OK, korrigering)
+                            call.respond(HttpStatusCode.Created, korrigering)
                         }
                     }
 
