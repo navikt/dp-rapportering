@@ -158,32 +158,6 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `Kun saksbehandler kan trigge manuell innsending av rapporteringsperiode`() {
-        withRapporteringApi(
-            rapporteringsperioder = listOf(testPeriode),
-        ) {
-            client.post("/rapporteringsperioder/$testPeriodeId/innsending") {
-                autentisert()
-            }.also { response ->
-                response.status shouldBe HttpStatusCode.Unauthorized
-            }
-
-            autentisert(
-                token = testAzureAdToken,
-                endepunkt = "/rapporteringsperioder/$testPeriodeId/innsending",
-                httpMethod = HttpMethod.Post,
-                //language=JSON
-                body = """{"begrunnelse": "" }""",
-            ).also { response ->
-                response.status shouldBe HttpStatusCode.OK
-                response.bodyAsText().let { json ->
-                    json shouldContainJsonKey "$.id"
-                }
-            }
-        }
-    }
-
-    @Test
     fun `Skal kunne hente ut en rapporteringsperiode med en gitt id`() {
         withRapporteringApi(
             rapporteringsperioder = listOf(testPeriode),
