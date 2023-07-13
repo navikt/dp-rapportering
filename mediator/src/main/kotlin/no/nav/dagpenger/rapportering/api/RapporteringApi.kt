@@ -123,6 +123,22 @@ internal fun Application.rapporteringApi(
 
                     call.respond(HttpStatusCode.Created)
                 }
+
+                route("/{periodeId}") {
+                    route("/innsending") {
+                        post {
+                            val ident = tilgangskontroll.verifiserTilgang(call)
+                            val periodeId = call.finnUUID("periodeId")
+
+                            mediator.behandle(ManuellInnsendingHendelse(ident, periodeId))
+                            val periode = rapporteringsperiodeRepository
+                                .hentRapporteringsperiode(ident, periodeId)!!
+                                .let { RapporteringsperiodeMapper(it, periodeId).dto }
+
+                            call.respond(HttpStatusCode.OK, periode)
+                        }
+                    }
+                }
             }
         }
 
@@ -189,20 +205,6 @@ internal fun Application.rapporteringApi(
 
                             mediator.behandle(hendelse)
                             call.respond(HttpStatusCode.OK, hendelse.godkjenningsendring)
-                        }
-                    }
-
-                    route("/innsending") {
-                        post {
-                            val ident = tilgangskontroll.verifiserTilgang(call)
-                            val periodeId = call.finnUUID("periodeId")
-
-                            mediator.behandle(ManuellInnsendingHendelse(ident, periodeId))
-                            val periode = rapporteringsperiodeRepository
-                                .hentRapporteringsperiode(ident, periodeId)!!
-                                .let { RapporteringsperiodeMapper(it, periodeId).dto }
-
-                            call.respond(HttpStatusCode.Created, periode)
                         }
                     }
 

@@ -61,7 +61,7 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `skal hente en liste med alle rapportingsperioder`() {
+    fun `skal hente en liste med alle rapportingsperioder for en gitt ident`() {
         val periodeTilUtfylling =
             Rapporteringsperiode(rapporteringspliktFom = LocalDate.now().minusDays(2)) { _, tom -> tom }
         val korrigert = rapporteringsperiode(Rapporteringsperiode.TilstandType.Innsendt)
@@ -92,7 +92,7 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `skal gi 404 Not Found på gjeldende uten periode`() {
+    fun `gjeldende skal respondere med 404 Not Found dersom person ikke har noen rapporteringsperioder`() {
         withRapporteringApi(
             rapporteringsperioder = listOf(),
         ) {
@@ -106,7 +106,7 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `skal gi 200 OK på gjeldende med periode`() {
+    fun `gjeldende skal respondere med en periode og 200 OK når person har rapporteringsperiode`() {
         withRapporteringApi(
             rapporteringsperioder = listOf(testPeriode),
         ) {
@@ -117,26 +117,71 @@ class RapporteringApiTest {
                 "${response.contentType()}" shouldContain "application/json"
                 response.bodyAsText().let { json ->
                     json shouldContainJsonKey "$.status"
+                    json.shouldContainJsonKeyValue("$.id", testPeriodeId.toString())
                 }
             }
         }
     }
 
-    private fun rapporteringsperiode(
-        tilstandType: Rapporteringsperiode.TilstandType,
-        korrigert: Rapporteringsperiode? = null,
-    ) =
-        Rapporteringsperiode.rehydrer(
-            UUID.randomUUID(),
-            beregnesEtter = LocalDate.now(),
-            fraOgMed = LocalDate.now(),
-            tilOgMed = LocalDate.now(),
-            tilstand = tilstandType,
-            opprettet = LocalDateTime.now(),
-            tidslinje = Aktivitetstidslinje(LocalDate.now()..LocalDate.now()),
-            godkjenningslogg = Godkjenningslogg(),
-            korrigerer = korrigert,
-        )
+    @Test
+    fun `Saksbehandler skal kunne søke etter rapporteringsperioder for en gitt ident`() {
+        withRapporteringApi(rapporteringsperioder = listOf(testPeriode)) {
+            autentisert(
+                token = testAzureAdToken,
+                endepunkt = "/rapporteringsperioder/sok",
+                httpMethod = HttpMethod.Post,
+                //language=JSON
+                body = """{"ident": "$defaultDummyFodselsnummer" }""",
+            ).let { response ->
+                response.status shouldBe HttpStatusCode.OK
+                "${response.contentType()}" shouldContain "application/json"
+                response.bodyAsText().let { json ->
+                    json shouldContainJsonKey "[*].id"
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `Bruker skal ikke kunne søke etter rapporteringsperioder`() {
+        withRapporteringApi(rapporteringsperioder = listOf(testPeriode)) {
+            autentisert(
+                token = testTokenXToken,
+                endepunkt = "/rapporteringsperioder/sok",
+                httpMethod = HttpMethod.Post,
+                //language=JSON
+                body = """{"ident": "$defaultDummyFodselsnummer" }""",
+            ).let { response ->
+                response.status shouldBe HttpStatusCode.Unauthorized
+            }
+        }
+    }
+
+    @Test
+    fun `Kun saksbehandler kan trigge manuell innsending av rapporteringsperiode`() {
+        withRapporteringApi(
+            rapporteringsperioder = listOf(testPeriode),
+        ) {
+            client.post("/rapporteringsperioder/$testPeriodeId/innsending") {
+                autentisert()
+            }.also { response ->
+                response.status shouldBe HttpStatusCode.Unauthorized
+            }
+
+            autentisert(
+                token = testAzureAdToken,
+                endepunkt = "/rapporteringsperioder/$testPeriodeId/innsending",
+                httpMethod = HttpMethod.Post,
+                //language=JSON
+                body = """{"begrunnelse": "" }""",
+            ).also { response ->
+                response.status shouldBe HttpStatusCode.OK
+                response.bodyAsText().let { json ->
+                    json shouldContainJsonKey "$.id"
+                }
+            }
+        }
+    }
 
     @Test
     fun `Skal kunne hente ut en rapporteringsperiode med en gitt id`() {
@@ -163,7 +208,7 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `Bruker skal kunne godkjenne en rapporteringsperiode`() {
+    fun `Bruker skal kunne godkjenne og avgodkjenne en rapporteringsperiode uten begrunnelse`() {
         withRapporteringApi(
             rapporteringsperioder = listOf(testPeriode),
         ) {
@@ -178,14 +223,7 @@ class RapporteringApiTest {
                     json shouldContainJsonKey "$.id"
                 }
             }
-        }
-    }
 
-    @Test
-    fun `Bruker skal kunne avgodkjenne en rapporteringsperiode`() {
-        withRapporteringApi(
-            rapporteringsperioder = listOf(testPeriode),
-        ) {
             client.post("/rapporteringsperioder/$testPeriodeId/avgodkjenn") {
                 autentisert()
             }.also { response ->
@@ -198,7 +236,7 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `Saksbehandler skal kunne godkjenne og avgodkjenne en rapporteringsperiode`() {
+    fun `Saksbehandler skal kunne godkjenne og avgodkjenne en rapporteringsperiode med begrunnelse`() {
         withRapporteringApi(
             rapporteringsperioder = listOf(testPeriode),
         ) {
@@ -310,40 +348,6 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `Skal som saksbehandler kunne søke etter rapporteringsperioder`() {
-        withRapporteringApi(rapporteringsperioder = listOf(testPeriode)) {
-            autentisert(
-                token = testAzureAdToken,
-                endepunkt = "/rapporteringsperioder/sok",
-                httpMethod = HttpMethod.Post,
-                //language=JSON
-                body = """{"ident": "12345" }""",
-            ).let { response ->
-                response.status shouldBe HttpStatusCode.OK
-                "${response.contentType()}" shouldContain "application/json"
-                response.bodyAsText().let { json ->
-                    json shouldContainJsonKey "[*].id"
-                }
-            }
-        }
-    }
-
-    @Test
-    fun `Skal som bruker ikke kunne søke etter rapporteringsperioder`() {
-        withRapporteringApi(rapporteringsperioder = listOf(testPeriode)) {
-            autentisert(
-                token = testTokenXToken,
-                endepunkt = "/rapporteringsperioder/sok",
-                httpMethod = HttpMethod.Post,
-                //language=JSON
-                body = """{"ident": "12345" }""",
-            ).let { response ->
-                response.status shouldBe HttpStatusCode.Unauthorized
-            }
-        }
-    }
-
-    @Test
     fun `Skal kunne slette en aktivitet`() {
         val aktivitet = Aktivitet.Arbeid(LocalDate.now(), 4)
         withRapporteringApi {
@@ -386,3 +390,19 @@ private fun withRapporteringApi(
         test = test,
     )
 }
+
+private fun rapporteringsperiode(
+    tilstandType: Rapporteringsperiode.TilstandType,
+    korrigert: Rapporteringsperiode? = null,
+) =
+    Rapporteringsperiode.rehydrer(
+        UUID.randomUUID(),
+        beregnesEtter = LocalDate.now(),
+        fraOgMed = LocalDate.now(),
+        tilOgMed = LocalDate.now(),
+        tilstand = tilstandType,
+        opprettet = LocalDateTime.now(),
+        tidslinje = Aktivitetstidslinje(LocalDate.now()..LocalDate.now()),
+        godkjenningslogg = Godkjenningslogg(),
+        korrigerer = korrigert,
+    )
