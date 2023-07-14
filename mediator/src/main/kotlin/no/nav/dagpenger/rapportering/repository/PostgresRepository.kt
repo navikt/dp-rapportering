@@ -6,6 +6,7 @@ import kotliquery.TransactionalSession
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
+import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.DagVisitor
 import no.nav.dagpenger.rapportering.Godkjenningsendring
 import no.nav.dagpenger.rapportering.Godkjenningslogg
@@ -32,6 +33,11 @@ import kotlin.time.Duration
 internal class PostgresRepository(private val ds: DataSource) :
     PersonRepository,
     RapporteringsperiodeRepository {
+
+    private companion object {
+        private val logger = KotlinLogging.logger { }
+    }
+
     override fun hentRapporteringsperiode(ident: String, uuid: UUID): Rapporteringsperiode? {
         val root = requireNotNull(finnRoot(uuid))
         val kjede = hentKjede(ident, root)
@@ -152,6 +158,8 @@ internal class PostgresRepository(private val ds: DataSource) :
                 queries.forEach { query ->
                     tx.run(query.asUpdate)
                 }
+
+                logger.info("Lagret person med ${queries.size} spørringer")
             }
         }
     }
@@ -273,16 +281,14 @@ internal class PostgresRepository(private val ds: DataSource) :
             queryOf(
                 //language=PostgreSQL
                 """
-                SELECT g.*, u.ident , u.kilde, (SELECT uuid FROM godkjenningsendring WHERE g.avgodkjent_av=id) AS avgodkjent_av_uuid
+                SELECT g.*, (SELECT uuid FROM godkjenningsendring WHERE g.avgodkjent_av=id) AS avgodkjent_av_uuid
                 FROM godkjenningsendring g
-                JOIN godkjenning_utført_av gu ON gu.godkjenningsendring_id = g.uuid
-                LEFT JOIN utfører u ON u.id = gu.utfører
                 WHERE g.uuid = :uuid
                 """.trimIndent(),
                 mapOf("uuid" to godkjenningsId),
             ).map { row ->
-                val utførerIdent = row.string("ident")
-                val kilde = when (row.string("kilde")) {
+                val utførerIdent = row.string("utfort_id")
+                val kilde = when (row.string("utfort_kilde")) {
                     "Sluttbruker" -> Godkjenningsendring.Sluttbruker(utførerIdent)
                     "Saksbehandler" -> Godkjenningsendring.Saksbehandler(utførerIdent)
                     else -> throw IllegalStateException("Ukjent kilde.")
@@ -488,23 +494,11 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
         begrunnelse: String?,
     ) {
         queries.add(
-            queryOf( //language=PostgreSQL
-                """
-                INSERT INTO utfører (kilde, ident) VALUES (:kilde, :ident) ON CONFLICT DO NOTHING 
-                """.trimIndent(),
-                mapOf(
-                    "kilde" to utførtAv::class.java.simpleName,
-                    "ident" to utførtAv.id,
-                ),
-            ),
-        )
-        queries.add(
             queryOf(
                 //language=PostgreSQL
                 """
-                INSERT
-                INTO godkjenningsendring (uuid, rapporteringsperiode_id, opprettet, begrunnelse)
-                VALUES (:uuid, :rapporteringsperiodeId, :opprettet, :begrunnelse)
+                INSERT INTO godkjenningsendring (uuid, rapporteringsperiode_id, opprettet, begrunnelse, utfort_kilde, utfort_id)
+                VALUES (:uuid, :rapporteringsperiodeId, :opprettet, :begrunnelse, :utfort_kilde, :utfort_id)
                 ON CONFLICT (uuid) DO UPDATE SET avgodkjent_av = (SELECT id FROM godkjenningsendring WHERE uuid = :avgodkjent_id)
                 """.trimIndent(),
                 mapOf(
@@ -513,21 +507,8 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
                     "opprettet" to opprettet,
                     "begrunnelse" to begrunnelse,
                     "avgodkjent_id" to avgodkjent?.id,
-                ),
-            ),
-        )
-
-        queries.add(
-            queryOf(
-                //language=PostgreSQL
-                """
-                INSERT INTO godkjenning_utført_av (godkjenningsendring_id, utfører)
-                    VALUES (:godkjenningsendring_id, (SELECT id FROM utfører WHERE ident = :ident) )
-                    ON CONFLICT (godkjenningsendring_id) DO NOTHING
-                """.trimIndent(),
-                mapOf(
-                    "godkjenningsendring_id" to id,
-                    "ident" to utførtAv.id,
+                    "utfort_kilde" to utførtAv::class.java.simpleName,
+                    "utfort_id" to utførtAv.id,
                 ),
             ),
         )

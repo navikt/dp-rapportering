@@ -1,7 +1,5 @@
 package no.nav.dagpenger.rapportering.jobs
 
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Mediator
 import no.nav.dagpenger.rapportering.hendelser.BeregningsdatoPassertHendelse
@@ -30,7 +28,6 @@ internal object InnsendingsJobb {
                     var innsendtePerioder = 0
                     val tidBrukt = measureTime {
                         innsendtePerioder = mediator.beregningsdatoPassert()
-                        runBlocking { delay(Random.nextLong(500, 25000)) }
                     }
                     metrics.jobbFullført(tidBrukt, innsendtePerioder)
                 } catch (e: Exception) {

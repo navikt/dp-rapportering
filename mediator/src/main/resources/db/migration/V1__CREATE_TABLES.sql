@@ -56,28 +56,14 @@ CREATE TABLE IF NOT EXISTS rapporteringsplikt
     gjelder_fra TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'::TEXT) NOT NULL
 );
 
-CREATE TABLE utfører
-(
-    id        BIGSERIAL PRIMARY KEY,
-    opprettet TIMESTAMP WITH TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'::TEXT) NOT NULL,
-    kilde     TEXT                                                              NOT NULL,
-    ident     TEXT                                                              NOT NULL,
-    UNIQUE (kilde, ident)
-);
-
 CREATE TABLE godkjenningsendring
 (
     id                      BIGSERIAL PRIMARY KEY,
-    uuid                    uuid UNIQUE NOT NULL,
-    rapporteringsperiode_id uuid        NOT NULL REFERENCES rapporteringsperiode (uuid) ON DELETE CASCADE,
-    opprettet               TIMESTAMP   NOT NULL,
-    avgodkjent_av           BIGINT      NULL REFERENCES godkjenningsendring (id) ON DELETE CASCADE,
-    begrunnelse             TEXT
-);
-
-CREATE TABLE godkjenning_utført_av
-(
-    id                     BIGSERIAL PRIMARY KEY,
-    godkjenningsendring_id uuid UNIQUE NOT NULL REFERENCES godkjenningsendring (uuid) ON DELETE CASCADE,
-    utfører                BIGINT      NOT NULL REFERENCES utfører (id)
+    uuid                    uuid UNIQUE              NOT NULL,
+    rapporteringsperiode_id uuid                     NOT NULL REFERENCES rapporteringsperiode (uuid) ON DELETE CASCADE,
+    opprettet               TIMESTAMP WITH TIME ZONE NOT NULL,
+    avgodkjent_av           BIGINT                   NULL REFERENCES godkjenningsendring (id) ON DELETE CASCADE,
+    begrunnelse             TEXT,
+    utfort_kilde            TEXT                     NOT NULL,
+    utfort_id               TEXT                     NOT NULL
 );
