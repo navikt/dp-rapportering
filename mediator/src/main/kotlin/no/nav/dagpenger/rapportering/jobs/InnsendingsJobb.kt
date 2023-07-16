@@ -25,7 +25,7 @@ internal object InnsendingsJobb {
             period = 15.minutes.inWholeMilliseconds,
             action = {
                 try {
-                    var innsendtePerioder = 0
+                    var innsendtePerioder: Int
                     val tidBrukt = measureTime {
                         innsendtePerioder = mediator.beregningsdatoPassert()
                     }

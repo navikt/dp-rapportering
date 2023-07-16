@@ -15,6 +15,7 @@ import kotlin.concurrent.fixedRateTimer
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
+
 internal object NyRapporteringssyklusJobb {
     private val logger = KotlinLogging.logger {}
     private val metrics = JobbKjøringMetrikker(this::class.java.simpleName)
@@ -38,7 +39,7 @@ internal object NyRapporteringssyklusJobb {
             action = {
                 try {
                     logger.info { "Starter opprettelse av ny rapporteringssyklus" }
-                    var antallIdenterMedRapporteringsplikt = 0
+                    var antallIdenterMedRapporteringsplikt: Int
                     val tidBrukt = measureTime {
                         antallIdenterMedRapporteringsplikt = mediator.nyRapporteringssyklus()
                     }
