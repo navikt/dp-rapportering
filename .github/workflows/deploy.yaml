@@ -1,4 +1,4 @@
-name: Build and deploy
+name: Deploy
 
 on:
   push:
@@ -23,7 +23,6 @@ jobs:
           java-version: 19
 
       - uses: gradle/gradle-build-action@v2.6.0
-        id: gradle-build
         with:
           dependency-graph: generate-and-submit
           arguments: --configuration-cache build installDist
