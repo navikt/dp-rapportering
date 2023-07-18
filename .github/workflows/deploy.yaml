@@ -12,7 +12,7 @@ jobs:
     name: Build and publish Docker image
     runs-on: ubuntu-latest
     permissions:
-      contents: "read"
+      contents: "write"
       checks: "write"
       id-token: "write"
     steps:
@@ -23,9 +23,10 @@ jobs:
           java-version: 19
 
       - uses: gradle/gradle-build-action@v2.6.0
+        id: gradle-build
         with:
+          dependency-graph: generate-and-submit
           arguments: --configuration-cache build installDist
-          gradle-home-cache-cleanup: true
 
       - name: Publish results (unit test)
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -33,15 +34,11 @@ jobs:
         with:
           junit_files: "**/build/test-results/test/TEST-*.xml"
 
-      - uses: gradle/gradle-build-action@v2.6.0
-        with:
-          arguments: --init-script cyclonedx.gradle :mediator:cyclonedxBom
-
       - name: docker-build-push
         uses: nais/docker-build-push@v0
         id: docker-build-push
         with:
-          byosbom: mediator/build/reports/bom.json
+          byosbom: dependency-graph-reports/deploy-build.json
           team: teamdagpenger
           push_image: true # optional, default true
           tag: ${{ github.sha }}
@@ -49,6 +46,7 @@ jobs:
           docker_context: mediator # optional, default .
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+
     outputs:
       image: ${{ steps.docker-build-push.outputs.image }}
 
