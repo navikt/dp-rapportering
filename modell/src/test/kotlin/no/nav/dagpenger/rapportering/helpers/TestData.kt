@@ -36,12 +36,12 @@ internal object TestData {
         opprettet = LocalDateTime.now(),
     ) { _, tom -> tom }
 
-    fun nyRapporteringspliktDatoHendelse() = RapporteringspliktDatoHendelse(
-        UUID.randomUUID(),
-        testIdent,
-        LocalDateTime.now(),
-        LocalDate.now(),
-        LocalDate.now(),
+    fun nyRapporteringspliktDatoHendelse(ønsketDato: LocalDate = LocalDate.now(), søknadInnsendtDato: LocalDate = LocalDate.now()) = RapporteringspliktDatoHendelse(
+        meldingsreferanseId = UUID.randomUUID(),
+        ident = testIdent,
+        opprettet = LocalDateTime.now(),
+        ønsketDato = ønsketDato,
+        søknadInnsendtDato = søknadInnsendtDato,
     ) { _, tom -> tom }
 
     fun godkjennPeriodeHendelse(rapporteringId: UUID = UUID.randomUUID()) =
