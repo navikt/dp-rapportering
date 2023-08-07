@@ -5,9 +5,6 @@ on:
     branches:
       - 'dependabot/**'
 
-env:
-  IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
-
 jobs:
   test:
     name: test

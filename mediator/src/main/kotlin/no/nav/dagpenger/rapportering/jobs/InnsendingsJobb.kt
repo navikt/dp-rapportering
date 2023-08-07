@@ -14,6 +14,7 @@ import kotlin.time.measureTime
 
 internal object InnsendingsJobb {
     private val logger = KotlinLogging.logger {}
+    private val sikkerlogg = KotlinLogging.logger("tjenestekall.InnsendingsJobb")
     private val metrics = JobbKjøringMetrikker(this::class.java.simpleName)
 
     @OptIn(ExperimentalTime::class)

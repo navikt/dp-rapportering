@@ -185,6 +185,7 @@ class Rapporteringsperiode private constructor(
 
     fun behandle(hendelse: BeregningsdatoPassertHendelse, skalBeregnesStrategi: SkalBeregnesStrategi) {
         hendelse.kontekst(this)
+        hendelse.info("Håndterer BeregningsdatoPassertHendelse")
 
         tilstand.behandle(hendelse, this, skalBeregnesStrategi)
     }
@@ -304,10 +305,17 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiode: Rapporteringsperiode,
             skalBeregnesStrategi: SkalBeregnesStrategi,
         ) {
-            if (rapporteringsperiode.beregnesEtter.isAfter(hendelse.beregningsdato)) return
-            if (!skalBeregnesStrategi.skalBeregnes(rapporteringsperiode.periode)) return
-
             hendelse.kontekst(this)
+
+            if (rapporteringsperiode.beregnesEtter.isAfter(hendelse.beregningsdato)) {
+                hendelse.info("Rapporteringsperioden kan først beregnes etter ${rapporteringsperiode.beregnesEtter}")
+                return
+            }
+            if (!skalBeregnesStrategi.skalBeregnes(rapporteringsperiode.periode)) {
+                hendelse.info("Rapporteringsperioden skal ikke beregnes på grunn av strategi")
+                return
+            }
+
             hendelse.info("Sender inn godkjent periode", mapOf("rapporteringsfrist" to hendelse.beregningsdato))
 
             rapporteringsperiode.tilstand(hendelse, Innsendt)
