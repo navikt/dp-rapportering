@@ -31,7 +31,7 @@ class VedtakMottakTest {
 @Language("JSON")
 private val vedtakFattetMelding = """
     {
-      "@event_name": "vedtak_fattet",
+      "@event_name": "hovedrettighet_vedtak_fattet",
       "ident": "123",
       "behandlingId": "${UUID.randomUUID()}",
       "virkningsdato": "${LocalDate.now()}",
