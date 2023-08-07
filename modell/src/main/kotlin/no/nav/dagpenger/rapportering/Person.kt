@@ -123,9 +123,7 @@ class Person private constructor(
 
     fun behandle(hendelse: BeregningsdatoPassertHendelse) {
         rapporteringsperioder.forEach { rapporteringsperiode ->
-            val måHaVedtakStrategi: (periode: ClosedRange<LocalDate>) -> Boolean = { periode ->
-                rapporteringsplikt.any(periode) { it is RapporteringspliktVedtak }
-            }
+            val måHaVedtakStrategi = MåHaVedtakStrategi(rapporteringsplikt)
             rapporteringsperiode.behandle(hendelse, måHaVedtakStrategi)
         }
     }

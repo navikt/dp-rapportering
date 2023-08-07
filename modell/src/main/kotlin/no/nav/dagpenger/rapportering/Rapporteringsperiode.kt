@@ -185,7 +185,6 @@ class Rapporteringsperiode private constructor(
 
     fun behandle(hendelse: BeregningsdatoPassertHendelse, skalBeregnesStrategi: SkalBeregnesStrategi) {
         hendelse.kontekst(this)
-        hendelse.info("Håndterer BeregningsdatoPassertHendelse")
 
         tilstand.behandle(hendelse, this, skalBeregnesStrategi)
     }
@@ -417,6 +416,14 @@ class Rapporteringsperiode private constructor(
 }
 
 fun interface SkalBeregnesStrategi {
-
     fun skalBeregnes(periode: ClosedRange<LocalDate>): Boolean
+}
+
+internal class MåHaVedtakStrategi(
+    val rapporteringsplikt: TemporalCollection<Rapporteringsplikt>,
+) :
+    SkalBeregnesStrategi {
+    override fun skalBeregnes(periode: ClosedRange<LocalDate>): Boolean {
+        return rapporteringsplikt.any(periode) { it is RapporteringspliktVedtak }
+    }
 }
