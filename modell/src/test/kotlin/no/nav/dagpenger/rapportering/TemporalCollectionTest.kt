@@ -22,9 +22,9 @@ class TemporalCollectionTest {
         plikter.put(5.januar, "foobar")
         plikter.put(8.januar, "barfoo")
 
-        plikter.any(3.januar..5.januar) { it != "bar" } shouldBe true
-        plikter.any(3.januar..5.januar) { it == "foo" } shouldBe true
-        plikter.any(3.januar..5.januar) { it == "foobar" } shouldBe true
-        plikter.any(3.januar..5.januar) { it != "barfoo" } shouldBe true
+        plikter.alleSomDekkerPeriode(3.januar..5.januar).size shouldBe 2
+        plikter.alleSomDekkerPeriode(3.januar..5.januar).size shouldBe 2
+        plikter.alleSomDekkerPeriode(3.januar..5.januar).size shouldBe 2
+        plikter.alleSomDekkerPeriode(3.januar..5.januar).size shouldBe 2
     }
 }

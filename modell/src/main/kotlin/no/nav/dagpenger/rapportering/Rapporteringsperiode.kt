@@ -421,9 +421,9 @@ fun interface SkalBeregnesStrategi {
 
 internal class MåHaVedtakStrategi(
     val rapporteringsplikt: TemporalCollection<Rapporteringsplikt>,
-) :
-    SkalBeregnesStrategi {
+) : SkalBeregnesStrategi {
+    // Har perioden minst EN dag som er dekket av et vedtak skal den beregnes
     override fun skalBeregnes(periode: ClosedRange<LocalDate>): Boolean {
-        return rapporteringsplikt.any(periode) { it is RapporteringspliktVedtak }
+        return rapporteringsplikt.alleSomDekkerPeriode(periode).any { it is RapporteringspliktVedtak }
     }
 }
