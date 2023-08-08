@@ -37,7 +37,9 @@ internal open class TemporalCollection<R> {
 
     fun alleSomDekkerPeriode(periode: ClosedRange<LocalDate>): List<R> {
         val datoer = periode.start.datesUntil(periode.endInclusive.plusDays(1)).toList()
-        return datoer.map { get(it) }.toSet().toList()
+        return datoer.mapNotNull {
+            runCatching { get(it) }.getOrNull()
+        }.toSet().toList()
     }
 }
 
