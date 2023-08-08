@@ -46,16 +46,6 @@ spec:
       value: {{azure.grupper.saksbehandler}}
     - name: flyway.cleanDisabled
       value: "false"
-  azure:
-    application:
-      enabled: true
-      tenant: {{azure.tenant}}
-      claims:
-        groups:
-          - id: {{azure.grupper.saksbehandler}}
-          - id: {{azure.grupper.beslutter}}
-        extra:
-          - NAVident
   gcp:
     sqlInstances:
       - type: POSTGRES_14
@@ -66,6 +56,16 @@ spec:
         databases:
           - name: rapportering
             envVarPrefix: DB
+  azure:
+    application:
+      enabled: true
+      tenant: {{azure.tenant}}
+      claims:
+        groups:
+          - id: {{azure.grupper.saksbehandler}}
+          - id: {{azure.grupper.beslutter}}
+        extra:
+          - NAVident
   accessPolicy:
     inbound:
       rules:
