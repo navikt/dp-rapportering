@@ -19,12 +19,12 @@ internal class VedtakMelding(
     private val virkningsdato = packet["virkningsdato"].asLocalDate()
 
     override fun behandle(mediator: IHendelseMediator, context: MessageContext) {
-        when (packet.utfall()) {
-            "Innvilget" -> mediator.behandle(VedtakInnvilgetHendelse(id, ident, virkningsdato, opprettet, strategiForBeregningsdato))
-            "Avslått" -> mediator.behandle(VedtakAvslåttHendelse(id, ident, virkningsdato, opprettet))
-            else -> throw IllegalArgumentException("Ugyldig utfall, kan ikke mappe ${packet.utfall()}")
+        when (packet.eventNavn()) {
+            "dagpenger_innvilget" -> mediator.behandle(VedtakInnvilgetHendelse(id, ident, virkningsdato, opprettet, strategiForBeregningsdato))
+            "dagpenger_avslått" -> mediator.behandle(VedtakAvslåttHendelse(id, ident, virkningsdato, opprettet))
+            else -> throw IllegalArgumentException("Ugyldig @event_navn, kan ikke mappe ${packet.eventNavn()}")
         }
     }
 
-    private fun JsonMessage.utfall(): String = this["utfall"].asText()
+    private fun JsonMessage.eventNavn(): String = this["@event_name"].asText()
 }
