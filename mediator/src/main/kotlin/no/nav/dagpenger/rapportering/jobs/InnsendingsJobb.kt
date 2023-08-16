@@ -9,7 +9,6 @@ import java.util.UUID
 import kotlin.concurrent.fixedRateTimer
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -24,7 +23,7 @@ internal object InnsendingsJobb {
             name = "Fast innsending av godkjente rapporteringsperioder hvor beregningsdatoen har passert",
             daemon = true,
             initialDelay = randomInitialDelay(),
-            period = 30.seconds.inWholeMilliseconds,
+            period = 15.minutes.inWholeMilliseconds,
             action = {
                 try {
                     var innsendtePerioder: Int
