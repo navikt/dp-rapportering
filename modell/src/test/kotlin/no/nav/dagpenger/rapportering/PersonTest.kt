@@ -125,6 +125,7 @@ class PersonTest {
                 testIdent,
                 virkningsdato = 1.januar,
                 opprettet = 4.januar.atStartOfDay(),
+                UUID.randomUUID(),
             ),
         )
         person.rapporteringspliktType shouldBe Ingen
@@ -137,6 +138,7 @@ class PersonTest {
                 testIdent,
                 virkningsdato = 1.januar,
                 opprettet = 4.januar.atStartOfDay(),
+                UUID.randomUUID(),
             ),
         )
         person.rapporteringspliktType shouldBe Ingen
@@ -149,6 +151,7 @@ class PersonTest {
                 testIdent,
                 virkningsdato = 1.januar,
                 opprettet = 4.januar.atStartOfDay(),
+                UUID.randomUUID(),
             ),
         )
         person.rapporteringspliktType shouldBe Ingen

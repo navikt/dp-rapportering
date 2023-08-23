@@ -34,6 +34,7 @@ internal object TestData {
         ident = testIdent,
         virkningsdato = virkningsdato,
         opprettet = LocalDateTime.now(),
+        UUID.randomUUID(),
     ) { _, tom -> tom }
 
     fun nyRapporteringspliktDatoHendelse(ønsketDato: LocalDate = LocalDate.now(), søknadInnsendtDato: LocalDate = LocalDate.now()) = RapporteringspliktDatoHendelse(

@@ -123,6 +123,7 @@ class PostgresRepositoryTest {
                         testIdent,
                         LocalDate.now(),
                         LocalDateTime.now(),
+                        UUID.randomUUID(),
                     ) { _, tom -> tom },
                 )
                 repository.lagre(person)

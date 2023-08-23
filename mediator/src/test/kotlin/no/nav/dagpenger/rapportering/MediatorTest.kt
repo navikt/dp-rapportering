@@ -116,6 +116,7 @@ class MediatorTest {
                 testIdent,
                 LocalDate.now(),
                 LocalDateTime.now(),
+                UUID.randomUUID(),
             ) { _, tom -> tom },
         )
         val person = mediator.hentEllerOpprettPerson(testIdent)
@@ -142,6 +143,7 @@ class MediatorTest {
                 testIdent,
                 LocalDate.now(),
                 LocalDateTime.now(),
+                UUID.randomUUID(),
             ) { _, tom -> tom },
         )
         val person = mediator.hentEllerOpprettPerson(testIdent)

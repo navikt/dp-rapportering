@@ -26,7 +26,7 @@ internal class VedtakMottak(
         River(rapidsConnection).apply {
             validate { it.requireKey("@id") }
             validate { it.demandAny("@event_name", listOf("dagpenger_innvilget", "dagpenger_avslått")) }
-            validate { it.requireKey("ident", "behandlingId", "virkningsdato") }
+            validate { it.requireKey("ident", "behandlingId", "virkningsdato", "sakId") }
             validate { it.interestedIn("@id", "@opprettet") }
         }.register(this)
     }

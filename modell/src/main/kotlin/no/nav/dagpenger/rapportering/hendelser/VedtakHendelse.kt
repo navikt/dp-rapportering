@@ -12,6 +12,7 @@ sealed class VedtakHendelse(
     internal val utfall: Utfall,
     internal val virkningsdato: LocalDate,
     internal val opprettet: LocalDateTime,
+    internal val sakId: UUID,
 ) : PersonHendelse(
     meldingsreferanseId,
     ident,
@@ -23,15 +24,17 @@ class VedtakInnvilgetHendelse(
     ident: String,
     virkningsdato: LocalDate,
     opprettet: LocalDateTime,
+    sakId: UUID,
     val beregningsdatoStrategi: FastsettBeregningsdatoStrategi,
-) : VedtakHendelse(meldingsreferanseId, ident, Utfall.Innvilget, virkningsdato, opprettet)
+) : VedtakHendelse(meldingsreferanseId, ident, Utfall.Innvilget, virkningsdato, opprettet, sakId)
 
 class VedtakAvslåttHendelse(
     meldingsreferanseId: UUID,
     ident: String,
     virkningsdato: LocalDate,
     opprettet: LocalDateTime,
-) : VedtakHendelse(meldingsreferanseId, ident, Utfall.Avslått, virkningsdato, opprettet)
+    sakId: UUID,
+) : VedtakHendelse(meldingsreferanseId, ident, Utfall.Avslått, virkningsdato, opprettet, sakId)
 
 enum class Utfall {
     Innvilget,

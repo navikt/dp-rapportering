@@ -45,7 +45,8 @@ private val dagpengerInnvilgetMelding = """
       "behandlingId": "${UUID.randomUUID()}",
       "virkningsdato": "${LocalDate.now()}",
       "@id": "${UUID.randomUUID()}",
-      "@opprettet": "${LocalDateTime.now()}"
+      "@opprettet": "${LocalDateTime.now()}",
+      "sakId": "${UUID.randomUUID()}"
     }
 """.trimIndent()
 
@@ -57,6 +58,7 @@ private val dagpengerAvslåttMelding = """
       "behandlingId": "${UUID.randomUUID()}",
       "virkningsdato": "${LocalDate.now()}",
       "@id": "${UUID.randomUUID()}",
-      "@opprettet": "${LocalDateTime.now()}"
+      "@opprettet": "${LocalDateTime.now()}",
+      "sakId": "${UUID.randomUUID()}"
     }
 """.trimIndent()
