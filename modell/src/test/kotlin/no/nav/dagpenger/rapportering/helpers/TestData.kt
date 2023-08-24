@@ -37,11 +37,10 @@ internal object TestData {
         UUID.randomUUID(),
     ) { _, tom -> tom }
 
-    fun nyRapporteringspliktDatoHendelse(ønsketDato: LocalDate = LocalDate.now(), søknadInnsendtDato: LocalDate = LocalDate.now()) = RapporteringspliktDatoHendelse(
+    fun nyRapporteringspliktDatoHendelse(søknadInnsendtDato: LocalDate = LocalDate.now()) = RapporteringspliktDatoHendelse(
         meldingsreferanseId = UUID.randomUUID(),
         ident = testIdent,
         opprettet = LocalDateTime.now(),
-        ønsketDato = ønsketDato,
         søknadInnsendtDato = søknadInnsendtDato,
     ) { _, tom -> tom }
 

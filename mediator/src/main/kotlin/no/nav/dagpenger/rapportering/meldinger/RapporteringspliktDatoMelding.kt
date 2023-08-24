@@ -14,18 +14,16 @@ private val logger = KotlinLogging.logger {}
 internal class RapporteringspliktDatoMelding(packet: JsonMessage, override val ident: String) :
     HendelseMessage(packet) {
     private val beregningsdatoStrategi: FastsettBeregningsdatoStrategi = strategiForBeregningsdato
-    private val ønsketDato = packet["@løsning"]["Virkningsdatoer"]["ønsketdato"].asLocalDate()
     private val søknadInnsendtDato = packet["@løsning"]["Søknadstidspunkt"].asLocalDate()
     private val rapporteringspliktDatoHendelse: RapporteringspliktDatoHendelse
         get() = RapporteringspliktDatoHendelse(
             id,
             ident,
             opprettet,
-            ønsketDato,
             søknadInnsendtDato,
             beregningsdatoStrategi,
         ).also {
-            logger.info { "Oppretter RapporteringspliktDatoHendelse med opprettet=$opprettet, ønsketDato=$ønsketDato, søknadInnsendtDato=$søknadInnsendtDato" }
+            logger.info { "Oppretter RapporteringspliktDatoHendelse med opprettet=$opprettet, søknadInnsendtDato=$søknadInnsendtDato" }
         }
 
     override fun behandle(mediator: IHendelseMediator, context: MessageContext) {

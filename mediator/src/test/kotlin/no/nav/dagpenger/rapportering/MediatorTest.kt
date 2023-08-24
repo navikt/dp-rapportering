@@ -42,7 +42,6 @@ class MediatorTest {
             testIdent,
             LocalDateTime.now(),
             LocalDate.now(),
-            LocalDate.now(),
         ) { _, tom -> tom }
 
     @Test
@@ -57,11 +56,11 @@ class MediatorTest {
         mediator.behandle(hendelse)
         hendelse.behov().map {
             it.type
-        } shouldContainExactly listOf(MineBehov.Virkningsdatoer, MineBehov.Søknadstidspunkt)
+        } shouldContainExactly listOf(MineBehov.Søknadstidspunkt)
 
         mediator.behandle(rapporteringspliktDatoHendelse)
 
-        hendelse.aktivitetsteller() shouldBe 3
+        hendelse.aktivitetsteller() shouldBe 2
         hendelse.harAktiviteter() shouldBe true
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId

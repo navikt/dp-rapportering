@@ -4,14 +4,14 @@ Egenskap: Rapporteringsplikt
 
   Scenariomal: Søknad gir rapporteringsplikt
     Gitt en ny bruker
-    Når brukeren søker om dagpenger den "<søknadsdato>" og ønsker dagpenger fra "<ønsketdato>"
+    Når brukeren søker om dagpenger den "<søknadsdato>"
     Så skal brukeren få rapporteringsplikt på grunn av "søknad"
-    Og rapporteringsplikten gjelder fra "<rapporteringsplikt>"
+    Og rapporteringsplikten gjelder fra "<søknadsdato>"
 
     Eksempler:
-      | søknadsdato | ønsketdato | rapporteringsplikt |
-      | 2020-01-15  | 2020-01-20 | 2020-01-20         |
-      | 2020-01-20  | 2020-01-15 | 2020-01-20         |
+      | søknadsdato |
+      | 2020-01-15  |
+      | 2020-01-20  |
 
   Scenariomal: Vedtak gir rapporteringsplikt
     Gitt en ny bruker

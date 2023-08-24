@@ -21,11 +21,10 @@ class RapporteringspliktSteps : No {
             person = testPerson
         }
 
-        Når("brukeren søker om dagpenger den {string} og ønsker dagpenger fra {string}") { søknadsdatoStr: String, ønsketdatoStr: String ->
+        Når("brukeren søker om dagpenger den {string}") { søknadsdatoStr: String ->
             val søknadsdato = LocalDate.parse(søknadsdatoStr)
-            val ønsketdato = LocalDate.parse(ønsketdatoStr)
             person.behandle(søknadInnsendtHendelse())
-            person.behandle(nyRapporteringspliktDatoHendelse(søknadsdato, ønsketdato))
+            person.behandle(nyRapporteringspliktDatoHendelse(søknadsdato))
         }
 
         Når("brukeren får innvilget vedtak om dagpenger med virkningsdato {string}") { dato: String ->

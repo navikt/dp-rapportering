@@ -10,13 +10,10 @@ class RapporteringspliktDatoHendelse(
     meldingsreferanseId: UUID,
     ident: String,
     internal val opprettet: LocalDateTime,
-    ønsketDato: LocalDate,
-    søknadInnsendtDato: LocalDate,
+    internal val søknadInnsendtDato: LocalDate,
     internal val beregningsdatoStrategi: FastsettBeregningsdatoStrategi,
 ) : PersonHendelse(
     meldingsreferanseId,
     ident,
     Aktivitetslogg(),
-) {
-    internal val gjelderFra = listOf(ønsketDato, søknadInnsendtDato).max()
-}
+)

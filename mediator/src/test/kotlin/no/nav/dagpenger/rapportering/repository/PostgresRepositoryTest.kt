@@ -81,7 +81,6 @@ class PostgresRepositoryTest {
                         testIdent,
                         LocalDateTime.now(),
                         LocalDate.now(),
-                        LocalDate.now(),
                     ) { _, tom -> tom },
                 )
                 behandle(
@@ -230,7 +229,6 @@ class PostgresRepositoryTest {
                         UUID.randomUUID(),
                         testIdent,
                         LocalDateTime.now(),
-                        LocalDate.now(),
                         LocalDate.now(),
                     ) { _, tom -> tom },
                 )

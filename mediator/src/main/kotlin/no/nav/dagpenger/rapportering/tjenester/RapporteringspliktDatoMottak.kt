@@ -22,7 +22,7 @@ internal class RapporteringspliktDatoMottak(
     init {
         River(rapidsConnection).apply {
             validate { it.demandValue("@event_name", "behov") }
-            validate { it.demandAll("@behov", listOf("Virkningsdatoer", "Søknadstidspunkt")) }
+            validate { it.demandAll("@behov", listOf("Søknadstidspunkt")) }
             validate { it.requireKey("ident", "Søknadstidspunkt.søknad_uuid") }
             validate { it.requireKey("@løsning") }
             validate { it.requireValue("@final", true) }

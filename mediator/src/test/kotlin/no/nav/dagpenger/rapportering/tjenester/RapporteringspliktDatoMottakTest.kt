@@ -32,21 +32,14 @@ private val løstBehovJSON = """
       "@id": "${UUID.randomUUID()}",
       "@event_name": "behov",
       "@behov": [
-        "Virkningsdatoer",
         "Søknadstidspunkt"
       ],
       "@opprettet": "${LocalDateTime.now()}",
       "ident": "123",
-      "Virkningsdatoer": {
-        "søknad_uuid": "${UUID.randomUUID()}"
-      },
       "Søknadstidspunkt": {
         "søknad_uuid": "${UUID.randomUUID()}"
       },
       "@løsning": {
-        "Virkningsdatoer": {
-          "ønsketdato": "${LocalDate.now()}"
-        },
         "Søknadstidspunkt": "${LocalDate.now()}"
       },
       "@final": true

@@ -34,7 +34,7 @@ class PersonTest {
         val hendelse = søknadInnsendtHendelse()
         person.behandle(hendelse)
 
-        assertSame(3, hendelse.aktivitetsteller())
+        assertSame(2, hendelse.aktivitetsteller())
         assertTrue(hendelse.harAktiviteter())
     }
 
@@ -48,7 +48,6 @@ class PersonTest {
                 UUID.randomUUID(),
                 testIdent,
                 LocalDateTime.now(),
-                LocalDate.now(),
                 LocalDate.now(),
             ) { _, tom -> tom },
         )

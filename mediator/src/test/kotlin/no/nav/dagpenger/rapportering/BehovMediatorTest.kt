@@ -13,24 +13,13 @@ class BehovMediatorTest {
     private val mediator = BehovMediator(rapid)
 
     @Test
-    fun `slår sammen flere behov på samme hendelse og publiserer en felles pakke`() {
+    fun `kan sende ut behov om søknadstidspunkt`() {
         val hendelse = TestHendelse()
-        hendelse.behov(
-            MineBehov.Virkningsdatoer,
-            "Trenger datoer",
-            mapOf(
-                "felt_fra_A" to "A",
-                "overlappMedLikVerdi" to "C",
-                "overlappMedUlikVerdi" to "C",
-            ),
-        )
         hendelse.behov(
             MineBehov.Søknadstidspunkt,
             "Trenger søknadstidspunkt",
             mapOf(
-                "felt_fra_B" to "B",
-                "overlappMedLikVerdi" to "C",
-                "overlappMedUlikVerdi" to "D",
+                "felt_fra_A" to "A",
             ),
         )
 
@@ -38,9 +27,8 @@ class BehovMediatorTest {
 
         with(rapid.inspektør) {
             size shouldBe 1
-            message(0)["@behov"].map { it.asText() } shouldBe listOf("Virkningsdatoer", "Søknadstidspunkt")
-            field(0, "Virkningsdatoer")["felt_fra_A"].asText() shouldBe "A"
-            field(0, "Søknadstidspunkt")["felt_fra_B"].asText() shouldBe "B"
+            message(0)["@behov"].map { it.asText() } shouldBe listOf("Søknadstidspunkt")
+            field(0, "Søknadstidspunkt")["felt_fra_A"].asText() shouldBe "A"
         }
     }
 

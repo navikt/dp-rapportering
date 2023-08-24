@@ -115,7 +115,6 @@ internal fun Application.rapporteringApi(
                             it.ident,
                             fom,
                             fom.toLocalDate(),
-                            fom.toLocalDate(),
                             strategiForBeregningsdato,
                         ),
                     )
