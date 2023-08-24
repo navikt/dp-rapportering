@@ -35,7 +35,7 @@ mockk = { group = "io.mockk", name = "mockk", version = "1.13.7" }
 mock-oauth2-server = { group = "no.nav.security", name = "mock-oauth2-server", version = "1.0.0" }
 testContainer = { group = "org.testcontainers", name = "testcontainers", version.ref = "testContainer" }
 testContainer-postgresql = { group = "org.testcontainers", name = "postgresql", version.ref = "testContainer" }
-flywaydb = { group = "org.flywaydb", name = "flyway-core", version = "9.21.1" }
+flywaydb = { group = "org.flywaydb", name = "flyway-core", version = "9.21.2" }
 hikariCP = { group = "com.zaxxer", name = "HikariCP", version = "5.0.1" }
 postgresql-driver = { group = "org.postgresql", name = "postgresql", version = "42.6.0" }
 kotlinquery = { group = "com.github.seratch", name = "kotliquery", version = "1.9.0" }
