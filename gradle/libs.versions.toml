@@ -5,7 +5,7 @@ kotlin = "1.9.0"
 ktor = "2.3.3"
 ktlint = "0.48.2"
 kotest = "5.6.2"
-testContainer = "1.18.3"
+testContainer = "1.19.0"
 
 [libraries]
 dp-biblioteker-oauth2-klient = { group = "com.github.navikt.dp-biblioteker", name = "oauth2-klient", version = "2023.04.27-09.33.fcf0798bf943" }
