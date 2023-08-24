@@ -108,7 +108,12 @@ class PersonTest {
         person.rapporteringspliktType shouldBe Ingen
         person.nyRapporteringsplikt(RapporteringspliktSøknad(rapporteringspliktFra = LocalDateTime.now()))
         person.rapporteringspliktType shouldBe Søknad
-        person.nyRapporteringsplikt(RapporteringspliktVedtak(rapporteringspliktFra = LocalDateTime.now()))
+        person.nyRapporteringsplikt(
+            RapporteringspliktVedtak(
+                rapporteringspliktFra = LocalDateTime.now(),
+                sakId = UUID.randomUUID(),
+            ),
+        )
         person.rapporteringspliktType shouldBe Vedtak
 
         person.rapporteringsplikter.size shouldBe 3
@@ -143,7 +148,12 @@ class PersonTest {
         )
         person.rapporteringspliktType shouldBe Ingen
 
-        person.nyRapporteringsplikt(RapporteringspliktVedtak(rapporteringspliktFra = 1.januar.atStartOfDay()))
+        person.nyRapporteringsplikt(
+            RapporteringspliktVedtak(
+                rapporteringspliktFra = 1.januar.atStartOfDay(),
+                sakId = UUID.randomUUID(),
+            ),
+        )
         person.rapporteringspliktType shouldBe Vedtak
         person.behandle(
             VedtakAvslåttHendelse(

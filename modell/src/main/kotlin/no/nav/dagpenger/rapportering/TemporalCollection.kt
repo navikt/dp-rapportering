@@ -34,13 +34,6 @@ internal open class TemporalCollection<R> {
             visitor.visit(it.key, it.value)
         }
     }
-
-    fun alleSomDekkerPeriode(periode: ClosedRange<LocalDate>): List<R> {
-        val datoer = periode.start.datesUntil(periode.endInclusive.plusDays(1)).toList()
-        return datoer.mapNotNull {
-            runCatching { get(it) }.getOrNull()
-        }.toSet().toList()
-    }
 }
 
 interface TemporalCollectionVisitor<R> {

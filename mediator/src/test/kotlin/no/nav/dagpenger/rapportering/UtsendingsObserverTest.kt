@@ -34,14 +34,17 @@ class UtsendingsObserverTest {
             )
         val fom = 1.januar
         val tom = 14.januar
+        val sakId = UUID.randomUUID()
+        val rapporteringsperiodeId = UUID.randomUUID()
         observer.rapporteringsperiodeInnsendt(
             RapporteringsperiodeObserver.RapporteringsperiodeInnsendt(
-                UUID.randomUUID(),
+                rapporteringsperiodeId = rapporteringsperiodeId,
                 fom = fom,
                 tom = tom,
                 dager = fom.datesUntil(tom.plusDays(1)).map {
                     Dag(it, mutableListOf(Aktivitet.Arbeid(it, 5)))
                 }.toList(),
+                sakId = sakId,
             ),
         )
 
@@ -49,6 +52,7 @@ class UtsendingsObserverTest {
         testRapid.inspektør.message(0).let {
             it["@event_name"].asText() shouldBe "rapporteringsperiode_innsendt_hendelse"
             it["ident"].asText() shouldBe "123"
+            it["rapporteringsId"].asText() shouldBe rapporteringsperiodeId.toString()
             it["fom"].asLocalDate() shouldBe 1.januar
             it["tom"].asLocalDate() shouldBe 14.januar
 
@@ -62,6 +66,8 @@ class UtsendingsObserverTest {
                 aktiviteter.single()["type"].asText() shouldBe "Arbeid"
                 Duration.parse(aktiviteter.single()["tid"].asText()) shouldBe 5.hours
             }
+
+            it["sakId"].asText() shouldBe sakId.toString()
         }
     }
 }

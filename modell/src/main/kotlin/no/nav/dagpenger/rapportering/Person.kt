@@ -62,7 +62,7 @@ class Person private constructor(
         hendelse.kontekst(this)
 
         if (rapporteringsperioder.any {
-                it.gjelderFor(rapporteringsperiode.gjelderFra)
+                it.dekkesAv(rapporteringsperiode.gjelderFra)
             }
         ) {
             hendelse.info("Det finnes allerede en rapporteringsperiode for denne perioden")
@@ -122,10 +122,7 @@ class Person private constructor(
     }
 
     fun behandle(hendelse: BeregningsdatoPassertHendelse) {
-        rapporteringsperioder.forEach { rapporteringsperiode ->
-            val måHaVedtakStrategi = MåHaVedtakStrategi(rapporteringsplikt)
-            rapporteringsperiode.behandle(hendelse, måHaVedtakStrategi)
-        }
+        rapporteringsplikt.get(hendelse.beregningsdato).behandle(hendelse, rapporteringsperioder.toList())
     }
 
     fun behandle(hendelse: KorrigerPeriodeHendelse) {

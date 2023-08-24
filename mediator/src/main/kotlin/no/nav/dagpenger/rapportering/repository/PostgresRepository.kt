@@ -95,7 +95,7 @@ internal class PostgresRepository(private val ds: DataSource) :
                 val rapporteringsplikt = when (type) {
                     RapporteringspliktType.Ingen -> IngenRapporteringsplikt(uuid, gjelderFra)
                     RapporteringspliktType.Søknad -> RapporteringspliktSøknad(uuid, gjelderFra)
-                    RapporteringspliktType.Vedtak -> RapporteringspliktVedtak(uuid, gjelderFra)
+                    RapporteringspliktType.Vedtak -> RapporteringspliktVedtak(uuid, gjelderFra, UUID.randomUUID()) // TODO: Håndtere lagring av sakId
                 }
                 Pair(opprettet, rapporteringsplikt)
             }.asList,

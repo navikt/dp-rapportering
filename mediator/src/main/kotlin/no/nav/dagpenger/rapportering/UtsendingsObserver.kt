@@ -29,6 +29,7 @@ class UtsendingsObserver(
                 "fom" to event.fom,
                 "tom" to event.tom,
                 "dager" to event.dager.map { DagJsonBuilder(it).json },
+                "sakId" to event.sakId,
             ),
         )
 

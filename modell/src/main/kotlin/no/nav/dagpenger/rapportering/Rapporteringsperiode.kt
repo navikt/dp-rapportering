@@ -93,7 +93,7 @@ class Rapporteringsperiode private constructor(
 
         fun List<Rapporteringsperiode>.hentGjeldende(dato: LocalDate = LocalDate.now()): Rapporteringsperiode? {
             return this.filter {
-                it.gjelderFor(dato)
+                it.dekkesAv(dato)
             }.singleOrNull {
                 it.tilstand == TilUtfylling
             }
@@ -115,7 +115,7 @@ class Rapporteringsperiode private constructor(
 
     fun finnSisteKorrigering(): Rapporteringsperiode = korrigertAv?.let { it.finnSisteKorrigering() } ?: this
 
-    fun gjelderFor(dato: LocalDate) = dato in periode
+    fun dekkesAv(dato: LocalDate) = dato in periode
 
     fun leggTilFritak(dato: LocalDate) {
         tidslinje.leggTilFritak(dato)
@@ -183,10 +183,10 @@ class Rapporteringsperiode private constructor(
         return true
     }
 
-    fun behandle(hendelse: BeregningsdatoPassertHendelse, skalBeregnesStrategi: SkalBeregnesStrategi) {
+    fun behandle(hendelse: BeregningsdatoPassertHendelse, sakId: UUID) {
         hendelse.kontekst(this)
 
-        tilstand.behandle(hendelse, this, skalBeregnesStrategi)
+        tilstand.behandle(hendelse, this, sakId)
     }
 
     fun behandle(hendelse: KorrigerPeriodeHendelse): Boolean {
@@ -239,7 +239,7 @@ class Rapporteringsperiode private constructor(
         fun behandle(
             hendelse: BeregningsdatoPassertHendelse,
             rapporteringsperiode: Rapporteringsperiode,
-            skalBeregnesStrategi: SkalBeregnesStrategi,
+            sakId: UUID,
         ) {
             // noop
         }
@@ -299,10 +299,11 @@ class Rapporteringsperiode private constructor(
     // Bruker har godkjent, men ikke sendt videre
     private object Godkjent : Rapporteringsperiodetilstand {
         override val type = TilstandType.Godkjent
+
         override fun behandle(
             hendelse: BeregningsdatoPassertHendelse,
             rapporteringsperiode: Rapporteringsperiode,
-            skalBeregnesStrategi: SkalBeregnesStrategi,
+            sakId: UUID,
         ) {
             hendelse.kontekst(this)
 
@@ -310,23 +311,20 @@ class Rapporteringsperiode private constructor(
                 hendelse.info("Rapporteringsperioden kan først beregnes etter ${rapporteringsperiode.beregnesEtter}")
                 return
             }
-            if (!skalBeregnesStrategi.skalBeregnes(rapporteringsperiode.periode)) {
-                hendelse.info("Rapporteringsperioden skal ikke beregnes på grunn av strategi")
-                return
-            }
 
             hendelse.info("Sender inn godkjent periode", mapOf("rapporteringsfrist" to hendelse.beregningsdato))
 
             rapporteringsperiode.tilstand(hendelse, Innsendt)
-            rapporteringsperiode.emitRapporteringsperiodeInnsendt()
+            rapporteringsperiode.emitRapporteringsperiodeInnsendt(sakId)
         }
 
         override fun behandle(hendelse: ManuellInnsendingHendelse, rapporteringsperiode: Rapporteringsperiode) {
             hendelse.kontekst(this)
             hendelse.info("Sender inn godkjent periode manuelt")
 
+            TODO("Må gå via rapporteringsplikt")
             rapporteringsperiode.tilstand(hendelse, Innsendt)
-            rapporteringsperiode.emitRapporteringsperiodeInnsendt()
+            // rapporteringsperiode.emitRapporteringsperiodeInnsendt()
         }
 
         override fun behandle(hendelse: AvgodkjennPeriodeHendelse, rapporteringsperiode: Rapporteringsperiode) {
@@ -389,12 +387,13 @@ class Rapporteringsperiode private constructor(
         observers.forEach { it.rapporteringsperiodeEndret(event) }
     }
 
-    private fun emitRapporteringsperiodeInnsendt() {
+    private fun emitRapporteringsperiodeInnsendt(sakId: UUID) {
         val event = RapporteringsperiodeObserver.RapporteringsperiodeInnsendt(
             rapporteringsperiodeId = rapporteringsperiodeId,
             fom = periode.start,
             tom = periode.endInclusive,
             dager = this.tidslinje.toList(),
+            sakId = sakId,
         )
 
         observers.forEach { it.rapporteringsperiodeInnsendt(event) }
@@ -410,20 +409,12 @@ class Rapporteringsperiode private constructor(
 
     fun registrer(observer: RapporteringsperiodeObserver) = observers.add(observer)
 
+    fun gjelderFor(rapporteringspliktFra: LocalDateTime) = gjelderFor(rapporteringspliktFra.toLocalDate())
+
+    fun gjelderFor(rapporteringspliktFra: LocalDate) =
+        rapporteringspliktFra in periode || rapporteringspliktFra.isAfter(periode.endInclusive)
+
     enum class TilstandType {
         TilUtfylling, Godkjent, Innsendt,
-    }
-}
-
-fun interface SkalBeregnesStrategi {
-    fun skalBeregnes(periode: ClosedRange<LocalDate>): Boolean
-}
-
-internal class MåHaVedtakStrategi(
-    val rapporteringsplikt: TemporalCollection<Rapporteringsplikt>,
-) : SkalBeregnesStrategi {
-    // Har perioden minst EN dag som er dekket av et vedtak skal den beregnes
-    override fun skalBeregnes(periode: ClosedRange<LocalDate>): Boolean {
-        return rapporteringsplikt.alleSomDekkerPeriode(periode).any { it is RapporteringspliktVedtak }
     }
 }

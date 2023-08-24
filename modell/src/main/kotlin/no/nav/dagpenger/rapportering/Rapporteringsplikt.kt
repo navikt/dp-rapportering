@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering
 
 import no.nav.dagpenger.aktivitetslogg.Aktivitetskontekst
 import no.nav.dagpenger.aktivitetslogg.SpesifikkKontekst
+import no.nav.dagpenger.rapportering.hendelser.BeregningsdatoPassertHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
@@ -20,6 +21,7 @@ interface Rapporteringsplikt : Aktivitetskontekst {
     }
 
     fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse)
+    fun behandle(hendelse: BeregningsdatoPassertHendelse, rapporteringsperioder: List<Rapporteringsperiode>) {}
 
     override fun toSpesifikkKontekst() = SpesifikkKontekst("Rapporteringsplikt", mapOf("type" to type.name))
     fun accept(visitor: RapporteringspliktVisitor) {
@@ -73,7 +75,10 @@ class IngenRapporteringsplikt(
         hendelse.info("Oppretter rapporteringsplikt på grunn av vedtak")
 
         person.nyRapporteringsplikt(
-            RapporteringspliktVedtak(rapporteringspliktFra = hendelse.virkningsdato.atStartOfDay()).also {
+            RapporteringspliktVedtak(
+                rapporteringspliktFra = hendelse.virkningsdato.atStartOfDay(),
+                sakId = hendelse.sakId,
+            ).also {
                 it.behandle(person, hendelse)
             },
         )
@@ -110,7 +115,7 @@ class RapporteringspliktSøknad(
         hendelse.kontekst(this)
         hendelse.info("Innvilgelse gir person rapporteringsplikt type Vedtak.")
 
-        person.nyRapporteringsplikt(RapporteringspliktVedtak(rapporteringspliktFra = hendelse.virkningsdato.atStartOfDay()))
+        person.nyRapporteringsplikt(RapporteringspliktVedtak(rapporteringspliktFra = hendelse.virkningsdato.atStartOfDay(), sakId = hendelse.sakId))
     }
 
     override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {
@@ -126,6 +131,7 @@ class RapporteringspliktSøknad(
 class RapporteringspliktVedtak(
     override val uuid: UUID = UUID.randomUUID(),
     override val rapporteringspliktFra: LocalDateTime,
+    private val sakId: UUID,
 ) : Rapporteringsplikt {
     override val type = RapporteringspliktType.Vedtak
 
@@ -149,6 +155,14 @@ class RapporteringspliktVedtak(
             }
 
             person.leggTilRapporteringsperiode(periode, hendelse)
+        }
+    }
+
+    override fun behandle(hendelse: BeregningsdatoPassertHendelse, rapporteringsperioder: List<Rapporteringsperiode>) {
+        rapporteringsperioder.filter {
+            it.gjelderFor(rapporteringspliktFra)
+        }.forEach {
+            it.behandle(hendelse, sakId)
         }
     }
 }
