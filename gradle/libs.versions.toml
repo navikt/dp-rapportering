@@ -46,7 +46,7 @@ kotest-assertions-json = { group = "io.kotest", name = "kotest-assertions-json-j
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-spotless = { id = "com.diffplug.spotless", version = "6.20.0" }
+spotless = { id = "com.diffplug.spotless", version = "6.21.0" }
 shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
 
 [bundles]
