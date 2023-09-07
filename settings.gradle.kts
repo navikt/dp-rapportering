@@ -9,5 +9,16 @@ include(
     "mediator",
     "modell",
     "openapi",
-    "common-test"
+    "common-test",
 )
+
+dependencyResolutionManagement {
+    repositories {
+        maven("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
+    }
+    versionCatalogs {
+        create("libs") {
+            from("no.nav.dagpenger:dp-version-catalog:20230906.92f5e1")
+        }
+    }
+}
