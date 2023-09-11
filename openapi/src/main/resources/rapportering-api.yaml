@@ -76,7 +76,7 @@ paths:
       summary: Søk etter rapporteringsperioder
       description: |
         Lister ut alle rapporteringsperioder som treffer søket. Har en periode blitt korrigert så er det den siste korrigeringen som blir vist. 
-      
+        
         Ønsker man perioden som har blitt korrigert må man hente ut denne via `/rapporteringsperioder/{periodeId}`.
       operationId: post-rapporteringsperiode-sok
       tags:
@@ -207,7 +207,7 @@ paths:
         - azureAd: [ ]
         - tokenX: [ ]
       parameters:
-      - $ref: '#/components/parameters/periodeId'
+        - $ref: '#/components/parameters/periodeId'
   /rapporteringsperioder/{periodeId}/aktivitet:
     post:
       requestBody:
@@ -387,6 +387,43 @@ components:
                 type: array
                 items:
                   $ref: '#/components/schemas/Aktivitet'
+        sistGodkjent:
+          type: object
+          required:
+            - dato
+            - kilde
+          properties:
+            dato:
+              type: string
+              format: date-time
+            kilde:
+              oneOf:
+                - $ref: '#/components/schemas/Saksbehandler'
+                - $ref: '#/components/schemas/Sluttbruker'
+              discriminator:
+                propertyName: kilde_type
+    Saksbehandler:
+      type: object
+      required:
+        - kilde_type
+        - id
+      properties:
+        kilde_type:
+          type: string
+        id:
+          type: string
+          example: "X123456"
+    Sluttbruker:
+      type: object
+      required:
+        - kilde_type
+        - id
+      properties:
+        kilde_type:
+          type: string
+        id:
+          type: string
+          example: "12345678910"
     PeriodeKorreksjonsInput:
       required:
         - fraOgMed
