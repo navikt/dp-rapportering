@@ -8,6 +8,7 @@ import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Innsendt
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.TilUtfylling
 import no.nav.dagpenger.rapportering.helpers.TestData.godkjennPeriodeHendelse
+import no.nav.dagpenger.rapportering.helpers.TestData.lagRapporteringsperiode
 import no.nav.dagpenger.rapportering.helpers.TestData.nyAktivitetHendelse
 import no.nav.dagpenger.rapportering.helpers.TestData.testIdent
 import no.nav.dagpenger.rapportering.helpers.januar
@@ -17,10 +18,8 @@ import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet.Companion.erLåst
-import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.time.Duration
 
@@ -174,27 +173,5 @@ class RapporteringsperiodeTest {
         ) {
             this.aktiviteter.add(aktivitet)
         }
-    }
-
-    private fun lagRapporteringsperiode(
-        fom: LocalDate,
-        tom: LocalDate,
-        tilstand: Rapporteringsperiode.TilstandType,
-        id: UUID = UUID.randomUUID(),
-        aktiviteter: List<Aktivitet> = emptyList(),
-    ): Rapporteringsperiode {
-        return Rapporteringsperiode.rehydrer(
-            rapporteringsperiodeId = id,
-            beregnesEtter = tom,
-            fraOgMed = fom,
-            tilOgMed = tom,
-            tilstand = tilstand,
-            opprettet = LocalDateTime.now(),
-            tidslinje = Aktivitetstidslinje(fom..tom).also {
-                aktiviteter.forEach(it::leggTilAktivitet)
-            },
-            Godkjenningslogg(),
-            korrigerer = null,
-        )
     }
 }
