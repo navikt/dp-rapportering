@@ -1,10 +1,13 @@
 package no.nav.dagpenger.rapportering.api
 
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.authentication
+import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.plugins.swagger.swaggerUI
 import io.ktor.server.request.receive
@@ -26,6 +29,7 @@ import no.nav.dagpenger.rapportering.api.dto.RapporteringsperiodeMapper
 import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetNyDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
+import no.nav.dagpenger.rapportering.api.models.FrontendDataDTO
 import no.nav.dagpenger.rapportering.api.models.GodkjennNyDTO
 import no.nav.dagpenger.rapportering.api.models.ProblemDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeNyDTO
@@ -40,6 +44,7 @@ import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.strategiForBeregningsdato
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
+import no.nav.helse.rapids_rivers.JsonMessage
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -155,7 +160,23 @@ internal fun Application.rapporteringApi(
                                     )
                                 }
 
-                                TokenX -> GodkjennPeriodeHendelse(ident, periodeId)
+                                TokenX -> {
+                                    val dto = call.receive<FrontendDataDTO>()
+
+                                    val json = JsonMessage.newMessage(
+                                        mapOf(
+                                            "timestamp" to LocalDateTime.now(),
+                                            "claims" to call.authentication.principal<JWTPrincipal>()?.payload?.claims.orEmpty(),
+                                            "image" to dto.image,
+                                            "kildekode" to dto.commit,
+                                            "klient" to call.request.headers[HttpHeaders.UserAgent].orEmpty(),
+                                            "språk" to "no-NB",
+                                        ),
+                                    ).toJson()
+                                    // Journalføre
+
+                                    GodkjennPeriodeHendelse(ident, periodeId)
+                                }
                             }
 
                             mediator.behandle(hendelse)
