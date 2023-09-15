@@ -188,6 +188,8 @@ class RapporteringApiTest {
         ) {
             client.post("/rapporteringsperioder/$testPeriodeId/godkjenn") {
                 autentisert()
+                contentType(ContentType.Application.Json)
+                setBody("""{"image": "IMAGE", "commit": "COMMIT" }""")
             }.also { response ->
                 response.status shouldBe HttpStatusCode.OK
                 verify {
