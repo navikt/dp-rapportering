@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.api.dto
 
 import no.nav.dagpenger.rapportering.AktivitetVisitor
 import no.nav.dagpenger.rapportering.DagVisitor
+import no.nav.dagpenger.rapportering.Godkjenningsendring
 import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.TilUtfylling
@@ -9,9 +10,12 @@ import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDagerInnerDTO
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeSistGodkjentDTO
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeSistGodkjentKildeDTO
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.SortedSet
 import java.util.UUID
 import kotlin.time.Duration
@@ -24,6 +28,8 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
     private val dager: SortedSet<Dag> = sortedSetOf(Dag.eldsteDagFørst)
     private var korrigerer: UUID? = null
     private var korrigertAv: UUID? = null
+    private var sistGodkjent: RapporteringsperiodeSistGodkjentDTO? = null
+
     val dto: RapporteringsperiodeDTO
         get() = RapporteringsperiodeDTO(
             id = id,
@@ -38,6 +44,7 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
             dager = dager.mapIndexed { index, it -> DagMapper(index, it).dto },
             korrigerer = korrigerer,
             korrigertAv = korrigertAv,
+            sistGodkjent = sistGodkjent,
         )
 
     init {
@@ -61,6 +68,27 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
         this.tilstand = tilstand
         this.korrigerer = korrigerer?.rapporteringsperiodeId
         this.korrigertAv = korrigertAv?.rapporteringsperiodeId
+    }
+
+    override fun visit(
+        godkjenningsendring: Godkjenningsendring,
+        id: UUID,
+        utførtAv: Godkjenningsendring.Kilde,
+        opprettet: LocalDateTime,
+        avgodkjent: Godkjenningsendring?,
+        begrunnelse: String?,
+    ) {
+        sistGodkjent = if (godkjenningsendring.godkjent()) {
+            RapporteringsperiodeSistGodkjentDTO(
+                dato = opprettet,
+                kilde = RapporteringsperiodeSistGodkjentKildeDTO(
+                    kildeType = utførtAv.javaClass.simpleName,
+                    id = utførtAv.id,
+                ),
+            )
+        } else {
+            null
+        }
     }
 
     override fun visit(

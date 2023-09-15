@@ -41,11 +41,24 @@ openApiGenerate {
             "models" to "",
         ),
     )
+    typeMappings.set(
+        mapOf(
+            "DateTime" to "LocalDateTime",
+        ),
+    )
+
+    importMappings.set(
+        mapOf(
+            "LocalDateTime" to "java.time.LocalDateTime",
+        ),
+    )
+
     modelNameSuffix.set("DTO")
     configOptions.set(
         mapOf(
             "serializationLibrary" to "jackson",
             "enumPropertyNaming" to "original",
+            "dateLibrary" to "custom",
         ),
     )
 }
