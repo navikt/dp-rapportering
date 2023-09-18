@@ -148,12 +148,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Godkjenn.Ny'
     parameters:
-      - name: periodeId
-        description: ID til rapporteringsperioden
-        schema:
-          type: integer
-        in: path
-        required: true
+      - $ref: '#/components/parameters/periodeId'
   /rapporteringsperioder/{periodeId}/avgodkjenn:
     post:
       responses:
@@ -174,12 +169,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Godkjenn.Ny'
     parameters:
-      - name: periodeId
-        description: ID til rapporteringsperioden
-        schema:
-          type: integer
-        in: path
-        required: true
+      - $ref: '#/components/parameters/periodeId'
   /rapporteringsperioder/{periodeId}/korrigering:
     post:
       responses:
