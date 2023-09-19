@@ -19,6 +19,7 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.Godkjenningsendring
 import no.nav.dagpenger.rapportering.IHendelseMediator
+import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.Companion.hentGjeldende
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.Issuer.AzureAD
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.Issuer.TokenX
@@ -44,6 +45,7 @@ import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.strategiForBeregningsdato
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
+import no.nav.dagpenger.rapportering.tidslinje.Dag
 import no.nav.helse.rapids_rivers.JsonMessage
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
@@ -51,7 +53,9 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream
 import org.apache.pdfbox.pdmodel.common.PDRectangle
 import org.apache.pdfbox.pdmodel.font.PDType0Font
 import java.io.ByteArrayOutputStream
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.TreeMap
 import java.util.UUID
 
 internal fun Application.rapporteringApi(
@@ -167,16 +171,7 @@ internal fun Application.rapporteringApi(
                                 }
 
                                 TokenX -> {
-                                    val dto = call.receive<FrontendDataDTO>()
-
-                                    val data = mapOf(
-                                        "timestamp" to LocalDateTime.now(),
-                                        "claims" to call.authentication.principal<JWTPrincipal>()?.payload?.claims.orEmpty(),
-                                        "image" to dto.image,
-                                        "kildekode" to dto.commit,
-                                        "klient" to call.request.headers[HttpHeaders.UserAgent].orEmpty(),
-                                        "språk" to "no-NB",
-                                    )
+                                    val data = hentData(call, rapporteringsperiodeRepository, ident, periodeId)
                                     val json = JsonMessage.newMessage(data).toJson()
                                     val pdf = opprettPdf(data)
                                     // Journalføre
@@ -318,6 +313,47 @@ private fun Aktivitet.toAktivitetDTO(): AktivitetDTO {
     )
 }
 
+private suspend fun hentData(
+    call: ApplicationCall,
+    rapporteringsperiodeRepository: RapporteringsperiodeRepository,
+    ident: String,
+    periodeId: UUID,
+): Map<String, Any> {
+    val dto = call.receive<FrontendDataDTO>()
+    val periode = rapporteringsperiodeRepository.hentRapporteringsperiode(ident, periodeId)
+
+    val dagMap = TreeMap<LocalDate, Map<String, kotlin.time.Duration>>()
+
+    val periodeVisitor = object : RapporteringsperiodVisitor {
+        override fun visit(
+            dag: Dag,
+            dato: LocalDate,
+            aktiviteter: List<Aktivitet>,
+            muligeAktiviter: List<Aktivitet.AktivitetType>,
+            strategi: Dag.StrategiType,
+        ) {
+            val aktiviteterMap = HashMap<String, kotlin.time.Duration>()
+            aktiviteter.forEach {
+                aktiviteterMap[it.type.name] = it.tid
+            }
+
+            dagMap[dato] = aktiviteterMap
+        }
+    }
+
+    periode?.accept(periodeVisitor)
+
+    return mapOf(
+        "timestamp" to LocalDateTime.now(),
+        "claims" to call.authentication.principal<JWTPrincipal>()?.payload?.claims.orEmpty(),
+        "image" to dto.image,
+        "kildekode" to dto.commit,
+        "klient" to call.request.headers[HttpHeaders.UserAgent].orEmpty(),
+        "språk" to "no-NB",
+        "rapportering" to dagMap,
+    )
+}
+
 private fun opprettPdf(data: Map<String, Any>): ByteArray {
     var output: ByteArray
 
@@ -351,15 +387,32 @@ private fun opprettPdf(data: Map<String, Any>): ByteArray {
 
 private fun iterate(map: Map<String, Any>, contentStream: PDPageContentStream, indent: String) {
     map.forEach { element ->
-        if (element.value is Map<*, *>) {
-            contentStream.showText(element.key + ": {")
-            contentStream.newLine()
-            iterate(element.value as Map<String, Any>, contentStream, "$indent    ")
-            contentStream.showText("}")
-            contentStream.newLine()
-        } else {
-            contentStream.showText(indent + element.key + ": " + element.value)
-            contentStream.newLine()
+        when (element.value) {
+            is Map<*, *> -> {
+                contentStream.showText(indent + element.key + ": {")
+                contentStream.newLine()
+                iterate(element.value as Map<String, Any>, contentStream, "$indent    ")
+                contentStream.showText("$indent}")
+                contentStream.newLine()
+            }
+
+            is Iterable<*> -> {
+                contentStream.showText(indent + element.key + ": {")
+                contentStream.newLine()
+                iterate(
+                    (element.value as Iterable<Any>).mapIndexed { index: Int, value: Any -> index.toString() to value }
+                        .toMap(),
+                    contentStream,
+                    "$indent    ",
+                )
+                contentStream.showText("$indent}")
+                contentStream.newLine()
+            }
+
+            else -> {
+                contentStream.showText(indent + element.key + ": " + element.value)
+                contentStream.newLine()
+            }
         }
     }
 }
