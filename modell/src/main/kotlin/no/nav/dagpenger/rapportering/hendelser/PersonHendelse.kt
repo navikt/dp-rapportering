@@ -18,13 +18,13 @@ abstract class PersonHendelse protected constructor(
 
     override fun ident() = ident
 
-    override fun meldingsreferanseId() = meldingsreferanseId.toString()
+    override fun meldingsreferanseId() = meldingsreferanseId
 
     final override fun toSpesifikkKontekst() = this.javaClass.canonicalName.split('.').last().let {
         SpesifikkKontekst(
             it,
             mapOf(
-                "meldingsreferanseId" to meldingsreferanseId(),
+                "meldingsreferanseId" to meldingsreferanseId().toString(),
                 "ident" to ident(),
             ) + kontekst(),
         )
