@@ -13,7 +13,6 @@ dependencies {
     implementation(libs.bundles.postgres)
     implementation(project(path = ":modell"))
     implementation(project(path = ":openapi"))
-    implementation(project(path = ":aktivitetslogg"))
     implementation("io.ktor:ktor-server-core-jvm:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-host-common-jvm:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-status-pages-jvm:${libs.versions.ktor.get()}")
