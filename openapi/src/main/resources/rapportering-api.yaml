@@ -325,6 +325,7 @@ components:
         - tilOgMed
         - status
         - dager
+        - kanGodkjennesFra
       type: object
       properties:
         id:
@@ -347,6 +348,9 @@ components:
           type: string
           format: uuid
           nullable: true
+        kanGodkjennesFra:
+          type: string
+          format: date
         status:
           type: string
           enum:

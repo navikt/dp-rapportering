@@ -50,6 +50,8 @@ class RapporteringsperiodeMapperTest {
             ),
         )
 
+        RapporteringsperiodeMapper(periode).dto.kanGodkjennesFra shouldBe 13.januar
+
         // Ikke godkjent
         RapporteringsperiodeMapper(periode).dto.sistGodkjent shouldBe null
 

@@ -29,6 +29,7 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
     private var korrigerer: UUID? = null
     private var korrigertAv: UUID? = null
     private var sistGodkjent: RapporteringsperiodeSistGodkjentDTO? = null
+    private lateinit var kanGodkjennesFra: LocalDate
 
     val dto: RapporteringsperiodeDTO
         get() = RapporteringsperiodeDTO(
@@ -45,6 +46,7 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
             korrigerer = korrigerer,
             korrigertAv = korrigertAv,
             sistGodkjent = sistGodkjent,
+            kanGodkjennesFra = kanGodkjennesFra,
         )
 
     init {
@@ -68,6 +70,7 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
         this.tilstand = tilstand
         this.korrigerer = korrigerer?.rapporteringsperiodeId
         this.korrigertAv = korrigertAv?.rapporteringsperiodeId
+        this.kanGodkjennesFra = rapporteringsperiode.kanGodkjennesFra
     }
 
     override fun visit(
