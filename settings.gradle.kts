@@ -5,7 +5,6 @@ plugins {
 
 rootProject.name = "dp-rapportering"
 include(
-    "aktivitetslogg",
     "mediator",
     "modell",
     "openapi",
@@ -18,7 +17,7 @@ dependencyResolutionManagement {
     }
     versionCatalogs {
         create("libs") {
-            from("no.nav.dagpenger:dp-version-catalog:20230911.29.ead731")
+            from("no.nav.dagpenger:dp-version-catalog:20230920.33.7a980e")
         }
     }
 }
