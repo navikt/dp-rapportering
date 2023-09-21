@@ -18,7 +18,7 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
+import no.nav.dagpenger.rapportering.GodkjenningExcpetion
 import no.nav.dagpenger.rapportering.Godkjenningslogg
 import no.nav.dagpenger.rapportering.Mediator
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
@@ -284,7 +284,7 @@ class RapporteringApiTest {
     }
 
     @Test
-    fun `For tidlig godkjenning gir 500 Bad Request`() {
+    fun `For tidlig godkjenning gir 405 Method Not Allowed`() {
         val iDag = LocalDate.now()
         val periodeSomIkkeKanGodkjennesEnda = rapporteringsperiode(
             TilUtfylling,
@@ -294,14 +294,14 @@ class RapporteringApiTest {
         val periodeId = periodeSomIkkeKanGodkjennesEnda.rapporteringsperiodeId
 
         val mediatorMock = mockk<Mediator>().also {
-            every { it.behandle(any<GodkjennPeriodeHendelse>()) } throws Aktivitetslogg.AktivitetException(Aktivitetslogg())
+            every { it.behandle(any<GodkjennPeriodeHendelse>()) } throws GodkjenningExcpetion("")
         }
 
         withRapporteringApi(rapporteringsperioder = listOf(periodeSomIkkeKanGodkjennesEnda), mediatorMock) {
             client.post("/rapporteringsperioder/$periodeId/godkjenn") {
                 autentisert()
             }.also { response ->
-                response.status shouldBe HttpStatusCode.BadRequest
+                response.status shouldBe HttpStatusCode.Forbidden
             }
         }
     }

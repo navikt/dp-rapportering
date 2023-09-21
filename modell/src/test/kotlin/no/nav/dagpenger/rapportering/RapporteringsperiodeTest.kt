@@ -4,7 +4,6 @@ import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.Companion.hentGjeldende
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Godkjent
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.Innsendt
@@ -144,16 +143,14 @@ class RapporteringsperiodeTest {
             dato = kanGodkjennesFra.minusDays(1),
         )
 
-        shouldThrow<Aktivitetslogg.AktivitetException> { rapporteringsperiode.behandle(forTidligGodkjenningHendelse) }
-        forTidligGodkjenningHendelse.harFunksjonelleFeilEllerVerre() shouldBe true
+        shouldThrow<GodkjenningExcpetion> { rapporteringsperiode.behandle(forTidligGodkjenningHendelse) }
 
         val godkjenningHendelse = godkjennPeriodeHendelse(
             rapporteringId = rapporteringsperiode.rapporteringsperiodeId,
             dato = kanGodkjennesFra,
         )
 
-        shouldNotThrow<Aktivitetslogg.AktivitetException> { rapporteringsperiode.behandle(godkjenningHendelse) }
-        godkjenningHendelse.harFunksjonelleFeilEllerVerre() shouldBe false
+        shouldNotThrow<GodkjenningExcpetion> { rapporteringsperiode.behandle(godkjenningHendelse) }
     }
 
     private val Rapporteringsperiode.tilstand get() = TestVisitor(this).tilstand

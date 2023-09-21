@@ -150,7 +150,7 @@ class Rapporteringsperiode private constructor(
         if (hendelse.rapporteringsperiodeId != rapporteringsperiodeId) return false
 
         if (hendelse.dato.isBefore(kanGodkjennesFra)) {
-            hendelse.logiskFeil("Kan ikke godkjenne periode, kan tidligst godkjennes $kanGodkjennesFra")
+            throw GodkjenningExcpetion("Kan ikke godkjenne periode, kan tidligst godkjennes $kanGodkjennesFra")
         }
 
         hendelse.kontekst(this)
@@ -425,3 +425,5 @@ class Rapporteringsperiode private constructor(
         TilUtfylling, Godkjent, Innsendt,
     }
 }
+
+class GodkjenningExcpetion(message: String?) : RuntimeException(message)

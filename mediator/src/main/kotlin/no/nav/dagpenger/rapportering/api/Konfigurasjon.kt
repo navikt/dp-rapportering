@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.api
 
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
+import io.ktor.http.HttpStatusCode.Companion.Forbidden
 import io.ktor.http.HttpStatusCode.Companion.MethodNotAllowed
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
@@ -14,7 +15,7 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
-import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
+import no.nav.dagpenger.rapportering.GodkjenningExcpetion
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.azureAd
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.tokenX
 import no.nav.dagpenger.rapportering.api.models.ProblemDTO
@@ -67,13 +68,13 @@ fun Application.konfigurasjon(
             )
         }
 
-        exception<Aktivitetslogg.AktivitetException> { call, cause ->
+        exception<GodkjenningExcpetion> { call, cause ->
             call.respond(
-                BadRequest,
+                Forbidden,
                 ProblemDTO(
-                    title = "Feil i aktivitetslogg (se sikkerlogg for detaljer)",
+                    title = "Ulovlig godkjenning",
                     detail = cause.message,
-                    status = BadRequest.value,
+                    status = Forbidden.value,
                 ),
             )
         }
