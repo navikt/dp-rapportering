@@ -118,7 +118,7 @@ class Aktivitetslogg(
         observers.add(observer)
     }
 
-    class AktivitetException internal constructor(private val aktivitetslogg: Aktivitetslogg) :
+    class AktivitetException constructor(private val aktivitetslogg: Aktivitetslogg) :
         RuntimeException(aktivitetslogg.toString()) {
         fun kontekst() = aktivitetslogg.kontekster.fold(mutableMapOf<String, String>()) { result, kontekst ->
             result.apply { putAll(kontekst.toSpesifikkKontekst().kontekstMap) }

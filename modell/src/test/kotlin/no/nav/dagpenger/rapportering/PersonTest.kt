@@ -49,9 +49,9 @@ class PersonTest {
                 testIdent,
                 LocalDateTime.now(),
                 LocalDate.now(),
-            ) { _, tom -> tom },
+            ) { fom, _ -> fom },
         )
-        val rapporteringsperiodeId = person.aktivRapporteringsperiode
+        val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
         // Bruker melder inn aktiviteter
         person.behandle(
             nyAktivitetHendelse(
@@ -73,7 +73,7 @@ class PersonTest {
         )
         assertEquals(3, person.antallAktiviteter)
         // Bruker godkjenner rapportering for en periode
-        person.behandle(godkjennPeriodeHendelse(rapporteringsperiodeId))
+        person.behandle(godkjennPeriodeHendelse(rapporteringsperiodeId, person.aktivRapporteringsperiode.kanGodkjennesFra))
         assertEquals(Godkjent.name, observer.tilstand)
         // Kan ikke rapportere aktivitet etter en periode er godkjent
         val nyAktivitetHendelse = nyAktivitetHendelse(rapporteringsperiodeId, LocalDate.now().plusDays(3))
@@ -82,7 +82,7 @@ class PersonTest {
             person.behandle(nyAktivitetHendelse)
         }
         // Bruker sender inn rapportering for samme periode på nytt
-        val hendelse = godkjennPeriodeHendelse(rapporteringsperiodeId)
+        val hendelse = godkjennPeriodeHendelse(rapporteringsperiodeId, person.aktivRapporteringsperiode.kanGodkjennesFra)
         assertThrows<IllegalStateException> {
             person.behandle(hendelse)
         }
@@ -181,7 +181,8 @@ class PersonTest {
         person.rapporteringsplikt.rapporteringspliktFra shouldBe 2.januar.atStartOfDay()
     }
 
-    private val Person.aktivRapporteringsperiode get() = TestVisitor(this).rapporteringsperioder.last().rapporteringsperiodeId
+    private val Person.aktivRapporteringsperiodeId get() = TestVisitor(this).rapporteringsperioder.last().rapporteringsperiodeId
+    private val Person.aktivRapporteringsperiode get() = TestVisitor(this).rapporteringsperioder.last()
     private val Person.antallAktiviteter get() = TestVisitor(this).aktiviteter.size
     private val Person.rapporteringspliktType get() = TestVisitor(this).rapporteringspliktType
     private val Person.rapporteringsplikt get() = TestVisitor(this).rapporteringsplikter.last()

@@ -18,9 +18,11 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
 import no.nav.dagpenger.rapportering.Godkjenningslogg
 import no.nav.dagpenger.rapportering.Mediator
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.TilUtfylling
 import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
 import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
 import no.nav.dagpenger.rapportering.api.TestApplication.testAzureAdToken
@@ -282,9 +284,32 @@ class RapporteringApiTest {
     }
 
     @Test
+    fun `For tidlig godkjenning gir 500 Bad Request`() {
+        val iDag = LocalDate.now()
+        val periodeSomIkkeKanGodkjennesEnda = rapporteringsperiode(
+            TilUtfylling,
+            fom = iDag,
+            tom = iDag.plusDays(14),
+        )
+        val periodeId = periodeSomIkkeKanGodkjennesEnda.rapporteringsperiodeId
+
+        val mediatorMock = mockk<Mediator>().also {
+            every { it.behandle(any<GodkjennPeriodeHendelse>()) } throws Aktivitetslogg.AktivitetException(Aktivitetslogg())
+        }
+
+        withRapporteringApi(rapporteringsperioder = listOf(periodeSomIkkeKanGodkjennesEnda), mediatorMock) {
+            client.post("/rapporteringsperioder/$periodeId/godkjenn") {
+                autentisert()
+            }.also { response ->
+                response.status shouldBe HttpStatusCode.BadRequest
+            }
+        }
+    }
+
+    @Test
     fun `Skal kunne opprette en korrigering av en rapporteringsperiode`() {
         val korrigert = rapporteringsperiode(Rapporteringsperiode.TilstandType.Innsendt)
-        val korrigering = rapporteringsperiode(Rapporteringsperiode.TilstandType.TilUtfylling, korrigert)
+        val korrigering = rapporteringsperiode(TilUtfylling, korrigert)
 
         withRapporteringApi(rapporteringsperioder = listOf(korrigert)) {
             client.post("/rapporteringsperioder/${korrigert.rapporteringsperiodeId}/korrigering") {
@@ -342,6 +367,7 @@ private val mediatorMock = mockk<Mediator>(relaxed = true)
 
 private fun withRapporteringApi(
     rapporteringsperioder: List<Rapporteringsperiode> = emptyList(),
+    mock: Mediator = mediatorMock,
     test: suspend ApplicationTestBuilder.() -> Unit,
 ) {
     TestApplication.withMockAuthServerAndTestApplication(
@@ -358,7 +384,7 @@ private fun withRapporteringApi(
                         )
                     } answers { rapporteringsperioder.single() }
                 },
-                mediatorMock,
+                mock,
             )
         },
         test = test,
@@ -368,12 +394,14 @@ private fun withRapporteringApi(
 private fun rapporteringsperiode(
     tilstandType: Rapporteringsperiode.TilstandType,
     korrigert: Rapporteringsperiode? = null,
+    fom: LocalDate = LocalDate.now(),
+    tom: LocalDate = LocalDate.now(),
 ) =
     Rapporteringsperiode.rehydrer(
         UUID.randomUUID(),
         beregnesEtter = LocalDate.now(),
-        fraOgMed = LocalDate.now(),
-        tilOgMed = LocalDate.now(),
+        fraOgMed = fom,
+        tilOgMed = tom,
         tilstand = tilstandType,
         opprettet = LocalDateTime.now(),
         tidslinje = Aktivitetstidslinje(LocalDate.now()..LocalDate.now()),

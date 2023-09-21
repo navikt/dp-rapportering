@@ -86,7 +86,13 @@ class MediatorTest {
 
         mediator.hentEllerOpprettPerson(testIdent).antallAktiviteter shouldBe 1
 
-        mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))
+        mediator.behandle(
+            GodkjennPeriodeHendelse(
+                testIdent,
+                rapporteringsperiodeId,
+                dato = person.aktivRapporteringsperiode.kanGodkjennesFra,
+            ),
+        )
 
         shouldThrow<IllegalStateException> {
             mediator.behandle(
@@ -120,7 +126,13 @@ class MediatorTest {
         )
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
-        mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))
+        mediator.behandle(
+            GodkjennPeriodeHendelse(
+                testIdent,
+                rapporteringsperiodeId,
+                dato = person.aktivRapporteringsperiode.kanGodkjennesFra,
+            ),
+        )
         val frist = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusDays(14)
 
         mediator.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, frist.minusDays(3)))
@@ -147,7 +159,13 @@ class MediatorTest {
         )
         val person = mediator.hentEllerOpprettPerson(testIdent)
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
-        mediator.behandle(GodkjennPeriodeHendelse(testIdent, rapporteringsperiodeId))
+        mediator.behandle(
+            GodkjennPeriodeHendelse(
+                testIdent,
+                rapporteringsperiodeId,
+                dato = person.aktivRapporteringsperiode.kanGodkjennesFra,
+            ),
+        )
         val frist = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusDays(14)
 
         mediator.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, frist.minusDays(3)))

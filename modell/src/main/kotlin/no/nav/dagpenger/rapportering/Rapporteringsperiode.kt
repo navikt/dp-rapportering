@@ -14,6 +14,7 @@ import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import no.nav.dagpenger.rapportering.utils.finnFørsteMandagIUken
+import no.nav.dagpenger.rapportering.utils.finnSisteLørdagIPerioden
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -36,6 +37,7 @@ class Rapporteringsperiode private constructor(
 ) : Aktivitetskontekst {
     private val observers: MutableSet<RapporteringsperiodeObserver> = mutableSetOf()
     val gjelderFra = periode.start
+    val kanGodkjennesFra = periode.finnSisteLørdagIPerioden() // kan godkjenne rapportering tidligst natt til siste lørdag i perioden
 
     constructor(
         rapporteringspliktFom: LocalDate,
@@ -146,6 +148,11 @@ class Rapporteringsperiode private constructor(
     fun behandle(hendelse: GodkjennPeriodeHendelse): Boolean {
         if (korrigertAv != null) return korrigertAv!!.behandle(hendelse)
         if (hendelse.rapporteringsperiodeId != rapporteringsperiodeId) return false
+
+        if (hendelse.dato.isBefore(kanGodkjennesFra)) {
+            hendelse.logiskFeil("Kan ikke godkjenne periode, kan tidligst godkjennes $kanGodkjennesFra")
+        }
+
         hendelse.kontekst(this)
         hendelse.info("Godkjenner rapporteringsperiode")
 
