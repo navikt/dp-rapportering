@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.api
 
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.HttpStatusCode.Companion.BadRequest
+import io.ktor.http.HttpStatusCode.Companion.MethodNotAllowed
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
@@ -13,7 +14,7 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
-import no.nav.dagpenger.rapportering.Configuration.config
+import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.azureAd
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.tokenX
 import no.nav.dagpenger.rapportering.api.models.ProblemDTO
@@ -47,21 +48,32 @@ fun Application.konfigurasjon(
     install(StatusPages) {
         exception<IllegalStateException> { call, cause ->
             call.respond(
-                HttpStatusCode.MethodNotAllowed,
+                MethodNotAllowed,
                 ProblemDTO(
                     title = "Ulovlig tilstand",
                     detail = cause.message,
-                    status = HttpStatusCode.MethodNotAllowed.value,
+                    status = MethodNotAllowed.value,
                 ),
             )
         }
         exception<java.lang.IllegalArgumentException> { call, cause ->
             call.respond(
-                HttpStatusCode.BadRequest,
+                BadRequest,
                 ProblemDTO(
                     title = "Ulovlig kall",
                     detail = cause.message,
-                    status = HttpStatusCode.MethodNotAllowed.value,
+                    status = MethodNotAllowed.value,
+                ),
+            )
+        }
+
+        exception<Aktivitetslogg.AktivitetException> { call, cause ->
+            call.respond(
+                BadRequest,
+                ProblemDTO(
+                    title = "Feil i aktivitetslogg (se sikkerlogg for detaljer)",
+                    detail = cause.message,
+                    status = BadRequest.value,
                 ),
             )
         }
