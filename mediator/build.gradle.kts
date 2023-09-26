@@ -13,7 +13,6 @@ dependencies {
     implementation(libs.bundles.postgres)
     implementation(project(path = ":modell"))
     implementation(project(path = ":openapi"))
-    implementation(project(path = ":aktivitetslogg"))
     implementation("io.ktor:ktor-server-core-jvm:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-host-common-jvm:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-status-pages-jvm:${libs.versions.ktor.get()}")
@@ -24,7 +23,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.mock.oauth2.server)
     testImplementation(libs.bundles.postgres.test)
-    testImplementation("in.specmatic:junit5-support:0.77.0")
+    testImplementation("in.specmatic:junit5-support:0.77.1")
     testImplementation(project(path = ":common-test"))
 }
 

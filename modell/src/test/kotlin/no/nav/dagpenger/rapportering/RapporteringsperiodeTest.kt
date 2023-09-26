@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering
 
+import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -130,6 +131,26 @@ class RapporteringsperiodeTest {
 
         periode.aktiviteter.all { erLåst(it) } shouldBe false
         periode.tilstand shouldBe TilUtfylling
+    }
+
+    @Test
+    fun `Kan tidligst godkjenne en periode siste lørdag i perioden`() {
+        val rapporteringsperiode = lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = TilUtfylling)
+        val kanGodkjennesFra = rapporteringsperiode.kanGodkjennesFra
+
+        val forTidligGodkjenningHendelse = godkjennPeriodeHendelse(
+            rapporteringId = rapporteringsperiode.rapporteringsperiodeId,
+            dato = kanGodkjennesFra.minusDays(1),
+        )
+
+        shouldThrow<GodkjenningExcpetion> { rapporteringsperiode.behandle(forTidligGodkjenningHendelse) }
+
+        val godkjenningHendelse = godkjennPeriodeHendelse(
+            rapporteringId = rapporteringsperiode.rapporteringsperiodeId,
+            dato = kanGodkjennesFra,
+        )
+
+        shouldNotThrow<GodkjenningExcpetion> { rapporteringsperiode.behandle(godkjenningHendelse) }
     }
 
     private val Rapporteringsperiode.tilstand get() = TestVisitor(this).tilstand

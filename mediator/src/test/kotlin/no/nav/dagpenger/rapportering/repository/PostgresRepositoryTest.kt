@@ -133,6 +133,7 @@ class PostgresRepositoryTest {
                     GodkjennPeriodeHendelse(
                         testIdent,
                         person.aktivRapporteringsperiodeId,
+                        dato = person.aktivRapporteringsperiode.kanGodkjennesFra,
                     ),
                 )
                 repository.lagre(person)
@@ -170,6 +171,7 @@ class PostgresRepositoryTest {
                         GodkjennPeriodeHendelse(
                             testIdent,
                             person.aktivRapporteringsperiodeId,
+                            dato = person.aktivRapporteringsperiode.kanGodkjennesFra,
                         ),
                     )
                     person.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, LocalDate.MAX))

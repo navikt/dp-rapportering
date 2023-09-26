@@ -69,6 +69,6 @@ internal object TestData {
         søknadInnsendtDato = søknadInnsendtDato,
     ) { _, tom -> tom }
 
-    fun godkjennPeriodeHendelse(rapporteringId: UUID = UUID.randomUUID()) =
-        GodkjennPeriodeHendelse(testIdent, rapporteringId)
+    fun godkjennPeriodeHendelse(rapporteringId: UUID = UUID.randomUUID(), dato: LocalDate = LocalDate.now()) =
+        GodkjennPeriodeHendelse(testIdent, rapporteringId, dato = dato)
 }

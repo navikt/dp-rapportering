@@ -148,12 +148,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Godkjenn.Ny'
     parameters:
-      - name: periodeId
-        description: ID til rapporteringsperioden
-        schema:
-          type: integer
-        in: path
-        required: true
+      - $ref: '#/components/parameters/periodeId'
   /rapporteringsperioder/{periodeId}/avgodkjenn:
     post:
       responses:
@@ -174,12 +169,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Godkjenn.Ny'
     parameters:
-      - name: periodeId
-        description: ID til rapporteringsperioden
-        schema:
-          type: integer
-        in: path
-        required: true
+      - $ref: '#/components/parameters/periodeId'
   /rapporteringsperioder/{periodeId}/korrigering:
     post:
       responses:
@@ -335,6 +325,7 @@ components:
         - tilOgMed
         - status
         - dager
+        - kanGodkjennesFra
       type: object
       properties:
         id:
@@ -357,6 +348,9 @@ components:
           type: string
           format: uuid
           nullable: true
+        kanGodkjennesFra:
+          type: string
+          format: date
         status:
           type: string
           enum:
