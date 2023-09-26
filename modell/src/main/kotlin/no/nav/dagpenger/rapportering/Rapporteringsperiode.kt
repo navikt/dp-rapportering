@@ -401,6 +401,7 @@ class Rapporteringsperiode private constructor(
             tom = periode.endInclusive,
             dager = this.tidslinje.toList(),
             sakId = sakId,
+            korrigerer = korrigerer?.rapporteringsperiodeId,
         )
 
         observers.forEach { it.rapporteringsperiodeInnsendt(event) }

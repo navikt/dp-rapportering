@@ -25,5 +25,6 @@ interface RapporteringsperiodeObserver {
         val tom: LocalDate,
         val dager: List<Dag>,
         val sakId: UUID,
+        val korrigerer: UUID?,
     )
 }

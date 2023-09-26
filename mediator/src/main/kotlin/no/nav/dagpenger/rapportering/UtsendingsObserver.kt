@@ -23,14 +23,18 @@ class UtsendingsObserver(
     override fun rapporteringsperiodeInnsendt(event: RapporteringsperiodeObserver.RapporteringsperiodeInnsendt) {
         val melding = JsonMessage.newMessage(
             "rapporteringsperiode_innsendt_hendelse",
-            mapOf(
+            mutableMapOf(
                 "ident" to hendelse.ident(),
                 "rapporteringsId" to event.rapporteringsperiodeId,
                 "fom" to event.fom,
                 "tom" to event.tom,
                 "dager" to event.dager.map { DagJsonBuilder(it).json },
                 "sakId" to event.sakId,
-            ),
+            ).apply {
+                if (event.korrigerer != null) {
+                    put("korrigerer", event.korrigerer as UUID)
+                }
+            },
         )
 
         withLoggingContext(
