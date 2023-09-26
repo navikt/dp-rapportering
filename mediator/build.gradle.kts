@@ -18,7 +18,6 @@ dependencies {
     implementation("io.ktor:ktor-server-host-common-jvm:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-status-pages-jvm:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-swagger:${libs.versions.ktor.get()}")
-    implementation("org.apache.pdfbox:pdfbox:3.0.0")
     testImplementation("io.ktor:ktor-server-test-host-jvm:${libs.versions.ktor.get()}")
     testImplementation("io.kotest:kotest-assertions-core-jvm:${libs.versions.kotest.get()}")
     testImplementation("io.kotest:kotest-assertions-json-jvm:${libs.versions.kotest.get()}")

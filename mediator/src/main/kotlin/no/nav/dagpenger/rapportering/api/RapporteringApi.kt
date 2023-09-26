@@ -19,6 +19,7 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.Godkjenningsendring
 import no.nav.dagpenger.rapportering.IHendelseMediator
+import no.nav.dagpenger.rapportering.MineBehov
 import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.Companion.hentGjeldende
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.Issuer.AzureAD
@@ -47,12 +48,6 @@ import no.nav.dagpenger.rapportering.strategiForBeregningsdato
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
 import no.nav.dagpenger.rapportering.tidslinje.Dag
 import no.nav.helse.rapids_rivers.JsonMessage
-import org.apache.pdfbox.pdmodel.PDDocument
-import org.apache.pdfbox.pdmodel.PDPage
-import org.apache.pdfbox.pdmodel.PDPageContentStream
-import org.apache.pdfbox.pdmodel.common.PDRectangle
-import org.apache.pdfbox.pdmodel.font.PDType0Font
-import java.io.ByteArrayOutputStream
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.TreeMap
@@ -173,10 +168,18 @@ internal fun Application.rapporteringApi(
                                 TokenX -> {
                                     val data = hentData(call, rapporteringsperiodeRepository, ident, periodeId)
                                     val json = JsonMessage.newMessage(data).toJson()
-                                    val pdf = opprettPdf(data)
-                                    // Journalføre
 
-                                    GodkjennPeriodeHendelse(ident, periodeId)
+                                    val hendelse = GodkjennPeriodeHendelse(ident, periodeId)
+                                    hendelse.behov(
+                                        MineBehov.NyRapporteringJournalpost,
+                                        "Trenger å journalføre rapportering",
+                                        mapOf(
+                                            "periodeId" to periodeId,
+                                            "json" to json,
+                                        ),
+                                    )
+
+                                    hendelse
                                 }
                             }
 
@@ -352,67 +355,4 @@ private suspend fun hentData(
         "språk" to "no-NB",
         "rapportering" to dagMap,
     )
-}
-
-private fun opprettPdf(data: Map<String, Any>): ByteArray {
-    var output: ByteArray
-
-    PDDocument().use { document ->
-        val font = PDType0Font.load(
-            document,
-            {}::class.java.getResource("/SourceSansPro-Regular.ttf")!!.openStream(),
-        )
-
-        val page = PDPage(PDRectangle.A4)
-        document.addPage(page)
-        PDPageContentStream(document, page).use { contentStream ->
-            contentStream.beginText()
-            contentStream.setFont(font, 12f)
-            contentStream.setLeading(14.5f)
-            contentStream.newLineAtOffset(25f, 800f)
-
-            iterate(data, contentStream, "")
-
-            contentStream.endText()
-        }
-
-        ByteArrayOutputStream().use {
-            document.save(it)
-            output = it.toByteArray()
-        }
-    }
-
-    return output
-}
-
-private fun iterate(map: Map<String, Any>, contentStream: PDPageContentStream, indent: String) {
-    map.forEach { element ->
-        when (element.value) {
-            is Map<*, *> -> {
-                contentStream.showText(indent + element.key + ": {")
-                contentStream.newLine()
-                iterate(element.value as Map<String, Any>, contentStream, "$indent    ")
-                contentStream.showText("$indent}")
-                contentStream.newLine()
-            }
-
-            is Iterable<*> -> {
-                contentStream.showText(indent + element.key + ": {")
-                contentStream.newLine()
-                iterate(
-                    (element.value as Iterable<Any>).mapIndexed { index: Int, value: Any -> index.toString() to value }
-                        .toMap(),
-                    contentStream,
-                    "$indent    ",
-                )
-                contentStream.showText("$indent}")
-                contentStream.newLine()
-            }
-
-            else -> {
-                contentStream.showText(indent + element.key + ": " + element.value)
-                contentStream.newLine()
-            }
-        }
-    }
 }
