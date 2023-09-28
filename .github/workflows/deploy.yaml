@@ -22,7 +22,7 @@ jobs:
           distribution: temurin
           java-version: 19
 
-      - uses: gradle/gradle-build-action@v2.8.0
+      - uses: gradle/gradle-build-action@v2.8.1
         with:
           dependency-graph: generate-and-submit
           arguments: --configuration-cache build installDist

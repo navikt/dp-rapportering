@@ -36,6 +36,7 @@ class UtsendingsObserverTest {
         val tom = 14.januar
         val sakId = UUID.randomUUID()
         val rapporteringsperiodeId = UUID.randomUUID()
+        val korrigererId = UUID.randomUUID()
         observer.rapporteringsperiodeInnsendt(
             RapporteringsperiodeObserver.RapporteringsperiodeInnsendt(
                 rapporteringsperiodeId = rapporteringsperiodeId,
@@ -45,6 +46,7 @@ class UtsendingsObserverTest {
                     Dag(it, mutableListOf(Aktivitet.Arbeid(it, 5)))
                 }.toList(),
                 sakId = sakId,
+                korrigerer = korrigererId,
             ),
         )
 
@@ -68,6 +70,7 @@ class UtsendingsObserverTest {
             }
 
             it["sakId"].asText() shouldBe sakId.toString()
+            it["korrigerer"].asText() shouldBe korrigererId.toString()
         }
     }
 }
