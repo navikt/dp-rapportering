@@ -105,7 +105,7 @@ class PersonTest {
         val person = Person(testIdent)
         // Personer begynner uten rapporertingsplikt
         person.rapporteringspliktType shouldBe Ingen
-        person.nyRapporteringsplikt(RapporteringspliktSøknad(rapporteringspliktFra = LocalDateTime.now()))
+        person.nyRapporteringsplikt(RapporteringspliktSøknad(rapporteringspliktFra = LocalDateTime.now().minusSeconds(3)))
         person.rapporteringspliktType shouldBe Søknad
         person.nyRapporteringsplikt(
             RapporteringspliktVedtak(
