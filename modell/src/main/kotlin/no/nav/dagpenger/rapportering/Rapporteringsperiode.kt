@@ -11,6 +11,7 @@ import no.nav.dagpenger.rapportering.hendelser.ManuellInnsendingHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringMidlertidigJournalførtHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitetstidslinje
 import no.nav.dagpenger.rapportering.utils.finnFørsteMandagIUken
@@ -34,6 +35,7 @@ class Rapporteringsperiode private constructor(
     private val godkjenningslogg: Godkjenningslogg = Godkjenningslogg(),
     private val korrigerer: Rapporteringsperiode? = null,
     private var korrigertAv: Rapporteringsperiode? = null,
+    private var journalpostId: String? = null,
 ) : Aktivitetskontekst {
     private val observers: MutableSet<RapporteringsperiodeObserver> = mutableSetOf()
     val gjelderFra = periode.start
@@ -213,6 +215,14 @@ class Rapporteringsperiode private constructor(
         return true
     }
 
+    fun behandle(hendelse: RapporteringMidlertidigJournalførtHendelse): Boolean {
+        if (hendelse.rapporteringsperiodeId != rapporteringsperiodeId) return false
+        hendelse.kontekst(this)
+
+        tilstand.behandle(hendelse, this)
+        return true
+    }
+
     private sealed interface Rapporteringsperiodetilstand : Aktivitetskontekst {
         val type: TilstandType
 
@@ -261,6 +271,10 @@ class Rapporteringsperiode private constructor(
 
         fun behandle(hendelse: ManuellInnsendingHendelse, rapporteringsperiode: Rapporteringsperiode) {
             throw IllegalStateException("Forventer manuell innsending av rapporteringsperiode i tilstand ${type.name}")
+        }
+
+        fun behandle(hendelse: RapporteringMidlertidigJournalførtHendelse, rapporteringsperiode: Rapporteringsperiode) {
+            throw IllegalStateException("Forventet ikke journalføring av rapportering i tilstand ${type.name}")
         }
     }
 
@@ -341,6 +355,13 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiode.godkjenningslogg.avgodkjenn(hendelse.godkjenningsendring)
             rapporteringsperiode.tidslinje.forEach { it.håndter(hendelse) }
             rapporteringsperiode.tilstand(hendelse, TilUtfylling)
+        }
+
+        override fun behandle(hendelse: RapporteringMidlertidigJournalførtHendelse, rapporteringsperiode: Rapporteringsperiode) {
+            hendelse.kontekst(this)
+            hendelse.info("Journalfører periode")
+
+            rapporteringsperiode.journalpostId = hendelse.journalpostId
         }
     }
 

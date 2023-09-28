@@ -171,7 +171,7 @@ internal fun Application.rapporteringApi(
 
                                     val hendelse = GodkjennPeriodeHendelse(ident, periodeId)
                                     hendelse.behov(
-                                        MineBehov.NyRapporteringJournalpost,
+                                        MineBehov.JournalføreRapportering,
                                         "Trenger å journalføre rapportering",
                                         mapOf(
                                             "periodeId" to periodeId,

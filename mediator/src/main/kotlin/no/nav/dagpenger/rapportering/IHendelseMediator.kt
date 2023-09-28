@@ -7,6 +7,7 @@ import no.nav.dagpenger.rapportering.hendelser.KorrigerPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.ManuellInnsendingHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringMidlertidigJournalførtHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
@@ -26,4 +27,5 @@ internal interface IHendelseMediator {
     fun behandle(hendelse: VedtakInnvilgetHendelse)
     fun behandle(hendelse: VedtakAvslåttHendelse)
     fun behandle(hendelse: AvgodkjennPeriodeHendelse)
+    fun behandle(hendelse: RapporteringMidlertidigJournalførtHendelse)
 }
