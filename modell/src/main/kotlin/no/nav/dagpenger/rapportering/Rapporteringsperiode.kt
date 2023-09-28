@@ -333,7 +333,7 @@ class Rapporteringsperiode private constructor(
                 return
             }
 
-            hendelse.info("Sender inn godkjent periode", mapOf("rapporteringsfrist" to hendelse.beregningsdato))
+            hendelse.info("Sender inn godkjent periode med rapporteringsfrist ${hendelse.beregningsdato}")
 
             rapporteringsperiode.tilstand(hendelse, Innsendt)
             rapporteringsperiode.emitRapporteringsperiodeInnsendt(sakId)
