@@ -187,8 +187,11 @@ class RapporteringApiTest {
 
     @Test
     fun `Bruker skal kunne godkjenne og avgodkjenne en rapporteringsperiode uten begrunnelse`() {
+        val mediatorMock = mockk<Mediator>(relaxed = true)
+
         withRapporteringApi(
             rapporteringsperioder = listOf(testPeriode),
+            mock = mediatorMock,
         ) {
             client.post("/rapporteringsperioder/$testPeriodeId/godkjenn") {
                 autentisert()
@@ -323,6 +326,8 @@ class RapporteringApiTest {
         withRapporteringApi(rapporteringsperioder = listOf(periodeSomIkkeKanGodkjennesEnda), mediatorMock) {
             client.post("/rapporteringsperioder/$periodeId/godkjenn") {
                 autentisert()
+                contentType(ContentType.Application.Json)
+                setBody("""{"image": "IMAGE", "commit": "COMMIT" }""")
             }.also { response ->
                 response.status shouldBe HttpStatusCode.Forbidden
             }
