@@ -11,10 +11,10 @@ class AvgodkjennPeriodeHendelse(
     val rapporteringsperiodeId: UUID,
     val godkjenningsendring: Godkjenningsendring,
 ) : PersonHendelse(
-    meldingsreferanseId,
-    ident,
-    Aktivitetslogg(),
-) {
+        meldingsreferanseId,
+        ident,
+        Aktivitetslogg(),
+    ) {
     constructor(ident: String, rapporteringId: UUID) : this(
         UUID.randomUUID(),
         ident,

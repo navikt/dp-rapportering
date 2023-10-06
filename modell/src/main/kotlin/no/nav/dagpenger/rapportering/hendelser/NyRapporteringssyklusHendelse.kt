@@ -11,7 +11,7 @@ class NyRapporteringssyklusHendelse(
     val fom: LocalDate,
     val beregningsdatoStrategi: FastsettBeregningsdatoStrategi,
 ) : PersonHendelse(
-    meldingsreferanseId,
-    ident,
-    Aktivitetslogg(),
-)
+        meldingsreferanseId,
+        ident,
+        Aktivitetslogg(),
+    )

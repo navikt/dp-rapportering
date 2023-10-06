@@ -19,11 +19,12 @@ class Dag(
     private val aktiviteter: MutableList<Aktivitet>,
     strategiType: StrategiType? = null,
 ) : Aktivitetskontekst {
-    private var strategi: MuligeAktiviteterStrategi = when (strategiType) {
-        StrategiType.EnAktivitet -> EnAktivitetStrategi
-        StrategiType.IngentingErMulig -> IngentingErMulig
-        else -> EnAktivitetStrategi
-    }
+    private var strategi: MuligeAktiviteterStrategi =
+        when (strategiType) {
+            StrategiType.EnAktivitet -> EnAktivitetStrategi
+            StrategiType.IngentingErMulig -> IngentingErMulig
+            else -> EnAktivitetStrategi
+        }
 
     constructor(dato: LocalDate) : this(dato, mutableListOf())
 
@@ -41,7 +42,11 @@ class Dag(
     internal fun dekkesAv(periode: ClosedRange<LocalDate>) = dato in periode
 
     fun leggTilAktivitet(aktivitet: Aktivitet): Boolean {
-        if (aktivitet.type !in muligeAktiviteter) throw IllegalStateException("Ikke lov å legge til ${aktivitet.type}. Lovlige aktivtiteter: $muligeAktiviteter")
+        if (aktivitet.type !in muligeAktiviteter) {
+            throw IllegalStateException(
+                "Ikke lov å legge til ${aktivitet.type}. Lovlige aktivtiteter: $muligeAktiviteter",
+            )
+        }
 
         return aktiviteter.add(aktivitet)
     }
@@ -85,16 +90,19 @@ class Dag(
     override fun hashCode() = Objects.hash(dato, aktiviteter)
 
     enum class StrategiType {
-        EnAktivitet, IngentingErMulig,
+        EnAktivitet,
+        IngentingErMulig,
     }
 
     private interface MuligeAktiviteterStrategi {
         val type: StrategiType
+
         fun mulige(aktiviteter: List<Aktivitet>): List<Aktivitet.AktivitetType>
     }
 
     private object EnAktivitetStrategi : MuligeAktiviteterStrategi {
         override val type = StrategiType.EnAktivitet
+
         override fun mulige(aktiviteter: List<Aktivitet>) =
             if (aktiviteter.filterNot { erSlettet(it) }.isEmpty()) listOf(Arbeid, Syk, Ferie) else emptyList()
     }

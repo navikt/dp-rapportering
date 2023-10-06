@@ -12,10 +12,10 @@ class ManuellInnsendingHendelse(
     internal val rapporteringsperiodeId: UUID,
 ) :
     PersonHendelse(
-        meldingsreferanseId,
-        ident,
-        Aktivitetslogg(),
-    ) {
+            meldingsreferanseId,
+            ident,
+            Aktivitetslogg(),
+        ) {
     constructor(ident: String, rapporteringsperiodeId: UUID) : this(
         UUID.randomUUID(),
         ident,

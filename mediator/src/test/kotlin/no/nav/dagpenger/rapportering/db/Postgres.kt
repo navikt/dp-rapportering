@@ -54,7 +54,11 @@ internal object Postgres {
         }
     }
 
-    fun withCleanDb(target: String, setup: () -> Unit, test: () -> Unit) {
+    fun withCleanDb(
+        target: String,
+        setup: () -> Unit,
+        test: () -> Unit,
+    ) {
         this.setup()
         PostgresDataSourceBuilder.clean().run {
             PostgresDataSourceBuilder.runMigrationTo(target)

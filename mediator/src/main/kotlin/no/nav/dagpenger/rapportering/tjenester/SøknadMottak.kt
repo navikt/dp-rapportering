@@ -35,7 +35,10 @@ internal class SøknadMottak(
         }.register(this)
     }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext) {
+    override fun onPacket(
+        packet: JsonMessage,
+        context: MessageContext,
+    ) {
         val ident = packet["fødselsnummer"].asText()
         val søknadID = packet["søknadsData"]["søknad_uuid"].asUUID()
         withLoggingContext(
@@ -49,7 +52,10 @@ internal class SøknadMottak(
         }
     }
 
-    override fun onError(problems: MessageProblems, context: MessageContext) {
+    override fun onError(
+        problems: MessageProblems,
+        context: MessageContext,
+    ) {
         logger.info { "${this.javaClass.simpleName} kunne ikke lese melding: \n $problems" }
     }
 

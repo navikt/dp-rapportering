@@ -16,7 +16,6 @@ internal class VedtakMottak(
     rapidsConnection: RapidsConnection,
     private val mediator: IHendelseMediator,
 ) : River.PacketListener {
-
     private companion object {
         private val logger = KotlinLogging.logger {}
         private val sikkerlogg = KotlinLogging.logger("tjenestekall.${this::class.java.simpleName}")
@@ -31,7 +30,10 @@ internal class VedtakMottak(
         }.register(this)
     }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext) {
+    override fun onPacket(
+        packet: JsonMessage,
+        context: MessageContext,
+    ) {
         val ident = packet["ident"].asText()
         val behandlingId = packet["behandlingId"].asUUID()
 
@@ -46,7 +48,10 @@ internal class VedtakMottak(
         }
     }
 
-    override fun onError(problems: MessageProblems, context: MessageContext) {
+    override fun onError(
+        problems: MessageProblems,
+        context: MessageContext,
+    ) {
         logger.info { "${this.javaClass.simpleName} kunne ikke lese melding: \n $problems" }
     }
 

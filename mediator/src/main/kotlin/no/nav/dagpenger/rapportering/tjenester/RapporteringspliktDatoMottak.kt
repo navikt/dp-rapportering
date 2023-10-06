@@ -30,7 +30,10 @@ internal class RapporteringspliktDatoMottak(
         }.register(this)
     }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext) {
+    override fun onPacket(
+        packet: JsonMessage,
+        context: MessageContext,
+    ) {
         val ident = packet["ident"].asText()
         val søknadID = packet["Søknadstidspunkt.søknad_uuid"].asText()
 
@@ -45,7 +48,10 @@ internal class RapporteringspliktDatoMottak(
         }
     }
 
-    override fun onError(problems: MessageProblems, context: MessageContext) {
+    override fun onError(
+        problems: MessageProblems,
+        context: MessageContext,
+    ) {
         logger.info { "${this.javaClass.simpleName} kunne ikke lese melding: \n $problems" }
     }
 }

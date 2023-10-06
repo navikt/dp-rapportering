@@ -20,7 +20,10 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 fun interface FastsettBeregningsdatoStrategi {
-    fun beregn(fom: LocalDate, tom: LocalDate): LocalDate
+    fun beregn(
+        fom: LocalDate,
+        tom: LocalDate,
+    ): LocalDate
 }
 
 class Rapporteringsperiode private constructor(
@@ -115,7 +118,7 @@ class Rapporteringsperiode private constructor(
         )
     }
 
-    fun finnSisteKorrigering(): Rapporteringsperiode = korrigertAv?.let { it.finnSisteKorrigering() } ?: this
+    fun finnSisteKorrigering(): Rapporteringsperiode = korrigertAv?.finnSisteKorrigering() ?: this
 
     fun dekkesAv(dato: LocalDate) = dato in periode
 
@@ -190,7 +193,10 @@ class Rapporteringsperiode private constructor(
         return true
     }
 
-    fun behandle(hendelse: BeregningsdatoPassertHendelse, sakId: UUID) {
+    fun behandle(
+        hendelse: BeregningsdatoPassertHendelse,
+        sakId: UUID,
+    ) {
         hendelse.kontekst(this)
 
         tilstand.behandle(hendelse, this, sakId)
@@ -216,7 +222,10 @@ class Rapporteringsperiode private constructor(
     private sealed interface Rapporteringsperiodetilstand : Aktivitetskontekst {
         val type: TilstandType
 
-        fun entering(rapporteringsperiode: Rapporteringsperiode, hendelse: IAktivitetslogg) {}
+        fun entering(
+            rapporteringsperiode: Rapporteringsperiode,
+            hendelse: IAktivitetslogg,
+        ) {}
 
         fun behandle(
             hendelse: GodkjennPeriodeHendelse,
@@ -239,7 +248,10 @@ class Rapporteringsperiode private constructor(
             throw IllegalStateException("Forventet ikke ny aktivitet i tilstand ${type.name}")
         }
 
-        fun behandle(hendelse: SlettAktivitetHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        fun behandle(
+            hendelse: SlettAktivitetHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
             throw IllegalStateException("Forventet ikke sletting av aktivitet i tilstand ${type.name}")
         }
 
@@ -251,15 +263,24 @@ class Rapporteringsperiode private constructor(
             // noop
         }
 
-        fun behandle(hendelse: KorrigerPeriodeHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        fun behandle(
+            hendelse: KorrigerPeriodeHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
             throw IllegalStateException("Forventer ikke korrigering av rapporteringsperiode i tilstand ${type.name}")
         }
 
-        fun leaving(rapporteringsperiode: Rapporteringsperiode, hendelse: IAktivitetslogg) {}
+        fun leaving(
+            rapporteringsperiode: Rapporteringsperiode,
+            hendelse: IAktivitetslogg,
+        ) {}
 
         override fun toSpesifikkKontekst() = SpesifikkKontekst("Tilstand", mapOf("tilstand" to type.name))
 
-        fun behandle(hendelse: ManuellInnsendingHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        fun behandle(
+            hendelse: ManuellInnsendingHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
             throw IllegalStateException("Forventer manuell innsending av rapporteringsperiode i tilstand ${type.name}")
         }
     }
@@ -282,20 +303,31 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiode.tilstand(hendelse, Godkjent)
         }
 
-        override fun behandle(hendelse: NyAktivitetHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        override fun behandle(
+            hendelse: NyAktivitetHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
             hendelse.kontekst(this)
             rapporteringsperiode.tidslinje.leggTilAktivitet(hendelse.aktivitet)
         }
 
-        override fun behandle(hendelse: SlettAktivitetHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        override fun behandle(
+            hendelse: SlettAktivitetHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
             hendelse.kontekst(this)
             rapporteringsperiode.tidslinje.forEach { it.håndter(hendelse) }
         }
 
-        override fun behandle(hendelse: KorrigerPeriodeHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        override fun behandle(
+            hendelse: KorrigerPeriodeHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
             hendelse.kontekst(this)
             if (rapporteringsperiode.korrigerer == null) {
-                throw IllegalStateException("Kan ikke starte en korrigering av en periode i tilstand ${type.name} som ikke er en korrigering")
+                throw IllegalStateException(
+                    "Kan ikke starte en korrigering av en periode i tilstand ${type.name} som ikke er en korrigering",
+                )
             } else {
                 hendelse.info("Erstatter påbegynt korrigering")
                 rapporteringsperiode.korrigerer.lagKorrigering()
@@ -325,16 +357,22 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiode.emitRapporteringsperiodeInnsendt(sakId)
         }
 
-        override fun behandle(hendelse: ManuellInnsendingHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        override fun behandle(
+            hendelse: ManuellInnsendingHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
             hendelse.kontekst(this)
             hendelse.info("Sender inn godkjent periode manuelt")
 
-            TODO("Må gå via rapporteringsplikt")
+            // TODO("Må gå via rapporteringsplikt")
             rapporteringsperiode.tilstand(hendelse, Innsendt)
             // rapporteringsperiode.emitRapporteringsperiodeInnsendt()
         }
 
-        override fun behandle(hendelse: AvgodkjennPeriodeHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        override fun behandle(
+            hendelse: AvgodkjennPeriodeHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
             hendelse.kontekst(this)
             hendelse.info("Avgodkjenner periode")
 
@@ -348,7 +386,10 @@ class Rapporteringsperiode private constructor(
     private object Innsendt : Rapporteringsperiodetilstand {
         override val type = TilstandType.Innsendt
 
-        override fun behandle(hendelse: KorrigerPeriodeHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        override fun behandle(
+            hendelse: KorrigerPeriodeHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
             hendelse.kontekst(this)
             hendelse.info("Oppretter korrigering av rapporteringsperiode med id ${rapporteringsperiode.rapporteringsperiodeId}")
 
@@ -383,37 +424,40 @@ class Rapporteringsperiode private constructor(
         hendelse: PersonHendelse,
         forrigeTilstand: Rapporteringsperiodetilstand = tilstand,
     ) {
-        val event = RapporteringsperiodeObserver.RapporteringsperiodeEndret(
-            rapporteringsperiodeId = rapporteringsperiodeId,
-            gjeldendeTilstand = tilstand.type,
-            forrigeTilstand = forrigeTilstand.type,
-            fom = periode.start,
-            tom = periode.endInclusive,
-        )
+        val event =
+            RapporteringsperiodeObserver.RapporteringsperiodeEndret(
+                rapporteringsperiodeId = rapporteringsperiodeId,
+                gjeldendeTilstand = tilstand.type,
+                forrigeTilstand = forrigeTilstand.type,
+                fom = periode.start,
+                tom = periode.endInclusive,
+            )
 
         observers.forEach { it.rapporteringsperiodeEndret(event) }
     }
 
     private fun emitRapporteringsperiodeInnsendt(sakId: UUID) {
-        val event = RapporteringsperiodeObserver.RapporteringsperiodeInnsendt(
-            rapporteringsperiodeId = rapporteringsperiodeId,
-            fom = periode.start,
-            tom = periode.endInclusive,
-            dager = this.tidslinje.toList(),
-            sakId = sakId,
-            korrigerer = korrigerer?.rapporteringsperiodeId,
-        )
+        val event =
+            RapporteringsperiodeObserver.RapporteringsperiodeInnsendt(
+                rapporteringsperiodeId = rapporteringsperiodeId,
+                fom = periode.start,
+                tom = periode.endInclusive,
+                dager = this.tidslinje.toList(),
+                sakId = sakId,
+                korrigerer = korrigerer?.rapporteringsperiodeId,
+            )
 
         observers.forEach { it.rapporteringsperiodeInnsendt(event) }
     }
 
-    override fun toSpesifikkKontekst() = SpesifikkKontekst(
-        "Rapporteringsperiode",
-        mapOf(
-            "fom" to periode.start.toString(),
-            "tom" to periode.endInclusive.toString(),
-        ),
-    )
+    override fun toSpesifikkKontekst() =
+        SpesifikkKontekst(
+            "Rapporteringsperiode",
+            mapOf(
+                "fom" to periode.start.toString(),
+                "tom" to periode.endInclusive.toString(),
+            ),
+        )
 
     fun registrer(observer: RapporteringsperiodeObserver) = observers.add(observer)
 
@@ -423,7 +467,9 @@ class Rapporteringsperiode private constructor(
         rapporteringspliktFra in periode || rapporteringspliktFra.isAfter(periode.endInclusive)
 
     enum class TilstandType {
-        TilUtfylling, Godkjent, Innsendt,
+        TilUtfylling,
+        Godkjent,
+        Innsendt,
     }
 }
 

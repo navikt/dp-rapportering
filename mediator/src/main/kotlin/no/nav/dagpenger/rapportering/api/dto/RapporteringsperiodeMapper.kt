@@ -32,22 +32,24 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
     private lateinit var kanGodkjennesFra: LocalDate
 
     val dto: RapporteringsperiodeDTO
-        get() = RapporteringsperiodeDTO(
-            id = id,
-            beregnesEtter = beregnesEtter,
-            fraOgMed = periode.start,
-            tilOgMed = periode.endInclusive,
-            status = when (tilstand) {
-                TilUtfylling -> RapporteringsperiodeDTO.Status.TilUtfylling
-                Rapporteringsperiode.TilstandType.Godkjent -> RapporteringsperiodeDTO.Status.Godkjent
-                Rapporteringsperiode.TilstandType.Innsendt -> RapporteringsperiodeDTO.Status.Innsendt
-            },
-            dager = dager.mapIndexed { index, it -> DagMapper(index, it).dto },
-            korrigerer = korrigerer,
-            korrigertAv = korrigertAv,
-            sistGodkjent = sistGodkjent,
-            kanGodkjennesFra = kanGodkjennesFra,
-        )
+        get() =
+            RapporteringsperiodeDTO(
+                id = id,
+                beregnesEtter = beregnesEtter,
+                fraOgMed = periode.start,
+                tilOgMed = periode.endInclusive,
+                status =
+                    when (tilstand) {
+                        TilUtfylling -> RapporteringsperiodeDTO.Status.TilUtfylling
+                        Rapporteringsperiode.TilstandType.Godkjent -> RapporteringsperiodeDTO.Status.Godkjent
+                        Rapporteringsperiode.TilstandType.Innsendt -> RapporteringsperiodeDTO.Status.Innsendt
+                    },
+                dager = dager.mapIndexed { index, it -> DagMapper(index, it).dto },
+                korrigerer = korrigerer,
+                korrigertAv = korrigertAv,
+                sistGodkjent = sistGodkjent,
+                kanGodkjennesFra = kanGodkjennesFra,
+            )
 
     init {
         rapporteringsperiode.accept(this)
@@ -81,17 +83,19 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
         avgodkjent: Godkjenningsendring?,
         begrunnelse: String?,
     ) {
-        sistGodkjent = if (godkjenningsendring.godkjent()) {
-            RapporteringsperiodeSistGodkjentDTO(
-                dato = opprettet,
-                kilde = RapporteringsperiodeSistGodkjentKildeDTO(
-                    kildeType = utførtAv.javaClass.simpleName,
-                    id = utførtAv.id,
-                ),
-            )
-        } else {
-            null
-        }
+        sistGodkjent =
+            if (godkjenningsendring.godkjent()) {
+                RapporteringsperiodeSistGodkjentDTO(
+                    dato = opprettet,
+                    kilde =
+                        RapporteringsperiodeSistGodkjentKildeDTO(
+                            kildeType = utførtAv.javaClass.simpleName,
+                            id = utførtAv.id,
+                        ),
+                )
+            } else {
+                null
+            }
     }
 
     override fun visit(
@@ -121,21 +125,24 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
             muligeAktiviter: List<Aktivitet.AktivitetType>,
             strategi: Dag.StrategiType,
         ) {
-            dto = RapporteringsperiodeDagerInnerDTO(
-                dagIndex = index,
-                dato = dato,
-                muligeAktiviteter = muligeAktiviter.map {
-                    AktivitetTypeDTO.valueOf(
-                        it.name,
-                    )
-                },
-                aktiviteter = aktiviteter.tilDto(),
-            )
+            dto =
+                RapporteringsperiodeDagerInnerDTO(
+                    dagIndex = index,
+                    dato = dato,
+                    muligeAktiviteter =
+                        muligeAktiviter.map {
+                            AktivitetTypeDTO.valueOf(
+                                it.name,
+                            )
+                        },
+                    aktiviteter = aktiviteter.tilDto(),
+                )
         }
 
-        private fun List<Aktivitet>.tilDto() = this.map {
-            AktivitetMapper(it).aktivitetDTO
-        }
+        private fun List<Aktivitet>.tilDto() =
+            this.map {
+                AktivitetMapper(it).aktivitetDTO
+            }
 
         private class AktivitetMapper(aktivitet: Aktivitet) : AktivitetVisitor {
             lateinit var aktivitetDTO: AktivitetDTO
@@ -152,12 +159,13 @@ internal class RapporteringsperiodeMapper(rapporteringsperiode: Rapporteringsper
                 type: Aktivitet.AktivitetType,
                 tilstand: Aktivitet.TilstandType,
             ) {
-                aktivitetDTO = AktivitetDTO(
-                    type = AktivitetTypeDTO.valueOf(type.name),
-                    dato = dato,
-                    id = uuid,
-                    timer = tid.toIsoString(),
-                )
+                aktivitetDTO =
+                    AktivitetDTO(
+                        type = AktivitetTypeDTO.valueOf(type.name),
+                        dato = dato,
+                        id = uuid,
+                        timer = tid.toIsoString(),
+                    )
             }
         }
     }

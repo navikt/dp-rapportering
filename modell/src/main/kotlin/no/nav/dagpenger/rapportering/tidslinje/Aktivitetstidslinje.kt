@@ -23,8 +23,7 @@ data class Aktivitetstidslinje internal constructor(
         }
     }
 
-    fun leggTilAktivitet(aktivitet: Aktivitet) =
-        this.single { dag -> dag.sammenfallerMed(aktivitet.dato) }.leggTilAktivitet(aktivitet)
+    fun leggTilAktivitet(aktivitet: Aktivitet) = this.single { dag -> dag.sammenfallerMed(aktivitet.dato) }.leggTilAktivitet(aktivitet)
 
     fun accept(visitor: AktivitetstidslinjeVisitor) {
         visitor.preVisit(this)
@@ -32,11 +31,12 @@ data class Aktivitetstidslinje internal constructor(
         visitor.postVisit(this)
     }
 
-    fun kopier() = Aktivitetstidslinje(
-        dager.map {
-            it.kopier()
-        }.toMutableSet(),
-    )
+    fun kopier() =
+        Aktivitetstidslinje(
+            dager.map {
+                it.kopier()
+            }.toMutableSet(),
+        )
 
     override fun equals(other: Any?) = other is Aktivitetstidslinje && dager == other.dager
 }

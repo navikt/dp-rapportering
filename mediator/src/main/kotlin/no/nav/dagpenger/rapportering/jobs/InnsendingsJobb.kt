@@ -27,9 +27,10 @@ internal object InnsendingsJobb {
             action = {
                 try {
                     var innsendtePerioder: Int
-                    val tidBrukt = measureTime {
-                        innsendtePerioder = mediator.beregningsdatoPassert()
-                    }
+                    val tidBrukt =
+                        measureTime {
+                            innsendtePerioder = mediator.beregningsdatoPassert()
+                        }
                     metrics.jobbFullført(tidBrukt, innsendtePerioder)
                 } catch (e: Exception) {
                     logger.error(e) { "Innsending av godkjente rapporteringsperioder feilet" }

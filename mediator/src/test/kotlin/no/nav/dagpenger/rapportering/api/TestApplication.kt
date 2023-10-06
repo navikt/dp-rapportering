@@ -19,7 +19,7 @@ object TestApplication {
     private const val TOKENX_ISSUER_ID = "tokenx"
     private const val AZUREAD_ISSUER_ID = "azureAd"
     private const val CLIENT_ID = "dp-soknad"
-    const val defaultDummyFodselsnummer = "12345"
+    const val DEFAULT_DUMMY_FODSELSNUMMER = "12345678910"
 
     private val mockOAuth2Server: MockOAuth2Server by lazy {
         MockOAuth2Server().also { server ->
@@ -31,7 +31,7 @@ object TestApplication {
         mockOAuth2Server.issueToken(
             issuerId = TOKENX_ISSUER_ID,
             audience = CLIENT_ID,
-            claims = mapOf("pid" to defaultDummyFodselsnummer),
+            claims = mapOf("pid" to DEFAULT_DUMMY_FODSELSNUMMER),
         ).serialize()
     }
 
@@ -39,12 +39,14 @@ object TestApplication {
         mockOAuth2Server.issueToken(
             issuerId = AZUREAD_ISSUER_ID,
             audience = CLIENT_ID,
-            claims = mapOf(
-                "NAVident" to "123",
-                "groups" to listOf(
-                    Configuration.properties[Configuration.Grupper.saksbehandler],
+            claims =
+                mapOf(
+                    "NAVident" to "123",
+                    "groups" to
+                        listOf(
+                            Configuration.properties[Configuration.Grupper.saksbehandler],
+                        ),
                 ),
-            ),
         ).serialize()
     }
 

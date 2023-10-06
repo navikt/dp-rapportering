@@ -14,10 +14,10 @@ class GodkjennPeriodeHendelse(
     val godkjenningsendring: Godkjenningsendring,
     val dato: LocalDate,
 ) : PersonHendelse(
-    meldingsreferanseId,
-    ident,
-    Aktivitetslogg(),
-) {
+        meldingsreferanseId,
+        ident,
+        Aktivitetslogg(),
+    ) {
     constructor(ident: String, rapporteringId: UUID, dato: LocalDate = LocalDate.now()) : this(
         meldingsreferanseId = UUID.randomUUID(),
         ident = ident,

@@ -18,12 +18,16 @@ sealed class Aktivitet(
     private var tilstand: Tilstand = Åpen,
 ) {
     enum class AktivitetType {
-        Arbeid, Syk, Ferie
+        Arbeid,
+        Syk,
+        Ferie,
     }
 
     companion object {
         fun perDag(aktiviteter: Collection<Aktivitet>) = aktiviteter.associateBy { it.dato }
+
         fun erLåst(aktivitet: Aktivitet) = aktivitet.tilstand == Låst
+
         fun erSlettet(aktivitet: Aktivitet) = aktivitet.tilstand == Slettet
 
         fun rehydrer(
@@ -33,11 +37,12 @@ sealed class Aktivitet(
             tid: Duration? = Duration.INFINITE,
             tilstand: String,
         ): Aktivitet {
-            val rehydrertTilstand = when (TilstandType.valueOf(tilstand)) {
-                TilstandType.Åpen -> Åpen
-                TilstandType.Låst -> Låst
-                TilstandType.Slettet -> throw IllegalStateException("Skal aldri rehydrere en slettet aktivitet")
-            }
+            val rehydrertTilstand =
+                when (TilstandType.valueOf(tilstand)) {
+                    TilstandType.Åpen -> Åpen
+                    TilstandType.Låst -> Låst
+                    TilstandType.Slettet -> throw IllegalStateException("Skal aldri rehydrere en slettet aktivitet")
+                }
 
             return when (AktivitetType.valueOf(type)) {
                 AktivitetType.Arbeid -> Arbeid(dato, tid!!, uuid, rehydrertTilstand)
@@ -62,37 +67,55 @@ sealed class Aktivitet(
         tilstand.behandle(hendelse, this)
     }
 
-    override fun equals(other: Any?) =
-        other is Aktivitet && dato == other.dato && tid == other.tid && type == other.type
+    override fun equals(other: Any?) = other is Aktivitet && dato == other.dato && tid == other.tid && type == other.type
 
     override fun hashCode() = Objects.hash(dato, tid, type)
 
     enum class TilstandType {
-        Åpen, Låst, Slettet
+        Åpen,
+        Låst,
+        Slettet,
     }
 
     interface Tilstand {
         val type: TilstandType
-        fun behandle(hendelse: GodkjennPeriodeHendelse, aktivitet: Aktivitet) {
+
+        fun behandle(
+            hendelse: GodkjennPeriodeHendelse,
+            aktivitet: Aktivitet,
+        ) {
             throw IllegalStateException("Kan ikke håndtere ${hendelse::class.java.simpleName} i denne tilstanden")
         }
 
-        fun behandle(hendelse: AvgodkjennPeriodeHendelse, aktivitet: Aktivitet) {
+        fun behandle(
+            hendelse: AvgodkjennPeriodeHendelse,
+            aktivitet: Aktivitet,
+        ) {
             throw IllegalStateException("Kan ikke håndtere ${hendelse::class.java.simpleName} i denne tilstanden")
         }
 
-        fun behandle(hendelse: SlettAktivitetHendelse, aktivitet: Aktivitet) {
+        fun behandle(
+            hendelse: SlettAktivitetHendelse,
+            aktivitet: Aktivitet,
+        ) {
             throw IllegalStateException("Kan ikke håndtere ${hendelse::class.java.simpleName} i denne tilstanden")
         }
     }
 
     private object Åpen : Tilstand {
         override val type = TilstandType.Åpen
-        override fun behandle(hendelse: GodkjennPeriodeHendelse, aktivitet: Aktivitet) {
+
+        override fun behandle(
+            hendelse: GodkjennPeriodeHendelse,
+            aktivitet: Aktivitet,
+        ) {
             aktivitet.tilstand = Låst
         }
 
-        override fun behandle(hendelse: SlettAktivitetHendelse, aktivitet: Aktivitet) {
+        override fun behandle(
+            hendelse: SlettAktivitetHendelse,
+            aktivitet: Aktivitet,
+        ) {
             aktivitet.tilstand = Slettet
         }
     }
@@ -100,7 +123,10 @@ sealed class Aktivitet(
     private object Låst : Tilstand {
         override val type = TilstandType.Låst
 
-        override fun behandle(hendelse: AvgodkjennPeriodeHendelse, aktivitet: Aktivitet) {
+        override fun behandle(
+            hendelse: AvgodkjennPeriodeHendelse,
+            aktivitet: Aktivitet,
+        ) {
             aktivitet.tilstand = Åpen
         }
     }

@@ -14,16 +14,36 @@ interface Rapporteringsplikt : Aktivitetskontekst {
     val uuid: UUID
     val type: RapporteringspliktType
     val rapporteringspliktFra: LocalDateTime
-    fun behandle(person: Person, hendelse: SøknadInnsendtHendelse)
-    fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse)
-    fun behandle(person: Person, hendelse: RapporteringspliktDatoHendelse) {
+
+    fun behandle(
+        person: Person,
+        hendelse: SøknadInnsendtHendelse,
+    )
+
+    fun behandle(
+        person: Person,
+        hendelse: NyRapporteringssyklusHendelse,
+    )
+
+    fun behandle(
+        person: Person,
+        hendelse: RapporteringspliktDatoHendelse,
+    ) {
         throw IllegalStateException("Forventer ikke ${RapporteringspliktDatoHendelse::class.java.simpleName}")
     }
 
-    fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse)
-    fun behandle(hendelse: BeregningsdatoPassertHendelse, rapporteringsperioder: List<Rapporteringsperiode>) {}
+    fun behandle(
+        person: Person,
+        hendelse: VedtakInnvilgetHendelse,
+    )
+
+    fun behandle(
+        hendelse: BeregningsdatoPassertHendelse,
+        rapporteringsperioder: List<Rapporteringsperiode>,
+    ) {}
 
     override fun toSpesifikkKontekst() = SpesifikkKontekst("Rapporteringsplikt", mapOf("type" to type.name))
+
     fun accept(visitor: RapporteringspliktVisitor) {
         visitor.visit(this, this.uuid, this.type)
     }
@@ -41,7 +61,10 @@ class IngenRapporteringsplikt(
 ) : Rapporteringsplikt {
     override val type = RapporteringspliktType.Ingen
 
-    override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {
+    override fun behandle(
+        person: Person,
+        hendelse: SøknadInnsendtHendelse,
+    ) {
         hendelse.kontekst(this)
         hendelse.behov(
             MineBehov.Søknadstidspunkt,
@@ -52,7 +75,10 @@ class IngenRapporteringsplikt(
         )
     }
 
-    override fun behandle(person: Person, hendelse: RapporteringspliktDatoHendelse) {
+    override fun behandle(
+        person: Person,
+        hendelse: RapporteringspliktDatoHendelse,
+    ) {
         hendelse.kontekst(this)
         hendelse.info("Oppretter rapporteringsplikt på grunn av søknad")
 
@@ -63,7 +89,10 @@ class IngenRapporteringsplikt(
         )
     }
 
-    override fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse) {
+    override fun behandle(
+        person: Person,
+        hendelse: VedtakInnvilgetHendelse,
+    ) {
         hendelse.kontekst(this)
         hendelse.info("Oppretter rapporteringsplikt på grunn av vedtak")
 
@@ -77,7 +106,10 @@ class IngenRapporteringsplikt(
         )
     }
 
-    override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {}
+    override fun behandle(
+        person: Person,
+        hendelse: NyRapporteringssyklusHendelse,
+    ) {}
 }
 
 class RapporteringspliktSøknad(
@@ -86,12 +118,18 @@ class RapporteringspliktSøknad(
 ) : Rapporteringsplikt {
     override val type = RapporteringspliktType.Søknad
 
-    override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {
+    override fun behandle(
+        person: Person,
+        hendelse: SøknadInnsendtHendelse,
+    ) {
         hendelse.kontekst(this)
         hendelse.info("Har allerede rapporteringsplikt, oppretter ikke ny")
     }
 
-    override fun behandle(person: Person, hendelse: RapporteringspliktDatoHendelse) {
+    override fun behandle(
+        person: Person,
+        hendelse: RapporteringspliktDatoHendelse,
+    ) {
         hendelse.kontekst(this)
         hendelse.info("Oppretter ny rapporteringsperiode på grunn av innsendt søknad")
 
@@ -104,14 +142,22 @@ class RapporteringspliktSøknad(
         }
     }
 
-    override fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse) {
+    override fun behandle(
+        person: Person,
+        hendelse: VedtakInnvilgetHendelse,
+    ) {
         hendelse.kontekst(this)
         hendelse.info("Innvilgelse gir person rapporteringsplikt type Vedtak.")
 
-        person.nyRapporteringsplikt(RapporteringspliktVedtak(rapporteringspliktFra = hendelse.virkningsdato.atStartOfDay(), sakId = hendelse.sakId))
+        person.nyRapporteringsplikt(
+            RapporteringspliktVedtak(rapporteringspliktFra = hendelse.virkningsdato.atStartOfDay(), sakId = hendelse.sakId),
+        )
     }
 
-    override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {
+    override fun behandle(
+        person: Person,
+        hendelse: NyRapporteringssyklusHendelse,
+    ) {
         hendelse.kontekst(this)
         hendelse.info("Oppretter ny rapporteringsperiode")
 
@@ -128,8 +174,15 @@ class RapporteringspliktVedtak(
 ) : Rapporteringsplikt {
     override val type = RapporteringspliktType.Vedtak
 
-    override fun behandle(person: Person, hendelse: SøknadInnsendtHendelse) {}
-    override fun behandle(person: Person, hendelse: NyRapporteringssyklusHendelse) {
+    override fun behandle(
+        person: Person,
+        hendelse: SøknadInnsendtHendelse,
+    ) {}
+
+    override fun behandle(
+        person: Person,
+        hendelse: NyRapporteringssyklusHendelse,
+    ) {
         hendelse.kontekst(this)
         hendelse.info("Oppretter ny rapporteringsperiode")
 
@@ -138,7 +191,10 @@ class RapporteringspliktVedtak(
         }
     }
 
-    override fun behandle(person: Person, hendelse: VedtakInnvilgetHendelse) {
+    override fun behandle(
+        person: Person,
+        hendelse: VedtakInnvilgetHendelse,
+    ) {
         hendelse.kontekst(this)
         hendelse.info("Oppretter ny rapporteringsperiode på grunn av vedtak")
 
@@ -151,7 +207,10 @@ class RapporteringspliktVedtak(
         }
     }
 
-    override fun behandle(hendelse: BeregningsdatoPassertHendelse, rapporteringsperioder: List<Rapporteringsperiode>) {
+    override fun behandle(
+        hendelse: BeregningsdatoPassertHendelse,
+        rapporteringsperioder: List<Rapporteringsperiode>,
+    ) {
         rapporteringsperioder.filter {
             it.gjelderFor(rapporteringspliktFra)
         }.forEach {

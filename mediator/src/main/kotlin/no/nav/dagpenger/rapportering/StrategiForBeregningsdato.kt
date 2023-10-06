@@ -10,11 +10,17 @@ internal val strategiForBeregningsdato: FastsettBeregningsdatoStrategi =
     }
 
 private object FastsettBeregningsdatoFom : FastsettBeregningsdatoStrategi {
-    override fun beregn(fom: LocalDate, tom: LocalDate) = fom
+    override fun beregn(
+        fom: LocalDate,
+        tom: LocalDate,
+    ) = fom
 }
 
 private class FastsettBeregningsdatoTom(private val dagerFør: Long = 2) : FastsettBeregningsdatoStrategi {
-    override fun beregn(fom: LocalDate, tom: LocalDate): LocalDate {
+    override fun beregn(
+        fom: LocalDate,
+        tom: LocalDate,
+    ): LocalDate {
         return tom.minusDays(dagerFør)
     }
 }

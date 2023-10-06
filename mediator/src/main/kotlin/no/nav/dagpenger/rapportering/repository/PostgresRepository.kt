@@ -33,87 +33,120 @@ import kotlin.time.Duration
 internal class PostgresRepository(private val ds: DataSource) :
     PersonRepository,
     RapporteringsperiodeRepository {
-
     private companion object {
         private val logger = KotlinLogging.logger { }
     }
 
-    override fun hentRapporteringsperiode(ident: String, uuid: UUID): Rapporteringsperiode? {
-        val root = requireNotNull(finnRoot(uuid))
+    override fun hentRapporteringsperiode(
+        ident: String,
+        rapporteringsperiodeId: UUID,
+    ): Rapporteringsperiode? {
+        val root = requireNotNull(finnRoot(rapporteringsperiodeId))
         val kjede = hentKjede(ident, root)
         return kjede.lagKjede { uuid, korrigerer ->
             hentRapporteringsperiodeMedKorrigering(ident, uuid, korrigerer)
         }
     }
 
-    private fun finnRoot(uuid: UUID) = using(sessionOf(ds)) { session ->
-        session.run(
-            queryOf(
-                //language=PostgreSQL
-                statement = """
-                WITH RECURSIVE find_root AS (
-                    SELECT uuid, korrigerer
-                    FROM rapporteringsperiode
-                    WHERE uuid = :startUuid
-                    
-                    UNION ALL
-                    
-                    SELECT rp.uuid, rp.korrigerer
-                    FROM rapporteringsperiode rp
-                    JOIN find_root fr ON rp.uuid = fr.korrigerer
-                )
-                SELECT uuid 
-                FROM find_root 
-                WHERE korrigerer IS NULL
-                """.trimIndent(),
-                paramMap = mapOf("startUuid" to uuid),
-            ).map { it.uuidOrNull("uuid") }.asSingle,
-        )
-    }
-
-    override fun hentRapporteringsperioder(ident: String) = using(sessionOf(ds)) { session ->
-        session.run(
-            queryOf(
-                //language=PostgreSQL
-                statement = """SELECT uuid FROM rapporteringsperiode WHERE person_ident = :ident AND korrigerer IS NULL ORDER BY fom DESC""",
-                paramMap = mapOf("ident" to ident),
-            ).map { hentRapporteringsperiode(ident, it.uuid("uuid")) }.asList,
-        )
-    }
-
-    override fun hentRapporteringspliktFor(ident: String) = using(sessionOf(ds)) { session ->
-        session.run(
-            queryOf(
-                //language=PostgreSQL
-                statement = """SELECT uuid, opprettet, gjelder_fra, type FROM rapporteringsplikt LEFT JOIN person p ON rapporteringsplikt.person_id = p.id WHERE p.ident = :ident""",
-                paramMap = mapOf("ident" to ident),
-            ).map {
-                val opprettet = it.localDateTime("opprettet")
-                val gjelderFra = it.localDateTime("gjelder_fra")
-                val type = RapporteringspliktType.valueOf(it.string("type"))
-                val uuid = it.uuid("uuid")
-                val rapporteringsplikt = when (type) {
-                    RapporteringspliktType.Ingen -> IngenRapporteringsplikt(uuid, gjelderFra)
-                    RapporteringspliktType.Søknad -> RapporteringspliktSøknad(uuid, gjelderFra)
-                    RapporteringspliktType.Vedtak -> RapporteringspliktVedtak(uuid, gjelderFra, UUID.randomUUID()) // TODO: Håndtere lagring av sakId
-                }
-                Pair(opprettet, rapporteringsplikt)
-            }.asList,
-        )
-    }
-
-    override fun hentRapporteringsperiodeFor(ident: String, dato: LocalDate) =
+    private fun finnRoot(uuid: UUID) =
         using(sessionOf(ds)) { session ->
             session.run(
                 queryOf(
                     //language=PostgreSQL
-                    statement = """SELECT uuid FROM rapporteringsperiode WHERE person_ident = :ident AND :dato BETWEEN fom AND tom""",
-                    paramMap = mapOf("ident" to ident, "dato" to dato),
-                ).map { row ->
-                    hentRapporteringsperiode(ident, row.uuid("uuid"))
-                }.asSingle,
+                    statement =
+                        """
+                        WITH RECURSIVE find_root AS (
+                            SELECT uuid, korrigerer
+                            FROM rapporteringsperiode
+                            WHERE uuid = :startUuid
+                            
+                            UNION ALL
+                            
+                            SELECT rp.uuid, rp.korrigerer
+                            FROM rapporteringsperiode rp
+                            JOIN find_root fr ON rp.uuid = fr.korrigerer
+                        )
+                        SELECT uuid 
+                        FROM find_root 
+                        WHERE korrigerer IS NULL
+                        """.trimIndent(),
+                    paramMap = mapOf("startUuid" to uuid),
+                ).map { it.uuidOrNull("uuid") }.asSingle,
             )
         }
+
+    override fun hentRapporteringsperioder(ident: String) =
+        using(sessionOf(ds)) { session ->
+            session.run(
+                queryOf(
+                    //language=PostgreSQL
+                    statement =
+                        """
+                        SELECT uuid
+                        FROM rapporteringsperiode
+                        WHERE person_ident = :ident
+                          AND korrigerer IS NULL
+                        ORDER BY fom DESC
+                        """.trimIndent(),
+                    paramMap = mapOf("ident" to ident),
+                ).map { hentRapporteringsperiode(ident, it.uuid("uuid")) }.asList,
+            )
+        }
+
+    override fun hentRapporteringspliktFor(ident: String) =
+        using(sessionOf(ds)) { session ->
+            session.run(
+                queryOf(
+                    //language=PostgreSQL
+                    statement =
+                        """
+                        SELECT uuid, opprettet, gjelder_fra, type
+                        FROM rapporteringsplikt
+                                 LEFT JOIN person p ON rapporteringsplikt.person_id = p.id
+                        WHERE p.ident = :ident
+                        """.trimIndent(),
+                    paramMap = mapOf("ident" to ident),
+                ).map {
+                    val opprettet = it.localDateTime("opprettet")
+                    val gjelderFra = it.localDateTime("gjelder_fra")
+                    val type = RapporteringspliktType.valueOf(it.string("type"))
+                    val uuid = it.uuid("uuid")
+                    val rapporteringsplikt =
+                        when (type) {
+                            RapporteringspliktType.Ingen -> IngenRapporteringsplikt(uuid, gjelderFra)
+                            RapporteringspliktType.Søknad -> RapporteringspliktSøknad(uuid, gjelderFra)
+                            RapporteringspliktType.Vedtak ->
+                                RapporteringspliktVedtak(
+                                    uuid,
+                                    gjelderFra,
+                                    UUID.randomUUID(),
+                                ) // TODO: Håndtere lagring av sakId
+                        }
+                    Pair(opprettet, rapporteringsplikt)
+                }.asList,
+            )
+        }
+
+    override fun hentRapporteringsperiodeFor(
+        ident: String,
+        dato: LocalDate,
+    ) = using(sessionOf(ds)) { session ->
+        session.run(
+            queryOf(
+                //language=PostgreSQL
+                statement =
+                    """
+                    SELECT uuid
+                    FROM rapporteringsperiode
+                    WHERE person_ident = :ident
+                      AND :dato BETWEEN fom AND tom
+                    """.trimIndent(),
+                paramMap = mapOf("ident" to ident, "dato" to dato),
+            ).map { row ->
+                hentRapporteringsperiode(ident, row.uuid("uuid"))
+            }.asSingle,
+        )
+    }
 
     override fun finnIdentForPeriode(periodeId: UUID) =
         using(sessionOf(ds)) { session ->
@@ -128,28 +161,30 @@ internal class PostgresRepository(private val ds: DataSource) :
             )
         }
 
-    private fun hentPerson(ident: String) = using(sessionOf(ds)) { session ->
-        session.run(
-            queryOf(
-                //language=PostgreSQL
-                statement = """SELECT ident FROM person WHERE ident = :ident""",
-                paramMap = mapOf("ident" to ident),
-            ).map { row ->
-                Person(
-                    row.string("ident"),
-                    hentRapporteringsperioder(ident),
-                    hentRapporteringspliktFor(ident),
-                )
-            }.asSingle,
-        )
-    }
+    private fun hentPerson(ident: String) =
+        using(sessionOf(ds)) { session ->
+            session.run(
+                queryOf(
+                    //language=PostgreSQL
+                    statement = """SELECT ident FROM person WHERE ident = :ident""",
+                    paramMap = mapOf("ident" to ident),
+                ).map { row ->
+                    Person(
+                        row.string("ident"),
+                        hentRapporteringsperioder(ident),
+                        hentRapporteringspliktFor(ident),
+                    )
+                }.asSingle,
+            )
+        }
 
-    override fun hentEllerOpprettPerson(ident: String) = if (personFinnes(ident)) {
-        hentPerson(ident)!!
-    } else {
-        insertPerson(ident)
-        Person(ident)
-    }
+    override fun hentEllerOpprettPerson(ident: String) =
+        if (personFinnes(ident)) {
+            hentPerson(ident)!!
+        } else {
+            insertPerson(ident)
+            Person(ident)
+        }
 
     override fun lagre(person: Person) {
         using(sessionOf(ds)) { session ->
@@ -164,26 +199,34 @@ internal class PostgresRepository(private val ds: DataSource) :
         }
     }
 
-    override fun hentIdenterMedGodkjentPeriode() = using(sessionOf(ds)) { session ->
-        session.run(
-            queryOf(
-                //language=PostgreSQL
-                statement = """SELECT person_ident FROM rapporteringsperiode WHERE tilstand = :tilstand""",
-                paramMap = mapOf(
-                    "tilstand" to Godkjent.name,
-                ),
-            ).map { row ->
-                row.string("person_ident")
-            }.asList,
-        )
-    }
+    override fun hentIdenterMedGodkjentPeriode() =
+        using(sessionOf(ds)) { session ->
+            session.run(
+                queryOf(
+                    //language=PostgreSQL
+                    statement = """SELECT person_ident FROM rapporteringsperiode WHERE tilstand = :tilstand""",
+                    paramMap =
+                        mapOf(
+                            "tilstand" to Godkjent.name,
+                        ),
+                ).map { row ->
+                    row.string("person_ident")
+                }.asList,
+            )
+        }
 
     override fun hentIdenterMedRapporteringsplikt(): List<String> {
         return using(sessionOf(dataSource = ds)) { session ->
             session.run(
                 queryOf(
                     //language=PostgreSQL
-                    statement = """SELECT ident FROM person LEFT JOIN rapporteringsplikt r ON person.id = r.person_id WHERE r.type != 'Ingen'""",
+                    statement =
+                        """
+                        SELECT ident
+                        FROM person
+                                 LEFT JOIN rapporteringsplikt r ON person.id = r.person_id
+                        WHERE r.type != 'Ingen'
+                        """.trimIndent(),
                 ).map { row ->
                     row.string("ident")
                 }.asList,
@@ -219,17 +262,18 @@ internal class PostgresRepository(private val ds: DataSource) :
         }
     }
 
-    private fun personFinnes(ident: String) = using(sessionOf(ds)) { session ->
-        session.run(
-            queryOf(
-                //language=PostgreSQL
-                statement = """SELECT EXISTS(SELECT 1 FROM person WHERE ident = :ident) AS finnes""",
-                paramMap = mapOf("ident" to ident),
-            ).map { row ->
-                row.boolean("finnes")
-            }.asSingle,
-        )
-    } ?: false
+    private fun personFinnes(ident: String) =
+        using(sessionOf(ds)) { session ->
+            session.run(
+                queryOf(
+                    //language=PostgreSQL
+                    statement = """SELECT EXISTS(SELECT 1 FROM person WHERE ident = :ident) AS finnes""",
+                    paramMap = mapOf("ident" to ident),
+                ).map { row ->
+                    row.boolean("finnes")
+                }.asSingle,
+            )
+        } ?: false
 
     private fun Row.toRapporteringsperiode(korrigerer: Rapporteringsperiode? = null): Rapporteringsperiode {
         val rapporteringsperiodeId = uuid("uuid")
@@ -237,13 +281,14 @@ internal class PostgresRepository(private val ds: DataSource) :
         val tilOgMed = localDate("tom")
         val eksisterendeDager = hentDager(rapporteringsperiodeId)
         val aktiviteter = hentAktiviteterFor(rapporteringsperiodeId)
-        val tidslinje = Aktivitetstidslinje(fraOgMed..tilOgMed) { dato ->
-            Dag(
-                dato = dato,
-                aktiviteter = aktiviteter.filter { it.dato == dato }.toMutableList(),
-                strategiType = eksisterendeDager[dato],
-            )
-        }
+        val tidslinje =
+            Aktivitetstidslinje(fraOgMed..tilOgMed) { dato ->
+                Dag(
+                    dato = dato,
+                    aktiviteter = aktiviteter.filter { it.dato == dato }.toMutableList(),
+                    strategiType = eksisterendeDager[dato],
+                )
+            }
         val godkjenningslogg = hentGodkjenningslogg(rapporteringsperiodeId)
 
         return Rapporteringsperiode.rehydrer(
@@ -259,40 +304,43 @@ internal class PostgresRepository(private val ds: DataSource) :
         )
     }
 
-    private fun hentGodkjenningslogg(rapporteringsperiodeId: UUID) = using(sessionOf(ds)) { session ->
-        session.transaction { tx: TransactionalSession ->
-            tx.run(
-                queryOf(
-                    // language=PostgreSQL
-                    """
-                    SELECT g.uuid
-                    FROM godkjenningsendring g
-                    LEFT JOIN godkjenningsendring g2 ON g.id = g2.avgodkjent_av
-                    WHERE g.rapporteringsperiode_id = :rapporteringsperiodeId  AND g2.avgodkjent_av IS NULL
-                    """.trimIndent(),
-                    mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
-                ).map { tx.hentGodkjenningsendring(it.uuid("uuid")) }.asList,
-            )
-        }
-    }.let { Godkjenningslogg(it) }
+    private fun hentGodkjenningslogg(rapporteringsperiodeId: UUID) =
+        using(sessionOf(ds)) { session ->
+            session.transaction { tx: TransactionalSession ->
+                tx.run(
+                    queryOf(
+                        // language=PostgreSQL
+                        """
+                        SELECT g.uuid
+                        FROM godkjenningsendring g
+                                 LEFT JOIN godkjenningsendring g2 ON g.id = g2.avgodkjent_av
+                        WHERE g.rapporteringsperiode_id = :rapporteringsperiodeId
+                          AND g2.avgodkjent_av IS NULL
+                        """.trimIndent(),
+                        mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
+                    ).map { tx.hentGodkjenningsendring(it.uuid("uuid")) }.asList,
+                )
+            }
+        }.let { Godkjenningslogg(it) }
 
     private fun TransactionalSession.hentGodkjenningsendring(godkjenningsId: UUID): Godkjenningsendring =
         run(
             queryOf(
                 //language=PostgreSQL
                 """
-                SELECT g.*, (SELECT uuid FROM godkjenningsendring WHERE g.avgodkjent_av=id) AS avgodkjent_av_uuid
+                SELECT g.*, (SELECT uuid FROM godkjenningsendring WHERE g.avgodkjent_av = id) AS avgodkjent_av_uuid
                 FROM godkjenningsendring g
                 WHERE g.uuid = :uuid
                 """.trimIndent(),
                 mapOf("uuid" to godkjenningsId),
             ).map { row ->
                 val utførerIdent = row.string("utfort_id")
-                val kilde = when (row.string("utfort_kilde")) {
-                    "Sluttbruker" -> Godkjenningsendring.Sluttbruker(utførerIdent)
-                    "Saksbehandler" -> Godkjenningsendring.Saksbehandler(utførerIdent)
-                    else -> throw IllegalStateException("Ukjent kilde.")
-                }
+                val kilde =
+                    when (row.string("utfort_kilde")) {
+                        "Sluttbruker" -> Godkjenningsendring.Sluttbruker(utførerIdent)
+                        "Saksbehandler" -> Godkjenningsendring.Saksbehandler(utførerIdent)
+                        else -> throw IllegalStateException("Ukjent kilde.")
+                    }
 
                 val avgodkjentAv = row.uuidOrNull("avgodkjent_av_uuid")?.let { hentGodkjenningsendring(it) }
                 Godkjenningsendring(
@@ -305,46 +353,51 @@ internal class PostgresRepository(private val ds: DataSource) :
             }.asSingle,
         ) ?: throw IllegalArgumentException("Kan ikke hente godkjenningsendring som ikke finnes. UUID=$godkjenningsId")
 
-    private fun hentDager(rapporteringsperiodeId: UUID) = using(sessionOf(ds)) { session ->
-        session.run(
-            queryOf(
-                // language=PostgreSQL
-                "SELECT dato, strategi FROM dag WHERE rapporteringsperiode_id = :rapporteringsperiodeId",
-                mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
-            ).map { row ->
-                Pair(row.localDate("dato"), Dag.StrategiType.valueOf(row.string("strategi")))
-            }.asList,
-        ).associate { it }
-    }
+    private fun hentDager(rapporteringsperiodeId: UUID) =
+        using(sessionOf(ds)) { session ->
+            session.run(
+                queryOf(
+                    // language=PostgreSQL
+                    "SELECT dato, strategi FROM dag WHERE rapporteringsperiode_id = :rapporteringsperiodeId",
+                    mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
+                ).map { row ->
+                    Pair(row.localDate("dato"), Dag.StrategiType.valueOf(row.string("strategi")))
+                }.asList,
+            ).associate { it }
+        }
 
-    private fun hentKjede(ident: String, uuid: UUID): List<UUID> {
+    /**
+     * Denne spørringen henter hele kjeden av rapporteringsperioder og korrigeringer
+     *
+     * 1. Først bruker den CTE (WITH RECURSIVE) til å rekursivt hente ut perioden vi skal ha
+     * 2. Så gjør den en UNION med perioden som korrigerer
+     * 3. Så kjører den rekursivt til det er tomt
+     * 4. Så henter vi ut alle IDene i (motsatt) rekkefølge vi må bygge de i
+     */
+    private fun hentKjede(
+        ident: String,
+        uuid: UUID,
+    ): List<UUID> {
         return using(sessionOf(ds)) { session ->
             session.run(
                 queryOf(
-                    /**
-                     * Denne spørringen henter hele kjeden av rapporteringsperioder og korrigeringer
-                     *
-                     * 1. Først bruker den CTE (WITH RECURSIVE) til å rekursivt hente ut perioden vi skal ha
-                     * 2. Så gjør den en UNION med perioden som korrigerer
-                     * 3. Så kjører den rekursivt til det er tomt
-                     * 4. Så henter vi ut alle IDene i (motsatt) rekkefølge vi må bygge de i
-                     */
                     //language=PostgreSQL
-                    statement = """
-                    WITH RECURSIVE linked_structure AS (
-                        SELECT a.uuid, a.korrigerer, a.korrigert_av
-                        FROM rapporteringsperiode a
-                        WHERE a.person_ident=:ident AND a.uuid = :startUuid
-                    
-                        UNION ALL
-                    
-                        SELECT a.uuid, a.korrigerer, a.korrigert_av
-                        FROM rapporteringsperiode a
-                                 JOIN linked_structure ls ON a.uuid = ls.korrigert_av
-                    )
-                    SELECT uuid, korrigerer
-                    FROM linked_structure
-                    """.trimIndent(),
+                    statement =
+                        """
+                        WITH RECURSIVE linked_structure AS (
+                            SELECT a.uuid, a.korrigerer, a.korrigert_av
+                            FROM rapporteringsperiode a
+                            WHERE a.person_ident=:ident AND a.uuid = :startUuid
+                        
+                            UNION ALL
+                        
+                            SELECT a.uuid, a.korrigerer, a.korrigert_av
+                            FROM rapporteringsperiode a
+                                     JOIN linked_structure ls ON a.uuid = ls.korrigert_av
+                        )
+                        SELECT uuid, korrigerer
+                        FROM linked_structure
+                        """.trimIndent(),
                     mapOf(
                         "ident" to ident,
                         "startUuid" to uuid,
@@ -373,11 +426,12 @@ internal class PostgresRepository(private val ds: DataSource) :
             session.run(
                 queryOf(
                     //language=PostgreSQL
-                    statement = """
+                    statement =
+                        """
                         |SELECT * FROM aktivitet 
                         |LEFT JOIN dag_aktivitet d ON aktivitet.uuid = d.aktivitet_id
                         |WHERE d.rapporteringsperiode_id = :rapporteringsperiodeId
-                    """.trimMargin(),
+                        """.trimMargin(),
                     paramMap = mapOf("rapporteringsperiodeId" to rapporteringsperiodeId),
                 ).map { row ->
                     Aktivitet.rehydrer(
@@ -404,7 +458,10 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
         person.accept(this)
     }
 
-    override fun visit(person: Person, ident: String) {
+    override fun visit(
+        person: Person,
+        ident: String,
+    ) {
         this.ident = ident
         queries.add(
             queryOf(
@@ -415,7 +472,10 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
         )
     }
 
-    override fun visit(at: LocalDateTime, item: Rapporteringsplikt) {
+    override fun visit(
+        at: LocalDateTime,
+        item: Rapporteringsplikt,
+    ) {
         this.rapporteringspliktOpprettet = at
         super<PersonVisitor>.visit(at, item)
     }
@@ -429,12 +489,13 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
         queries.add(
             queryOf(
                 //language=PostgreSQL
-                statement = """
+                statement =
+                    """
                     INSERT INTO rapporteringsplikt(uuid, person_id, type, opprettet, gjelder_fra) 
                     SELECT :rapporteringspliktId, id, :type, :opprettet, :gjelderFra 
                     FROM person WHERE ident = :ident 
                     ON CONFLICT (uuid) DO NOTHING 
-                """.trimIndent(),
+                    """.trimIndent(),
                 mapOf(
                     "ident" to ident,
                     "type" to type.name,
@@ -459,7 +520,8 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
         queries.add(
             queryOf(
                 //language=PostgreSQL
-                statement = """
+                statement =
+                    """
                     INSERT INTO rapporteringsperiode (uuid, person_ident, tilstand, beregnes_etter, fom, tom, korrigerer, korrigert_av)
                     VALUES (:uuid,
                             :ident,
@@ -470,17 +532,18 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
                             :korrigerer,
                             :korrigertAv)
                     ON CONFLICT (uuid) DO UPDATE SET tilstand = :tilstand, korrigerer = :korrigerer, korrigert_av = :korrigertAv
-                """.trimIndent(),
-                paramMap = mapOf(
-                    "uuid" to id,
-                    "ident" to ident,
-                    "beregnesEtter" to beregnesEtter,
-                    "tilstand" to tilstand.name,
-                    "fraOgMed" to periode.start,
-                    "tilOgMed" to periode.endInclusive,
-                    "korrigerer" to korrigerer?.rapporteringsperiodeId,
-                    "korrigertAv" to korrigertAv?.rapporteringsperiodeId,
-                ),
+                    """.trimIndent(),
+                paramMap =
+                    mapOf(
+                        "uuid" to id,
+                        "ident" to ident,
+                        "beregnesEtter" to beregnesEtter,
+                        "tilstand" to tilstand.name,
+                        "fraOgMed" to periode.start,
+                        "tilOgMed" to periode.endInclusive,
+                        "korrigerer" to korrigerer?.rapporteringsperiodeId,
+                        "korrigertAv" to korrigertAv?.rapporteringsperiodeId,
+                    ),
             ),
         )
     }
@@ -524,16 +587,18 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
         queries.add(
             queryOf(
                 //language=PostgreSQL
-                statement = """
+                statement =
+                    """
                     INSERT INTO dag (rapporteringsperiode_id, dato, strategi)
                     VALUES (:rapporteringsperiodeId, :dato, :strategi)
                     ON CONFLICT (rapporteringsperiode_id, dato) DO UPDATE SET strategi = :strategi
-                """.trimIndent(),
-                paramMap = mapOf(
-                    "rapporteringsperiodeId" to rapporteringsperiodeId,
-                    "dato" to dato,
-                    "strategi" to strategi.name,
-                ),
+                    """.trimIndent(),
+                paramMap =
+                    mapOf(
+                        "rapporteringsperiodeId" to rapporteringsperiodeId,
+                        "dato" to dato,
+                        "strategi" to strategi.name,
+                    ),
             ),
         )
     }
@@ -559,43 +624,47 @@ private class LagrePersonStatementBuilder(person: Person) : PersonVisitor, Rappo
         queries.add(
             queryOf(
                 //language=PostgreSQL
-                statement = """
-                INSERT INTO aktivitet(uuid,
-                                      person_ident,
-                                      tilstand,
-                                      dato,
-                                      "type",
-                                      tid)
-                VALUES (:uuid,
-                        :ident,
-                        :tilstand,
-                        :dato,
-                        :type,
-                        :tid::interval)
-                ON CONFLICT (uuid) DO UPDATE SET tilstand = :tilstand
-                """.trimIndent(),
-                paramMap = mapOf(
-                    "uuid" to aktivitet.uuid,
-                    "ident" to ident,
-                    "tilstand" to tilstand.name,
-                    "dato" to dato,
-                    "type" to type.name,
-                    "tid" to tid.toIsoString(),
-                ),
+                statement =
+                    """
+                    INSERT INTO aktivitet(uuid,
+                                          person_ident,
+                                          tilstand,
+                                          dato,
+                                          "type",
+                                          tid)
+                    VALUES (:uuid,
+                            :ident,
+                            :tilstand,
+                            :dato,
+                            :type,
+                            :tid::interval)
+                    ON CONFLICT (uuid) DO UPDATE SET tilstand = :tilstand
+                    """.trimIndent(),
+                paramMap =
+                    mapOf(
+                        "uuid" to aktivitet.uuid,
+                        "ident" to ident,
+                        "tilstand" to tilstand.name,
+                        "dato" to dato,
+                        "type" to type.name,
+                        "tid" to tid.toIsoString(),
+                    ),
             ),
         )
         queries.add(
             queryOf(
                 //language=PostgreSQL
-                statement = """
+                statement =
+                    """
                     INSERT INTO dag_aktivitet (rapporteringsperiode_id, aktivitet_id)
                     VALUES (:rapporteringsperiodeId, :aktivitetId)
                     ON CONFLICT DO NOTHING
-                """.trimIndent(),
-                paramMap = mapOf(
-                    "rapporteringsperiodeId" to rapporteringsperiodeId,
-                    "aktivitetId" to aktivitet.uuid,
-                ),
+                    """.trimIndent(),
+                paramMap =
+                    mapOf(
+                        "rapporteringsperiodeId" to rapporteringsperiodeId,
+                        "aktivitetId" to aktivitet.uuid,
+                    ),
             ),
         )
     }

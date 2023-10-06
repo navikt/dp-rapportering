@@ -20,11 +20,12 @@ class RapporteringsperiodeMapperTest {
 
     @Test
     fun `sisteGodkjent mappes riktig`() {
-        val periode = lagRapporteringsperiode(
-            fom = 1.januar,
-            tom = 14.januar,
-            tilstand = Rapporteringsperiode.TilstandType.TilUtfylling,
-        )
+        val periode =
+            lagRapporteringsperiode(
+                fom = 1.januar,
+                tom = 14.januar,
+                tilstand = Rapporteringsperiode.TilstandType.TilUtfylling,
+            )
 
         // Ikke godkjent
         RapporteringsperiodeMapper(periode).dto.sistGodkjent shouldBe null
@@ -87,9 +88,10 @@ private fun lagRapporteringsperiode(
         tilOgMed = tom,
         tilstand = tilstand,
         opprettet = LocalDateTime.now(),
-        tidslinje = Aktivitetstidslinje(fom..tom).also {
-            aktiviteter.forEach(it::leggTilAktivitet)
-        },
+        tidslinje =
+            Aktivitetstidslinje(fom..tom).also {
+                aktiviteter.forEach(it::leggTilAktivitet)
+            },
         Godkjenningslogg(),
         korrigerer = null,
     )

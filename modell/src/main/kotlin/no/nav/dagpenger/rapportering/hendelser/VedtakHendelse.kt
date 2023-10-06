@@ -14,10 +14,10 @@ sealed class VedtakHendelse(
     internal val opprettet: LocalDateTime,
     internal val sakId: UUID,
 ) : PersonHendelse(
-    meldingsreferanseId,
-    ident,
-    Aktivitetslogg(),
-)
+        meldingsreferanseId,
+        ident,
+        Aktivitetslogg(),
+    )
 
 class VedtakInnvilgetHendelse(
     meldingsreferanseId: UUID,

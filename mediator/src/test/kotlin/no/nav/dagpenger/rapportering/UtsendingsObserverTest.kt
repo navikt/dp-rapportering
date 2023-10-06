@@ -42,9 +42,10 @@ class UtsendingsObserverTest {
                 rapporteringsperiodeId = rapporteringsperiodeId,
                 fom = fom,
                 tom = tom,
-                dager = fom.datesUntil(tom.plusDays(1)).map {
-                    Dag(it, mutableListOf(Aktivitet.Arbeid(it, 5)))
-                }.toList(),
+                dager =
+                    fom.datesUntil(tom.plusDays(1)).map {
+                        Dag(it, mutableListOf(Aktivitet.Arbeid(it, 5)))
+                    }.toList(),
                 sakId = sakId,
                 korrigerer = korrigererId,
             ),

@@ -54,9 +54,10 @@ internal fun Application.rapporteringApi(
         authenticate("tokenX") {
             route("/rapporteringsperioder") {
                 get {
-                    val rapporteringsperioder = rapporteringsperiodeRepository
-                        .hentRapporteringsperioder(call.ident())
-                        .map { RapporteringsperiodeMapper(it).dto }
+                    val rapporteringsperioder =
+                        rapporteringsperiodeRepository
+                            .hentRapporteringsperioder(call.ident())
+                            .map { RapporteringsperiodeMapper(it).dto }
 
                     call.respond(HttpStatusCode.OK, rapporteringsperioder)
                 }
@@ -79,8 +80,9 @@ internal fun Application.rapporteringApi(
         authenticate("azureAd") {
             route("/rapporteringsperioder/") {
                 post<RapporteringsperiodeSokDTO>("/sok") {
-                    val rapporteringsperioder = rapporteringsperiodeRepository.hentRapporteringsperioder(it.ident)
-                        .map { rapporteringsperiode -> RapporteringsperiodeMapper(rapporteringsperiode).dto }
+                    val rapporteringsperioder =
+                        rapporteringsperiodeRepository.hentRapporteringsperioder(it.ident)
+                            .map { rapporteringsperiode -> RapporteringsperiodeMapper(rapporteringsperiode).dto }
 
                     call.respond(HttpStatusCode.OK, rapporteringsperioder)
                 }
@@ -95,10 +97,11 @@ internal fun Application.rapporteringApi(
                         ),
                     )
                     return@post
-                    val fom = it.fraOgMed?.let { fraOgMed -> fraOgMed.atStartOfDay() } ?: LocalDateTime.now()
-                    val harGjeldende = rapporteringsperiodeRepository
-                        .hentRapporteringsperiodeFor(it.ident, fom.toLocalDate())
-                        ?.let { true } ?: false
+                    val fom = it.fraOgMed?.atStartOfDay() ?: LocalDateTime.now()
+                    val harGjeldende =
+                        rapporteringsperiodeRepository
+                            .hentRapporteringsperiodeFor(it.ident, fom.toLocalDate())
+                            ?.let { true } ?: false
                     if (harGjeldende) call.respond(HttpStatusCode.Conflict)
 
                     mediator.behandle(
@@ -130,10 +133,11 @@ internal fun Application.rapporteringApi(
                     get {
                         val ident = tilgangskontroll.verifiserTilgang(call)
                         val periodeId = call.finnUUID("periodeId")
-                        val dto = rapporteringsperiodeRepository
-                            .hentRapporteringsperiode(ident, periodeId)
-                            ?.let { RapporteringsperiodeMapper(it, periodeId).dto }
-                            ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
+                        val dto =
+                            rapporteringsperiodeRepository
+                                .hentRapporteringsperiode(ident, periodeId)
+                                ?.let { RapporteringsperiodeMapper(it, periodeId).dto }
+                                ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
 
                         call.respond(HttpStatusCode.OK, dto)
                     }
@@ -142,21 +146,22 @@ internal fun Application.rapporteringApi(
                         post {
                             val ident = tilgangskontroll.verifiserTilgang(call)
                             val periodeId = call.finnUUID("periodeId")
-                            val hendelse = when (call.issuer()) {
-                                AzureAD -> {
-                                    val godkjenning = call.receive<GodkjennNyDTO>()
-                                    require(godkjenning.begrunnelse.isNotEmpty()) { "Saksbehandler må oppgi begrunnelse" }
+                            val hendelse =
+                                when (call.issuer()) {
+                                    AzureAD -> {
+                                        val godkjenning = call.receive<GodkjennNyDTO>()
+                                        require(godkjenning.begrunnelse.isNotEmpty()) { "Saksbehandler må oppgi begrunnelse" }
 
-                                    GodkjennPeriodeHendelse(
-                                        ident,
-                                        periodeId,
-                                        Godkjenningsendring.Saksbehandler(call.saksbehandlerId()),
-                                        godkjenning.begrunnelse,
-                                    )
+                                        GodkjennPeriodeHendelse(
+                                            ident,
+                                            periodeId,
+                                            Godkjenningsendring.Saksbehandler(call.saksbehandlerId()),
+                                            godkjenning.begrunnelse,
+                                        )
+                                    }
+
+                                    TokenX -> GodkjennPeriodeHendelse(ident, periodeId)
                                 }
-
-                                TokenX -> GodkjennPeriodeHendelse(ident, periodeId)
-                            }
 
                             mediator.behandle(hendelse)
 
@@ -169,21 +174,22 @@ internal fun Application.rapporteringApi(
                             val ident = tilgangskontroll.verifiserTilgang(call)
                             val periodeId = call.finnUUID("periodeId")
 
-                            val hendelse = when (call.issuer()) {
-                                AzureAD -> {
-                                    val avgodkjenning = call.receive<GodkjennNyDTO>()
-                                    require(avgodkjenning.begrunnelse.isNotEmpty()) { "Saksbehandler må oppgi begrunnelse" }
+                            val hendelse =
+                                when (call.issuer()) {
+                                    AzureAD -> {
+                                        val avgodkjenning = call.receive<GodkjennNyDTO>()
+                                        require(avgodkjenning.begrunnelse.isNotEmpty()) { "Saksbehandler må oppgi begrunnelse" }
 
-                                    AvgodkjennPeriodeHendelse(
-                                        ident,
-                                        periodeId,
-                                        Godkjenningsendring.Saksbehandler(call.saksbehandlerId()),
-                                        avgodkjenning.begrunnelse,
-                                    )
+                                        AvgodkjennPeriodeHendelse(
+                                            ident,
+                                            periodeId,
+                                            Godkjenningsendring.Saksbehandler(call.saksbehandlerId()),
+                                            avgodkjenning.begrunnelse,
+                                        )
+                                    }
+
+                                    TokenX -> AvgodkjennPeriodeHendelse(ident, periodeId)
                                 }
-
-                                TokenX -> AvgodkjennPeriodeHendelse(ident, periodeId)
-                            }
 
                             mediator.behandle(hendelse)
                             call.respond(HttpStatusCode.OK, hendelse.godkjenningsendring)
@@ -196,14 +202,15 @@ internal fun Application.rapporteringApi(
                             val periodeId = call.finnUUID("periodeId")
 
                             mediator.behandle(KorrigerPeriodeHendelse(ident, periodeId))
-                            val korrigering = rapporteringsperiodeRepository
-                                .hentRapporteringsperiode(ident, periodeId)!!
-                                .let {
-                                    RapporteringsperiodeMapper(
-                                        it,
-                                        it.finnSisteKorrigering().rapporteringsperiodeId,
-                                    ).dto
-                                }
+                            val korrigering =
+                                rapporteringsperiodeRepository
+                                    .hentRapporteringsperiode(ident, periodeId)!!
+                                    .let {
+                                        RapporteringsperiodeMapper(
+                                            it,
+                                            it.finnSisteKorrigering().rapporteringsperiodeId,
+                                        ).dto
+                                    }
 
                             call.respond(HttpStatusCode.Created, korrigering)
                         }
@@ -245,8 +252,9 @@ private class RapporteringsperiodeTilgangskontroll(private val repository: Rappo
     Tilgangskontroll {
     override fun verifiserTilgang(call: ApplicationCall): String {
         val periodeId = call.finnUUID("periodeId")
-        val ident = repository.finnIdentForPeriode(periodeId)
-            ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
+        val ident =
+            repository.finnIdentForPeriode(periodeId)
+                ?: throw NotFoundException("Rapporteringsperioden finnes ikke")
 
         return when (call.issuer()) {
             TokenX -> {
@@ -263,26 +271,30 @@ private class IkkeTilgangException(message: String) : Exception(message)
 
 private fun AktivitetNyDTO.toAktivitet() =
     when (type) {
-        AktivitetTypeDTO.Arbeid -> Aktivitet.Arbeid(
-            dato = dato,
-            arbeidstimer = timer ?: throw IllegalArgumentException("Må ha antall arbeidstimer"),
-        )
+        AktivitetTypeDTO.Arbeid ->
+            Aktivitet.Arbeid(
+                dato = dato,
+                arbeidstimer = timer ?: throw IllegalArgumentException("Må ha antall arbeidstimer"),
+            )
 
-        AktivitetTypeDTO.Syk -> Aktivitet.Syk(
-            dato = dato,
-        )
+        AktivitetTypeDTO.Syk ->
+            Aktivitet.Syk(
+                dato = dato,
+            )
 
-        AktivitetTypeDTO.Ferie -> Aktivitet.Ferie(
-            dato = dato,
-        )
+        AktivitetTypeDTO.Ferie ->
+            Aktivitet.Ferie(
+                dato = dato,
+            )
     }
 
 private fun Aktivitet.toAktivitetDTO(): AktivitetDTO {
-    val aktivitetType = when (this) {
-        is Aktivitet.Arbeid -> AktivitetTypeDTO.Arbeid
-        is Aktivitet.Ferie -> AktivitetTypeDTO.Ferie
-        is Aktivitet.Syk -> AktivitetTypeDTO.Syk
-    }
+    val aktivitetType =
+        when (this) {
+            is Aktivitet.Arbeid -> AktivitetTypeDTO.Arbeid
+            is Aktivitet.Ferie -> AktivitetTypeDTO.Ferie
+            is Aktivitet.Syk -> AktivitetTypeDTO.Syk
+        }
     return AktivitetDTO(
         type = aktivitetType,
         dato = this.dato,

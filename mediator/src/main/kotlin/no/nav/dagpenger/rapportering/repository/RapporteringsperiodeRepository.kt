@@ -5,8 +5,17 @@ import java.time.LocalDate
 import java.util.UUID
 
 interface RapporteringsperiodeRepository {
-    fun hentRapporteringsperiode(ident: String, uuid: UUID): Rapporteringsperiode?
+    fun hentRapporteringsperiode(
+        ident: String,
+        uuid: UUID,
+    ): Rapporteringsperiode?
+
     fun hentRapporteringsperioder(ident: String): List<Rapporteringsperiode>
-    fun hentRapporteringsperiodeFor(ident: String, dato: LocalDate): Rapporteringsperiode?
+
+    fun hentRapporteringsperiodeFor(
+        ident: String,
+        dato: LocalDate,
+    ): Rapporteringsperiode?
+
     fun finnIdentForPeriode(periodeId: UUID): String?
 }

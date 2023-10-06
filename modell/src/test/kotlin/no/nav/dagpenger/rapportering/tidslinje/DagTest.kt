@@ -11,12 +11,13 @@ class DagTest {
         val dag1 = Dag(LocalDate.now().minusDays(1))
         val dag2 = Dag(LocalDate.now())
         val dag3 = Dag(LocalDate.now().plusDays(1))
-        val sortert = sortedSetOf(
-            eldsteDagFørst,
-            dag2,
-            dag1,
-            dag3,
-        )
+        val sortert =
+            sortedSetOf(
+                eldsteDagFørst,
+                dag2,
+                dag1,
+                dag3,
+            )
 
         assertEquals(setOf(dag1, dag2, dag3), sortert)
     }

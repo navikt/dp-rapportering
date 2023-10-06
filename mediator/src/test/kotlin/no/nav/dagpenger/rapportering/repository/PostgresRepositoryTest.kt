@@ -191,12 +191,13 @@ class PostgresRepositoryTest {
                     person.aktivRapporteringsperiode.finnSisteKorrigering()
                 }
             // Opprett en ny korrigering som skal erstatte forrige korrigering
-            val nyKorrigering = repository.hentEllerOpprettPerson(testIdent).let { person ->
-                person.behandle(KorrigerPeriodeHendelse(testIdent, innsendtRapportering.rapporteringsperiodeId))
-                repository.lagre(person)
+            val nyKorrigering =
+                repository.hentEllerOpprettPerson(testIdent).let { person ->
+                    person.behandle(KorrigerPeriodeHendelse(testIdent, innsendtRapportering.rapporteringsperiodeId))
+                    repository.lagre(person)
 
-                person.aktivRapporteringsperiode.finnSisteKorrigering()
-            }
+                    person.aktivRapporteringsperiode.finnSisteKorrigering()
+                }
             // Verifiser at innsendt periode har en korrigering, men som har erstattet den forrige
             repository.hentEllerOpprettPerson(testIdent).let { person ->
                 person.aktivRapporteringsperiode.finnSisteKorrigering().also {
@@ -217,31 +218,32 @@ class PostgresRepositoryTest {
     fun `kan slette en aktivitet`() {
         withMigratedDb {
             val repository = PostgresRepository(dataSource)
-            val person = Person(testIdent).apply {
-                behandle(
-                    SøknadInnsendtHendelse(
-                        UUID.randomUUID(),
-                        testIdent,
-                        LocalDateTime.now(),
-                        søknadId = UUID.randomUUID(),
-                    ),
-                )
-                behandle(
-                    RapporteringspliktDatoHendelse(
-                        UUID.randomUUID(),
-                        testIdent,
-                        LocalDateTime.now(),
-                        LocalDate.now(),
-                    ) { _, tom -> tom },
-                )
-                behandle(
-                    NyAktivitetHendelse(
-                        testIdent,
-                        aktivRapporteringsperiodeId,
-                        Aktivitet.Arbeid(LocalDate.now(), 2),
-                    ),
-                )
-            }
+            val person =
+                Person(testIdent).apply {
+                    behandle(
+                        SøknadInnsendtHendelse(
+                            UUID.randomUUID(),
+                            testIdent,
+                            LocalDateTime.now(),
+                            søknadId = UUID.randomUUID(),
+                        ),
+                    )
+                    behandle(
+                        RapporteringspliktDatoHendelse(
+                            UUID.randomUUID(),
+                            testIdent,
+                            LocalDateTime.now(),
+                            LocalDate.now(),
+                        ) { _, tom -> tom },
+                    )
+                    behandle(
+                        NyAktivitetHendelse(
+                            testIdent,
+                            aktivRapporteringsperiodeId,
+                            Aktivitet.Arbeid(LocalDate.now(), 2),
+                        ),
+                    )
+                }
             person.antallDager shouldBe 14
             person.antallAktiviteter shouldBe 1
 
@@ -275,7 +277,7 @@ class PostgresRepositoryTest {
 
     private class TestRapporteringsperiodeVisitor(rapporteringsperiode: Rapporteringsperiode) :
         RapporteringsperiodVisitor {
-        internal val godkjenninger = mutableListOf<Godkjenningsendring>()
+        val godkjenninger = mutableListOf<Godkjenningsendring>()
 
         init {
             rapporteringsperiode.accept(this)

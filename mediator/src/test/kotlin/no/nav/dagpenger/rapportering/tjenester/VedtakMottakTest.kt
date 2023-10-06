@@ -38,7 +38,8 @@ class VedtakMottakTest {
 }
 
 @Language("JSON")
-private val dagpengerInnvilgetMelding = """
+private val dagpengerInnvilgetMelding =
+    """
     {
       "@event_name": "dagpenger_innvilget",
       "ident": "123",
@@ -48,10 +49,11 @@ private val dagpengerInnvilgetMelding = """
       "@opprettet": "${LocalDateTime.now()}",
       "sakId": "${UUID.randomUUID()}"
     }
-""".trimIndent()
+    """.trimIndent()
 
 @Language("JSON")
-private val dagpengerAvslåttMelding = """
+private val dagpengerAvslåttMelding =
+    """
     {
       "@event_name": "dagpenger_avslått",
       "ident": "123",
@@ -61,4 +63,4 @@ private val dagpengerAvslåttMelding = """
       "@opprettet": "${LocalDateTime.now()}",
       "sakId": "${UUID.randomUUID()}"
     }
-""".trimIndent()
+    """.trimIndent()

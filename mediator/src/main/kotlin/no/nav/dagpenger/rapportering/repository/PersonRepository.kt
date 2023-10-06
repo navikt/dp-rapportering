@@ -6,8 +6,12 @@ import java.time.LocalDateTime
 
 interface PersonRepository {
     fun hentEllerOpprettPerson(ident: String): Person
+
     fun lagre(person: Person)
+
     fun hentIdenterMedGodkjentPeriode(): List<String>
+
     fun hentIdenterMedRapporteringsplikt(): List<String>
+
     fun hentRapporteringspliktFor(ident: String): List<Pair<LocalDateTime, Rapporteringsplikt>>
 }

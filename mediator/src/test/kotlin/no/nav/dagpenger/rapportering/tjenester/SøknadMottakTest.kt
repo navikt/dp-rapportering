@@ -20,9 +20,10 @@ class SøknadMottakTest {
     @Test
     fun `Skal behandle innsending_ferdigstilt event for type NySøknad`() {
         val slot = slot<SøknadInnsendtHendelse>()
-        val mockMediator = mockk<Mediator>().also {
-            every { it.behandle(capture(slot)) } just Runs
-        }
+        val mockMediator =
+            mockk<Mediator>().also {
+                every { it.behandle(capture(slot)) } just Runs
+            }
 
         TestRapid().let { testRapid ->
             SøknadMottak(
@@ -51,7 +52,8 @@ private object Meldingsfabrikk {
     fun `innsending ferdigstilt hendelse`(
         ident: String,
         søknadId: UUID = UUID.randomUUID(),
-    ): String = //language=JSON
+    ): String =
+        //language=JSON
         """
         {
           "type": "NySøknad",

@@ -58,7 +58,10 @@ class Person private constructor(
         this.rapporteringsplikt.put(rapporteringsplikt.rapporteringspliktFra, rapporteringsplikt)
     }
 
-    fun leggTilRapporteringsperiode(rapporteringsperiode: Rapporteringsperiode, hendelse: PersonHendelse) {
+    fun leggTilRapporteringsperiode(
+        rapporteringsperiode: Rapporteringsperiode,
+        hendelse: PersonHendelse,
+    ) {
         hendelse.kontekst(this)
 
         if (rapporteringsperioder.any {
@@ -166,6 +169,7 @@ class Person private constructor(
     }
 
     override fun toSpesifikkKontekst() = SpesifikkKontekst("person", mapOf("ident" to ident))
+
     override fun equals(other: Any?) = other is Person && this.ident == other.ident
 
     override fun hashCode() = this.ident.hashCode()
@@ -178,6 +182,7 @@ class Person private constructor(
 }
 
 private fun Collection<Rapporteringsperiode>.accept(visitor: PersonVisitor) = forEach { it.accept(visitor) }
+
 private fun Collection<Rapporteringsperiode>.behandle(
     hendelse: PersonHendelse,
     block: (Rapporteringsperiode) -> Boolean,

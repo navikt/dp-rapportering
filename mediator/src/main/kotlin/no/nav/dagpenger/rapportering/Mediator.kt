@@ -109,7 +109,10 @@ internal class Mediator(
         finalize(person, hendelse)
     }
 
-    private fun finalize(person: Person, hendelse: PersonHendelse) {
+    private fun finalize(
+        person: Person,
+        hendelse: PersonHendelse,
+    ) {
         lagre(person)
         if (!hendelse.harAktiviteter()) return
         if (hendelse.harFunksjonelleFeilEllerVerre()) {
