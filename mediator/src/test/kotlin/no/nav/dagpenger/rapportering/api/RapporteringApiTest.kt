@@ -208,7 +208,7 @@ class RapporteringApiTest {
                     hendelse.ident() shouldBe defaultDummyFodselsnummer
                     hendelse.rapporteringsperiodeId shouldBe testPeriodeId
                     hendelse.behov().size shouldBe 1
-                    hendelse.behov()[0].type shouldBe MineBehov.JournalføreRapportering
+                    hendelse.behov()[0].type shouldBe MineBehov.MellomlagreRapportering
                     hendelse.behov()[0].detaljer().size shouldBe 2
                     hendelse.behov()[0].detaljer().get("periodeId") shouldBe testPeriodeId
                     hendelse.behov()[0].detaljer().get("json").toString().let { json ->

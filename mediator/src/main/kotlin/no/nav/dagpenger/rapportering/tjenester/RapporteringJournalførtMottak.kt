@@ -4,20 +4,19 @@ import mu.KotlinLogging
 import mu.withLoggingContext
 import no.nav.dagpenger.rapportering.IHendelseMediator
 import no.nav.dagpenger.rapportering.MineBehov
-import no.nav.dagpenger.rapportering.meldinger.RapporteringMidlertidigJournalførtMelding
+import no.nav.dagpenger.rapportering.meldinger.RapporteringJournalførtMelding
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
-import no.nav.helse.rapids_rivers.toUUID
 
-internal class NyJournalpostMottak(
+internal class RapporteringJournalførtMottak(
     rapidsConnection: RapidsConnection,
     private val mediator: IHendelseMediator,
 ) : River.PacketListener {
     private companion object {
         private val logger = KotlinLogging.logger {}
-        private val sikkerlogg = KotlinLogging.logger("tjenestekall.SøknadMottak")
+        private val sikkerlogg = KotlinLogging.logger("tjenestekall.${this::class.java.simpleName}")
     }
 
     private val behov = MineBehov.JournalføreRapportering.name
@@ -39,22 +38,20 @@ internal class NyJournalpostMottak(
         val ident = packet["ident"].asText()
         val periodeId = packet["periodeId"].asText()
         val journalpostId = packet["@løsning"]["journalpostId"].asText()
-        val json = packet["@løsning"]["json"].asText()
 
         withLoggingContext(
             "periodeId" to periodeId,
         ) {
-            val melding = RapporteringMidlertidigJournalførtMelding(
+            val melding = RapporteringJournalførtMelding(
                 packet,
                 ident,
-                periodeId.toUUID(),
+                periodeId,
                 journalpostId,
-                json,
             )
             melding.behandle(mediator, context)
 
-            logger.info { "Fått RapporteringspliktDatoHendelse for $periodeId" }
-            sikkerlogg.info { "Fått RapporteringspliktDatoHendelse for $periodeId. Packet: ${packet.toJson()}" }
+            logger.info { "Fått løsning for JournalføreRapportering for $periodeId" }
+            sikkerlogg.info { "Fått løsning for JournalføreRapportering for $periodeId. Packet: ${packet.toJson()}" }
         }
     }
 }

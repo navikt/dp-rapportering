@@ -4,12 +4,11 @@ import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
 import java.time.LocalDateTime
 import java.util.UUID
 
-class RapporteringMidlertidigJournalførtHendelse(
+class RapporteringMellomlagretHendelse(
     meldingsreferanseId: UUID,
     ident: String,
     internal val opprettet: LocalDateTime,
-    internal val rapporteringsperiodeId: UUID,
-    internal val journalpostId: String,
+    internal val periodeId: String,
 ) : PersonHendelse(
     meldingsreferanseId,
     ident,
@@ -17,14 +16,12 @@ class RapporteringMidlertidigJournalførtHendelse(
 ) {
     constructor(
         ident: String,
-        rapporteringsperiodeId: UUID,
-        journalpostId: String,
+        periodeId: String,
         opprettet: LocalDateTime = LocalDateTime.now(),
     ) : this(
         meldingsreferanseId = UUID.randomUUID(),
         ident = ident,
-        rapporteringsperiodeId = rapporteringsperiodeId,
-        journalpostId = journalpostId,
+        periodeId = periodeId,
         opprettet = opprettet,
     )
 }
