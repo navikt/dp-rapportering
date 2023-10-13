@@ -51,19 +51,20 @@ object AuthFactory {
         TokenX,
     }
 
-    fun issuerFromString(issuer: String?) = when (issuer) {
-        azureAdConfiguration.issuer -> Issuer.AzureAD
-        tokenXConfiguration.issuer -> Issuer.TokenX
-        else -> {
-            throw IllegalArgumentException("Ikke støttet issuer: $issuer")
+    fun issuerFromString(issuer: String?) =
+        when (issuer) {
+            azureAdConfiguration.issuer -> Issuer.AzureAD
+            tokenXConfiguration.issuer -> Issuer.TokenX
+            else -> {
+                throw IllegalArgumentException("Ikke støttet issuer: $issuer")
+            }
         }
-    }
 
     fun JWTAuthenticationProvider.Config.tokenX() {
-        verifier(JwkProvider(URL(tokenXConfiguration.jwksUri)), tokenXConfiguration.issuer) {
+        verifier(jwkProvider(URL(tokenXConfiguration.jwksUri)), tokenXConfiguration.issuer) {
             withAudience(Configuration.properties[token_x.client_id])
         }
-        realm = Configuration.appName
+        realm = Configuration.APP_NAME
         validate { credentials ->
             validator(credentials)
         }
@@ -71,10 +72,10 @@ object AuthFactory {
 
     fun JWTAuthenticationProvider.Config.azureAd() {
         val saksbehandlerGruppe = Configuration.properties[Configuration.Grupper.saksbehandler]
-        verifier(JwkProvider(URL(azureAdConfiguration.jwksUri)), azureAdConfiguration.issuer) {
+        verifier(jwkProvider(URL(azureAdConfiguration.jwksUri)), azureAdConfiguration.issuer) {
             withAudience(Configuration.properties[azure_app.client_id])
         }
-        realm = Configuration.appName
+        realm = Configuration.APP_NAME
         validate { credentials ->
             require(
                 credentials.payload.claims["groups"]?.asList(String::class.java)?.contains(saksbehandlerGruppe)
@@ -84,7 +85,7 @@ object AuthFactory {
         }
     }
 
-    private fun JwkProvider(url: URL) =
+    private fun jwkProvider(url: URL) =
         JwkProviderBuilder(url)
             .cached(10, 24, TimeUnit.HOURS) // cache up to 10 JWKs for 24 hours
             .rateLimited(
@@ -106,10 +107,11 @@ private data class OpenIdConfiguration(
     val authorizationEndpoint: String,
 )
 
-private val httpClient = HttpClient(CIO) {
-    install(ContentNegotiation) {
-        jackson {
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+private val httpClient =
+    HttpClient(CIO) {
+        install(ContentNegotiation) {
+            jackson {
+                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            }
         }
     }
-}

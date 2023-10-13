@@ -81,6 +81,7 @@ fun Application.konfigurasjon(
     }
 }
 
-internal fun ApplicationCall.finnUUID(pathParam: String): UUID = parameters[pathParam]?.let {
-    UUID.fromString(it)
-} ?: throw IllegalArgumentException("Kunne ikke finne oppgaveId i path")
+internal fun ApplicationCall.finnUUID(pathParam: String): UUID =
+    parameters[pathParam]?.let {
+        UUID.fromString(it)
+    } ?: throw IllegalArgumentException("Kunne ikke finne oppgaveId i path")

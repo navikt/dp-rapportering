@@ -10,7 +10,7 @@ class SøknadInnsendtHendelse(
     internal val opprettet: LocalDateTime,
     internal val søknadId: UUID,
 ) : PersonHendelse(
-    meldingsreferanseId,
-    ident,
-    Aktivitetslogg(),
-)
+        meldingsreferanseId,
+        ident,
+        Aktivitetslogg(),
+    )

@@ -16,7 +16,10 @@ class BehovMediator(private val rapidsConnection: RapidsConnection) {
         hendelse.kontekster().forEach { if (!it.harFunksjonelleFeilEllerVerre()) håndter(hendelse, it.behov()) }
     }
 
-    private fun håndter(hendelse: PersonHendelse, behov: List<Aktivitet.Behov>) {
+    private fun håndter(
+        hendelse: PersonHendelse,
+        behov: List<Aktivitet.Behov>,
+    ) {
         behov
             .groupBy { it.kontekst() }
             .grupperBehovTilDetaljer()
@@ -41,17 +44,23 @@ class BehovMediator(private val rapidsConnection: RapidsConnection) {
                 .ikkeTillatUnikeDetaljerPåSammeBehov(kontekst, behovliste)
         }
 
-    private fun <K : Any> Map<K, List<Map<String, Any?>>>.ikkeTillatUnikeDetaljerPåSammeBehov(kontekst: Map<String, String>, behovliste: List<Aktivitet.Behov>) =
-        mapValues { (_, detaljerList) ->
-            // tillater duplikate detaljer-maps, så lenge de er like
-            detaljerList
-                .distinct()
-                .also { detaljer ->
-                    require(detaljer.size == 1) {
-                        sikkerlogg.error("Forsøkte å sende duplikate behov på kontekst ${kontekst.entries.joinToString { "${it.key}=${it.value}" }}")
-                        "Kan ikke produsere samme behov på samme kontekst med ulike detaljer. Forsøkte å be om ${behovliste.joinToString { it.type.name }}"
-                    }
+    private fun <K : Any> Map<K, List<Map<String, Any?>>>.ikkeTillatUnikeDetaljerPåSammeBehov(
+        kontekst: Map<String, String>,
+        behovliste: List<Aktivitet.Behov>,
+    ) = mapValues { (_, detaljerList) ->
+        // tillater duplikate detaljer-maps, så lenge de er like
+        detaljerList
+            .distinct()
+            .also { detaljer ->
+                require(detaljer.size == 1) {
+                    sikkerlogg.error(
+                        "Forsøkte å sende duplikate behov på kontekst " +
+                            kontekst.entries.joinToString { "${it.key}=${it.value}" },
+                    )
+                    "Kan ikke produsere samme behov på samme kontekst med ulike detaljer. " +
+                        "Forsøkte å be om ${behovliste.joinToString { it.type.name }}"
                 }
-                .single()
-        }
+            }
+            .single()
+    }
 }

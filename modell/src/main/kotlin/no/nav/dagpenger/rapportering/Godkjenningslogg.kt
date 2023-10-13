@@ -17,7 +17,9 @@ class Godkjenningslogg(godkjenninger: List<Godkjenningsendring> = emptyList()) {
     }
 
     private fun gjeldende() = godkjenninger.last()
+
     fun godkjent() = godkjenninger.lastOrNull()?.godkjent() ?: false
+
     fun accept(visitor: RapporteringsperiodVisitor) {
         godkjenninger.forEach { it.accept(visitor) }
     }
@@ -46,7 +48,9 @@ class Godkjenningsendring(
     }
 
     fun godkjent() = avgodkjentAv == null
+
     fun kanEndre(kilde: Kilde) = kilde == utførtAv
+
     fun accept(visitor: RapporteringsperiodVisitor) {
         avgodkjentAv?.accept(visitor)
         visitor.visit(this, id, utførtAv, opprettet, avgodkjentAv, begrunnelse)

@@ -29,158 +29,166 @@ import java.util.UUID
 class MediatorTest {
     private val rapid = TestRapid()
     private val mediator
-        get() = Mediator(
-            rapid,
-            PostgresRepository(dataSource),
-            mockk(relaxed = true),
-            mockk(relaxed = true),
-        )
+        get() =
+            Mediator(
+                rapid,
+                PostgresRepository(dataSource),
+                mockk(relaxed = true),
+                mockk(relaxed = true),
+            )
     private val testIdent = "12312312311"
     private val rapporteringspliktDatoHendelse: RapporteringspliktDatoHendelse
-        get() = RapporteringspliktDatoHendelse(
-            UUID.randomUUID(),
-            testIdent,
-            LocalDateTime.now(),
-            LocalDate.now(),
-        ) { _, tom -> tom }
-
-    @Test
-    fun mediatorflyt() = withMigratedDb {
-        val hendelse = SøknadInnsendtHendelse(
-            UUID.randomUUID(),
-            testIdent,
-            LocalDateTime.now(),
-            søknadId = UUID.randomUUID(),
-        )
-
-        mediator.behandle(hendelse)
-        hendelse.behov().map {
-            it.type
-        } shouldContainExactly listOf(MineBehov.Søknadstidspunkt)
-
-        mediator.behandle(rapporteringspliktDatoHendelse)
-
-        hendelse.aktivitetsteller() shouldBe 2
-        hendelse.harAktiviteter() shouldBe true
-        val person = mediator.hentEllerOpprettPerson(testIdent)
-        val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
-        mediator.behandle(NyAktivitetHendelse(testIdent, rapporteringsperiodeId, Aktivitet.Arbeid(LocalDate.now(), 2)))
-
-        mediator.hentEllerOpprettPerson(testIdent).antallAktiviteter shouldBe 1
-    }
-
-    @Test
-    fun `kan ikke endre på godkjent periode`() = withMigratedDb {
-        val hendelse = SøknadInnsendtHendelse(
-            UUID.randomUUID(),
-            testIdent,
-            LocalDateTime.now(),
-            søknadId = UUID.randomUUID(),
-        )
-
-        mediator.behandle(hendelse)
-        mediator.behandle(rapporteringspliktDatoHendelse)
-        val person = mediator.hentEllerOpprettPerson(testIdent)
-        val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
-        mediator.behandle(NyAktivitetHendelse(testIdent, rapporteringsperiodeId, Aktivitet.Arbeid(LocalDate.now(), 2)))
-
-        mediator.hentEllerOpprettPerson(testIdent).antallAktiviteter shouldBe 1
-
-        mediator.behandle(
-            GodkjennPeriodeHendelse(
+        get() =
+            RapporteringspliktDatoHendelse(
+                UUID.randomUUID(),
                 testIdent,
-                rapporteringsperiodeId,
-                dato = person.aktivRapporteringsperiode.kanGodkjennesFra,
-            ),
-        )
+                LocalDateTime.now(),
+                LocalDate.now(),
+            ) { _, tom -> tom }
 
-        shouldThrow<IllegalStateException> {
+    @Test
+    fun mediatorflyt() =
+        withMigratedDb {
+            val hendelse =
+                SøknadInnsendtHendelse(
+                    UUID.randomUUID(),
+                    testIdent,
+                    LocalDateTime.now(),
+                    søknadId = UUID.randomUUID(),
+                )
+
+            mediator.behandle(hendelse)
+            hendelse.behov().map {
+                it.type
+            } shouldContainExactly listOf(MineBehov.Søknadstidspunkt)
+
+            mediator.behandle(rapporteringspliktDatoHendelse)
+
+            hendelse.aktivitetsteller() shouldBe 2
+            hendelse.harAktiviteter() shouldBe true
+            val person = mediator.hentEllerOpprettPerson(testIdent)
+            val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
+            mediator.behandle(NyAktivitetHendelse(testIdent, rapporteringsperiodeId, Aktivitet.Arbeid(LocalDate.now(), 2)))
+
+            mediator.hentEllerOpprettPerson(testIdent).antallAktiviteter shouldBe 1
+        }
+
+    @Test
+    fun `kan ikke endre på godkjent periode`() =
+        withMigratedDb {
+            val hendelse =
+                SøknadInnsendtHendelse(
+                    UUID.randomUUID(),
+                    testIdent,
+                    LocalDateTime.now(),
+                    søknadId = UUID.randomUUID(),
+                )
+
+            mediator.behandle(hendelse)
+            mediator.behandle(rapporteringspliktDatoHendelse)
+            val person = mediator.hentEllerOpprettPerson(testIdent)
+            val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
+            mediator.behandle(NyAktivitetHendelse(testIdent, rapporteringsperiodeId, Aktivitet.Arbeid(LocalDate.now(), 2)))
+
+            mediator.hentEllerOpprettPerson(testIdent).antallAktiviteter shouldBe 1
+
             mediator.behandle(
-                NyAktivitetHendelse(
+                GodkjennPeriodeHendelse(
                     testIdent,
                     rapporteringsperiodeId,
-                    Aktivitet.Arbeid(LocalDate.now(), 2),
+                    dato = person.aktivRapporteringsperiode.kanGodkjennesFra,
                 ),
             )
+
+            shouldThrow<IllegalStateException> {
+                mediator.behandle(
+                    NyAktivitetHendelse(
+                        testIdent,
+                        rapporteringsperiodeId,
+                        Aktivitet.Arbeid(LocalDate.now(), 2),
+                    ),
+                )
+            }
+            val sisteAktivitet = mediator.hentEllerOpprettPerson(testIdent).sisteAktivitet
+            shouldThrow<IllegalStateException> {
+                mediator.behandle(SlettAktivitetHendelse(testIdent, rapporteringsperiodeId, sisteAktivitet.uuid))
+            }
         }
-        val sisteAktivitet = mediator.hentEllerOpprettPerson(testIdent).sisteAktivitet
-        shouldThrow<IllegalStateException> {
-            mediator.behandle(SlettAktivitetHendelse(testIdent, rapporteringsperiodeId, sisteAktivitet.uuid))
-        }
-    }
 
     @Test
-    fun `godkjente rapporteringsperioder publiseres når fristen har passert`() = withMigratedDb {
-        val hendelse =
-            SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID())
-        mediator.behandle(hendelse)
-        mediator.behandle(rapporteringspliktDatoHendelse)
-        mediator.behandle(
-            VedtakInnvilgetHendelse(
-                UUID.randomUUID(),
-                testIdent,
-                LocalDate.now(),
-                LocalDateTime.now(),
-                UUID.randomUUID(),
-            ) { _, tom -> tom },
-        )
-        val person = mediator.hentEllerOpprettPerson(testIdent)
-        val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
-        mediator.behandle(
-            GodkjennPeriodeHendelse(
-                testIdent,
-                rapporteringsperiodeId,
-                dato = person.aktivRapporteringsperiode.kanGodkjennesFra,
-            ),
-        )
-        val frist = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusDays(14)
+    fun `godkjente rapporteringsperioder publiseres når fristen har passert`() =
+        withMigratedDb {
+            val hendelse =
+                SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID())
+            mediator.behandle(hendelse)
+            mediator.behandle(rapporteringspliktDatoHendelse)
+            mediator.behandle(
+                VedtakInnvilgetHendelse(
+                    UUID.randomUUID(),
+                    testIdent,
+                    LocalDate.now(),
+                    LocalDateTime.now(),
+                    UUID.randomUUID(),
+                ) { _, tom -> tom },
+            )
+            val person = mediator.hentEllerOpprettPerson(testIdent)
+            val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
+            mediator.behandle(
+                GodkjennPeriodeHendelse(
+                    testIdent,
+                    rapporteringsperiodeId,
+                    dato = person.aktivRapporteringsperiode.kanGodkjennesFra,
+                ),
+            )
+            val frist = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusDays(14)
 
-        mediator.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, frist.minusDays(3)))
-        rapid.inspektør.size shouldBe 1
+            mediator.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, frist.minusDays(3)))
+            rapid.inspektør.size shouldBe 1
 
-        mediator.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, frist))
-        rapid.inspektør.size shouldBe 3
-    }
+            mediator.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, frist))
+            rapid.inspektør.size shouldBe 3
+        }
 
     @Test
-    fun `godkjente rapporteringsperioder kan korrigeres`() = withMigratedDb {
-        val hendelse =
-            SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID())
-        mediator.behandle(hendelse)
-        mediator.behandle(rapporteringspliktDatoHendelse)
-        mediator.behandle(
-            VedtakInnvilgetHendelse(
-                UUID.randomUUID(),
-                testIdent,
-                LocalDate.now(),
-                LocalDateTime.now(),
-                UUID.randomUUID(),
-            ) { _, tom -> tom },
-        )
-        val person = mediator.hentEllerOpprettPerson(testIdent)
-        val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
-        mediator.behandle(
-            GodkjennPeriodeHendelse(
-                testIdent,
-                rapporteringsperiodeId,
-                dato = person.aktivRapporteringsperiode.kanGodkjennesFra,
-            ),
-        )
-        val frist = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusDays(14)
+    fun `godkjente rapporteringsperioder kan korrigeres`() =
+        withMigratedDb {
+            val hendelse =
+                SøknadInnsendtHendelse(UUID.randomUUID(), testIdent, LocalDateTime.now(), søknadId = UUID.randomUUID())
+            mediator.behandle(hendelse)
+            mediator.behandle(rapporteringspliktDatoHendelse)
+            mediator.behandle(
+                VedtakInnvilgetHendelse(
+                    UUID.randomUUID(),
+                    testIdent,
+                    LocalDate.now(),
+                    LocalDateTime.now(),
+                    UUID.randomUUID(),
+                ) { _, tom -> tom },
+            )
+            val person = mediator.hentEllerOpprettPerson(testIdent)
+            val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
+            mediator.behandle(
+                GodkjennPeriodeHendelse(
+                    testIdent,
+                    rapporteringsperiodeId,
+                    dato = person.aktivRapporteringsperiode.kanGodkjennesFra,
+                ),
+            )
+            val frist = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).plusDays(14)
 
-        mediator.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, frist.minusDays(3)))
-        rapid.inspektør.size shouldBe 1
+            mediator.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, frist.minusDays(3)))
+            rapid.inspektør.size shouldBe 1
 
-        mediator.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, frist))
-        rapid.inspektør.size shouldBe 3
+            mediator.behandle(BeregningsdatoPassertHendelse(UUID.randomUUID(), testIdent, frist))
+            rapid.inspektør.size shouldBe 3
 
-        person.aktivRapporteringsperiode.finnSisteKorrigering() shouldBe person.aktivRapporteringsperiode
-        val hendelse1 = KorrigerPeriodeHendelse(UUID.randomUUID(), testIdent, rapporteringsperiodeId)
-        mediator.behandle(hendelse1)
-        with(mediator.hentEllerOpprettPerson(testIdent)) {
-            aktivRapporteringsperiode.finnSisteKorrigering() shouldNotBe person.aktivRapporteringsperiode
+            person.aktivRapporteringsperiode.finnSisteKorrigering() shouldBe person.aktivRapporteringsperiode
+            val hendelse1 = KorrigerPeriodeHendelse(UUID.randomUUID(), testIdent, rapporteringsperiodeId)
+            mediator.behandle(hendelse1)
+            with(mediator.hentEllerOpprettPerson(testIdent)) {
+                aktivRapporteringsperiode.finnSisteKorrigering() shouldNotBe person.aktivRapporteringsperiode
+            }
         }
-    }
 
     private val Person.aktivRapporteringsperiodeId get() = aktivRapporteringsperiode.rapporteringsperiodeId
     private val Person.aktivRapporteringsperiode get() = TestVisitor(this).rapporteringsperioder.last()

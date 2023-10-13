@@ -11,7 +11,6 @@ abstract class PersonHendelse protected constructor(
     private val ident: String,
     private val aktivitetslogg: IAktivitetslogg,
 ) : AktivitetsloggHendelse, IAktivitetslogg by aktivitetslogg, Aktivitetskontekst {
-
     init {
         aktivitetslogg.kontekst(this)
     }
@@ -20,16 +19,18 @@ abstract class PersonHendelse protected constructor(
 
     override fun meldingsreferanseId() = meldingsreferanseId
 
-    final override fun toSpesifikkKontekst() = this.javaClass.canonicalName.split('.').last().let {
-        SpesifikkKontekst(
-            it,
-            mapOf(
-                "meldingsreferanseId" to meldingsreferanseId().toString(),
-                "ident" to ident(),
-            ) + kontekst(),
-        )
-    }
+    final override fun toSpesifikkKontekst() =
+        this.javaClass.canonicalName.split('.').last().let {
+            SpesifikkKontekst(
+                it,
+                mapOf(
+                    "meldingsreferanseId" to meldingsreferanseId().toString(),
+                    "ident" to ident(),
+                ) + kontekst(),
+            )
+        }
 
     protected open fun kontekst(): Map<String, String> = emptyMap()
+
     fun toLogString() = aktivitetslogg.toString()
 }

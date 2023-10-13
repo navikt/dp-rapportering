@@ -23,26 +23,31 @@ internal object NyRapporteringssyklusJobb {
     private val UKEDAG_FOR_KJØRING = DayOfWeek.MONDAY
     private val TIDSPUNKT_FOR_KJØRING = LocalTime.of(15, 0)
     private val nå = ZonedDateTime.now()
-    private val tidspunktForNesteKjøring = nå.with(TemporalAdjusters.nextOrSame(UKEDAG_FOR_KJØRING)).with(
-        TIDSPUNKT_FOR_KJØRING,
-    )
-    private val millisekunderTilNesteKjøring = tidspunktForNesteKjøring.toInstant().toEpochMilli() - nå.toInstant()
-        .toEpochMilli() // differansen i millisekunder mellom de to tidspunktene
+    private val tidspunktForNesteKjøring =
+        nå.with(TemporalAdjusters.nextOrSame(UKEDAG_FOR_KJØRING)).with(
+            TIDSPUNKT_FOR_KJØRING,
+        )
+    private val millisekunderTilNesteKjøring =
+        tidspunktForNesteKjøring.toInstant().toEpochMilli() -
+            nå.toInstant()
+                .toEpochMilli() // differansen i millisekunder mellom de to tidspunktene
 
     @OptIn(ExperimentalTime::class)
     internal fun start(mediator: Mediator) {
         fixedRateTimer(
             name = "Fast opprettelse av ny rapporteringssyklus",
             daemon = true,
-            initialDelay = millisekunderTilNesteKjøring.coerceAtLeast(0), // Har nåværende tidspunkt passert 'tidspunktForNesteKjøring' starter vi timeren umiddelbart
+            // Har nåværende tidspunkt passert 'tidspunktForNesteKjøring' starter vi timeren umiddelbart
+            initialDelay = millisekunderTilNesteKjøring.coerceAtLeast(0),
             period = 7.days.inWholeMilliseconds,
             action = {
                 try {
                     logger.info { "Starter opprettelse av ny rapporteringssyklus" }
                     var antallIdenterMedRapporteringsplikt: Int
-                    val tidBrukt = measureTime {
-                        antallIdenterMedRapporteringsplikt = mediator.nyRapporteringssyklus()
-                    }
+                    val tidBrukt =
+                        measureTime {
+                            antallIdenterMedRapporteringsplikt = mediator.nyRapporteringssyklus()
+                        }
                     metrics.jobbFullført(tidBrukt, antallIdenterMedRapporteringsplikt)
                 } catch (e: Exception) {
                     logger.error(e) { "Opprettelse av ny rapporteringssyklus feilet" }

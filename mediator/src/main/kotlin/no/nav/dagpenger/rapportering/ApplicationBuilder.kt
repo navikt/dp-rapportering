@@ -24,12 +24,13 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
                 konfigurasjon()
                 rapporteringApi(postgresRepository, mediator)
             }.build()
-    private val mediator = Mediator(
-        rapidsConnection = rapidsConnection,
-        postgresRepository,
-        BehovMediator(rapidsConnection),
-        AktivitetsloggMediator(rapidsConnection),
-    )
+    private val mediator =
+        Mediator(
+            rapidsConnection = rapidsConnection,
+            postgresRepository,
+            BehovMediator(rapidsConnection),
+            AktivitetsloggMediator(rapidsConnection),
+        )
 
     init {
         rapidsConnection.register(this)
@@ -46,7 +47,7 @@ internal class ApplicationBuilder(configuration: Map<String, String>) : RapidsCo
 
     override fun onStartup(rapidsConnection: RapidsConnection) {
         runMigration()
-        logger.info { "Starter appen ${Configuration.appName}" }
+        logger.info { "Starter appen ${Configuration.APP_NAME}" }
 
         InnsendingsJobb.start(mediator)
         NyRapporteringssyklusJobb.start(mediator)

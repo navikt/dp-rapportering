@@ -13,7 +13,7 @@ class RapporteringspliktDatoHendelse(
     internal val søknadInnsendtDato: LocalDate,
     internal val beregningsdatoStrategi: FastsettBeregningsdatoStrategi,
 ) : PersonHendelse(
-    meldingsreferanseId,
-    ident,
-    Aktivitetslogg(),
-)
+        meldingsreferanseId,
+        ident,
+        Aktivitetslogg(),
+    )

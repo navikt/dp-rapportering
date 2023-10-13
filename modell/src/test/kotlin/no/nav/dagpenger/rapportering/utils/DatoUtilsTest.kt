@@ -6,7 +6,6 @@ import java.time.LocalDate
 import kotlin.test.assertNotEquals
 
 class DatoUtilsTest {
-
     @Test
     fun `hjelpemetoder setter alltid fom dato til en mandag`() {
         val søndagUke1 = LocalDate.of(2023, 1, 8)

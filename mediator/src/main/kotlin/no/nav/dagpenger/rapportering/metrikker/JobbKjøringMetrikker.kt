@@ -4,38 +4,42 @@ import io.prometheus.client.Counter
 import io.prometheus.client.Histogram
 import kotlin.time.Duration
 
-private const val namespace = "dp_rapportering"
+private const val NAMESPACE = "dp_rapportering"
 
 internal class JobbKjøringMetrikker(private val navn: String) {
     // Define the metrics
     private companion object {
-        private val jobStatus: Counter = Counter.build()
-            .namespace(namespace)
-            .name("job_execution_status")
-            .help("Indicates the status of the job execution")
-            .labelNames("navn")
-            .register()
+        private val jobStatus: Counter =
+            Counter.build()
+                .namespace(NAMESPACE)
+                .name("job_execution_status")
+                .help("Indicates the status of the job execution")
+                .labelNames("navn")
+                .register()
 
-        private val jobDuration: Histogram = Histogram.build()
-            .namespace(namespace)
-            .name("job_execution_duration_seconds")
-            .help("Duration of the job execution in seconds")
-            .labelNames("navn")
-            .register()
+        private val jobDuration: Histogram =
+            Histogram.build()
+                .namespace(NAMESPACE)
+                .name("job_execution_duration_seconds")
+                .help("Duration of the job execution in seconds")
+                .labelNames("navn")
+                .register()
 
-        private val affectedRowsCount: Counter = Counter.build()
-            .namespace(namespace)
-            .name("affected_rows_count")
-            .help("Number of rows affected by the job")
-            .labelNames("navn")
-            .register()
+        private val affectedRowsCount: Counter =
+            Counter.build()
+                .namespace(NAMESPACE)
+                .name("affected_rows_count")
+                .help("Number of rows affected by the job")
+                .labelNames("navn")
+                .register()
 
-        private val jobErrors: Counter = Counter.build()
-            .namespace(namespace)
-            .name("job_errors_total")
-            .help("Number of errors encountered during the job execution")
-            .labelNames("navn")
-            .register()
+        private val jobErrors: Counter =
+            Counter.build()
+                .namespace(NAMESPACE)
+                .name("job_errors_total")
+                .help("Number of errors encountered during the job execution")
+                .labelNames("navn")
+                .register()
     }
 
     private fun incrementJobStatus(success: Boolean) {
@@ -59,7 +63,10 @@ internal class JobbKjøringMetrikker(private val navn: String) {
         incrementJobErrors()
     }
 
-    fun jobbFullført(tidBrukt: Duration, rader: Int) {
+    fun jobbFullført(
+        tidBrukt: Duration,
+        rader: Int,
+    ) {
         observeJobDuration(tidBrukt.inWholeSeconds)
         incrementJobStatus(true)
         incrementAffectedRowsCount(rader)

@@ -10,7 +10,7 @@ class BeregningsdatoPassertHendelse(
     internal val beregningsdato: LocalDate,
 ) :
     PersonHendelse(
-        meldingsreferanseId,
-        ident,
-        Aktivitetslogg(),
-    )
+            meldingsreferanseId,
+            ident,
+            Aktivitetslogg(),
+        )

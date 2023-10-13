@@ -13,7 +13,10 @@ internal class SøknadInnsendtMelding(packet: JsonMessage, override val ident: S
             return SøknadInnsendtHendelse(id, ident, opprettet, søknadId)
         }
 
-    override fun behandle(mediator: IHendelseMediator, context: MessageContext) {
+    override fun behandle(
+        mediator: IHendelseMediator,
+        context: MessageContext,
+    ) {
         mediator.behandle(søknadInnsendtHendelse)
     }
 }

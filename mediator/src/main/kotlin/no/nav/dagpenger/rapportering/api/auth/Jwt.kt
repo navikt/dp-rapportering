@@ -16,8 +16,7 @@ internal fun validator(jwtCredential: JWTCredential): Principal {
     return JWTPrincipal(jwtCredential.payload)
 }
 
-internal fun ApplicationCall.ident(): String =
-    requireNotNull(this.authentication.principal<JWTPrincipal>()) { "Ikke autentisert" }.fnr
+internal fun ApplicationCall.ident(): String = requireNotNull(this.authentication.principal<JWTPrincipal>()) { "Ikke autentisert" }.fnr
 
 internal val JWTPrincipal.fnr get(): String = requirePid(this)
 
@@ -27,18 +26,16 @@ internal fun ApplicationCall.saksbehandlerId() =
 private fun requirePid(credential: JWTPayloadHolder): String =
     requireNotNull(credential.payload.claims["pid"]?.asString()) { "Token må inneholde fødselsnummer for personen i claim 'pid'" }
 
-private fun JWTPrincipal.saksbehandlerId(): String =
-    requireNotNull(this.payload.claims["NAVident"]?.asString())
+private fun JWTPrincipal.saksbehandlerId(): String = requireNotNull(this.payload.claims["NAVident"]?.asString())
 
-private fun JWTPrincipal.saksbehandlerApp(): String =
-    requireNotNull(this.payload.claims["azp_name"]?.asString())
+private fun JWTPrincipal.saksbehandlerApp(): String = requireNotNull(this.payload.claims["azp_name"]?.asString())
 
-private fun JWTPrincipal.saksbehandlerEpostAdresse(): String =
-    requireNotNull(this.payload.claims["preferred_username"]?.asString())
+private fun JWTPrincipal.saksbehandlerEpostAdresse(): String = requireNotNull(this.payload.claims["preferred_username"]?.asString())
 
-internal fun ApplicationRequest.jwt(): String = this.parseAuthorizationHeader().let { authHeader ->
-    (authHeader as? HttpAuthHeader.Single)?.blob ?: throw IllegalArgumentException("JWT not found")
-}
+internal fun ApplicationRequest.jwt(): String =
+    this.parseAuthorizationHeader().let { authHeader ->
+        (authHeader as? HttpAuthHeader.Single)?.blob ?: throw IllegalArgumentException("JWT not found")
+    }
 
 internal fun ApplicationCall.optionalIdent(): String? =
     requireNotNull(this.authentication.principal<JWTPrincipal>()).payload.claims["pid"]?.asString()

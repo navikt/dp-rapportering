@@ -190,6 +190,7 @@ class PersonTest {
 
     private class TestObserver : PersonObserver {
         lateinit var tilstand: String
+
         override fun rapporteringsperiodeEndret(event: RapporteringsperiodeObserver.RapporteringsperiodeEndret) {
             tilstand = event.gjeldendeTilstand.toString()
         }
@@ -229,7 +230,11 @@ class PersonTest {
             this.aktiviteter += aktiviteter
         }
 
-        override fun visit(rapporteringsplikt: Rapporteringsplikt, id: UUID, type: RapporteringspliktType) {
+        override fun visit(
+            rapporteringsplikt: Rapporteringsplikt,
+            id: UUID,
+            type: RapporteringspliktType,
+        ) {
             rapporteringspliktType = type
             this.rapporteringsplikter.add(rapporteringsplikt)
         }

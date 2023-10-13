@@ -17,16 +17,27 @@ import no.nav.dagpenger.rapportering.hendelser.VedtakInnvilgetHendelse
 
 internal interface IHendelseMediator {
     fun behandle(hendelse: SøknadInnsendtHendelse)
+
     fun behandle(hendelse: NyAktivitetHendelse)
+
     fun behandle(hendelse: SlettAktivitetHendelse)
+
     fun behandle(hendelse: GodkjennPeriodeHendelse)
+
     fun behandle(hendelse: BeregningsdatoPassertHendelse)
+
     fun behandle(hendelse: NyRapporteringssyklusHendelse)
+
     fun behandle(hendelse: KorrigerPeriodeHendelse)
+
     fun behandle(hendelse: ManuellInnsendingHendelse)
+
     fun behandle(hendelse: RapporteringspliktDatoHendelse)
+
     fun behandle(hendelse: VedtakInnvilgetHendelse)
+
     fun behandle(hendelse: VedtakAvslåttHendelse)
+
     fun behandle(hendelse: AvgodkjennPeriodeHendelse)
     fun behandle(hendelse: RapporteringMellomlagretHendelse)
     fun behandle(hendelse: RapporteringJournalførtHendelse)

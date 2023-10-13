@@ -25,8 +25,8 @@ import no.nav.dagpenger.rapportering.Mediator
 import no.nav.dagpenger.rapportering.MineBehov
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.TilUtfylling
+import no.nav.dagpenger.rapportering.api.TestApplication.DEFAULT_DUMMY_FODSELSNUMMER
 import no.nav.dagpenger.rapportering.api.TestApplication.autentisert
-import no.nav.dagpenger.rapportering.api.TestApplication.defaultDummyFodselsnummer
 import no.nav.dagpenger.rapportering.api.TestApplication.testAzureAdToken
 import no.nav.dagpenger.rapportering.api.TestApplication.testTokenXToken
 import no.nav.dagpenger.rapportering.hendelser.AvgodkjennPeriodeHendelse
@@ -135,7 +135,7 @@ class RapporteringApiTest {
                 endepunkt = "/rapporteringsperioder/sok",
                 httpMethod = HttpMethod.Post,
                 //language=JSON
-                body = """{"ident": "$defaultDummyFodselsnummer" }""",
+                body = """{"ident": "$DEFAULT_DUMMY_FODSELSNUMMER" }""",
             ).let { response ->
                 response.status shouldBe HttpStatusCode.OK
                 "${response.contentType()}" shouldContain "application/json"
@@ -154,7 +154,7 @@ class RapporteringApiTest {
                 endepunkt = "/rapporteringsperioder/sok",
                 httpMethod = HttpMethod.Post,
                 //language=JSON
-                body = """{"ident": "$defaultDummyFodselsnummer" }""",
+                body = """{"ident": "$DEFAULT_DUMMY_FODSELSNUMMER" }""",
             ).let { response ->
                 response.status shouldBe HttpStatusCode.Unauthorized
             }
@@ -312,16 +312,18 @@ class RapporteringApiTest {
     @Test
     fun `For tidlig godkjenning gir 405 Method Not Allowed`() {
         val iDag = LocalDate.now()
-        val periodeSomIkkeKanGodkjennesEnda = rapporteringsperiode(
-            TilUtfylling,
-            fom = iDag,
-            tom = iDag.plusDays(14),
-        )
+        val periodeSomIkkeKanGodkjennesEnda =
+            rapporteringsperiode(
+                TilUtfylling,
+                fom = iDag,
+                tom = iDag.plusDays(14),
+            )
         val periodeId = periodeSomIkkeKanGodkjennesEnda.rapporteringsperiodeId
 
-        val mediatorMock = mockk<Mediator>().also {
-            every { it.behandle(any<GodkjennPeriodeHendelse>()) } throws GodkjenningExcpetion("")
-        }
+        val mediatorMock =
+            mockk<Mediator>().also {
+                every { it.behandle(any<GodkjennPeriodeHendelse>()) } throws GodkjenningExcpetion("")
+            }
 
         withRapporteringApi(rapporteringsperioder = listOf(periodeSomIkkeKanGodkjennesEnda), mediatorMock) {
             client.post("/rapporteringsperioder/$periodeId/godkjenn") {
@@ -403,11 +405,11 @@ private fun withRapporteringApi(
             konfigurasjon()
             rapporteringApi(
                 mockk<RapporteringsperiodeRepository>().apply {
-                    every { finnIdentForPeriode(any()) } answers { defaultDummyFodselsnummer }
-                    every { hentRapporteringsperioder(defaultDummyFodselsnummer) } answers { rapporteringsperioder }
+                    every { finnIdentForPeriode(any()) } answers { DEFAULT_DUMMY_FODSELSNUMMER }
+                    every { hentRapporteringsperioder(DEFAULT_DUMMY_FODSELSNUMMER) } answers { rapporteringsperioder }
                     every {
                         hentRapporteringsperiode(
-                            defaultDummyFodselsnummer,
+                            DEFAULT_DUMMY_FODSELSNUMMER,
                             any(),
                         )
                     } answers { rapporteringsperioder.single() }
@@ -424,15 +426,14 @@ private fun rapporteringsperiode(
     korrigert: Rapporteringsperiode? = null,
     fom: LocalDate = LocalDate.now(),
     tom: LocalDate = LocalDate.now(),
-) =
-    Rapporteringsperiode.rehydrer(
-        UUID.randomUUID(),
-        beregnesEtter = LocalDate.now(),
-        fraOgMed = fom,
-        tilOgMed = tom,
-        tilstand = tilstandType,
-        opprettet = LocalDateTime.now(),
-        tidslinje = Aktivitetstidslinje(LocalDate.now()..LocalDate.now()),
-        godkjenningslogg = Godkjenningslogg(),
-        korrigerer = korrigert,
-    )
+) = Rapporteringsperiode.rehydrer(
+    UUID.randomUUID(),
+    beregnesEtter = LocalDate.now(),
+    fraOgMed = fom,
+    tilOgMed = tom,
+    tilstand = tilstandType,
+    opprettet = LocalDateTime.now(),
+    tidslinje = Aktivitetstidslinje(LocalDate.now()..LocalDate.now()),
+    godkjenningslogg = Godkjenningslogg(),
+    korrigerer = korrigert,
+)

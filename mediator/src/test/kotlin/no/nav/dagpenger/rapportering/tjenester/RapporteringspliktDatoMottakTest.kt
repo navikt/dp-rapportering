@@ -27,7 +27,8 @@ class RapporteringspliktDatoMottakTest {
 }
 
 @Language("JSON")
-private val løstBehovJSON = """
+private val løstBehovJSON =
+    """
     {
       "@id": "${UUID.randomUUID()}",
       "@event_name": "behov",
@@ -44,4 +45,4 @@ private val løstBehovJSON = """
       },
       "@final": true
     }
-""".trimIndent()
+    """.trimIndent()

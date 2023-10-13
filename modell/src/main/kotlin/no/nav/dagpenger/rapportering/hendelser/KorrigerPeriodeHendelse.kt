@@ -8,9 +8,9 @@ class KorrigerPeriodeHendelse(
     ident: String,
     val rapporteringsperiodeId: UUID,
 ) : PersonHendelse(
-    meldingsreferanseId,
-    ident,
-    Aktivitetslogg(),
-) {
+        meldingsreferanseId,
+        ident,
+        Aktivitetslogg(),
+    ) {
     constructor(ident: String, rapporteringId: UUID) : this(UUID.randomUUID(), ident, rapporteringId)
 }

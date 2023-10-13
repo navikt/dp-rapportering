@@ -28,10 +28,11 @@ class RapporteringsperiodeTest {
     @Test
     fun `Kan hente ut gjeldende rapporteringsperiode`() {
         val periodeId = UUID.randomUUID()
-        val rapporteringsperioder: List<Rapporteringsperiode> = listOf(
-            lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = Godkjent),
-            lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = TilUtfylling, id = periodeId),
-        )
+        val rapporteringsperioder: List<Rapporteringsperiode> =
+            listOf(
+                lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = Godkjent),
+                lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = TilUtfylling, id = periodeId),
+            )
 
         rapporteringsperioder.hentGjeldende(dato = 7.januar)!!.rapporteringsperiodeId shouldBe periodeId
         rapporteringsperioder.hentGjeldende(dato = 15.januar) shouldBe null
@@ -54,14 +55,16 @@ class RapporteringsperiodeTest {
 
     @Test
     fun `kan ikke godkjenne korrigeringer som ikke er faktisk endring`() {
-        val innsendtPeriode = lagRapporteringsperiode(
-            fom = 1.januar,
-            tom = 14.januar,
-            tilstand = Innsendt,
-            aktiviteter = listOf(
-                Aktivitet.Arbeid(6.januar, 3),
-            ),
-        )
+        val innsendtPeriode =
+            lagRapporteringsperiode(
+                fom = 1.januar,
+                tom = 14.januar,
+                tilstand = Innsendt,
+                aktiviteter =
+                    listOf(
+                        Aktivitet.Arbeid(6.januar, 3),
+                    ),
+            )
         innsendtPeriode.behandle(KorrigerPeriodeHendelse(testIdent, innsendtPeriode.rapporteringsperiodeId))
         val korrigertPeriode = innsendtPeriode.korrigertAv
 
@@ -108,10 +111,11 @@ class RapporteringsperiodeTest {
     fun `Kan godkjenne og avgodkjenne en periode`() {
         val periode = lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = TilUtfylling)
         periode.behandle(nyAktivitetHendelse(periode.rapporteringsperiodeId, 5.januar))
-        val avgodkjennHendelse = AvgodkjennPeriodeHendelse(
-            ident = testIdent,
-            rapporteringId = periode.rapporteringsperiodeId,
-        )
+        val avgodkjennHendelse =
+            AvgodkjennPeriodeHendelse(
+                ident = testIdent,
+                rapporteringId = periode.rapporteringsperiodeId,
+            )
 
         shouldThrow<IllegalStateException> {
             periode.behandle(avgodkjennHendelse)
@@ -138,17 +142,19 @@ class RapporteringsperiodeTest {
         val rapporteringsperiode = lagRapporteringsperiode(fom = 1.januar, tom = 14.januar, tilstand = TilUtfylling)
         val kanGodkjennesFra = rapporteringsperiode.kanGodkjennesFra
 
-        val forTidligGodkjenningHendelse = godkjennPeriodeHendelse(
-            rapporteringId = rapporteringsperiode.rapporteringsperiodeId,
-            dato = kanGodkjennesFra.minusDays(1),
-        )
+        val forTidligGodkjenningHendelse =
+            godkjennPeriodeHendelse(
+                rapporteringId = rapporteringsperiode.rapporteringsperiodeId,
+                dato = kanGodkjennesFra.minusDays(1),
+            )
 
         shouldThrow<GodkjenningExcpetion> { rapporteringsperiode.behandle(forTidligGodkjenningHendelse) }
 
-        val godkjenningHendelse = godkjennPeriodeHendelse(
-            rapporteringId = rapporteringsperiode.rapporteringsperiodeId,
-            dato = kanGodkjennesFra,
-        )
+        val godkjenningHendelse =
+            godkjennPeriodeHendelse(
+                rapporteringId = rapporteringsperiode.rapporteringsperiodeId,
+                dato = kanGodkjennesFra,
+            )
 
         shouldNotThrow<GodkjenningExcpetion> { rapporteringsperiode.behandle(godkjenningHendelse) }
     }

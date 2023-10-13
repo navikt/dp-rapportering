@@ -33,11 +33,12 @@ class RapporteringspliktSteps : No {
         }
 
         Så("skal brukeren få rapporteringsplikt på grunn av {string}") { arsak: String ->
-            val type = when (arsak) {
-                "søknad" -> RapporteringspliktType.Søknad
-                "vedtak" -> RapporteringspliktType.Vedtak
-                else -> throw IllegalArgumentException("Ukjent årsak til rapporteringsplikt")
-            }
+            val type =
+                when (arsak) {
+                    "søknad" -> RapporteringspliktType.Søknad
+                    "vedtak" -> RapporteringspliktType.Vedtak
+                    else -> throw IllegalArgumentException("Ukjent årsak til rapporteringsplikt")
+                }
             person.rapporteringsplikt.type shouldBe type
         }
 
@@ -56,7 +57,11 @@ class RapporteringspliktSteps : No {
             person.accept(this)
         }
 
-        override fun visit(rapporteringsplikt: Rapporteringsplikt, id: UUID, type: RapporteringspliktType) {
+        override fun visit(
+            rapporteringsplikt: Rapporteringsplikt,
+            id: UUID,
+            type: RapporteringspliktType,
+        ) {
             this.rapporteringsplikt = rapporteringsplikt
         }
     }

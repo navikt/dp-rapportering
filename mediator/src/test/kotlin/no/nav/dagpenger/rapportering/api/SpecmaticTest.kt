@@ -30,24 +30,25 @@ object SpecmaticTest : SpecmaticJUnitSupport() {
 
             System.setProperty("SPECMATIC_GENERATIVE_TESTS", "true")
             val rapporteringsperiodeRepository = PostgresRepository(PostgresDataSourceBuilder.dataSource)
-            server = KtorBuilder().port(8081).module {
-                konfigurasjon {
-                    bearer("tokenX") {
-                        authenticate {
-                            UserIdPrincipal("jetbrains")
+            server =
+                KtorBuilder().port(8081).module {
+                    konfigurasjon {
+                        bearer("tokenX") {
+                            authenticate {
+                                UserIdPrincipal("jetbrains")
+                            }
+                        }
+                        bearer("azureAd") {
+                            authenticate {
+                                UserIdPrincipal("jetbrains")
+                            }
                         }
                     }
-                    bearer("azureAd") {
-                        authenticate {
-                            UserIdPrincipal("jetbrains")
-                        }
-                    }
-                }
-                rapporteringApi(
-                    rapporteringsperiodeRepository,
-                    Mediator(TestRapid(), rapporteringsperiodeRepository, mockk(relaxed = true), mockk(relaxed = true)),
-                )
-            }.build(CIO).start()
+                    rapporteringApi(
+                        rapporteringsperiodeRepository,
+                        Mediator(TestRapid(), rapporteringsperiodeRepository, mockk(relaxed = true), mockk(relaxed = true)),
+                    )
+                }.build(CIO).start()
         }
     }
 

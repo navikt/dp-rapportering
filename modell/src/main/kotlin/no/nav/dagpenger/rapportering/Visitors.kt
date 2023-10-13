@@ -9,7 +9,10 @@ import java.util.UUID
 import kotlin.time.Duration
 
 interface PersonVisitor : RapporteringsperiodVisitor, AktivitetstidslinjeVisitor, RapporteringspliktVisitor {
-    fun visit(person: Person, ident: String) {}
+    fun visit(
+        person: Person,
+        ident: String,
+    ) {}
 }
 
 interface RapporteringsperiodVisitor : AktivitetstidslinjeVisitor, GodkjenningsloggVisitor {
@@ -38,14 +41,23 @@ interface GodkjenningsloggVisitor {
 }
 
 interface RapporteringspliktVisitor : AktivitetstidslinjeVisitor, TemporalCollectionVisitor<Rapporteringsplikt> {
-    fun visit(rapporteringsplikt: Rapporteringsplikt, id: UUID, type: RapporteringspliktType) {}
-    override fun visit(at: LocalDateTime, item: Rapporteringsplikt) {
+    fun visit(
+        rapporteringsplikt: Rapporteringsplikt,
+        id: UUID,
+        type: RapporteringspliktType,
+    ) {}
+
+    override fun visit(
+        at: LocalDateTime,
+        item: Rapporteringsplikt,
+    ) {
         item.accept(this)
     }
 }
 
 interface AktivitetstidslinjeVisitor : DagVisitor {
     fun preVisit(aktivitetstidslinje: Aktivitetstidslinje) {}
+
     fun postVisit(aktivitetstidslinje: Aktivitetstidslinje) {}
 }
 

@@ -16,17 +16,21 @@ internal class RapporteringspliktDatoMelding(packet: JsonMessage, override val i
     private val beregningsdatoStrategi: FastsettBeregningsdatoStrategi = strategiForBeregningsdato
     private val søknadInnsendtDato = packet["@løsning"]["Søknadstidspunkt"].asLocalDate()
     private val rapporteringspliktDatoHendelse: RapporteringspliktDatoHendelse
-        get() = RapporteringspliktDatoHendelse(
-            id,
-            ident,
-            opprettet,
-            søknadInnsendtDato,
-            beregningsdatoStrategi,
-        ).also {
-            logger.info { "Oppretter RapporteringspliktDatoHendelse med opprettet=$opprettet, søknadInnsendtDato=$søknadInnsendtDato" }
-        }
+        get() =
+            RapporteringspliktDatoHendelse(
+                id,
+                ident,
+                opprettet,
+                søknadInnsendtDato,
+                beregningsdatoStrategi,
+            ).also {
+                logger.info { "Oppretter RapporteringspliktDatoHendelse med opprettet=$opprettet, søknadInnsendtDato=$søknadInnsendtDato" }
+            }
 
-    override fun behandle(mediator: IHendelseMediator, context: MessageContext) {
+    override fun behandle(
+        mediator: IHendelseMediator,
+        context: MessageContext,
+    ) {
         mediator.behandle(rapporteringspliktDatoHendelse)
     }
 }
