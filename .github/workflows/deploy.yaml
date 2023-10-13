@@ -23,6 +23,8 @@ jobs:
           java-version: 19
 
       - uses: gradle/gradle-build-action@v2.9.0
+        env:
+          DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS: compileClasspath|runtimeClasspath
         with:
           dependency-graph: generate-and-submit
           arguments: --configuration-cache build installDist
