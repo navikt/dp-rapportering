@@ -24,17 +24,23 @@ internal class RapporteringMellomlagretMottak(
     init {
         River(rapidsConnection).apply {
             validate { it.demandValue("@event_name", "behov") }
-            validate { it.demandAllOrAny("@behov", listOf(behov)) }
+            validate { it.demandAll("@behov", listOf(behov)) }
             validate { it.requireKey("ident", "periodeId", "@løsning") }
             validate {
                 it.require("@løsning") { løsning ->
                     løsning.required(behov)
+                    løsning.required("json")
                 }
             }
+            validate { it.requireValue("@final", true) }
+            validate { it.interestedIn("@id", "@opprettet") }
         }.register(this)
     }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext) {
+    override fun onPacket(
+        packet: JsonMessage,
+        context: MessageContext,
+    ) {
         val ident = packet["ident"].asText()
         val periodeId = packet["periodeId"].asText()
         val json = packet["@løsning"]["json"].asText()
@@ -42,12 +48,13 @@ internal class RapporteringMellomlagretMottak(
         withLoggingContext(
             "periodeId" to periodeId,
         ) {
-            val melding = RapporteringMellomlagretMelding(
-                packet,
-                ident,
-                periodeId,
-                json,
-            )
+            val melding =
+                RapporteringMellomlagretMelding(
+                    packet,
+                    ident,
+                    periodeId,
+                    json,
+                )
             melding.behandle(mediator, context)
 
             logger.info { "Fått løsning for MellomlagreRapportering for $periodeId" }

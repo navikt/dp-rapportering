@@ -17,7 +17,10 @@ internal class RapporteringJournalførtMelding(
             return RapporteringJournalførtHendelse(id, ident, opprettet, periodeId, journalpostId)
         }
 
-    override fun behandle(mediator: IHendelseMediator, context: MessageContext) {
+    override fun behandle(
+        mediator: IHendelseMediator,
+        context: MessageContext,
+    ) {
         mediator.behandle(rapporteringJournalførtHendelse)
     }
 }

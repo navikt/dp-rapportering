@@ -303,11 +303,17 @@ class Rapporteringsperiode private constructor(
             throw IllegalStateException("Forventer manuell innsending av rapporteringsperiode i tilstand ${type.name}")
         }
 
-        fun behandle(hendelse: RapporteringMellomlagretHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        fun behandle(
+            hendelse: RapporteringMellomlagretHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
             throw IllegalStateException("Forventet ikke journalføring av rapportering i tilstand ${type.name}")
         }
 
-        fun behandle(hendelse: RapporteringJournalførtHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        fun behandle(
+            hendelse: RapporteringJournalførtHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
             throw IllegalStateException("Forventet ikke journalføring av rapportering i tilstand ${type.name}")
         }
     }
@@ -408,12 +414,18 @@ class Rapporteringsperiode private constructor(
             rapporteringsperiode.tilstand(hendelse, TilUtfylling)
         }
 
-        override fun behandle(hendelse: RapporteringMellomlagretHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        override fun behandle(
+            hendelse: RapporteringMellomlagretHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
             hendelse.kontekst(this)
             hendelse.info("Mellomlagrer periode")
         }
 
-        override fun behandle(hendelse: RapporteringJournalførtHendelse, rapporteringsperiode: Rapporteringsperiode) {
+        override fun behandle(
+            hendelse: RapporteringJournalførtHendelse,
+            rapporteringsperiode: Rapporteringsperiode,
+        ) {
             hendelse.kontekst(this)
             hendelse.info("Journalfører periode")
 

@@ -339,22 +339,23 @@ private suspend fun hentData(
 
     val dagMap = TreeMap<LocalDate, Map<String, kotlin.time.Duration>>()
 
-    val periodeVisitor = object : RapporteringsperiodVisitor {
-        override fun visit(
-            dag: Dag,
-            dato: LocalDate,
-            aktiviteter: List<Aktivitet>,
-            muligeAktiviter: List<Aktivitet.AktivitetType>,
-            strategi: Dag.StrategiType,
-        ) {
-            val aktiviteterMap = HashMap<String, kotlin.time.Duration>()
-            aktiviteter.forEach {
-                aktiviteterMap[it.type.name] = it.tid
-            }
+    val periodeVisitor =
+        object : RapporteringsperiodVisitor {
+            override fun visit(
+                dag: Dag,
+                dato: LocalDate,
+                aktiviteter: List<Aktivitet>,
+                muligeAktiviter: List<Aktivitet.AktivitetType>,
+                strategi: Dag.StrategiType,
+            ) {
+                val aktiviteterMap = HashMap<String, kotlin.time.Duration>()
+                aktiviteter.forEach {
+                    aktiviteterMap[it.type.name] = it.tid
+                }
 
-            dagMap[dato] = aktiviteterMap
+                dagMap[dato] = aktiviteterMap
+            }
         }
-    }
 
     periode?.accept(periodeVisitor)
 

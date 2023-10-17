@@ -10,10 +10,10 @@ class RapporteringMellomlagretHendelse(
     internal val opprettet: LocalDateTime,
     internal val periodeId: String,
 ) : PersonHendelse(
-    meldingsreferanseId,
-    ident,
-    Aktivitetslogg(),
-) {
+        meldingsreferanseId,
+        ident,
+        Aktivitetslogg(),
+    ) {
     constructor(
         ident: String,
         periodeId: String,

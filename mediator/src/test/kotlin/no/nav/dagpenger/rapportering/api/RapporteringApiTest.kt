@@ -205,7 +205,7 @@ class RapporteringApiTest {
                     mediatorMock.behandle(capture(slot))
                 }
                 slot.captured.let { hendelse ->
-                    hendelse.ident() shouldBe defaultDummyFodselsnummer
+                    hendelse.ident() shouldBe DEFAULT_DUMMY_FODSELSNUMMER
                     hendelse.rapporteringsperiodeId shouldBe testPeriodeId
                     hendelse.behov().size shouldBe 1
                     hendelse.behov()[0].type shouldBe MineBehov.MellomlagreRapportering

@@ -11,10 +11,13 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
-class RapporteringMellomlagretDatoMottakTest {
+class RapporteringMellomlagretMottakTest {
     private val rapid = TestRapid()
     private val mediator = mockk<IHendelseMediator>(relaxed = true)
-    private val mottak = RapporteringspliktDatoMottak(rapid, mediator)
+
+    init {
+        RapporteringMellomlagretMottak(rapid, mediator)
+    }
 
     @Test
     fun `vi tar imot og håndterer rapportering mellomlagret hendelser`() {
@@ -27,7 +30,8 @@ class RapporteringMellomlagretDatoMottakTest {
 }
 
 @Language("JSON")
-private val løstBehovJSON = """
+private val løstBehovJSON =
+    """
     {
       "@id": "${UUID.randomUUID()}",
       "@event_name": "behov",
@@ -37,10 +41,11 @@ private val løstBehovJSON = """
       "@opprettet": "${LocalDateTime.now()}",
       "ident": "ident123",
       "periodeId": "periodeId123",
+      "MellomlagreRapportering": {},
       "@løsning": {
         "MellomlagreRapportering": "${LocalDate.now()}",
         "json": "{}"
       },
       "@final": true
     }
-""".trimIndent()
+    """.trimIndent()

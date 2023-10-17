@@ -3,7 +3,7 @@ package no.nav.dagpenger.rapportering.tjenester
 import io.mockk.mockk
 import io.mockk.verify
 import no.nav.dagpenger.rapportering.IHendelseMediator
-import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringJournalførtHendelse
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
@@ -11,20 +11,20 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
-class RapporteringspliktDatoMottakTest {
+class RapporteringJournalførtMottakTest {
     private val rapid = TestRapid()
     private val mediator = mockk<IHendelseMediator>(relaxed = true)
 
     init {
-        RapporteringspliktDatoMottak(rapid, mediator)
+        RapporteringJournalførtMottak(rapid, mediator)
     }
 
     @Test
-    fun `vi tar imot og håndterer rapporteringspliktdato hendelser`() {
+    fun `vi tar imot og håndterer rapportering journalført hendelser`() {
         rapid.sendTestMessage(løstBehovJSON)
 
         verify {
-            mediator.behandle(any<RapporteringspliktDatoHendelse>())
+            mediator.behandle(any<RapporteringJournalførtHendelse>())
         }
     }
 }
@@ -36,15 +36,15 @@ private val løstBehovJSON =
       "@id": "${UUID.randomUUID()}",
       "@event_name": "behov",
       "@behov": [
-        "Søknadstidspunkt"
+        "JournalføreRapportering"
       ],
       "@opprettet": "${LocalDateTime.now()}",
-      "ident": "123",
-      "Søknadstidspunkt": {
-        "søknad_uuid": "${UUID.randomUUID()}"
-      },
+      "ident": "ident123",
+      "periodeId": "periodeId123",
+      "JournalføreRapportering": {},
       "@løsning": {
-        "Søknadstidspunkt": "${LocalDate.now()}"
+        "JournalføreRapportering": "${LocalDate.now()}",
+        "journalpostId": "123456"
       },
       "@final": true
     }

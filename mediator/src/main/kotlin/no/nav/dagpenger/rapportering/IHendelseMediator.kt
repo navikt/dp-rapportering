@@ -39,6 +39,8 @@ internal interface IHendelseMediator {
     fun behandle(hendelse: VedtakAvslåttHendelse)
 
     fun behandle(hendelse: AvgodkjennPeriodeHendelse)
+
     fun behandle(hendelse: RapporteringMellomlagretHendelse)
+
     fun behandle(hendelse: RapporteringJournalførtHendelse)
 }

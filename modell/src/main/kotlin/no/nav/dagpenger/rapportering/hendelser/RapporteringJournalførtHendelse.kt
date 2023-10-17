@@ -11,10 +11,10 @@ class RapporteringJournalførtHendelse(
     internal val periodeId: String,
     internal val journalpostId: String,
 ) : PersonHendelse(
-    meldingsreferanseId,
-    ident,
-    Aktivitetslogg(),
-) {
+        meldingsreferanseId,
+        ident,
+        Aktivitetslogg(),
+    ) {
     constructor(
         ident: String,
         periodeId: String,

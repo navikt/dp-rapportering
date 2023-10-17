@@ -27,7 +27,10 @@ internal class RapporteringMellomlagretMelding(
             return hendelse
         }
 
-    override fun behandle(mediator: IHendelseMediator, context: MessageContext) {
+    override fun behandle(
+        mediator: IHendelseMediator,
+        context: MessageContext,
+    ) {
         mediator.behandle(rapporteringMellomlagretHendelse)
     }
 }

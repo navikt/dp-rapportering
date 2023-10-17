@@ -24,17 +24,22 @@ internal class RapporteringJournalførtMottak(
     init {
         River(rapidsConnection).apply {
             validate { it.demandValue("@event_name", "behov") }
-            validate { it.demandAllOrAny("@behov", listOf(behov)) }
+            validate { it.demandAll("@behov", listOf(behov)) }
             validate { it.requireKey("ident", "periodeId", "@løsning") }
             validate {
                 it.require("@løsning") { løsning ->
                     løsning.required(behov)
                 }
             }
+            validate { it.requireValue("@final", true) }
+            validate { it.interestedIn("@id", "@opprettet") }
         }.register(this)
     }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext) {
+    override fun onPacket(
+        packet: JsonMessage,
+        context: MessageContext,
+    ) {
         val ident = packet["ident"].asText()
         val periodeId = packet["periodeId"].asText()
         val journalpostId = packet["@løsning"]["journalpostId"].asText()
@@ -42,12 +47,13 @@ internal class RapporteringJournalførtMottak(
         withLoggingContext(
             "periodeId" to periodeId,
         ) {
-            val melding = RapporteringJournalførtMelding(
-                packet,
-                ident,
-                periodeId,
-                journalpostId,
-            )
+            val melding =
+                RapporteringJournalførtMelding(
+                    packet,
+                    ident,
+                    periodeId,
+                    journalpostId,
+                )
             melding.behandle(mediator, context)
 
             logger.info { "Fått løsning for JournalføreRapportering for $periodeId" }
