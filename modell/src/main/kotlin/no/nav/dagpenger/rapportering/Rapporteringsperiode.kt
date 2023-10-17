@@ -39,7 +39,6 @@ class Rapporteringsperiode private constructor(
     private val godkjenningslogg: Godkjenningslogg = Godkjenningslogg(),
     private val korrigerer: Rapporteringsperiode? = null,
     private var korrigertAv: Rapporteringsperiode? = null,
-    private var journalpostId: String? = null,
 ) : Aktivitetskontekst {
     private val observers: MutableSet<RapporteringsperiodeObserver> = mutableSetOf()
     val gjelderFra = periode.start
@@ -428,8 +427,6 @@ class Rapporteringsperiode private constructor(
         ) {
             hendelse.kontekst(this)
             hendelse.info("Journalfører periode")
-
-            rapporteringsperiode.journalpostId = hendelse.journalpostId
         }
     }
 
