@@ -23,7 +23,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.mock.oauth2.server)
     testImplementation(libs.bundles.postgres.test)
-    testImplementation("in.specmatic:junit5-support:0.80.1")
+    testImplementation("in.specmatic:junit5-support:0.81.0")
     testImplementation(project(path = ":common-test"))
 }
 
