@@ -100,20 +100,33 @@ class GodkjennFlyttTest {
             val løstBehovMellomlagreRapportering =
                 """
                 {
-                  "@id": "${UUID.randomUUID()}",
-                  "@event_name": "behov",
-                  "@behov": [
-                    "MellomlagreRapportering"
-                  ],
-                  "@opprettet": "${LocalDateTime.now()}",
-                  "ident": "$testIdent",
-                  "periodeId": "$rapporteringsperiodeId",
-                  "MellomlagreRapportering": {},
-                  "@løsning": {
-                    "MellomlagreRapportering": "${LocalDate.now()}",
-                    "json": "${json.replace("\"", "\\\"")}"
-                  },
-                  "@final": true
+                    "@event_name": "behov",
+                    "@behovId": "${UUID.randomUUID()}",
+                    "@behov": [
+                        "MellomlagreRapportering",
+                        "JournalføreRapportering"
+                    ],
+                    "meldingsreferanseId": "${UUID.randomUUID()}",
+                    "ident": "$testIdent",
+                    "MellomlagreRapportering": {
+                        "periodeId": "$rapporteringsperiodeId",
+                        "json": "${json.replace("\"", "\\\"")}"
+                    },
+                    "@id": "${UUID.randomUUID()}",
+                    "@opprettet": "${LocalDateTime.now()}",
+                    "system_read_count": 0,
+                    "@løsning": {
+                        "MellomlagreRapportering": [
+                            {
+                                "metainfo": {
+                                    "innhold": "netto.pdf",
+                                    "filtype": "PDF",
+                                    "variant": "NETTO"
+                                },
+                                "urn": "urn:vedlegg:journalpostId/netto.pdf"
+                            }
+                        ]
+                    }
                 }
                 """.trimIndent()
             rapid.sendTestMessage(løstBehovMellomlagreRapportering)
@@ -130,20 +143,25 @@ class GodkjennFlyttTest {
             val løstBehovJournalføreRapportering =
                 """
                 {
-                  "@id": "${UUID.randomUUID()}",
-                  "@event_name": "behov",
-                  "@behov": [
-                    "JournalføreRapportering"
-                  ],
-                  "@opprettet": "${LocalDateTime.now()}",
-                  "ident": "$testIdent",
-                  "periodeId": "$rapporteringsperiodeId",
-                  "JournalføreRapportering": {},
-                  "@løsning": {
-                    "JournalføreRapportering": "${LocalDate.now()}",
-                    "journalpostId": "123456"
-                  },
-                  "@final": true
+                    "@event_name": "behov",
+                    "@behovId": "${UUID.randomUUID()}",
+                    "@behov": [
+                        "MellomlagreRapportering",
+                        "JournalføreRapportering"
+                    ],
+                    "meldingsreferanseId": "${UUID.randomUUID()}",
+                    "ident": "$testIdent",
+                    "JournalføreRapportering": {
+                        "periodeId": "$rapporteringsperiodeId",
+                        "json": "${json.replace("\"", "\\\"")}",
+                        "urn": "urn:vedlegg:journalpostId/netto.pdf"
+                    },
+                    "@id": "${UUID.randomUUID()}",
+                    "@opprettet": "${LocalDateTime.now()}",
+                    "system_read_count": 0,
+                    "@løsning": {
+                        "journalpostId": "123456"
+                    }
                 }
                 """.trimIndent()
             rapid.sendTestMessage(løstBehovJournalføreRapportering)

@@ -25,14 +25,18 @@ internal class RapporteringMellomlagretMottak(
         River(rapidsConnection).apply {
             validate { it.demandValue("@event_name", "behov") }
             validate { it.demandAll("@behov", listOf(behov)) }
-            validate { it.requireKey("ident", "periodeId", "@løsning") }
+            validate { it.requireKey("ident", "@løsning") }
+            validate {
+                it.require(behov) { behov ->
+                    behov.required("periodeId")
+                    behov.required("json")
+                }
+            }
             validate {
                 it.require("@løsning") { løsning ->
                     løsning.required(behov)
-                    løsning.required("json")
                 }
             }
-            validate { it.requireValue("@final", true) }
             validate { it.interestedIn("@id", "@opprettet") }
         }.register(this)
     }
@@ -42,8 +46,9 @@ internal class RapporteringMellomlagretMottak(
         context: MessageContext,
     ) {
         val ident = packet["ident"].asText()
-        val periodeId = packet["periodeId"].asText()
-        val json = packet["@løsning"]["json"].asText()
+        val periodeId = packet[behov]["periodeId"].asText()
+        val json = packet[behov]["json"].asText()
+        val urn = packet["@løsning"][behov][0]["urn"].asText()
 
         withLoggingContext(
             "periodeId" to periodeId,
@@ -54,6 +59,7 @@ internal class RapporteringMellomlagretMottak(
                     ident,
                     periodeId,
                     json,
+                    urn,
                 )
             melding.behandle(mediator, context)
 

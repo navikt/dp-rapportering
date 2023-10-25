@@ -25,13 +25,17 @@ internal class RapporteringJournalførtMottak(
         River(rapidsConnection).apply {
             validate { it.demandValue("@event_name", "behov") }
             validate { it.demandAll("@behov", listOf(behov)) }
-            validate { it.requireKey("ident", "periodeId", "@løsning") }
+            validate { it.requireKey("ident", "@løsning") }
             validate {
-                it.require("@løsning") { løsning ->
-                    løsning.required(behov)
+                it.require(behov) { behov ->
+                    behov.required("periodeId")
                 }
             }
-            validate { it.requireValue("@final", true) }
+            validate {
+                it.require("@løsning") { løsning ->
+                    løsning.required("journalpostId")
+                }
+            }
             validate { it.interestedIn("@id", "@opprettet") }
         }.register(this)
     }
@@ -41,7 +45,7 @@ internal class RapporteringJournalførtMottak(
         context: MessageContext,
     ) {
         val ident = packet["ident"].asText()
-        val periodeId = packet["periodeId"].asText()
+        val periodeId = packet[behov]["periodeId"].asText()
         val journalpostId = packet["@løsning"]["journalpostId"].asText()
 
         withLoggingContext(

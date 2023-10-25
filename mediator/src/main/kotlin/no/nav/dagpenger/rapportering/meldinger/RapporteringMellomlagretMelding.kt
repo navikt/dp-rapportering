@@ -11,6 +11,7 @@ internal class RapporteringMellomlagretMelding(
     override val ident: String,
     private val periodeId: String,
     private val json: String,
+    private val urn: String,
 ) :
     HendelseMessage(packet) {
     private val rapporteringMellomlagretHendelse: RapporteringMellomlagretHendelse
@@ -22,6 +23,7 @@ internal class RapporteringMellomlagretMelding(
                 mapOf(
                     "periodeId" to periodeId,
                     "json" to json,
+                    "urn" to urn,
                 ),
             )
             return hendelse

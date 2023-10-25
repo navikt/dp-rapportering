@@ -7,8 +7,6 @@ import no.nav.dagpenger.rapportering.hendelser.RapporteringJournalførtHendelse
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
-import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.UUID
 
 class RapporteringJournalførtMottakTest {
@@ -33,19 +31,24 @@ class RapporteringJournalførtMottakTest {
 private val løstBehovJSON =
     """
     {
-      "@id": "${UUID.randomUUID()}",
       "@event_name": "behov",
+      "@behovId": "${UUID.randomUUID()}",
       "@behov": [
         "JournalføreRapportering"
       ],
-      "@opprettet": "${LocalDateTime.now()}",
+      "meldingsreferanseId":"d0ce2eef-ab53-4b06-acf3-4c85386dc561",
       "ident": "ident123",
-      "periodeId": "periodeId123",
-      "JournalføreRapportering": {},
+      "JournalføreRapportering":{
+          "periodeId": "periodeId123",
+          "json": "{\"key1\": \"value1\"}",
+          "urn": "urn:vedlegg:periodeId/netto.pdf"
+      },
       "@løsning": {
-        "JournalføreRapportering": "${LocalDate.now()}",
         "journalpostId": "123456"
       },
-      "@final": true
+      "@id": "30ef9625-196a-445b-9b4e-67e0e6a5118d",
+      "@opprettet": "2023-10-23T18:53:08.056035121",
+      "system_read_count": 0,
+      "system_participating_services":[{"id": "30ef9625-196a-445b-9b4e-67e0e6a5118d", "service": "dp-rapportering"}]
     }
     """.trimIndent()
