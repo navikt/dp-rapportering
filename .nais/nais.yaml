@@ -72,7 +72,7 @@ spec:
         - application: dp-saksbehandling-frontend
         - application: dp-rapportering-frontend
         {{#if wonderwalled}}
-        - application: wonderwalled-idporten
+        - application: tokenx-token-generator
           namespace: aura
         - application: wonderwalled-azure
           namespace: aura
