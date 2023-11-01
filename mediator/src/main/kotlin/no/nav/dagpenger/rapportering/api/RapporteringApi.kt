@@ -1,10 +1,13 @@
 package no.nav.dagpenger.rapportering.api
 
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.authentication
+import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.plugins.swagger.swaggerUI
 import io.ktor.server.request.receive
@@ -16,6 +19,8 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.Godkjenningsendring
 import no.nav.dagpenger.rapportering.IHendelseMediator
+import no.nav.dagpenger.rapportering.MineBehov
+import no.nav.dagpenger.rapportering.RapporteringsperiodVisitor
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.Companion.hentGjeldende
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.Issuer.AzureAD
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.Issuer.TokenX
@@ -26,6 +31,7 @@ import no.nav.dagpenger.rapportering.api.dto.RapporteringsperiodeMapper
 import no.nav.dagpenger.rapportering.api.models.AktivitetDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetNyDTO
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
+import no.nav.dagpenger.rapportering.api.models.FrontendDataDTO
 import no.nav.dagpenger.rapportering.api.models.GodkjennNyDTO
 import no.nav.dagpenger.rapportering.api.models.ProblemDTO
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeNyDTO
@@ -40,7 +46,11 @@ import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringsperiodeRepository
 import no.nav.dagpenger.rapportering.strategiForBeregningsdato
 import no.nav.dagpenger.rapportering.tidslinje.Aktivitet
+import no.nav.dagpenger.rapportering.tidslinje.Dag
+import no.nav.helse.rapids_rivers.JsonMessage
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.TreeMap
 import java.util.UUID
 
 internal fun Application.rapporteringApi(
@@ -160,7 +170,22 @@ internal fun Application.rapporteringApi(
                                         )
                                     }
 
-                                    TokenX -> GodkjennPeriodeHendelse(ident, periodeId)
+                                    TokenX -> {
+                                        val data = hentData(call, rapporteringsperiodeRepository, ident, periodeId)
+                                        val json = JsonMessage.newMessage(data).toJson()
+
+                                        val hendelse = GodkjennPeriodeHendelse(ident, periodeId)
+                                        hendelse.behov(
+                                            MineBehov.MellomlagreRapportering,
+                                            "Trenger å mellomlagre rapportering",
+                                            mapOf(
+                                                "periodeId" to periodeId,
+                                                "json" to json,
+                                            ),
+                                        )
+
+                                        hendelse
+                                    }
                                 }
 
                             mediator.behandle(hendelse)
@@ -300,5 +325,47 @@ private fun Aktivitet.toAktivitetDTO(): AktivitetDTO {
         dato = this.dato,
         id = this.uuid,
         timer = this.tid.toIsoString(),
+    )
+}
+
+private suspend fun hentData(
+    call: ApplicationCall,
+    rapporteringsperiodeRepository: RapporteringsperiodeRepository,
+    ident: String,
+    periodeId: UUID,
+): Map<String, Any> {
+    val dto = call.receive<FrontendDataDTO>()
+    val periode = rapporteringsperiodeRepository.hentRapporteringsperiode(ident, periodeId)
+
+    val dagMap = TreeMap<LocalDate, Map<String, kotlin.time.Duration>>()
+
+    val periodeVisitor =
+        object : RapporteringsperiodVisitor {
+            override fun visit(
+                dag: Dag,
+                dato: LocalDate,
+                aktiviteter: List<Aktivitet>,
+                muligeAktiviter: List<Aktivitet.AktivitetType>,
+                strategi: Dag.StrategiType,
+            ) {
+                val aktiviteterMap = HashMap<String, kotlin.time.Duration>()
+                aktiviteter.forEach {
+                    aktiviteterMap[it.type.name] = it.tid
+                }
+
+                dagMap[dato] = aktiviteterMap
+            }
+        }
+
+    periode?.accept(periodeVisitor)
+
+    return mapOf(
+        "timestamp" to LocalDateTime.now(),
+        "claims" to call.authentication.principal<JWTPrincipal>()?.payload?.claims.orEmpty(),
+        "image" to dto.image,
+        "kildekode" to dto.commit,
+        "klient" to call.request.headers[HttpHeaders.UserAgent].orEmpty(),
+        "språk" to "no-NB",
+        "rapportering" to dagMap,
     )
 }

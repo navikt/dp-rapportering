@@ -2,7 +2,9 @@ package no.nav.dagpenger.rapportering
 
 import io.kotest.matchers.shouldBe
 import no.nav.dagpenger.aktivitetslogg.Aktivitetslogg
+import no.nav.dagpenger.rapportering.hendelser.GodkjennPeriodeHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringMellomlagretHendelse
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -48,6 +50,56 @@ class BehovMediatorTest {
 
         assertThrows<IllegalArgumentException> {
             mediator.håndter(hendelse)
+        }
+    }
+
+    @Test
+    fun `kan sende ut behov om mellomlagre rapportering`() {
+        val ident = "01020312345"
+        val periodeId = UUID.randomUUID()
+        val hendelse = GodkjennPeriodeHendelse(ident, periodeId)
+        hendelse.behov(
+            MineBehov.MellomlagreRapportering,
+            "Trenger å mellomlagre rapportering",
+            mapOf(
+                "periodeId" to periodeId,
+                "json" to "{\"key1\": \"value1\"}",
+            ),
+        )
+
+        mediator.håndter(hendelse)
+
+        with(rapid.inspektør) {
+            size shouldBe 1
+            message(0)["@behov"].map { it.asText() } shouldBe listOf("MellomlagreRapportering")
+            field(0, "ident").asText() shouldBe ident
+            field(0, "MellomlagreRapportering")["periodeId"].asText() shouldBe periodeId.toString()
+            field(0, "MellomlagreRapportering")["json"].asText() shouldBe "{\"key1\": \"value1\"}"
+        }
+    }
+
+    @Test
+    fun `kan sende ut behov om journalføre rapportering`() {
+        val ident = "01020312345"
+        val periodeId = UUID.randomUUID().toString()
+        val hendelse = RapporteringMellomlagretHendelse(ident, periodeId)
+        hendelse.behov(
+            MineBehov.JournalføreRapportering,
+            "Trenger å journalføre rapportering",
+            mapOf(
+                "periodeId" to periodeId,
+                "json" to "{\"key1\": \"value1\"}",
+            ),
+        )
+
+        mediator.håndter(hendelse)
+
+        with(rapid.inspektør) {
+            size shouldBe 1
+            message(0)["@behov"].map { it.asText() } shouldBe listOf("JournalføreRapportering")
+            field(0, "ident").asText() shouldBe ident
+            field(0, "JournalføreRapportering")["periodeId"].asText() shouldBe periodeId
+            field(0, "JournalføreRapportering")["json"].asText() shouldBe "{\"key1\": \"value1\"}"
         }
     }
 

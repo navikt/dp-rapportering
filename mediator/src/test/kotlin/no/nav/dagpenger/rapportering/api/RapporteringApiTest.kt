@@ -17,10 +17,12 @@ import io.ktor.http.contentType
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import no.nav.dagpenger.rapportering.GodkjenningExcpetion
 import no.nav.dagpenger.rapportering.Godkjenningslogg
 import no.nav.dagpenger.rapportering.Mediator
+import no.nav.dagpenger.rapportering.MineBehov
 import no.nav.dagpenger.rapportering.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.Rapporteringsperiode.TilstandType.TilUtfylling
 import no.nav.dagpenger.rapportering.api.TestApplication.DEFAULT_DUMMY_FODSELSNUMMER
@@ -185,16 +187,40 @@ class RapporteringApiTest {
 
     @Test
     fun `Bruker skal kunne godkjenne og avgodkjenne en rapporteringsperiode uten begrunnelse`() {
+        val mediatorMock = mockk<Mediator>(relaxed = true)
+
         withRapporteringApi(
             rapporteringsperioder = listOf(testPeriode),
+            mock = mediatorMock,
         ) {
             client.post("/rapporteringsperioder/$testPeriodeId/godkjenn") {
                 autentisert()
+                contentType(ContentType.Application.Json)
+                setBody("""{"image": "IMAGE", "commit": "COMMIT" }""")
             }.also { response ->
                 response.status shouldBe HttpStatusCode.OK
+
+                val slot = slot<GodkjennPeriodeHendelse>()
                 verify {
-                    mediatorMock.behandle(any<GodkjennPeriodeHendelse>())
+                    mediatorMock.behandle(capture(slot))
                 }
+                slot.captured.let { hendelse ->
+                    hendelse.ident() shouldBe DEFAULT_DUMMY_FODSELSNUMMER
+                    hendelse.rapporteringsperiodeId shouldBe testPeriodeId
+                    hendelse.behov().size shouldBe 1
+                    hendelse.behov()[0].type shouldBe MineBehov.MellomlagreRapportering
+                    hendelse.behov()[0].detaljer().size shouldBe 2
+                    hendelse.behov()[0].detaljer().get("periodeId") shouldBe testPeriodeId
+                    hendelse.behov()[0].detaljer().get("json").toString().let { json ->
+                        json shouldContainJsonKey "$.claims"
+                        json shouldContainJsonKey "$.image"
+                        json shouldContainJsonKey "$.kildekode"
+                        json shouldContainJsonKey "$.klient"
+                        json shouldContainJsonKey "$.språk"
+                        json shouldContainJsonKey "$.rapportering"
+                    }
+                }
+
                 response.bodyAsText().let { json ->
                     json shouldContainJsonKey "$.id"
                 }
@@ -302,6 +328,8 @@ class RapporteringApiTest {
         withRapporteringApi(rapporteringsperioder = listOf(periodeSomIkkeKanGodkjennesEnda), mediatorMock) {
             client.post("/rapporteringsperioder/$periodeId/godkjenn") {
                 autentisert()
+                contentType(ContentType.Application.Json)
+                setBody("""{"image": "IMAGE", "commit": "COMMIT" }""")
             }.also { response ->
                 response.status shouldBe HttpStatusCode.Forbidden
             }

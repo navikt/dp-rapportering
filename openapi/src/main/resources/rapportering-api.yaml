@@ -455,6 +455,16 @@ components:
           type: string
           format: uri
           description: Hvor feilen oppstod
+    FrontendData:
+      type: object
+      required:
+        - image
+        - commit
+      properties:
+        image:
+          type: string
+        commit:
+          type: string
   securitySchemes:
     azureAd:
       type: http

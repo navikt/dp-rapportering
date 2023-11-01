@@ -14,7 +14,10 @@ import java.util.UUID
 class RapporteringspliktDatoMottakTest {
     private val rapid = TestRapid()
     private val mediator = mockk<IHendelseMediator>(relaxed = true)
-    private val mottak = RapporteringspliktDatoMottak(rapid, mediator)
+
+    init {
+        RapporteringspliktDatoMottak(rapid, mediator)
+    }
 
     @Test
     fun `vi tar imot og håndterer rapporteringspliktdato hendelser`() {

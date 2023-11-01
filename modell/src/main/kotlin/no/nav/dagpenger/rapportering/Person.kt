@@ -11,6 +11,8 @@ import no.nav.dagpenger.rapportering.hendelser.ManuellInnsendingHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.NyRapporteringssyklusHendelse
 import no.nav.dagpenger.rapportering.hendelser.PersonHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringJournalførtHendelse
+import no.nav.dagpenger.rapportering.hendelser.RapporteringMellomlagretHendelse
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.dagpenger.rapportering.hendelser.SlettAktivitetHendelse
 import no.nav.dagpenger.rapportering.hendelser.SøknadInnsendtHendelse
@@ -154,6 +156,20 @@ class Person private constructor(
         hendelse.info("Behandler vedtak med utfall avslått")
 
         nyRapporteringsplikt(IngenRapporteringsplikt(rapporteringspliktFra = hendelse.virkningsdato.atStartOfDay()))
+    }
+
+    fun behandle(hendelse: RapporteringMellomlagretHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Behandler mellomlagret rapportering")
+
+        rapporteringsperioder.behandle(hendelse) { it.behandle(hendelse) }
+    }
+
+    fun behandle(hendelse: RapporteringJournalførtHendelse) {
+        hendelse.kontekst(this)
+        hendelse.info("Behandler journalført rapportering")
+
+        rapporteringsperioder.behandle(hendelse) { it.behandle(hendelse) }
     }
 
     fun registrer(observer: PersonObserver) {

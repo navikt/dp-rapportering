@@ -4,4 +4,6 @@ import no.nav.dagpenger.aktivitetslogg.Aktivitet
 
 enum class MineBehov : Aktivitet.Behov.Behovtype {
     Søknadstidspunkt,
+    MellomlagreRapportering,
+    JournalføreRapportering,
 }
