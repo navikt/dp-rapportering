@@ -314,7 +314,8 @@ class Rapporteringsperiode private constructor(
             hendelse: RapporteringJournalførtHendelse,
             rapporteringsperiode: Rapporteringsperiode,
         ) {
-            throw IllegalStateException("Forventet ikke journalføring av rapportering i tilstand ${type.name}")
+            hendelse.kontekst(this)
+            hendelse.info("Journalfører periode")
         }
     }
 
