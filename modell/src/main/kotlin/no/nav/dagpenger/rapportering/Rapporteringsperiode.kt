@@ -306,7 +306,8 @@ class Rapporteringsperiode private constructor(
             hendelse: RapporteringMellomlagretHendelse,
             rapporteringsperiode: Rapporteringsperiode,
         ) {
-            throw IllegalStateException("Forventet ikke mellomlagring PDF for rapportering i tilstand ${type.name}")
+            hendelse.kontekst(this)
+            hendelse.info("Mellomlagrer periode")
         }
 
         fun behandle(
