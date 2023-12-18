@@ -7,6 +7,10 @@ on:
     branches-ignore:
       - 'dependabot/**'
 
+permissions:
+  contents: "read"
+  id-token: "write"
+
 jobs:
   build:
     name: Build and publish Docker image
