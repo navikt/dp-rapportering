@@ -52,17 +52,18 @@ class PersonTest {
             ) { fom, _ -> fom },
         )
         val rapporteringsperiodeId = person.aktivRapporteringsperiodeId
+
         // Bruker melder inn aktiviteter
         person.behandle(
             nyAktivitetHendelse(
                 rapporteringsperiodeId,
-                Aktivitet.Arbeid(LocalDate.now().plusDays(5), "PT3H20M"),
+                Aktivitet.Arbeid(LocalDate.now().plusDays(8), "PT3H20M"),
             ),
         )
         person.behandle(
             nyAktivitetHendelse(
                 rapporteringsperiodeId,
-                Aktivitet.Syk(LocalDate.now().plusDays(4)),
+                Aktivitet.Syk(LocalDate.now().plusDays(3)),
             ),
         )
         person.behandle(
@@ -73,7 +74,12 @@ class PersonTest {
         )
         assertEquals(3, person.antallAktiviteter)
         // Bruker godkjenner rapportering for en periode
-        person.behandle(godkjennPeriodeHendelse(rapporteringsperiodeId, person.aktivRapporteringsperiode.kanGodkjennesFra))
+        person.behandle(
+            godkjennPeriodeHendelse(
+                rapporteringsperiodeId,
+                person.aktivRapporteringsperiode.kanGodkjennesFra,
+            ),
+        )
         assertEquals(Godkjent.name, observer.tilstand)
         // Kan ikke rapportere aktivitet etter en periode er godkjent
         val nyAktivitetHendelse = nyAktivitetHendelse(rapporteringsperiodeId, LocalDate.now().plusDays(3))
@@ -82,7 +88,8 @@ class PersonTest {
             person.behandle(nyAktivitetHendelse)
         }
         // Bruker sender inn rapportering for samme periode på nytt
-        val hendelse = godkjennPeriodeHendelse(rapporteringsperiodeId, person.aktivRapporteringsperiode.kanGodkjennesFra)
+        val hendelse =
+            godkjennPeriodeHendelse(rapporteringsperiodeId, person.aktivRapporteringsperiode.kanGodkjennesFra)
         assertThrows<IllegalStateException> {
             person.behandle(hendelse)
         }
@@ -105,7 +112,11 @@ class PersonTest {
         val person = Person(testIdent)
         // Personer begynner uten rapporertingsplikt
         person.rapporteringspliktType shouldBe Ingen
-        person.nyRapporteringsplikt(RapporteringspliktSøknad(rapporteringspliktFra = LocalDateTime.now().minusSeconds(3)))
+        person.nyRapporteringsplikt(
+            RapporteringspliktSøknad(
+                rapporteringspliktFra = LocalDateTime.now().minusSeconds(3),
+            ),
+        )
         person.rapporteringspliktType shouldBe Søknad
         person.nyRapporteringsplikt(
             RapporteringspliktVedtak(
