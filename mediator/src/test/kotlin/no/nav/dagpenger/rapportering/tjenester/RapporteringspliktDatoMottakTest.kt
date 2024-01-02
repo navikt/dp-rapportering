@@ -1,6 +1,9 @@
 package no.nav.dagpenger.rapportering.tjenester
 
+import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.runs
 import io.mockk.verify
 import no.nav.dagpenger.rapportering.IHendelseMediator
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
@@ -13,19 +16,21 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 class RapporteringspliktDatoMottakTest {
-    private val rapid = TestRapid()
-    private val mediator = mockk<IHendelseMediator>(relaxed = true)
+    private val testRapid = TestRapid()
+    private val mockMediator = mockk<IHendelseMediator>()
 
     @BeforeEach
     fun setup() {
-        RapporteringspliktDatoMottak(rapid, mediator)
+        RapporteringspliktDatoMottak(testRapid, mockMediator)
     }
 
     @Test
     fun `vi tar imot og håndterer rapporteringspliktdato hendelser`() {
-        rapid.sendTestMessage(løstBehovJSON)
+        every { mockMediator.behandle(any<RapporteringspliktDatoHendelse>()) } just runs
 
-        verify(exactly = 1) { mediator.behandle(any<RapporteringspliktDatoHendelse>()) }
+        testRapid.sendTestMessage(løstBehovJSON)
+
+        verify(exactly = 1) { mockMediator.behandle(any<RapporteringspliktDatoHendelse>()) }
     }
 }
 

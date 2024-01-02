@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.hendelser.VedtakAvslåttHendelse
 import no.nav.dagpenger.rapportering.hendelser.VedtakInnvilgetHendelse
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -17,23 +18,29 @@ import java.util.UUID
 
 class VedtakMottakTest {
     private val testRapid = TestRapid()
-    private val mediator = mockk<Mediator>(relaxed = true)
-    private val mottak = VedtakMottak(testRapid, mediator)
+    private val mockMediator = mockk<Mediator>()
+
+    @BeforeEach
+    fun setup() {
+        VedtakMottak(testRapid, mockMediator)
+    }
 
     @Test
     fun `Skal behandle dagpenger_innvilget event`() {
-        every { mediator.behandle(any<VedtakInnvilgetHendelse>()) } just runs
+        every { mockMediator.behandle(any<VedtakInnvilgetHendelse>()) } just runs
+
         testRapid.sendTestMessage(dagpengerInnvilgetMelding)
 
-        verify(exactly = 1) { mediator.behandle(any<VedtakInnvilgetHendelse>()) }
+        verify(exactly = 1) { mockMediator.behandle(any<VedtakInnvilgetHendelse>()) }
     }
 
     @Test
     fun `Skal behandle dagpenger_avslått event`() {
-        every { mediator.behandle(any<VedtakAvslåttHendelse>()) } just runs
+        every { mockMediator.behandle(any<VedtakAvslåttHendelse>()) } just runs
+
         testRapid.sendTestMessage(dagpengerAvslåttMelding)
 
-        verify(exactly = 1) { mediator.behandle(any<VedtakAvslåttHendelse>()) }
+        verify(exactly = 1) { mockMediator.behandle(any<VedtakAvslåttHendelse>()) }
     }
 }
 

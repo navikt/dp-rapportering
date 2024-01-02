@@ -21,10 +21,7 @@ class SøknadMottakTest {
 
     @BeforeEach
     fun setup() {
-        SøknadMottak(
-            testRapid,
-            mockMediator,
-        )
+        SøknadMottak(testRapid, mockMediator)
     }
 
     @Test
@@ -50,7 +47,6 @@ fun innsendingFerdigstiltHendelse(
       "fødselsnummer": "$ident",
       "søknadsData": {
         "søknad_uuid": "$søknadId"
-     
       },
       "@event_name": "innsending_ferdigstilt"
     } 

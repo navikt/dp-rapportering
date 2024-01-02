@@ -1,28 +1,35 @@
 package no.nav.dagpenger.rapportering.tjenester
 
+import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.runs
 import io.mockk.verify
 import no.nav.dagpenger.rapportering.IHendelseMediator
 import no.nav.dagpenger.rapportering.hendelser.RapporteringJournalførtHendelse
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
 class RapporteringJournalførtMottakTest {
-    private val rapid = TestRapid()
-    private val mediator = mockk<IHendelseMediator>(relaxed = true)
+    private val testRapid = TestRapid()
+    private val mockMediator = mockk<IHendelseMediator>()
 
-    init {
-        RapporteringJournalførtMottak(rapid, mediator)
+    @BeforeEach
+    fun setup() {
+        RapporteringJournalførtMottak(testRapid, mockMediator)
     }
 
     @Test
     fun `vi tar imot og håndterer rapportering journalført hendelser`() {
-        rapid.sendTestMessage(løstBehovJSON)
+        every { mockMediator.behandle(any<RapporteringJournalførtHendelse>()) } just runs
+
+        testRapid.sendTestMessage(løstBehovJSON)
 
         verify {
-            mediator.behandle(any<RapporteringJournalførtHendelse>())
+            mockMediator.behandle(any<RapporteringJournalførtHendelse>())
         }
     }
 }
