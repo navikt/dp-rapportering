@@ -6,6 +6,7 @@ import no.nav.dagpenger.rapportering.IHendelseMediator
 import no.nav.dagpenger.rapportering.hendelser.RapporteringspliktDatoHendelse
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -15,7 +16,8 @@ class RapporteringspliktDatoMottakTest {
     private val rapid = TestRapid()
     private val mediator = mockk<IHendelseMediator>(relaxed = true)
 
-    init {
+    @BeforeEach
+    fun setup() {
         RapporteringspliktDatoMottak(rapid, mediator)
     }
 
@@ -23,9 +25,7 @@ class RapporteringspliktDatoMottakTest {
     fun `vi tar imot og håndterer rapporteringspliktdato hendelser`() {
         rapid.sendTestMessage(løstBehovJSON)
 
-        verify {
-            mediator.behandle(any<RapporteringspliktDatoHendelse>())
-        }
+        verify(exactly = 1) { mediator.behandle(any<RapporteringspliktDatoHendelse>()) }
     }
 }
 
