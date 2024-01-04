@@ -83,3 +83,10 @@ interface AktivitetVisitor {
     ) {
     }
 }
+
+interface TemporalCollectionVisitor<R> {
+    fun visit(
+        at: LocalDateTime,
+        item: R,
+    )
+}

@@ -30,10 +30,6 @@ internal open class TemporalCollection<R> {
         put(at.atStartOfDay(), item)
     }
 
-    protected fun historiskeVerdier(til: LocalDate): Collection<R> {
-        return contents.filter { it.key.isBefore(til.atStartOfDay()) || it.key == til.atStartOfDay() }.values
-    }
-
     fun isNotEmpty() = contents.isNotEmpty()
 
     fun accept(visitor: TemporalCollectionVisitor<R>) {
@@ -41,11 +37,4 @@ internal open class TemporalCollection<R> {
             visitor.visit(it.key, it.value)
         }
     }
-}
-
-interface TemporalCollectionVisitor<R> {
-    fun visit(
-        at: LocalDateTime,
-        item: R,
-    )
 }
