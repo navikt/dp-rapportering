@@ -48,6 +48,10 @@ class Dag(
             )
         }
 
+        if (!sammenfallerMed(aktivitet.dato)) {
+            throw IllegalStateException("Aktivitetens dato ${aktivitet.dato} må være lik $dato}")
+        }
+
         return aktiviteter.add(aktivitet)
     }
 
