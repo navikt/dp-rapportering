@@ -50,6 +50,16 @@ jobs:
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
 
+      - name: Publish SBOM
+        uses: 'aquasecurity/trivy-action@91713af97dc80187565512baba96e4364e983601'
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          OUTPUT: sarif.json
+        run: |
+          trivy convert --format sarif --output ${{ env.output}} ${{ steps.docker-build-push.outputs.salsa }}
+          printf "\n Uploading GitHub Dependency Snapshot"
+          curl -H "Accept: application/vnd.github+json" -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${GITHUB_REPOSITORY}/dependency-graph/snapshots" -d @./$(echo ${{ env.output }} | xargs)
+
     outputs:
       image: ${{ steps.docker-build-push.outputs.image }}
 
