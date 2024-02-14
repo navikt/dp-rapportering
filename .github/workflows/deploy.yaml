@@ -26,7 +26,7 @@ jobs:
           distribution: temurin
           java-version: 19
 
-      - uses: gradle/gradle-build-action@v3.0.0
+      - uses: gradle/gradle-build-action@v3.1.0
         env:
           DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS: compileClasspath|runtimeClasspath
         with:
