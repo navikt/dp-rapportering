@@ -1,4 +1,4 @@
-package dagpenger.nav.no.plugins
+package no.nav.dagpenger.plugins
 
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
