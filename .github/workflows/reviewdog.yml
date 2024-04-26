@@ -1,0 +1,16 @@
+name: reviewdog
+on: [push]
+
+jobs:
+  code-style-violations:
+    name: Check coding style violations
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: ktlint
+        uses: ScaCap/action-ktlint@master
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-check
+          ktlint_version: 1.1.1

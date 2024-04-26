@@ -6,7 +6,7 @@ plugins {
     id("com.diffplug.spotless") version "6.25.0"
 }
 
-group = "no.nav.dagpenger"
+group = "no.nav.dagpenger.rapportering"
 version = "0.0.1"
 
 kotlin {
