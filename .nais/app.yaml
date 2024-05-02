@@ -76,6 +76,6 @@ spec:
       runtime: java
   prometheus:
     enabled: true
-    path: /internal/metrics
+    path: /metrics
   secureLogs:
     enabled: true

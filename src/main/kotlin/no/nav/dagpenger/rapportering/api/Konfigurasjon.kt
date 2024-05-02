@@ -17,7 +17,7 @@ fun Application.konfigurasjon() {
     install(CallLogging) {
         disableDefaultColors()
         filter {
-            it.request.path() !in setOf("/metrics", "/isalive", "/isready")
+            it.request.path() !in setOf("/metrics", "/isAlive", "/isReady")
         }
         level = Level.INFO
     }
