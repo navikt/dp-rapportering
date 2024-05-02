@@ -8,12 +8,22 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
+import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.AuthenticationConfig
+import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.path
+import no.nav.dagpenger.rapportering.api.auth.AuthFactory.azureAd
+import no.nav.dagpenger.rapportering.api.auth.AuthFactory.tokenX
 import org.slf4j.event.Level
 
-fun Application.konfigurasjon() {
+fun Application.konfigurasjon(
+    auth: AuthenticationConfig.() -> Unit = {
+        jwt("tokenX") { tokenX() }
+        jwt("azureAd") { azureAd() }
+    },
+) {
     install(CallLogging) {
         disableDefaultColors()
         filter {
@@ -21,6 +31,11 @@ fun Application.konfigurasjon() {
         }
         level = Level.INFO
     }
+
+    install(Authentication) {
+        auth()
+    }
+
     install(ContentNegotiation) {
         jackson {
             registerModule(JavaTimeModule())
