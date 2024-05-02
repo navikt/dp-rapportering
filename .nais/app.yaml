@@ -11,12 +11,8 @@ spec:
   image: {{ image }}
   port: 8080
 
-  {{#if ingresses}}
   ingresses:
-    {{#each ingresses as |url|}}
-     - {{url}}
-    {{/each}}
-  {{/if}}
+    - https://dp-rapportering.intern.dev.nav.no
 
   tokenx:
     enabled: true
