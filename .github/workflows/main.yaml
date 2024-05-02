@@ -53,3 +53,4 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/app.yaml
           VAR: image=${{ needs.build.outputs.image }}
+          VARS: .nais/vars-dev.yaml
