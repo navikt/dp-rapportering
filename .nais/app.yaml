@@ -18,6 +18,44 @@ spec:
     {{/each}}
   {{/if}}
 
+  tokenx:
+    enabled: true
+
+  env:
+    - name: BEREGNINGSDATO_STRATEGI
+      value: {{beregningsdato.strategi}}
+    - name: GRUPPER_SAKSBEHANDLER
+      value: {{azure.grupper.saksbehandler}}
+    - name: flyway.cleanDisabled
+      value: "false"
+
+  azure:
+    application:
+      enabled: true
+      tenant: {{azure.tenant}}
+      claims:
+        groups:
+          - id: {{azure.grupper.saksbehandler}}
+          - id: {{azure.grupper.beslutter}}
+        extra:
+          - NAVident
+  accessPolicy:
+    outbound:
+      rules:
+        - application: dp-arena-meldeplikt-adapter
+    inbound:
+      rules:
+        - application: dp-saksbehandling-frontend
+        - application: dp-rapportering-frontend
+        {{#if wonderwalled}}
+        - application: tokenx-token-generator
+          namespace: aura
+        - application: wonderwalled-azure
+          namespace: aura
+        - application: azure-token-generator
+          namespace: aura
+        {{/if}}
+
   liveness:
     path: /isAlive
   readiness:
@@ -41,11 +79,3 @@ spec:
     path: /internal/metrics
   secureLogs:
     enabled: true
-
-  accessPolicy:
-    inbound:
-      rules:
-        - application: dp-rapportering-frontend
-    outbound:
-      rules:
-        - application: dp-arena-meldeplikt-adapter
