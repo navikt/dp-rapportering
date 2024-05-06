@@ -1,9 +1,7 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("jvm") version "1.9.23"
     id("io.ktor.plugin") version "2.3.10"
-    id("com.diffplug.spotless") version "6.25.0"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
 }
 
 group = "no.nav.dagpenger.rapportering"
@@ -35,16 +33,8 @@ dependencies {
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
 }
 
-spotless {
-    kotlin {
-        ktlint("1.1.1")
-    }
-
-    kotlinGradle {
-        ktlint("1.1.1")
-    }
-}
-
-tasks.withType<KotlinCompile>().configureEach {
-    dependsOn("spotlessApply")
+ktlint {
+    android.set(false)
+    outputToConsole.set(true)
+    outputColorName.set("RED")
 }
