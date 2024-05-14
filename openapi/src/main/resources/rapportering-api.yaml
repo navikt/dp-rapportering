@@ -1,0 +1,191 @@
+openapi: 3.0.0
+info:
+    title: Rapporteringsperiode API
+    version: 1.0.0
+    description: API for å fylle og korrigerere rapporteringsperioder
+    contact:
+        name: '#team-dagpenger-rapportering'
+servers:
+    - url: https://dp-rapportering.intern.dev.nav.no
+      description: dev
+    - url: https://dp-rapportering.intern.nav.no
+      description: prod
+paths:
+    /rapporteringsperioder:
+        get:
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/Rapporteringsperiode'
+                    description: OK
+            summary: Hent alle rapporteringsperioder
+            description: Lister ut alle rapporteringsperioder, både aktive og historiske
+            operationId: get-rapporteringsperiode
+            tags:
+                - Rapporteringsperiode
+            security:
+                - tokenX: [ ]
+    /rapporteringsperioder/gjeldende:
+        get:
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Rapporteringsperiode'
+                    description: OK
+                '404':
+                    description: Not Found
+            summary: Henter ut gjeldende rapporteringsperiode
+            description: Henter ut en rapporteringsperiode. Henter alltid den siste perioden som gjelder for tidsrommet og må fylles ut. Henter ikke ut påstartede korrigeringer.
+            operationId: get-rapporteringsperiode-gjeldende
+            tags:
+                - Rapporteringsperiode
+            security:
+                - tokenX: [ ]
+    /rapporteringsperioder/{periodeId}:
+        get:
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Rapporteringsperiode'
+                    description: OK
+                '404':
+                    description: Not Found
+            summary: Hent en bestemt rapporteringsperiode
+            description: Henter ut en rapporteringsperiod
+            operationId: get-rapporteringsperiode-id
+            tags:
+                - Rapporteringsperiode
+            security:
+                - tokenX: [ ]
+        parameters:
+            - $ref: '#/components/parameters/periodeId'
+components:
+    schemas:
+        AktivitetType:
+            type: string
+            enum:
+                - Arbeid
+                - Syk
+                - Utdanning
+                - Fravaer
+        Aktivitet:
+            required:
+                - type
+                - dato
+            type: object
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                type:
+                    $ref: '#/components/schemas/AktivitetType'
+                timer:
+                    type: string
+                    format: ISO8601 Duration
+                    description: Må representeres som en ISO8601 Duration
+                dato:
+                    format: date
+                    type: string
+            example:
+                id: 4a49e571-6384-4eab-9c2e-3f4d48d30b9a
+                type: Arbeid
+                timer: PT8H30M
+                dato: '2023-05-05'
+        Rapporteringsperiode:
+            required:
+                - id
+                - kanKorrigeres
+            type: object
+            properties:
+                id:
+                    type: string
+                periode:
+                    type: object
+                    properties:
+                        fraOgMed:
+                            type: string
+                            format: date
+                        tilOgMed:
+                            type: string
+                            format: date
+                        kanSendesFra:
+                            type: string
+                            format: date
+                dager:
+                    type: array
+                    items:
+                        type: object
+                        required:
+                            - dagIndex
+                            - dato
+                            - muligeAktiviteter
+                            - aktiviteter
+                        properties:
+                            dagIndex:
+                                type: integer
+                            dato:
+                                type: string
+                                format: date
+                            aktiviteter:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/Aktivitet'
+                kanKorrigeres:
+                    type: boolean
+        Problem:
+            type: object
+            description: Implementasjon av Problem Details for HTTP APIs [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807)
+            properties:
+                type:
+                    type: string
+                    format: uri
+                    default: about:blank
+                    description: URI som identifiserer problemet
+                title:
+                    type: string
+                    description: En kort oppsummering av problemet
+                status:
+                    type: integer
+                    description: HTTP status
+                detail:
+                    type: string
+                    description: Forklaring av problemet
+                instance:
+                    type: string
+                    format: uri
+                    description: Hvor feilen oppstod
+    securitySchemes:
+        tokenX:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+            description: |
+                Bruker [TokenX](https://docs.nais.io/security/auth/tokenx/) til autentisering. Du må utveksle IDporten-token
+                til et TokenX-token hvor `audience` er satt til `[cluster]:teamdagpenger:dp-rapportering`.
+                
+                For å teste APIet kan du lage et gyldig OBO-token ved å bruke wonderwalled:
+                - [dev-gcp](https://wonderwalled-idporten.intern.dev.nav.no/api/obo?aud=dev-gcp:teamdagpenger:dp-rapportering)
+    headers: { }
+    responses: { }
+    parameters:
+        periodeId:
+            name: periodeId
+            description: ID til rapporteringsperioden
+            schema:
+                type: string
+            in: path
+            required: true
+
+tags:
+    - name: Rapporteringsperiode
+      description: >-
+          Rapporteringsperioder representerer hvilke perioder man må eller har meldt
+          seg for
