@@ -36,6 +36,6 @@ sealed class Aktivitet(
     enum class AktivitetType {
         Arbeid,
         Syk,
-        Ferie,
+        Fravaer,
     }
 }
