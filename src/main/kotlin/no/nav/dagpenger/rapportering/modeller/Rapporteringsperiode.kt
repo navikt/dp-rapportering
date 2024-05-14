@@ -1,36 +1,41 @@
 package no.nav.dagpenger.rapportering.modeller
 
-/*data class Rapporteringsperiode(
-    val id: UUID,
-    val beregnesEtter: LocalDate,
-    val fraOgMed: LocalDate,
-    val tilOgMed: LocalDate,
-    val status: Rapporteringsperiodetilstand,
-    val dager: List<RapporteringsperiodeDag>,
+import java.time.LocalDate
+import java.util.UUID
+import kotlin.time.Duration
+
+class Rapporteringsperiode(
+    val ident: String,
+    val id: Long,
+    val periode: Periode,
+    val aktivitetstidslinje: Aktivitetstidslinje,
+    val kanKorrigeres: Boolean,
 )
 
-data class RapporteringsperiodeDag(
-    val dagIndex: Int,
+data class Periode(
+    val fra: LocalDate,
+    val til: LocalDate,
+    val kanSendesFra: LocalDate,
+)
+
+data class Aktivitetstidslinje internal constructor(
+    private val dager: MutableSet<Dag> = mutableSetOf(),
+)
+
+class Dag(
+    internal val dato: LocalDate,
+    private val aktiviteter: MutableList<Aktivitet>,
+)
+
+sealed class Aktivitet(
     val dato: LocalDate,
-    val muligeAktiviteter: List<AktivitetType>,
-    val aktiviteter: List<Aktivitet>,
-)
-
-data class Aktivitet(
-    val id: UUID,
+    val tid: Duration,
     val type: AktivitetType,
-    val timer: String,
-    val dato: LocalDate,
-)
-
-enum class AktivitetType {
-    Arbeid,
-    Syk,
-    Ferie,
+    val uuid: UUID = UUID.randomUUID(),
+) {
+    enum class AktivitetType {
+        Arbeid,
+        Syk,
+        Ferie,
+    }
 }
-
-enum class Rapporteringsperiodetilstand {
-    TilUtfylling,
-    Godkjent,
-    Innsendt,
-} */

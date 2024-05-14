@@ -24,14 +24,11 @@ internal fun Application.rapporteringApi(rapporteringsRepository: RapporteringsR
 
                 route("/gjeldende") {
                     get {
-                        val rapporteringsperiode =
-                            rapporteringsRepository
-                                .hentRapporteringsperioder("12345678910").first()
-
-                        when (rapporteringsperiode) {
-                            null -> call.respond(HttpStatusCode.NotFound)
-                            else -> call.respond(HttpStatusCode.OK, rapporteringsperiode)
-                        }
+                        rapporteringsRepository
+                            .hentRapporteringsperioder("12345678910")
+                            .firstOrNull()
+                            ?.also { call.respond(HttpStatusCode.OK, it) }
+                            ?: call.respond(HttpStatusCode.NotFound)
                     }
                 }
             }

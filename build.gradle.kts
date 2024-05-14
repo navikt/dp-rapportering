@@ -2,7 +2,6 @@ plugins {
     kotlin("jvm") version "1.9.23"
     id("io.ktor.plugin") version "2.3.10"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
-    id("org.openapi.generator") version "7.5.0"
 }
 
 group = "no.nav.dagpenger.rapportering"
@@ -46,56 +45,4 @@ dependencies {
     implementation(libs.jackson.annotation)
     implementation("io.ktor:ktor-server-netty:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
-}
-
-tasks {
-    withType<org.jlleitschuh.gradle.ktlint.tasks.KtLintCheckTask> {
-        dependsOn("openApiGenerate")
-    }
-
-    named("compileKotlin").configure {
-        dependsOn("openApiGenerate")
-    }
-}
-
-ktlint {
-    android.set(false)
-    outputToConsole.set(true)
-    outputColorName.set("RED")
-    filter {
-        exclude("**/generated/**")
-    }
-}
-
-openApiGenerate {
-    generatorName.set("kotlin-server")
-    inputSpec.set("$projectDir/src/main/resources/openapi/rapportering-api.yaml")
-    outputDir.set("${layout.buildDirectory.get()}/generated/")
-    packageName.set("$group.api")
-    globalProperties.set(
-        mapOf(
-            "apis" to "none",
-            "models" to "",
-        ),
-    )
-    typeMappings.set(
-        mapOf(
-            "DateTime" to "LocalDateTime",
-        ),
-    )
-
-    importMappings.set(
-        mapOf(
-            "LocalDateTime" to "java.time.LocalDateTime",
-        ),
-    )
-
-    modelNameSuffix.set("DTO")
-    configOptions.set(
-        mapOf(
-            "serializationLibrary" to "jackson",
-            "enumPropertyNaming" to "original",
-            "dateLibrary" to "custom",
-        ),
-    )
 }
