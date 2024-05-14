@@ -1,7 +1,7 @@
 package no.nav.dagpenger.rapportering.repository
 
-import no.nav.dagpenger.rapportering.modeller.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDTO
 
 interface RapporteringsRepository {
-    fun hentRapporteringsperioder(ident: String): List<Rapporteringsperiode>
+    fun hentRapporteringsperioder(ident: String): List<RapporteringsperiodeDTO>
 }

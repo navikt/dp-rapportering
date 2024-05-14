@@ -1,9 +1,6 @@
 package no.nav.dagpenger.rapportering.modeller
 
-import java.time.LocalDate
-import java.util.UUID
-
-data class Rapporteringsperiode(
+/*data class Rapporteringsperiode(
     val id: UUID,
     val beregnesEtter: LocalDate,
     val fraOgMed: LocalDate,
@@ -36,4 +33,4 @@ enum class Rapporteringsperiodetilstand {
     TilUtfylling,
     Godkjent,
     Innsendt,
-}
+} */

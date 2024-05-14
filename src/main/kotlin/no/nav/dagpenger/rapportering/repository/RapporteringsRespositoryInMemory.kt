@@ -1,27 +1,26 @@
 package no.nav.dagpenger.rapportering.repository
 
-import no.nav.dagpenger.rapportering.modeller.AktivitetType
-import no.nav.dagpenger.rapportering.modeller.Rapporteringsperiode
-import no.nav.dagpenger.rapportering.modeller.RapporteringsperiodeDag
-import no.nav.dagpenger.rapportering.modeller.Rapporteringsperiodetilstand
+import no.nav.dagpenger.rapportering.api.models.AktivitetTypeDTO
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDTO
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeDagDTO
 import java.time.LocalDate
 import java.util.UUID
 
 class RapporteringsRespositoryInMemory : RapporteringsRepository {
-    override fun hentRapporteringsperioder(ident: String): List<Rapporteringsperiode> =
+    override fun hentRapporteringsperioder(ident: String): List<RapporteringsperiodeDTO> =
         listOf(
-            Rapporteringsperiode(
+            RapporteringsperiodeDTO(
                 id = UUID.randomUUID(),
                 beregnesEtter = LocalDate.now(),
                 fraOgMed = LocalDate.now(),
                 tilOgMed = LocalDate.now(),
-                status = Rapporteringsperiodetilstand.TilUtfylling,
+                status = RapporteringsperiodeDTO.Status.TilUtfylling,
                 dager =
                     (0..13).map { dagIndex ->
-                        RapporteringsperiodeDag(
+                        RapporteringsperiodeDagDTO(
                             dagIndex = dagIndex,
                             dato = LocalDate.now(),
-                            muligeAktiviteter = AktivitetType.entries.map { it },
+                            muligeAktiviteter = AktivitetTypeDTO.entries.map { it },
                             aktiviteter = emptyList(),
                         )
                     },
