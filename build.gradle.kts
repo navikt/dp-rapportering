@@ -31,6 +31,12 @@ sourceSets {
     }
 }
 
+ktlint {
+    android.set(false)
+    outputToConsole.set(true)
+    outputColorName.set("RED")
+}
+
 repositories {
     mavenCentral()
     maven { setUrl("https://github-package-registry-mirror.gc.nav.no/cached/maven-release") }
