@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering
 import com.natpryce.konfig.ConfigurationMap
 import com.natpryce.konfig.ConfigurationProperties
 import com.natpryce.konfig.EnvironmentVariables
+import com.natpryce.konfig.Key
 import com.natpryce.konfig.PropertyGroup
 import com.natpryce.konfig.getValue
 import com.natpryce.konfig.overriding
@@ -29,4 +30,10 @@ internal object Configuration {
             map + pair.second
         }
     internal val beregningsdato_strategi by stringType
+
+    val meldepliktAdapterUrl by lazy {
+        properties[Key("MELDEPLIKT_ADAPTER_HOST", stringType)].let {
+            "https://$it"
+        }
+    }
 }

@@ -31,6 +31,10 @@ sourceSets {
     }
 }
 
+tasks.test {
+    useJUnitPlatform()
+}
+
 ktlint {
     android.set(false)
     outputToConsole.set(true)
@@ -51,4 +55,11 @@ dependencies {
     implementation(libs.jackson.annotation)
     implementation("io.ktor:ktor-server-netty:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
+
+    testImplementation("io.kotest:kotest-assertions-core-jvm:${libs.versions.kotest.get()}")
+    testImplementation("io.mockk:mockk:${libs.versions.mockk.get()}")
+    testImplementation(libs.mock.oauth2.server)
+    testImplementation(libs.ktor.server.test.host)
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.2")
+    testImplementation(libs.ktor.client.mock)
 }
