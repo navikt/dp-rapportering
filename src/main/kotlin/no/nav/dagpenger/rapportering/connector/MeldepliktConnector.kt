@@ -18,7 +18,7 @@ class MeldepliktConnector(
 
     suspend fun hentMeldekort(ident: String): String {
         val response =
-            httpClient.get(URI(meldepliktUrl).toURL()) {
+            httpClient.get(URI("$meldepliktUrl/meldekort").toURL()) {
                 parameter("ident", ident)
                 contentType(ContentType.Application.Json)
             }
