@@ -16,6 +16,7 @@ import io.ktor.server.auth.jwt.JWTAuthenticationProvider
 import io.ktor.server.auth.jwt.JWTPrincipal
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.Configuration
+import java.net.URI
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
@@ -58,7 +59,7 @@ object AuthFactory {
         }
 
     fun JWTAuthenticationProvider.Config.tokenX() {
-        verifier(jwkProvider(URL(tokenXConfiguration.jwksUri)), tokenXConfiguration.issuer) {
+        verifier(jwkProvider(URI(tokenXConfiguration.jwksUri).toURL()), tokenXConfiguration.issuer) {
             withAudience(Configuration.properties[token_x.client_id])
         }
         realm = Configuration.APP_NAME
@@ -69,7 +70,7 @@ object AuthFactory {
 
     fun JWTAuthenticationProvider.Config.azureAd() {
         val saksbehandlerGruppe = Configuration.properties[Configuration.Grupper.saksbehandler]
-        verifier(jwkProvider(URL(azureAdConfiguration.jwksUri)), azureAdConfiguration.issuer) {
+        verifier(jwkProvider(URI(azureAdConfiguration.jwksUri).toURL()), azureAdConfiguration.issuer) {
             withAudience(Configuration.properties[azure_app.client_id])
         }
         realm = Configuration.APP_NAME
