@@ -4,7 +4,6 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
-import io.ktor.client.request.parameter
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import no.nav.dagpenger.rapportering.Configuration
@@ -18,8 +17,7 @@ class MeldepliktConnector(
 
     suspend fun hentMeldekort(ident: String): String {
         val response =
-            httpClient.get(URI("$meldepliktUrl/meldekort").toURL()) {
-                parameter("ident", ident)
+            httpClient.get(URI("$meldepliktUrl/meldekort/$ident").toURL()) {
                 contentType(ContentType.Application.Json)
             }
         return response.body()
