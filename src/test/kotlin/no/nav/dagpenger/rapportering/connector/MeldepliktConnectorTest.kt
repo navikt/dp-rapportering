@@ -5,23 +5,16 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 class MeldepliktConnectorTest {
-    private fun meldepliktConnector(
-        responseBody: String,
-        statusCode: Int,
-    ) = MeldepliktConnector(
-        meldepliktUrl = "http://baseUrl",
-        engine = createMockClient(statusCode, responseBody),
-    )
+    private val meldepliktUrl = "http://meldepliktUrl"
 
     @Test
-    fun `henter tom meldekortliste`() {
-        val connector = meldepliktConnector("[]", 200)
+    fun `meldeplikt API svarer med tom liste`() {
+        runBlocking {
+            val mockEngine = createMockClient(200, "[]")
+            val meldepliktConnector = MeldepliktConnector(meldepliktUrl, mockEngine)
 
-        val response =
-            runBlocking {
-                connector.hentMeldekort("123")
-            }
-
-        response shouldBe "[]"
+            val response = meldepliktConnector.hentMeldekort("123")
+            response shouldBe "[]"
+        }
     }
 }
