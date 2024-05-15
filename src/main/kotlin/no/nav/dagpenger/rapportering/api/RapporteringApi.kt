@@ -8,24 +8,27 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import no.nav.dagpenger.rapportering.repository.RapporteringsRepository
+import no.nav.dagpenger.rapportering.api.auth.ident
+import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 
-internal fun Application.rapporteringApi(rapporteringsRepository: RapporteringsRepository) {
+internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnector) {
     routing {
         authenticate("tokenX") {
             route("/rapporteringsperioder") {
                 get {
+                    val ident = call.ident()
+
                     val rapporteringsperioder =
-                        rapporteringsRepository
-                            .hentRapporteringsperioder("12345678910")
+                        meldepliktConnector
+                            .hentMeldekort(ident)
 
                     call.respond(HttpStatusCode.OK, rapporteringsperioder)
                 }
 
                 route("/gjeldende") {
                     get {
-                        rapporteringsRepository
-                            .hentRapporteringsperioder("12345678910")
+                        meldepliktConnector
+                            .hentMeldekort("12345678910")
                             .firstOrNull()
                             ?.also { call.respond(HttpStatusCode.OK, it) }
                             ?: call.respond(HttpStatusCode.NotFound)
