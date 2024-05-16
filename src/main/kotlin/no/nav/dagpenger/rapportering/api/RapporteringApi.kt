@@ -18,17 +18,16 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
                 get {
                     val ident = call.ident()
 
-                    val rapporteringsperioder =
-                        meldepliktConnector
-                            .hentMeldekort(ident)
-
-                    call.respond(HttpStatusCode.OK, rapporteringsperioder)
+                    meldepliktConnector
+                        .hentMeldekort(ident)
+                        .also { call.respond(HttpStatusCode.OK, it) }
                 }
 
                 route("/gjeldende") {
                     get {
+                        val ident = call.ident()
                         meldepliktConnector
-                            .hentMeldekort("12345678910")
+                            .hentMeldekort(ident)
                             .firstOrNull()
                             ?.also { call.respond(HttpStatusCode.OK, it) }
                             ?: call.respond(HttpStatusCode.NotFound)
