@@ -12,7 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
-import no.nav.dagpenger.rapportering.modeller.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import java.net.URI
 
 class MeldepliktConnector(

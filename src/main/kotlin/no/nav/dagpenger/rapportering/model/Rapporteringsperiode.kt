@@ -1,4 +1,4 @@
-package no.nav.dagpenger.rapportering.modeller
+package no.nav.dagpenger.rapportering.model
 
 import java.time.LocalDate
 import java.util.UUID

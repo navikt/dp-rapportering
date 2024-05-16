@@ -2,9 +2,9 @@ package no.nav.dagpenger.rapportering.connector
 
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
-import no.nav.dagpenger.rapportering.modeller.Aktivitetstidslinje
-import no.nav.dagpenger.rapportering.modeller.Periode
-import no.nav.dagpenger.rapportering.modeller.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.Aktivitetstidslinje
+import no.nav.dagpenger.rapportering.model.Periode
+import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
