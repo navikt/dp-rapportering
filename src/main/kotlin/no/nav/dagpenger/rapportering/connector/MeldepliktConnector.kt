@@ -22,6 +22,7 @@ class MeldepliktConnector(
     val httpClient = createHttpClient(engine)
 
     suspend fun hentMeldekort(ident: String): List<Rapporteringsperiode> =
+        // TODO Returtype: List<Rapporteringsperiode> -> Person
         withContext(Dispatchers.IO) {
             try {
                 val response: HttpResponse =

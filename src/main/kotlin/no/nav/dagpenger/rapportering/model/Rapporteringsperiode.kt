@@ -4,8 +4,13 @@ import java.time.LocalDate
 import java.util.UUID
 import kotlin.time.Duration
 
-class Rapporteringsperiode(
+data class Person(
     val ident: String,
+    val rapporteringsperioder: List<Rapporteringsperiode>,
+)
+
+data class Rapporteringsperiode(
+    val ident: String, // TODO: Fjerne ident når Person er tatt i bruk
     val id: Long,
     val periode: Periode,
     val aktivitetstidslinje: Aktivitetstidslinje,
@@ -22,7 +27,7 @@ data class Aktivitetstidslinje internal constructor(
     private val dager: MutableSet<Dag> = mutableSetOf(),
 )
 
-class Dag(
+data class Dag(
     internal val dato: LocalDate,
     private val aktiviteter: MutableList<Aktivitet>,
 )
