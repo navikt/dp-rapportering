@@ -10,7 +10,8 @@ data class Person(
 )
 
 data class Rapporteringsperiode(
-    val ident: String, // TODO: Fjerne ident når Person er tatt i bruk
+    // TODO: Fjerne ident når Person er tatt i bruk
+    val ident: String,
     val id: Long,
     val periode: Periode,
     val aktivitetstidslinje: Aktivitetstidslinje,
