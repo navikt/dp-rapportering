@@ -31,6 +31,7 @@ class MeldepliktConnector(
                     }
                 if (response.status.isSuccess()) {
                     logger.info("Kall til meldeplikt-adapter gikk OK")
+                    sikkerlogg.info("Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK")
                     response.body()
                 } else {
                     logger.warn("Kall til meldeplikt-adapter feilet med status ${response.status}")
@@ -44,5 +45,6 @@ class MeldepliktConnector(
 
     companion object {
         private val logger = KotlinLogging.logger {}
+        val sikkerlogg = KotlinLogging.logger("connector.HentRapporteringperioder")
     }
 }
