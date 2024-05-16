@@ -49,6 +49,7 @@ repositories {
 dependencies {
     implementation(libs.rapids.and.rivers)
     implementation(libs.konfig)
+    implementation(libs.bundles.jackson)
     implementation(libs.bundles.postgres)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.client)

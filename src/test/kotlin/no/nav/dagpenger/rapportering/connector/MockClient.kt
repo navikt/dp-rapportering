@@ -1,5 +1,7 @@
 package no.nav.dagpenger.rapportering.connector
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -10,12 +12,12 @@ import io.ktor.http.headersOf
 
 internal fun createMockClient(
     statusCode: Int,
-    responseBody: String,
+    responseBody: Any,
 ): HttpClientEngine {
     val mockEngine =
         MockEngine {
             respond(
-                content = responseBody,
+                content = objectMapper.writeValueAsString(responseBody),
                 status = HttpStatusCode.fromValue(statusCode),
                 headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
             )
@@ -23,3 +25,5 @@ internal fun createMockClient(
 
     return mockEngine
 }
+
+val objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())

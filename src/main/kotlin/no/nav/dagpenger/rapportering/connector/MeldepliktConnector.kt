@@ -7,6 +7,7 @@ import io.ktor.client.request.get
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import no.nav.dagpenger.rapportering.Configuration
+import no.nav.dagpenger.rapportering.modeller.Rapporteringsperiode
 import java.net.URI
 
 class MeldepliktConnector(
@@ -15,7 +16,7 @@ class MeldepliktConnector(
 ) {
     val httpClient = createHttpClient(engine)
 
-    suspend fun hentMeldekort(ident: String): String {
+    suspend fun hentMeldekort(ident: String): List<Rapporteringsperiode> {
         val response =
             httpClient.get(URI("$meldepliktUrl/meldekort/$ident").toURL()) {
                 contentType(ContentType.Application.Json)

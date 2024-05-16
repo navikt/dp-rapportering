@@ -8,7 +8,7 @@ class Rapporteringsperiode(
     val ident: String,
     val id: Long,
     val periode: Periode,
-    val aktivitetstidslinje: Aktivitetstidslinje?,
+    val aktivitetstidslinje: Aktivitetstidslinje,
     val kanKorrigeres: Boolean,
 )
 
