@@ -10,6 +10,7 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 
 internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnector) {
     routing {
@@ -20,6 +21,7 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
 
                     meldepliktConnector
                         .hentMeldekort(ident)
+                        .also { RapporteringsperiodeMetrikker.hentet.inc() }
                         .also { call.respond(HttpStatusCode.OK, it) }
                 }
 
