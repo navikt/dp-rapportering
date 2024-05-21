@@ -3,7 +3,7 @@ import io.prometheus.client.Counter
 
 private const val NAMESPACE = "dp-rapportering"
 
-object Metrikker {
+object RapporteringsperiodeMetrikker {
     val hentet: Counter =
         Counter.build()
             .namespace(NAMESPACE)
