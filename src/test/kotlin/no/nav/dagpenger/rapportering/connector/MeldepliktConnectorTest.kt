@@ -2,7 +2,6 @@ package no.nav.dagpenger.rapportering.connector
 
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
-import no.nav.dagpenger.rapportering.model.Aktivitetstidslinje
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import org.junit.jupiter.api.Test
@@ -43,12 +42,10 @@ class MeldepliktConnectorTest {
 
             with(get(0)) {
                 id shouldBe 123L
-                ident shouldBe "123"
             }
 
             with(get(1)) {
                 id shouldBe 1234L
-                ident shouldBe "1234"
             }
         }
     }
@@ -57,27 +54,27 @@ class MeldepliktConnectorTest {
 val rapporteringsperiodeListe =
     listOf(
         Rapporteringsperiode(
-            ident = "123",
             id = 123L,
             periode =
                 Periode(
-                    fra = LocalDate.now().minusWeeks(2),
-                    til = LocalDate.now(),
-                    kanSendesFra = LocalDate.now(),
+                    fraOgMed = LocalDate.now().minusWeeks(2),
+                    tilOgMed = LocalDate.now(),
                 ),
-            aktivitetstidslinje = Aktivitetstidslinje(),
+            dager = emptyList(),
+            kanSendesFra = LocalDate.now(),
+            kanSendes = true,
             kanKorrigeres = true,
         ),
         Rapporteringsperiode(
-            ident = "1234",
             id = 1234L,
             periode =
                 Periode(
-                    fra = LocalDate.now().minusWeeks(4),
-                    til = LocalDate.now().minusWeeks(2),
-                    kanSendesFra = LocalDate.now().minusWeeks(2),
+                    fraOgMed = LocalDate.now().minusWeeks(4),
+                    tilOgMed = LocalDate.now().minusWeeks(2),
                 ),
-            aktivitetstidslinje = Aktivitetstidslinje(),
+            dager = emptyList(),
+            kanSendesFra = LocalDate.now().minusWeeks(2),
+            kanSendes = true,
             kanKorrigeres = false,
         ),
     )

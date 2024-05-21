@@ -1,5 +1,4 @@
 package no.nav.dagpenger.rapportering.metrics
-
 import io.prometheus.client.Counter
 
 private const val NAMESPACE = "dp-rapportering"
