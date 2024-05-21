@@ -30,21 +30,21 @@ class MeldepliktConnector(
                         contentType(ContentType.Application.Json)
                     }
                 if (response.status.isSuccess()) {
-                    logger.info("Kall til meldeplikt-adapter gikk OK")
-                    sikkerlogg.info("Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK")
+                    logger.info { "Kall til meldeplikt-adapter gikk OK" }
+                    sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
                     response.body()
                 } else {
-                    logger.warn("Kall til meldeplikt-adapter feilet med status ${response.status}")
+                    logger.warn { "Kall til meldeplikt-adapter feilet med status ${response.status}" }
                     emptyList()
                 }
             } catch (e: Exception) {
-                logger.warn("Kall til meldeplikt-adapter eller mapping av response feilet", e)
+                logger.warn(e) { "Kall til meldeplikt-adapter eller mapping av response feilet" }
                 emptyList()
             }
         }
 
     companion object {
         private val logger = KotlinLogging.logger {}
-        val sikkerlogg = KotlinLogging.logger("connector.HentRapporteringperioder")
+        val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
     }
 }
