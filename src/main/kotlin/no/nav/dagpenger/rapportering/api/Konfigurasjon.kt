@@ -15,14 +15,13 @@ import io.ktor.server.metrics.micrometer.MicrometerMetrics
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.path
-import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.azureAd
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.tokenX
 import org.slf4j.event.Level
 
 fun Application.konfigurasjon(
-    appMicrometerRegistry: PrometheusMeterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
+    appMicrometerRegistry: PrometheusMeterRegistry,
     auth: AuthenticationConfig.() -> Unit = {
         jwt("tokenX") { tokenX() }
         jwt("azureAd") { azureAd() }

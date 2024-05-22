@@ -3,6 +3,8 @@ package no.nav.dagpenger.rapportering
 import io.ktor.server.application.Application
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.micrometer.prometheus.PrometheusConfig
+import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.dagpenger.rapportering.api.internalApi
 import no.nav.dagpenger.rapportering.api.konfigurasjon
 import no.nav.dagpenger.rapportering.api.rapporteringApi
@@ -13,7 +15,9 @@ fun main() {
 }
 
 fun Application.module() {
-    konfigurasjon()
-    internalApi()
+    val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
+
+    konfigurasjon(appMicrometerRegistry)
+    internalApi(appMicrometerRegistry)
     rapporteringApi(MeldepliktConnector())
 }
