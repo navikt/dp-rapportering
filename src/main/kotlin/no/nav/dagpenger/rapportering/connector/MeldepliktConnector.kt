@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
+import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import java.net.URI
 
@@ -35,10 +36,12 @@ class MeldepliktConnector(
                     response.body()
                 } else {
                     logger.warn { "Kall til meldeplikt-adapter feilet med status ${response.status}" }
+                    MeldepliktMetrikker.meldepliktError.inc()
                     emptyList()
                 }
             } catch (e: Exception) {
                 logger.warn(e) { "Kall til meldeplikt-adapter eller mapping av response feilet" }
+                MeldepliktMetrikker.meldepliktException.inc()
                 emptyList()
             }
         }
