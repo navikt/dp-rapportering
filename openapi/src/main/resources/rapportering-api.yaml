@@ -75,9 +75,10 @@ components:
                 - Arbeid
                 - Syk
                 - Utdanning
-                - Fravaer
+                - FerieEllerFravaer
         Aktivitet:
             required:
+                - id
                 - type
                 - dato
             type: object
@@ -116,9 +117,6 @@ components:
                         tilOgMed:
                             type: string
                             format: date
-                        kanSendesFra:
-                            type: string
-                            format: date
                 dager:
                     type: array
                     items:
@@ -126,11 +124,8 @@ components:
                         required:
                             - dagIndex
                             - dato
-                            - muligeAktiviteter
                             - aktiviteter
                         properties:
-                            dagIndex:
-                                type: integer
                             dato:
                                 type: string
                                 format: date
@@ -138,6 +133,11 @@ components:
                                 type: array
                                 items:
                                     $ref: '#/components/schemas/Aktivitet'
+                kanSendesFra:
+                    type: string
+                    format: date
+                kanSendes:
+                    type: boolean
                 kanKorrigeres:
                     type: boolean
         Problem:
