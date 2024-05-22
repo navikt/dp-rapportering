@@ -9,7 +9,6 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
-import io.ktor.http.isSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
@@ -37,19 +36,15 @@ class MeldepliktConnector(
                         header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
                         contentType(ContentType.Application.Json)
                     }
-                if (response.status.isSuccess()) {
-                    logger.info { "Kall til meldeplikt-adapter gikk OK" }
-                    sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
-                    response.body()
-                } else {
-                    logger.warn { "Kall til meldeplikt-adapter feilet med status ${response.status}" }
-                    MeldepliktMetrikker.meldepliktError.inc()
-                    emptyList()
-                }
+
+                logger.info { "Kall til meldeplikt-adapter gikk OK" }
+                sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
+
+                response.body()
             } catch (e: Exception) {
                 logger.warn(e) { "Kall til meldeplikt-adapter eller mapping av response feilet" }
                 MeldepliktMetrikker.meldepliktException.inc()
-                emptyList()
+                throw e
             }
         }
 

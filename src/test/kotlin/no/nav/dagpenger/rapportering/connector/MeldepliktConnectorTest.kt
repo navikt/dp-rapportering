@@ -1,10 +1,10 @@
 package no.nav.dagpenger.rapportering.connector
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.ktor.serialization.JsonConvertException
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.model.Dag
-import no.nav.dagpenger.rapportering.model.Periode
-import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -16,7 +16,7 @@ class MeldepliktConnectorTest {
     private val ident = "12345678903"
 
     private fun meldepliktConnector(
-        responseBody: Any,
+        responseBody: String,
         statusCode: Int,
     ) = MeldepliktConnector(
         meldepliktUrl = meldepliktUrl,
@@ -26,7 +26,7 @@ class MeldepliktConnectorTest {
 
     @Test
     fun `henter tom meldekortliste`() {
-        val connector = meldepliktConnector(emptyList<Rapporteringsperiode>(), 200)
+        val connector = meldepliktConnector("[]", 200)
 
         val response =
             runBlocking {
@@ -38,9 +38,12 @@ class MeldepliktConnectorTest {
 
     @Test
     fun `henter meldekortliste med to elementer`() {
-        val rapporteringsperiode1 = rapporteringsperiodeFor(id = 123L, fraOgMed = 1.januar, tilOgMed = 14.januar, kanSendesFra = 13.januar)
-        val rapporteringsperiode2 = rapporteringsperiodeFor(id = 456L, fraOgMed = 15.januar, tilOgMed = 28.januar, kanSendesFra = 27.januar)
-        val rapporteringsperioder = listOf(rapporteringsperiode1, rapporteringsperiode2)
+        val rapporteringsperiode1 =
+            rapporteringsperiodeFor(id = 123L, fraOgMed = 1.januar, tilOgMed = 14.januar, kanSendesFra = 13.januar)
+        val rapporteringsperiode2 =
+            rapporteringsperiodeFor(id = 456L, fraOgMed = 15.januar, tilOgMed = 28.januar, kanSendesFra = 27.januar)
+
+        val rapporteringsperioder = "[$rapporteringsperiode1, $rapporteringsperiode2]"
 
         val connector = meldepliktConnector(rapporteringsperioder, 200)
 
@@ -67,6 +70,19 @@ class MeldepliktConnectorTest {
             }
         }
     }
+
+    @Test
+    fun `feiler ved ugyldig periode`() {
+        val rapporteringsperioder =
+            rapporteringsperiodeFor(id = 123L, fraOgMed = 1.januar, tilOgMed = 10.januar)
+        val connector = meldepliktConnector("[$rapporteringsperioder]", 200)
+
+        shouldThrow<JsonConvertException> {
+            runBlocking {
+                connector.hentMeldekort(ident, subjectToken)
+            }
+        }
+    }
 }
 
 fun rapporteringsperiodeFor(
@@ -77,11 +93,17 @@ fun rapporteringsperiodeFor(
     kanSendesFra: LocalDate = LocalDate.now(),
     kanSendes: Boolean = true,
     kanKorrigeres: Boolean = true,
-) = Rapporteringsperiode(
-    id = id,
-    periode = Periode(fraOgMed, tilOgMed),
-    dager = dager,
-    kanSendesFra = kanSendesFra,
-    kanSendes = kanSendes,
-    kanKorrigeres = kanKorrigeres,
-)
+) = //language=JSON
+    """
+    {
+      "id": $id,
+      "periode": {
+        "fraOgMed": "$fraOgMed",
+        "tilOgMed": "$tilOgMed"
+      },
+      "dager": $dager,
+      "kanSendesFra": "$kanSendesFra",
+      "kanSendes": $kanSendes,
+      "kanKorrigeres": $kanKorrigeres
+    }
+    """.trimIndent()
