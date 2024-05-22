@@ -2,7 +2,7 @@ package no.nav.dagpenger.rapportering.model
 
 import java.time.LocalDate
 
-class Rapporteringsperiode(
+data class Rapporteringsperiode(
     val id: Long,
     val periode: Periode,
     val dager: List<Dag>,
