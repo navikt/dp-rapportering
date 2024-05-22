@@ -13,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
-import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import java.net.URI
 
@@ -30,22 +29,16 @@ class MeldepliktConnector(
     ): List<Rapporteringsperiode> =
         // TODO Returtype: List<Rapporteringsperiode> -> Person
         withContext(Dispatchers.IO) {
-            try {
-                val response: HttpResponse =
-                    httpClient.get(URI("$meldepliktUrl/meldekort/$ident").toURL()) {
-                        header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
-                        contentType(ContentType.Application.Json)
-                    }
+            val response: HttpResponse =
+                httpClient.get(URI("$meldepliktUrl/meldekort/$ident").toURL()) {
+                    header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
+                    contentType(ContentType.Application.Json)
+                }
 
-                logger.info { "Kall til meldeplikt-adapter gikk OK" }
-                sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
+            logger.info { "Kall til meldeplikt-adapter gikk OK" }
+            sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
 
-                response.body()
-            } catch (e: Exception) {
-                logger.warn(e) { "Kall til meldeplikt-adapter eller mapping av response feilet" }
-                MeldepliktMetrikker.meldepliktException.inc()
-                throw e
-            }
+            response.body()
         }
 
     companion object {
