@@ -8,6 +8,8 @@ import com.natpryce.konfig.PropertyGroup
 import com.natpryce.konfig.getValue
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
+import io.micrometer.prometheus.PrometheusConfig
+import io.micrometer.prometheus.PrometheusMeterRegistry
 
 internal object Configuration {
     const val APP_NAME = "dp-rapportering"
@@ -18,6 +20,8 @@ internal object Configuration {
                 "Grupper.saksbehandler" to "123",
             ),
         )
+
+    val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
     object Grupper : PropertyGroup() {
         val saksbehandler by stringType
