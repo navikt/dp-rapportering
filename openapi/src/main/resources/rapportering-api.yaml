@@ -75,7 +75,7 @@ components:
                 - Arbeid
                 - Syk
                 - Utdanning
-                - FerieEllerFravaer
+                - Fravaer
         Aktivitet:
             required:
                 - id
@@ -100,39 +100,49 @@ components:
                 type: Arbeid
                 timer: PT8H30M
                 dato: '2023-05-05'
+        periode:
+            type: object
+            required:
+                - fraOgMed
+                - tilOgMed
+            properties:
+                fraOgMed:
+                    type: string
+                    format: date
+                tilOgMed:
+                    type: string
+                    format: date
+        dager:
+            type: array
+            items:
+                type: object
+                required:
+                    - dato
+                    - aktiviteter
+                properties:
+                    dato:
+                        type: string
+                        format: date
+                    aktiviteter:
+                        type: array
+                        items:
+                            $ref: '#/components/schemas/Aktivitet'
         Rapporteringsperiode:
             required:
                 - id
+                - periode
+                - dager
+                - kanSendesFra
+                - kanSendes
                 - kanKorrigeres
             type: object
             properties:
                 id:
                     type: string
                 periode:
-                    type: object
-                    properties:
-                        fraOgMed:
-                            type: string
-                            format: date
-                        tilOgMed:
-                            type: string
-                            format: date
+                    $ref: '#/components/schemas/periode'
                 dager:
-                    type: array
-                    items:
-                        type: object
-                        required:
-                            - dagIndex
-                            - dato
-                            - aktiviteter
-                        properties:
-                            dato:
-                                type: string
-                                format: date
-                            aktiviteter:
-                                type: array
-                                items:
-                                    $ref: '#/components/schemas/Aktivitet'
+                    $ref: '#/components/schemas/dager'
                 kanSendesFra:
                     type: string
                     format: date

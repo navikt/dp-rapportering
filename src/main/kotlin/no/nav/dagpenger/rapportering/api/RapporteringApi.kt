@@ -21,6 +21,7 @@ import no.nav.dagpenger.rapportering.api.auth.jwt
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
+import no.nav.dagpenger.rapportering.model.toResponse
 import java.net.URI
 
 private val logger = KotlinLogging.logger {}
@@ -83,7 +84,6 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
                         HttpProblem(title = "Feilet", detail = cause.message, status = 400),
                     )
                 }
-
                 else -> {
                     logger.error(cause) { "Kunne ikke håndtere API kall" }
                     MeldepliktMetrikker.meldepliktException.inc()
@@ -105,8 +105,10 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
 
                     meldepliktConnector
                         .hentMeldekort(ident, jwtToken)
-                        .also { RapporteringsperiodeMetrikker.hentet.inc() }
-                        .also { call.respond(HttpStatusCode.OK, it) }
+                        .also {
+                            RapporteringsperiodeMetrikker.hentet.inc()
+                        }
+                        .also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                 }
 
                 route("/gjeldende") {

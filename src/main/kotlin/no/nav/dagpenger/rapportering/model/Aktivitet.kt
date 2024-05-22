@@ -7,11 +7,12 @@ data class Aktivitet(
     val uuid: UUID,
     val dato: LocalDate,
     val type: AktivitetsType,
+    val timer: String,
 ) {
     enum class AktivitetsType {
-        ARBIED,
-        SYK,
-        UTDANNING,
-        FRAVAER,
+        Arbeid,
+        Syk,
+        Utdanning,
+        Fravaer,
     }
 }
