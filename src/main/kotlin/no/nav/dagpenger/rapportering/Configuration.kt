@@ -10,6 +10,8 @@ import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
+import no.nav.dagpenger.oauth2.CachedOauth2Client
+import no.nav.dagpenger.oauth2.OAuth2Config
 
 internal object Configuration {
     const val APP_NAME = "dp-rapportering"
@@ -40,4 +42,22 @@ internal object Configuration {
             "https://$it"
         }
     }
+
+    val meldepliktAdapterAudience by lazy { properties[Key("MELDEPLIKT_ADAPTER_AUDIENCE", stringType)] }
+
+    private val tokenXClient by lazy {
+        val tokenX = OAuth2Config.TokenX(properties)
+        CachedOauth2Client(
+            tokenEndpointUrl = tokenX.tokenEndpointUrl,
+            authType = tokenX.privateKey(),
+        )
+    }
+
+    fun tokenXClient(audience: String) =
+        { subjectToken: String ->
+            tokenXClient.tokenExchange(
+                token = subjectToken,
+                audience = audience,
+            ).accessToken
+        }
 }

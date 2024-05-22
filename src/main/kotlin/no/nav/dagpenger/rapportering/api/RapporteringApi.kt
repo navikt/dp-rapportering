@@ -9,6 +9,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.api.auth.ident
+import no.nav.dagpenger.rapportering.api.auth.jwt
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 
@@ -18,9 +19,10 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
             route("/rapporteringsperioder") {
                 get {
                     val ident = call.ident()
+                    val jwtToken = call.request.jwt()
 
                     meldepliktConnector
-                        .hentMeldekort(ident)
+                        .hentMeldekort(ident, jwtToken)
                         .also { RapporteringsperiodeMetrikker.hentet.inc() }
                         .also { call.respond(HttpStatusCode.OK, it) }
                 }
@@ -28,8 +30,9 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
                 route("/gjeldende") {
                     get {
                         val ident = call.ident()
+                        val jwtToken = call.request.jwt()
                         meldepliktConnector
-                            .hentMeldekort(ident)
+                            .hentMeldekort(ident, jwtToken)
                             .firstOrNull()
                             ?.also { call.respond(HttpStatusCode.OK, it) }
                             ?: call.respond(HttpStatusCode.NotFound)

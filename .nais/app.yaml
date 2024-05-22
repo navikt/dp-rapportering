@@ -30,6 +30,8 @@ spec:
       value: "false"
     - name: MELDEPLIKT_ADAPTER_HOST
       value: {{MELDEPLIKT_ADAPTER_HOST}}
+    - name: MELDEPLIKT_ADAPTER_AUDIENCE
+      value: {{MELDEPLIKT_ADAPTER_AUDIENCE}}
 
   azure:
     application:

@@ -4,8 +4,10 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.Dispatchers
@@ -18,16 +20,21 @@ import java.net.URI
 
 class MeldepliktConnector(
     private val meldepliktUrl: String = Configuration.meldepliktAdapterUrl,
+    val tokenProvider: (String) -> String = Configuration.tokenXClient(Configuration.meldepliktAdapterAudience),
     engine: HttpClientEngine = CIO.create {},
 ) {
     val httpClient = createHttpClient(engine)
 
-    suspend fun hentMeldekort(ident: String): List<Rapporteringsperiode> =
+    suspend fun hentMeldekort(
+        ident: String,
+        subjectToken: String,
+    ): List<Rapporteringsperiode> =
         // TODO Returtype: List<Rapporteringsperiode> -> Person
         withContext(Dispatchers.IO) {
             try {
                 val response: HttpResponse =
                     httpClient.get(URI("$meldepliktUrl/meldekort/$ident").toURL()) {
+                        header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
                         contentType(ContentType.Application.Json)
                     }
                 if (response.status.isSuccess()) {

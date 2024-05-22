@@ -10,11 +10,17 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class MeldepliktConnectorTest {
+    private val testTokenProvider: (token: String) -> String = { _ -> "testToken" }
+    private val meldepliktUrl = "http://meldepliktAdapterUrl"
+    private val subjectToken = "gylidg_token"
+    private val ident = "12345678903"
+
     private fun meldepliktConnector(
         responseBody: Any,
         statusCode: Int,
     ) = MeldepliktConnector(
-        meldepliktUrl = "http://baseUrl",
+        meldepliktUrl = meldepliktUrl,
+        tokenProvider = testTokenProvider,
         engine = createMockClient(statusCode, responseBody),
     )
 
@@ -24,7 +30,7 @@ class MeldepliktConnectorTest {
 
         val response =
             runBlocking {
-                connector.hentMeldekort("123")
+                connector.hentMeldekort(ident, subjectToken)
             }
 
         response shouldBe emptyList()
@@ -40,7 +46,7 @@ class MeldepliktConnectorTest {
 
         val response =
             runBlocking {
-                connector.hentMeldekort("123")
+                connector.hentMeldekort(ident, subjectToken)
             }
 
         with(response) {
