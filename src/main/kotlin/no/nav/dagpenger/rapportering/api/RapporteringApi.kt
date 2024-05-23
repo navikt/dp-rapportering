@@ -122,6 +122,20 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
                 }
+
+                route("/detaljer/{id}") {
+                    get {
+                        val jwtToken = call.request.jwt()
+                        val id = call.parameters["id"]
+
+                        if (id.isNullOrBlank()) {
+                            call.respond(HttpStatusCode.BadRequest)
+                            return@get
+                        }
+
+                        meldepliktConnector.hentMeldekortdetaljer(id, jwtToken)
+                    }
+                }
             }
         }
     }

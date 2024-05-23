@@ -35,8 +35,25 @@ class MeldepliktConnector(
                     contentType(ContentType.Application.Json)
                 }
 
-            logger.info { "Kall til meldeplikt-adapter gikk OK" }
+            logger.info { "Kall til meldeplikt-adapter for å hente perioder gikk OK" }
             sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
+
+            response.body()
+        }
+
+    suspend fun hentMeldekortdetaljer(
+        id: String,
+        subjectToken: String,
+    ): String =
+        withContext(Dispatchers.IO) {
+            val response: HttpResponse =
+                httpClient.get(URI("$meldepliktUrl/meldekortdetaljer/$id").toURL()) {
+                    header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
+                    contentType(ContentType.Application.Json)
+                }
+
+            logger.info { "Kall til meldeplikt-adapter for å hente detaljer gikk OK" }
+            sikkerlogg.info { "Kall til meldeplikt-adapter for å hente detaljer for id = $id gikk OK" }
 
             response.body()
         }
