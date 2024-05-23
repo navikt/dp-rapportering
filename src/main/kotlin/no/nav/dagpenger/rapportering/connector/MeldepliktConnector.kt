@@ -30,7 +30,7 @@ class MeldepliktConnector(
         // TODO Returtype: List<Rapporteringsperiode> -> Person
         withContext(Dispatchers.IO) {
             val response: HttpResponse =
-                httpClient.get(URI("$meldepliktUrl/meldekort/$ident").toURL()) {
+                httpClient.get(URI("$meldepliktUrl/meldekort").toURL()) {
                     header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
                     contentType(ContentType.Application.Json)
                 }
