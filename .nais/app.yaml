@@ -51,14 +51,9 @@ spec:
       rules:
         - application: dp-saksbehandling-frontend
         - application: dp-rapportering-frontend
-        {{#if wonderwalled}}
         - application: tokenx-token-generator
           namespace: aura
-        - application: wonderwalled-azure
-          namespace: aura
-        - application: azure-token-generator
-          namespace: aura
-        {{/if}}
+          cluster: dev-gcp
 
   liveness:
     path: /isAlive
