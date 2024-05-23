@@ -18,6 +18,6 @@ azure:
     beslutter: "11b8475a-fb12-41aa-b1f6-8497c1b5385b" # 0000-GA-Dagpenger-Beslutter
 
 MELDEPLIKT_ADAPTER_HOST: dp-arena-meldeplikt-adapter.intern.dev.nav.no
-MELDEPLIKT_ADAPTER_AUDIENCE: dev-gcp:teamdagpenger:dp-rapportering
+MELDEPLIKT_ADAPTER_AUDIENCE: dev-gcp:teamdagpenger:dp-arena-meldeplikt-adapter
 
 
