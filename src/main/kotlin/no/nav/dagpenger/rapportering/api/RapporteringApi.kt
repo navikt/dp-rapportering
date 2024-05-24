@@ -133,7 +133,7 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
                             return@get
                         }
 
-                        meldepliktConnector.hentAktivitetsdager(id, jwtToken)
+                        call.respond(HttpStatusCode.OK, meldepliktConnector.hentAktivitetsdager(id, jwtToken))
                     }
                 }
             }
