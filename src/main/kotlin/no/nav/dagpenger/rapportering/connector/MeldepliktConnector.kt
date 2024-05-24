@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
+import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import java.net.URI
 
@@ -23,14 +24,13 @@ class MeldepliktConnector(
 ) {
     val httpClient = createHttpClient(engine)
 
-    suspend fun hentMeldekort(
+    suspend fun hentRapporteringsperioder(
         ident: String,
         subjectToken: String,
     ): List<Rapporteringsperiode> =
-        // TODO Returtype: List<Rapporteringsperiode> -> Person
         withContext(Dispatchers.IO) {
             val response: HttpResponse =
-                httpClient.get(URI("$meldepliktUrl/meldekort").toURL()) {
+                httpClient.get(URI("$meldepliktUrl/rapporteringsperioder").toURL()) {
                     header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
                     contentType(ContentType.Application.Json)
                 }
@@ -41,13 +41,13 @@ class MeldepliktConnector(
             response.body()
         }
 
-    suspend fun hentMeldekortdetaljer(
+    suspend fun hentAktivitetsdager(
         id: String,
         subjectToken: String,
-    ): String =
+    ): List<Dag> =
         withContext(Dispatchers.IO) {
             val response: HttpResponse =
-                httpClient.get(URI("$meldepliktUrl/meldekortdetaljer/$id").toURL()) {
+                httpClient.get(URI("$meldepliktUrl/aktivitetsdager/$id").toURL()) {
                     header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
                     contentType(ContentType.Application.Json)
                 }

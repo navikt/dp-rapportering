@@ -104,7 +104,7 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
                     val jwtToken = call.request.jwt()
 
                     meldepliktConnector
-                        .hentMeldekort(ident, jwtToken)
+                        .hentRapporteringsperioder(ident, jwtToken)
                         .also {
                             RapporteringsperiodeMetrikker.hentet.inc()
                         }
@@ -116,7 +116,7 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
                         meldepliktConnector
-                            .hentMeldekort(ident, jwtToken)
+                            .hentRapporteringsperioder(ident, jwtToken)
                             .firstOrNull()
                             ?.also { call.respond(HttpStatusCode.OK, it) }
                             ?: call.respond(HttpStatusCode.NotFound)
@@ -133,7 +133,7 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
                             return@get
                         }
 
-                        meldepliktConnector.hentMeldekortdetaljer(id, jwtToken)
+                        meldepliktConnector.hentAktivitetsdager(id, jwtToken)
                     }
                 }
             }

@@ -29,7 +29,7 @@ class MeldepliktConnectorTest {
 
         val response =
             runBlocking {
-                connector.hentMeldekort(ident, subjectToken)
+                connector.hentRapporteringsperioder(ident, subjectToken)
             }
 
         response shouldBe emptyList()
@@ -48,7 +48,7 @@ class MeldepliktConnectorTest {
 
         val response =
             runBlocking {
-                connector.hentMeldekort(ident, subjectToken)
+                connector.hentRapporteringsperioder(ident, subjectToken)
             }
 
         with(response) {
@@ -78,7 +78,7 @@ class MeldepliktConnectorTest {
 
         shouldThrow<JsonConvertException> {
             runBlocking {
-                connector.hentMeldekort(ident, subjectToken)
+                connector.hentRapporteringsperioder(ident, subjectToken)
             }
         }
     }
