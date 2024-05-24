@@ -141,8 +141,6 @@ components:
                     type: string
                 periode:
                     $ref: '#/components/schemas/periode'
-                dager:
-                    $ref: '#/components/schemas/dager'
                 kanSendesFra:
                     type: string
                     format: date

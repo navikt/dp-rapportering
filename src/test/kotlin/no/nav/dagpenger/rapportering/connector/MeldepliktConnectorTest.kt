@@ -4,7 +4,6 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.ktor.serialization.JsonConvertException
 import kotlinx.coroutines.runBlocking
-import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -89,7 +88,6 @@ fun rapporteringsperiodeFor(
     id: Long = 123L,
     fraOgMed: LocalDate = LocalDate.now().minusWeeks(2),
     tilOgMed: LocalDate = LocalDate.now(),
-    dager: List<Dag> = emptyList(),
     kanSendesFra: LocalDate = LocalDate.now(),
     kanSendes: Boolean = true,
     kanKorrigeres: Boolean = true,
@@ -101,7 +99,6 @@ fun rapporteringsperiodeFor(
         "fraOgMed": "$fraOgMed",
         "tilOgMed": "$tilOgMed"
       },
-      "dager": $dager,
       "kanSendesFra": "$kanSendesFra",
       "kanSendes": $kanSendes,
       "kanKorrigeres": $kanKorrigeres
