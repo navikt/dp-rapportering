@@ -26,3 +26,16 @@ fun List<Rapporteringsperiode>.toResponse(): List<RapporteringsperiodeResponse> 
             kanKorrigeres = rapporteringsperiode.kanKorrigeres,
         )
     }
+
+fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
+    RapporteringsperiodeResponse(
+        id = this.id.toString(),
+        periode =
+            PeriodeResponse(
+                fraOgMed = this.periode.fraOgMed,
+                tilOgMed = this.periode.tilOgMed,
+            ),
+        kanSendesFra = this.kanSendesFra,
+        kanSendes = this.kanSendes,
+        kanKorrigeres = this.kanKorrigeres,
+    )

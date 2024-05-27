@@ -13,6 +13,7 @@ import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import mu.KotlinLogging
@@ -98,6 +99,43 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
     }
     routing {
         authenticate("tokenX") {
+            route("/rapporteringsperiode") {
+                route("/{id}") {
+                    get {
+                        val ident = call.ident()
+                        val jwtToken = call.request.jwt()
+                        val id = call.parameters["id"]
+
+                        if (id.isNullOrBlank()) {
+                            call.respond(HttpStatusCode.BadRequest)
+                            return@get
+                        }
+
+                        meldepliktConnector
+                            .hentRapporteringsperioder(ident, jwtToken)
+                            .firstOrNull { it.id.toString() == id }
+                            .let {
+                                if (it == null) {
+                                    call.respond(HttpStatusCode.NotFound)
+                                } else {
+                                    call.respond(HttpStatusCode.OK, it.toResponse())
+                                }
+                            }
+                    }
+
+                    post {
+                        // TODO
+                        call.respond(HttpStatusCode.NotImplemented)
+                    }
+
+                    route("/korriger") {
+                        post {
+                            // TODO
+                            call.respond(HttpStatusCode.NotImplemented)
+                        }
+                    }
+                }
+            }
             route("/rapporteringsperioder") {
                 get {
                     val ident = call.ident()
@@ -123,6 +161,14 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
                     }
                 }
 
+                route("/innsendte") {
+                    get {
+                        // TODO
+                        call.respond(HttpStatusCode.NotImplemented)
+                    }
+                }
+
+                // TODO: Fjernes?
                 route("/detaljer/{id}") {
                     get {
                         val jwtToken = call.request.jwt()
