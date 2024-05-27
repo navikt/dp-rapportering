@@ -41,6 +41,23 @@ class MeldepliktConnector(
             response.body()
         }
 
+    suspend fun hentSendteRapporteringsperioder(
+        ident: String,
+        subjectToken: String,
+    ): List<Rapporteringsperiode> =
+        withContext(Dispatchers.IO) {
+            val response: HttpResponse =
+                httpClient.get(URI("$meldepliktUrl/sendterapporteringsperioder").toURL()) {
+                    header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
+                    contentType(ContentType.Application.Json)
+                }
+
+            logger.info { "Kall til meldeplikt-adapter for å hente sendte perioder gikk OK" }
+            sikkerlogg.info { "Kall til meldeplikt-adapter for å hente sendte perioder for $ident gikk OK" }
+
+            response.body()
+        }
+
     suspend fun hentAktivitetsdager(
         id: String,
         subjectToken: String,
@@ -48,6 +65,22 @@ class MeldepliktConnector(
         withContext(Dispatchers.IO) {
             val response: HttpResponse =
                 httpClient.get(URI("$meldepliktUrl/aktivitetsdager/$id").toURL()) {
+                    header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
+                    contentType(ContentType.Application.Json)
+                }
+
+            logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
+
+            response.body()
+        }
+
+    suspend fun hentKorrigeringId(
+        id: String,
+        subjectToken: String,
+    ): String =
+        withContext(Dispatchers.IO) {
+            val response: HttpResponse =
+                httpClient.get(URI("$meldepliktUrl/korrigertMeldekort/$id").toURL()) {
                     header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
                     contentType(ContentType.Application.Json)
                 }

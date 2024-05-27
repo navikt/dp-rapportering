@@ -130,8 +130,17 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
 
                     route("/korriger") {
                         post {
-                            // TODO
-                            call.respond(HttpStatusCode.NotImplemented)
+                            val jwtToken = call.request.jwt()
+                            val id = call.parameters["id"]
+
+                            if (id.isNullOrBlank()) {
+                                call.respond(HttpStatusCode.BadRequest)
+                                return@post
+                            }
+
+                            meldepliktConnector
+                                .hentKorrigeringId(id, jwtToken)
+                                .also { call.respond(HttpStatusCode.OK, it) }
                         }
                     }
                 }
@@ -143,9 +152,8 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
 
                     meldepliktConnector
                         .hentRapporteringsperioder(ident, jwtToken)
-                        .also {
-                            RapporteringsperiodeMetrikker.hentet.inc()
-                        }
+                        .sortedBy { it.periode.fraOgMed }
+                        .also { RapporteringsperiodeMetrikker.hentet.inc() }
                         .also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                 }
 
@@ -155,7 +163,7 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
                         val jwtToken = call.request.jwt()
                         meldepliktConnector
                             .hentRapporteringsperioder(ident, jwtToken)
-                            .firstOrNull()
+                            .minByOrNull { it.periode.fraOgMed }
                             ?.also { call.respond(HttpStatusCode.OK, it) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
@@ -163,8 +171,12 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
 
                 route("/innsendte") {
                     get {
-                        // TODO
-                        call.respond(HttpStatusCode.NotImplemented)
+                        val ident = call.ident()
+                        val jwtToken = call.request.jwt()
+                        meldepliktConnector
+                            .hentSendteRapporteringsperioder(ident, jwtToken)
+                            .sortedByDescending { it.periode.fraOgMed }
+                            .also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                     }
                 }
 
