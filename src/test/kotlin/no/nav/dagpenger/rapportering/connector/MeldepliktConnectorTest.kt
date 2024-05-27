@@ -13,6 +13,7 @@ class MeldepliktConnectorTest {
     private val meldepliktUrl = "http://meldepliktAdapterUrl"
     private val subjectToken = "gylidg_token"
     private val ident = "12345678903"
+    private val rapporteringId = "1806478069"
 
     private fun meldepliktConnector(
         responseBody: String,
@@ -82,6 +83,34 @@ class MeldepliktConnectorTest {
             }
         }
     }
+
+    @Test
+    fun `henter tom aktivitetsdagerliste`() {
+        val connector = meldepliktConnector("[]", 200)
+
+        val response =
+            runBlocking {
+                connector.hentAktivitetsdager(rapporteringId, subjectToken)
+            }
+
+        response shouldBe emptyList()
+    }
+
+    @Test
+    fun `henter aktivitetsdagerliste med 14 elementer`() {
+        val connector = meldepliktConnector(aktivitetsdagerlisteFor(), 200)
+
+        val response =
+            runBlocking {
+                connector.hentAktivitetsdager(rapporteringId, subjectToken)
+            }
+
+        with(response) {
+            size shouldBe 14
+            first().dato shouldBe LocalDate.now().minusWeeks(2)
+            last().dato shouldBe LocalDate.now().minusDays(1)
+        }
+    }
 }
 
 fun rapporteringsperiodeFor(
@@ -103,4 +132,67 @@ fun rapporteringsperiodeFor(
       "kanSendes": $kanSendes,
       "kanKorrigeres": $kanKorrigeres
     }
+    """.trimIndent()
+
+fun aktivitetsdagerlisteFor(startDato: LocalDate = LocalDate.now().minusWeeks(2)) =
+    //language=JSON
+    """
+    [
+        {
+            "dato": "$startDato",
+            "aktiviteter": []
+        },
+        {
+            "dato": "${startDato.plusDays(1)}",
+            "aktiviteter": []
+        },
+        {
+            "dato": "${startDato.plusDays(2)}",
+            "aktiviteter": []
+        },
+        {
+            "dato": "${startDato.plusDays(3)}",
+            "aktiviteter": []
+        },
+        {
+            "dato": "${startDato.plusDays(4)}",
+            "aktiviteter": []
+        },
+        {
+            "dato": "${startDato.plusDays(5)}",
+            "aktiviteter": []
+        },
+        {
+            "dato": "${startDato.plusDays(6)}",
+            "aktiviteter": []
+        },
+        {
+            "dato": "${startDato.plusDays(7)}",
+            "aktiviteter": []
+        },
+        {
+            "dato": "${startDato.plusDays(8)}",
+            "aktiviteter": []
+        },
+        {
+            "dato": "${startDato.plusDays(9)}",
+            "aktiviteter": []
+        },
+        {
+            "dato": "${startDato.plusDays(10)}",
+            "aktiviteter": []
+        },
+        {
+            "dato": "${startDato.plusDays(11)}",
+            "aktiviteter": []
+        },
+        {
+            "dato": "${startDato.plusDays(12)}",
+            "aktiviteter": []
+        },
+        {
+            "dato": "${startDato.plusDays(13)}",
+            "aktiviteter": []
+        }
+    ]
     """.trimIndent()

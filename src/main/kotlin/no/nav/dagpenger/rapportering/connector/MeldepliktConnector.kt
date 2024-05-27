@@ -52,8 +52,7 @@ class MeldepliktConnector(
                     contentType(ContentType.Application.Json)
                 }
 
-            logger.info { "Kall til meldeplikt-adapter for å hente detaljer gikk OK" }
-            sikkerlogg.info { "Kall til meldeplikt-adapter for å hente detaljer for id = $id gikk OK" }
+            logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
 
             response.body()
         }
