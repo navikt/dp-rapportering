@@ -4,7 +4,6 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.ktor.serialization.JsonConvertException
 import kotlinx.coroutines.runBlocking
-import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -57,14 +56,14 @@ class MeldepliktConnectorTest {
             size shouldBe 2
 
             with(get(0)) {
-                id shouldBe PeriodeId(123L)
+                id shouldBe 123L
                 periode.fraOgMed shouldBe 1.januar
                 periode.tilOgMed shouldBe 14.januar
                 kanSendesFra shouldBe 13.januar
             }
 
             with(get(1)) {
-                id shouldBe PeriodeId(456L)
+                id shouldBe 456L
                 periode.fraOgMed shouldBe 15.januar
                 periode.tilOgMed shouldBe 28.januar
                 kanSendesFra shouldBe 27.januar

@@ -190,7 +190,7 @@ components:
         periodeId:
             type: object
             properties:
-                value:
+                id:
                     type: string
         Rapporteringsperiode:
             required:
@@ -253,7 +253,7 @@ components:
             name: periodeId
             description: ID til rapporteringsperioden
             schema:
-                $ref: '#/components/schemas/periodeId'
+                type: string
             in: path
             required: true
 

@@ -6,7 +6,7 @@ import no.nav.dagpenger.behandling.api.models.RapporteringsperiodeResponse
 import java.time.LocalDate
 
 open class Rapporteringsperiode(
-    val id: PeriodeId,
+    val id: Long,
     val periode: Periode,
     val kanSendesFra: LocalDate,
     val kanSendes: Boolean,
@@ -18,7 +18,7 @@ fun List<Rapporteringsperiode>.toResponse(): List<RapporteringsperiodeResponse> 
 
 fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
     RapporteringsperiodeResponse(
-        id = PeriodeIdResponse(this.id.value.toString()),
+        id = PeriodeIdResponse(this.id.toString()),
         periode =
             PeriodeResponse(
                 fraOgMed = this.periode.fraOgMed,
