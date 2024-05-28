@@ -1,15 +1,22 @@
 package no.nav.dagpenger.rapportering.model
 
-import no.nav.dagpenger.behandling.api.models.PeriodeResponse
-import no.nav.dagpenger.behandling.api.models.RapporteringsperiodeResponse
+import no.nav.dagpenger.rapportering.api.models.AktivitetResponse
+import no.nav.dagpenger.rapportering.api.models.AktivitetTypeResponse
+import no.nav.dagpenger.rapportering.api.models.DagInnerResponse
+import no.nav.dagpenger.rapportering.api.models.PeriodeResponse
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeResponse
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse
 import java.time.LocalDate
 
 open class Rapporteringsperiode(
     val id: Long,
     val periode: Periode,
+    val dager: List<Dag>,
     val kanSendesFra: LocalDate,
     val kanSendes: Boolean,
     val kanKorrigeres: Boolean,
+    val bruttoBelop: String?,
+    val status: RapporteringsperiodeStatus,
 )
 
 fun List<Rapporteringsperiode>.toResponse(): List<RapporteringsperiodeResponse> =
@@ -23,7 +30,35 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
                 fraOgMed = this.periode.fraOgMed,
                 tilOgMed = this.periode.tilOgMed,
             ),
+        dager =
+            dager.map { dag ->
+                DagInnerResponse(
+                    dato = dag.dato,
+                    aktiviteter =
+                        dag.aktiviteter.map { aktivitet ->
+                            AktivitetResponse(
+                                id = aktivitet.uuid,
+                                type =
+                                    when (aktivitet.type) {
+                                        Aktivitet.AktivitetsType.Arbeid -> AktivitetTypeResponse.Arbeid
+                                        Aktivitet.AktivitetsType.Syk -> AktivitetTypeResponse.Syk
+                                        Aktivitet.AktivitetsType.Utdanning -> AktivitetTypeResponse.Utdanning
+                                        Aktivitet.AktivitetsType.Fravaer -> AktivitetTypeResponse.Fravaer
+                                    },
+                                timer = aktivitet.timer,
+                            )
+                        },
+                    dagIndex = dag.dagIndex.toBigDecimal(),
+                )
+            },
         kanSendesFra = this.kanSendesFra,
         kanSendes = this.kanSendes,
         kanKorrigeres = this.kanKorrigeres,
+        bruttoBelop = this.bruttoBelop,
+        status =
+            when (this.status) {
+                RapporteringsperiodeStatus.TilUtfylling -> RapporteringsperiodeStatusResponse.TilUtfylling
+                RapporteringsperiodeStatus.Innsendt -> RapporteringsperiodeStatusResponse.Innsendt
+                RapporteringsperiodeStatus.Ferdig -> RapporteringsperiodeStatusResponse.Ferdig
+            },
     )

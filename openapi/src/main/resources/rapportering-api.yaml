@@ -140,7 +140,6 @@ components:
             required:
                 - id
                 - type
-                - dato
             type: object
             properties:
                 id:
@@ -152,14 +151,10 @@ components:
                     type: string
                     format: ISO8601 Duration
                     description: Må representeres som en ISO8601 Duration
-                dato:
-                    format: date
-                    type: string
             example:
                 id: 4a49e571-6384-4eab-9c2e-3f4d48d30b9a
                 type: Arbeid
                 timer: PT8H30M
-                dato: '2023-05-05'
         periode:
             type: object
             required:
@@ -172,13 +167,14 @@ components:
                 tilOgMed:
                     type: string
                     format: date
-        dager:
+        dag:
             type: array
             items:
                 type: object
                 required:
                     - dato
                     - aktiviteter
+                    - dagIndex
                 properties:
                     dato:
                         type: string
@@ -187,6 +183,8 @@ components:
                         type: array
                         items:
                             $ref: '#/components/schemas/Aktivitet'
+                    dagIndex:
+                        type: number
         periodeId:
             type: object
             properties:
@@ -200,12 +198,15 @@ components:
                 - kanSendesFra
                 - kanSendes
                 - kanKorrigeres
+                - status
             type: object
             properties:
                 id:
                     type: string
                 periode:
                     $ref: '#/components/schemas/periode'
+                dager:
+                    $ref: '#/components/schemas/dag'
                 kanSendesFra:
                     type: string
                     format: date
@@ -213,6 +214,17 @@ components:
                     type: boolean
                 kanKorrigeres:
                     type: boolean
+                bruttoBelop:
+                    type: string
+                status:
+                    $ref: '#/components/schemas/RapporteringsperiodeStatus'
+        RapporteringsperiodeStatus:
+            type: string
+            enum:
+                - TilUtfylling
+                - Innsendt
+                - Ferdig
+                -
         Problem:
             type: object
             description: Implementasjon av Problem Details for HTTP APIs [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807)

@@ -4,6 +4,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.ktor.serialization.JsonConvertException
 import kotlinx.coroutines.runBlocking
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -117,9 +118,12 @@ fun rapporteringsperiodeFor(
     id: Long = 123L,
     fraOgMed: LocalDate = LocalDate.now().minusWeeks(2),
     tilOgMed: LocalDate = LocalDate.now(),
+    dager: String = aktivitetsdagerlisteFor(fraOgMed),
     kanSendesFra: LocalDate = LocalDate.now(),
     kanSendes: Boolean = true,
     kanKorrigeres: Boolean = true,
+    status: RapporteringsperiodeStatus = RapporteringsperiodeStatus.TilUtfylling,
+    bruttoBelop: String? = null,
 ) = //language=JSON
     """
     {
@@ -128,9 +132,12 @@ fun rapporteringsperiodeFor(
         "fraOgMed": "$fraOgMed",
         "tilOgMed": "$tilOgMed"
       },
+      "dager": $dager,
       "kanSendesFra": "$kanSendesFra",
       "kanSendes": $kanSendes,
-      "kanKorrigeres": $kanKorrigeres
+      "kanKorrigeres": $kanKorrigeres,
+      "bruttoBelop": $bruttoBelop,
+      "status": "${status.name}"
     }
     """.trimIndent()
 
@@ -140,59 +147,73 @@ fun aktivitetsdagerlisteFor(startDato: LocalDate = LocalDate.now().minusWeeks(2)
     [
         {
             "dato": "$startDato",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 0
         },
         {
             "dato": "${startDato.plusDays(1)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 1
         },
         {
             "dato": "${startDato.plusDays(2)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 2
         },
         {
             "dato": "${startDato.plusDays(3)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 3
         },
         {
             "dato": "${startDato.plusDays(4)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 4
         },
         {
             "dato": "${startDato.plusDays(5)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 5
         },
         {
             "dato": "${startDato.plusDays(6)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 6
         },
         {
             "dato": "${startDato.plusDays(7)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 7
         },
         {
             "dato": "${startDato.plusDays(8)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 8
         },
         {
             "dato": "${startDato.plusDays(9)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 9
         },
         {
             "dato": "${startDato.plusDays(10)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 10
         },
         {
             "dato": "${startDato.plusDays(11)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 11
         },
         {
             "dato": "${startDato.plusDays(12)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 12
         },
         {
             "dato": "${startDato.plusDays(13)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 13
         }
     ]
     """.trimIndent()
