@@ -1,6 +1,5 @@
 package no.nav.dagpenger.rapportering.model
 
-import no.nav.dagpenger.behandling.api.models.PeriodeIdResponse
 import no.nav.dagpenger.behandling.api.models.PeriodeResponse
 import no.nav.dagpenger.behandling.api.models.RapporteringsperiodeResponse
 import java.time.LocalDate
@@ -18,7 +17,7 @@ fun List<Rapporteringsperiode>.toResponse(): List<RapporteringsperiodeResponse> 
 
 fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
     RapporteringsperiodeResponse(
-        id = PeriodeIdResponse(this.id.toString()),
+        id = this.id.toString(),
         periode =
             PeriodeResponse(
                 fraOgMed = this.periode.fraOgMed,
