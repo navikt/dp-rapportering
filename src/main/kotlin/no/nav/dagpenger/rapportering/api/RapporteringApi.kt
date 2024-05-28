@@ -100,6 +100,18 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
     routing {
         authenticate("tokenX") {
             route("/rapporteringsperiode") {
+                route("/gjeldende") {
+                    get {
+                        val ident = call.ident()
+                        val jwtToken = call.request.jwt()
+                        meldepliktConnector
+                            .hentRapporteringsperioder(ident, jwtToken)
+                            .minByOrNull { it.periode.fraOgMed }
+                            ?.also { call.respond(HttpStatusCode.OK, it) }
+                            ?: call.respond(HttpStatusCode.NotFound)
+                    }
+                }
+
                 route("/{id}") {
                     get {
                         val ident = call.ident()
@@ -155,18 +167,6 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
                         .sortedBy { it.periode.fraOgMed }
                         .also { RapporteringsperiodeMetrikker.hentet.inc() }
                         .also { call.respond(HttpStatusCode.OK, it.toResponse()) }
-                }
-
-                route("/gjeldende") {
-                    get {
-                        val ident = call.ident()
-                        val jwtToken = call.request.jwt()
-                        meldepliktConnector
-                            .hentRapporteringsperioder(ident, jwtToken)
-                            .minByOrNull { it.periode.fraOgMed }
-                            ?.also { call.respond(HttpStatusCode.OK, it) }
-                            ?: call.respond(HttpStatusCode.NotFound)
-                    }
                 }
 
                 route("/innsendte") {

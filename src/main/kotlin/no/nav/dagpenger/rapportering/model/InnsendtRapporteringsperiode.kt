@@ -10,7 +10,7 @@ class InnsendtRapporteringsperiode(
     kanSendes: Boolean,
     kanKorrigeres: Boolean,
 ) : Rapporteringsperiode(
-        id = id,
+        id = PeriodeId(id),
         periode = periode,
         kanSendesFra = kanSendesFra,
         kanSendes = kanSendes,

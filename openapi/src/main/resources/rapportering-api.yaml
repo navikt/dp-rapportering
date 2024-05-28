@@ -22,14 +22,34 @@ paths:
                                 items:
                                     $ref: '#/components/schemas/Rapporteringsperiode'
                     description: OK
-            summary: Hent alle rapporteringsperioder
-            description: Lister ut alle rapporteringsperioder, både aktive og historiske
-            operationId: get-rapporteringsperiode
+            summary: Hent alle rapporteringsperioder som ikke er sendt inn
+            description: Lister ut alle rapporteringsperioder som ikke er sendt inn
+            operationId: get-rapporteringsperioder
             tags:
                 - Rapporteringsperiode
             security:
                 - tokenX: [ ]
-    /rapporteringsperioder/gjeldende:
+    /rapporteringsperioder/innsendte:
+        get:
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/Rapporteringsperiode'
+                    description: OK
+            summary: Hent alle tidligere innsendte rapporteringsperioder
+            description: Lister ut alle rapporteringsperioder som har blitt sendt inn
+            operationId: get-innsendte-rapporteringsperioder
+            tags:
+                - Rapporteringsperiode
+                - Innsendte rapporteringsperioder
+                - Historisk
+            security:
+                - tokenX: []
+    /rapporteringsperiode/gjeldende:
         get:
             responses:
                 '200':
@@ -47,7 +67,7 @@ paths:
                 - Rapporteringsperiode
             security:
                 - tokenX: [ ]
-    /rapporteringsperioder/{periodeId}:
+    /rapporteringsperiode/{periodeId}:
         get:
             responses:
                 '200':
@@ -65,8 +85,51 @@ paths:
                 - Rapporteringsperiode
             security:
                 - tokenX: [ ]
+        post:
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Rapporteringsperiode'
+            responses:
+                200:
+                    description: OK
+                400:
+                    description: Bad Request
+                404:
+                    description: Not Found
+            summary: Innsending av rapporteringsperiode
+            description: Sender inn en utfylt rapporteringsperiode
+            operationId: post-rapporteringsperiode-id
+            tags:
+                - Rapporteringsperiode
+            security:
+                - tokenX: []
         parameters:
             - $ref: '#/components/parameters/periodeId'
+    /rapporteringsperiode/{periodeId}/korriger:
+        post:
+            responses:
+                200:
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/periodeId'
+                404:
+                    description: Not Found
+            summary: Opprett korrigering av rapporteringsperiode
+            description: Oppretter korrigering av rapporteringsperiode. Returnerer ny periodeId
+            operationId: post-rapporteringsperiode-id-korriger
+            tags:
+                - Rapporteringsperiode
+                - Korriger
+            security:
+                - tokenX: []
+        parameters:
+            -   $ref: '#/components/parameters/periodeId'
+
 components:
     schemas:
         AktivitetType:
@@ -127,6 +190,8 @@ components:
                         type: array
                         items:
                             $ref: '#/components/schemas/Aktivitet'
+        periodeId:
+            type: string
         Rapporteringsperiode:
             required:
                 - id
@@ -138,7 +203,7 @@ components:
             type: object
             properties:
                 id:
-                    type: string
+                    $ref: '#/components/schemas/periodeId'
                 periode:
                     $ref: '#/components/schemas/periode'
                 kanSendesFra:
@@ -188,7 +253,7 @@ components:
             name: periodeId
             description: ID til rapporteringsperioden
             schema:
-                type: string
+                $ref: '#/components/schemas/periodeId'
             in: path
             required: true
 

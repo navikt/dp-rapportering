@@ -14,6 +14,7 @@ import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import java.net.URI
 
@@ -77,7 +78,7 @@ class MeldepliktConnector(
     suspend fun hentKorrigeringId(
         id: String,
         subjectToken: String,
-    ): String =
+    ): PeriodeId =
         withContext(Dispatchers.IO) {
             val response: HttpResponse =
                 httpClient.get(URI("$meldepliktUrl/korrigertMeldekort/$id").toURL()) {
@@ -87,7 +88,7 @@ class MeldepliktConnector(
 
             logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
 
-            response.body()
+            PeriodeId(response.body())
         }
 
     companion object {
