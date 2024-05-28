@@ -188,7 +188,10 @@ components:
                         items:
                             $ref: '#/components/schemas/Aktivitet'
         periodeId:
-            type: string
+            type: object
+            properties:
+                value:
+                    type: string
         Rapporteringsperiode:
             required:
                 - id
