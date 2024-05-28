@@ -23,7 +23,7 @@ class MeldepliktConnector(
     val tokenProvider: (String) -> String = Configuration.tokenXClient(Configuration.meldepliktAdapterAudience),
     engine: HttpClientEngine = CIO.create {},
 ) {
-    val httpClient = createHttpClient(engine)
+    private val httpClient = createHttpClient(engine)
 
     suspend fun hentRapporteringsperioder(
         ident: String,
@@ -42,7 +42,7 @@ class MeldepliktConnector(
             response.body()
         }
 
-    suspend fun hentSendteRapporteringsperioder(
+    suspend fun hentInnsendteRapporteringsperioder(
         ident: String,
         subjectToken: String,
     ): List<Rapporteringsperiode> =
@@ -53,8 +53,8 @@ class MeldepliktConnector(
                     contentType(ContentType.Application.Json)
                 }
 
-            logger.info { "Kall til meldeplikt-adapter for å hente sendte perioder gikk OK" }
-            sikkerlogg.info { "Kall til meldeplikt-adapter for å hente sendte perioder for $ident gikk OK" }
+            logger.info { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }
+            sikkerlogg.info { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident gikk OK" }
 
             response.body()
         }

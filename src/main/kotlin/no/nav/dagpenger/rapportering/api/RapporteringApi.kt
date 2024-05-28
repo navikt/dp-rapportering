@@ -174,7 +174,7 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
                         meldepliktConnector
-                            .hentSendteRapporteringsperioder(ident, jwtToken)
+                            .hentInnsendteRapporteringsperioder(ident, jwtToken)
                             .sortedByDescending { it.periode.fraOgMed }
                             .also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                     }
