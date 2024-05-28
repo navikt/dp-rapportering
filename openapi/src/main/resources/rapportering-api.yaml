@@ -26,7 +26,7 @@ paths:
             description: Lister ut alle rapporteringsperioder som ikke er sendt inn
             operationId: get-rapporteringsperioder
             tags:
-                - Rapporteringsperiode
+                - Rapporteringsperioder
             security:
                 - tokenX: [ ]
     /rapporteringsperioder/innsendte:
@@ -44,9 +44,7 @@ paths:
             description: Lister ut alle rapporteringsperioder som har blitt sendt inn
             operationId: get-innsendte-rapporteringsperioder
             tags:
-                - Rapporteringsperiode
-                - Innsendte rapporteringsperioder
-                - Historisk
+                - Rapporteringsperioder
             security:
                 - tokenX: []
     /rapporteringsperiode/gjeldende:
@@ -124,7 +122,6 @@ paths:
             operationId: post-rapporteringsperiode-id-korriger
             tags:
                 - Rapporteringsperiode
-                - Korriger
             security:
                 - tokenX: []
         parameters:
