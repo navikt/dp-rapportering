@@ -164,7 +164,7 @@ class MeldepliktConnectorTest {
                 dager.last().dato shouldBe 28.januar
                 kanSendesFra shouldBe 27.januar
                 status shouldBe Ferdig
-                bruttoBelop shouldBe "1000"
+                bruttoBelop shouldBe 1000.0
             }
         }
     }
