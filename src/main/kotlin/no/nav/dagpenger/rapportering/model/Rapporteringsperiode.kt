@@ -17,6 +17,7 @@ open class Rapporteringsperiode(
     val kanKorrigeres: Boolean,
     val bruttoBelop: String?,
     val status: RapporteringsperiodeStatus,
+    val registrertArbeidssoker: Boolean?,
 )
 
 fun List<Rapporteringsperiode>.toResponse(): List<RapporteringsperiodeResponse> =
@@ -61,4 +62,5 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
                 RapporteringsperiodeStatus.Innsendt -> RapporteringsperiodeStatusResponse.Innsendt
                 RapporteringsperiodeStatus.Ferdig -> RapporteringsperiodeStatusResponse.Ferdig
             },
+        registrertArbeidssoker = this.registrertArbeidssoker,
     )
