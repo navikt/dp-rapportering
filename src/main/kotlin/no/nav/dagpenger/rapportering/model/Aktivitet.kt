@@ -11,6 +11,6 @@ data class Aktivitet(
         Arbeid,
         Syk,
         Utdanning,
-        Fravaer,
+        FerieEllerFravaer,
     }
 }
