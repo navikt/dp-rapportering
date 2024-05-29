@@ -171,15 +171,15 @@ class MeldepliktConnectorTest {
 
     @Test
     fun `henter korringeringId`() {
-        val id = "1806985352"
-        val connector = meldepliktConnector(id, 200)
+        val id = 1806985352L
+        val connector = meldepliktConnector(id.toString(), 200)
 
         val response =
             runBlocking {
                 connector.hentKorrigeringId(ident, subjectToken)
             }
 
-        response shouldBe PeriodeId(id.toLong())
+        response shouldBe PeriodeId(id)
     }
 
     @Test
