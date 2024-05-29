@@ -215,7 +215,7 @@ components:
                 kanKorrigeres:
                     type: boolean
                 bruttoBelop:
-                    type: string
+                    type: number
                 status:
                     $ref: '#/components/schemas/RapporteringsperiodeStatus'
                 registrertArbeidssoker:

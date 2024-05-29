@@ -15,7 +15,7 @@ open class Rapporteringsperiode(
     val kanSendesFra: LocalDate,
     val kanSendes: Boolean,
     val kanKorrigeres: Boolean,
-    val bruttoBelop: String?,
+    val bruttoBelop: Double?,
     val status: RapporteringsperiodeStatus,
     val registrertArbeidssoker: Boolean?,
 )
@@ -55,7 +55,7 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
         kanSendesFra = this.kanSendesFra,
         kanSendes = this.kanSendes,
         kanKorrigeres = this.kanKorrigeres,
-        bruttoBelop = this.bruttoBelop,
+        bruttoBelop = this.bruttoBelop?.toBigDecimal(),
         status =
             when (this.status) {
                 RapporteringsperiodeStatus.TilUtfylling -> RapporteringsperiodeStatusResponse.TilUtfylling
