@@ -49,7 +49,7 @@ openApiGenerate {
     generatorName.set("kotlin-server")
     inputSpec.set("$projectDir/src/main/resources/rapportering-api.yaml")
     outputDir.set("${layout.buildDirectory.get()}/generated/")
-    packageName.set("no.nav.dagpenger.behandling.api")
+    packageName.set("no.nav.dagpenger.rapportering.api")
     globalProperties.set(
         mapOf(
             "apis" to "none",

@@ -4,6 +4,11 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.ktor.serialization.JsonConvertException
 import kotlinx.coroutines.runBlocking
+import no.nav.dagpenger.rapportering.model.PeriodeId
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -25,7 +30,7 @@ class MeldepliktConnectorTest {
     )
 
     @Test
-    fun `henter tom meldekortliste`() {
+    fun `henter tom rapporteringsperiodeliste`() {
         val connector = meldepliktConnector("[]", 200)
 
         val response =
@@ -37,7 +42,7 @@ class MeldepliktConnectorTest {
     }
 
     @Test
-    fun `henter meldekortliste med to elementer`() {
+    fun `henter rapporteringsperiodeliste med to elementer`() {
         val rapporteringsperiode1 =
             rapporteringsperiodeFor(id = 123L, fraOgMed = 1.januar, tilOgMed = 14.januar, kanSendesFra = 13.januar)
         val rapporteringsperiode2 =
@@ -59,14 +64,24 @@ class MeldepliktConnectorTest {
                 id shouldBe 123L
                 periode.fraOgMed shouldBe 1.januar
                 periode.tilOgMed shouldBe 14.januar
+                dager.size shouldBe 14
+                dager.first().dato shouldBe 1.januar
+                dager.last().dato shouldBe 14.januar
                 kanSendesFra shouldBe 13.januar
+                status shouldBe TilUtfylling
+                bruttoBelop shouldBe null
             }
 
             with(get(1)) {
                 id shouldBe 456L
                 periode.fraOgMed shouldBe 15.januar
                 periode.tilOgMed shouldBe 28.januar
+                dager.size shouldBe 14
+                dager.first().dato shouldBe 15.januar
+                dager.last().dato shouldBe 28.januar
                 kanSendesFra shouldBe 27.januar
+                status shouldBe TilUtfylling
+                bruttoBelop shouldBe null
             }
         }
     }
@@ -82,6 +97,89 @@ class MeldepliktConnectorTest {
                 connector.hentRapporteringsperioder(ident, subjectToken)
             }
         }
+
+        shouldThrow<JsonConvertException> {
+            runBlocking {
+                connector.hentInnsendteRapporteringsperioder(ident, subjectToken)
+            }
+        }
+    }
+
+    @Test
+    fun `henter tom liste for innsendte rapporteringsperioder`() {
+        val connector = meldepliktConnector("[]", 200)
+
+        val response =
+            runBlocking {
+                connector.hentInnsendteRapporteringsperioder(ident, subjectToken)
+            }
+
+        response shouldBe emptyList()
+    }
+
+    @Test
+    fun `henter liste med innsedte rapporteringsperioder med to elementer`() {
+        val rapporteringsperiode1 =
+            rapporteringsperiodeFor(id = 123L, fraOgMed = 1.januar, tilOgMed = 14.januar, kanSendesFra = 13.januar, status = Innsendt)
+        val rapporteringsperiode2 =
+            rapporteringsperiodeFor(
+                id = 456L,
+                fraOgMed = 15.januar,
+                tilOgMed = 28.januar,
+                kanSendesFra = 27.januar,
+                status = Ferdig,
+                bruttoBelop = "1000",
+            )
+
+        val rapporteringsperioder = "[$rapporteringsperiode1, $rapporteringsperiode2]"
+
+        val connector = meldepliktConnector(rapporteringsperioder, 200)
+
+        val response =
+            runBlocking {
+                connector.hentRapporteringsperioder(ident, subjectToken)
+            }
+
+        with(response) {
+            size shouldBe 2
+
+            with(get(0)) {
+                id shouldBe 123L
+                periode.fraOgMed shouldBe 1.januar
+                periode.tilOgMed shouldBe 14.januar
+                dager.size shouldBe 14
+                dager.first().dato shouldBe 1.januar
+                dager.last().dato shouldBe 14.januar
+                kanSendesFra shouldBe 13.januar
+                status shouldBe Innsendt
+                bruttoBelop shouldBe null
+            }
+
+            with(get(1)) {
+                id shouldBe 456L
+                periode.fraOgMed shouldBe 15.januar
+                periode.tilOgMed shouldBe 28.januar
+                dager.size shouldBe 14
+                dager.first().dato shouldBe 15.januar
+                dager.last().dato shouldBe 28.januar
+                kanSendesFra shouldBe 27.januar
+                status shouldBe Ferdig
+                bruttoBelop shouldBe "1000"
+            }
+        }
+    }
+
+    @Test
+    fun `henter korringeringId`() {
+        val id = 1806985352L
+        val connector = meldepliktConnector(id.toString(), 200)
+
+        val response =
+            runBlocking {
+                connector.hentKorrigeringId(ident, subjectToken)
+            }
+
+        response shouldBe PeriodeId(id)
     }
 
     @Test
@@ -117,9 +215,12 @@ fun rapporteringsperiodeFor(
     id: Long = 123L,
     fraOgMed: LocalDate = LocalDate.now().minusWeeks(2),
     tilOgMed: LocalDate = LocalDate.now(),
+    dager: String = aktivitetsdagerlisteFor(fraOgMed),
     kanSendesFra: LocalDate = LocalDate.now(),
     kanSendes: Boolean = true,
     kanKorrigeres: Boolean = true,
+    status: RapporteringsperiodeStatus = RapporteringsperiodeStatus.TilUtfylling,
+    bruttoBelop: String? = null,
 ) = //language=JSON
     """
     {
@@ -128,9 +229,12 @@ fun rapporteringsperiodeFor(
         "fraOgMed": "$fraOgMed",
         "tilOgMed": "$tilOgMed"
       },
+      "dager": $dager,
       "kanSendesFra": "$kanSendesFra",
       "kanSendes": $kanSendes,
-      "kanKorrigeres": $kanKorrigeres
+      "kanKorrigeres": $kanKorrigeres,
+      "bruttoBelop": $bruttoBelop,
+      "status": "${status.name}"
     }
     """.trimIndent()
 
@@ -140,59 +244,73 @@ fun aktivitetsdagerlisteFor(startDato: LocalDate = LocalDate.now().minusWeeks(2)
     [
         {
             "dato": "$startDato",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 0
         },
         {
             "dato": "${startDato.plusDays(1)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 1
         },
         {
             "dato": "${startDato.plusDays(2)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 2
         },
         {
             "dato": "${startDato.plusDays(3)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 3
         },
         {
             "dato": "${startDato.plusDays(4)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 4
         },
         {
             "dato": "${startDato.plusDays(5)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 5
         },
         {
             "dato": "${startDato.plusDays(6)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 6
         },
         {
             "dato": "${startDato.plusDays(7)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 7
         },
         {
             "dato": "${startDato.plusDays(8)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 8
         },
         {
             "dato": "${startDato.plusDays(9)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 9
         },
         {
             "dato": "${startDato.plusDays(10)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 10
         },
         {
             "dato": "${startDato.plusDays(11)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 11
         },
         {
             "dato": "${startDato.plusDays(12)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 12
         },
         {
             "dato": "${startDato.plusDays(13)}",
-            "aktiviteter": []
+            "aktiviteter": [],
+            "dagIndex": 13
         }
     ]
     """.trimIndent()
