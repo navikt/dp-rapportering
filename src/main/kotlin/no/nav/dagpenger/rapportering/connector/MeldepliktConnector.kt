@@ -30,16 +30,10 @@ class MeldepliktConnector(
         subjectToken: String,
     ): List<Rapporteringsperiode> =
         withContext(Dispatchers.IO) {
-            val response: HttpResponse =
-                httpClient.get(URI("$meldepliktUrl/rapporteringsperioder").toURL()) {
-                    header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
-                    contentType(ContentType.Application.Json)
-                }
-
-            logger.info { "Kall til meldeplikt-adapter for å hente perioder gikk OK" }
-            sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
-
-            response.body()
+            hentData("/rapporteringsperioder", subjectToken)
+                .loggInfo { "Kall til meldeplikt-adapter for å hente perioder gikk OK" }
+                .sikkerloggInfo { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
+                .body()
         }
 
     suspend fun hentInnsendteRapporteringsperioder(
@@ -47,16 +41,10 @@ class MeldepliktConnector(
         subjectToken: String,
     ): List<Rapporteringsperiode> =
         withContext(Dispatchers.IO) {
-            val response: HttpResponse =
-                httpClient.get(URI("$meldepliktUrl/sendterapporteringsperioder").toURL()) {
-                    header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
-                    contentType(ContentType.Application.Json)
-                }
-
-            logger.info { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }
-            sikkerlogg.info { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident gikk OK" }
-
-            response.body()
+            hentData("/sendterapporteringsperioder", subjectToken)
+                .loggInfo { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }
+                .sikkerloggInfo { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident gikk OK" }
+                .body()
         }
 
     suspend fun hentAktivitetsdager(
@@ -64,15 +52,9 @@ class MeldepliktConnector(
         subjectToken: String,
     ): List<Dag> =
         withContext(Dispatchers.IO) {
-            val response: HttpResponse =
-                httpClient.get(URI("$meldepliktUrl/aktivitetsdager/$id").toURL()) {
-                    header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
-                    contentType(ContentType.Application.Json)
-                }
-
-            logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
-
-            response.body()
+            hentData("/aktivitetsdager/$id", subjectToken)
+                .loggInfo { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
+                .body()
         }
 
     suspend fun hentKorrigeringId(
@@ -80,16 +62,23 @@ class MeldepliktConnector(
         subjectToken: String,
     ): PeriodeId =
         withContext(Dispatchers.IO) {
-            val response: HttpResponse =
-                httpClient.get(URI("$meldepliktUrl/korrigertMeldekort/$id").toURL()) {
-                    header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
-                    contentType(ContentType.Application.Json)
-                }
-
-            logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
-
-            PeriodeId(response.body())
+            hentData("/korrigertMeldekort/$id", subjectToken)
+                .loggInfo { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
+                .let { PeriodeId(it.body()) }
         }
+
+    private suspend fun hentData(
+        path: String,
+        subjectToken: String,
+    ): HttpResponse =
+        httpClient.get(URI("$meldepliktUrl$path").toURL()) {
+            header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
+            contentType(ContentType.Application.Json)
+        }
+
+    private fun HttpResponse.loggInfo(msg: () -> String) = this.also { logger.info { msg } }
+
+    private fun HttpResponse.sikkerloggInfo(msg: () -> String) = this.also { sikkerlogg.info { msg } }
 
     companion object {
         private val logger = KotlinLogging.logger {}
