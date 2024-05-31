@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS rapporteringsperiode
+(
+    id                      BIGSERIAL                                                           NOT NULL PRIMARY KEY,
+    ident                   VARCHAR(11)                                                         NOT NULL,
+    fom                     DATE                                                                NOT NULL,
+    tom                     DATE                                                                NOT NULL,
+    kan_sendes_fra          DATE                                                                NOT NULL,
+    kan_sendes              BOOLEAN                                                             NOT NULL,
+    kan_korrigeres          BOOLEAN                                                             NOT NULL,
+    brutto_belop            DECIMAL                                                             NOT NULL,
+    registrert_arbeidssoker BOOLEAN                                                             NULL,
+    status                  VARCHAR                                                             NOT NULL
+);
+
+-- CREATE TABLE IF NOT EXISTS dag
+-- (
+--     rapporteringsperiode_id BIGSERIAL   NOT NULL REFERENCES rapporteringsperiode(id),
+--     aktivitet_id            uuid        NOT NULL REFERENCES aktivitet(uuid),
+--     dato                    DATE        NOT NULL,
+--     dag_index               INT      NOT NULL
+-- )
