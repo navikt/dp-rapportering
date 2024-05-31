@@ -174,7 +174,7 @@ class MeldepliktConnectorTest {
                 dager.first().dato shouldBe 1.januar
                 dager.last().dato shouldBe 14.januar
                 dager.first().aktiviteter.first().type shouldBe Arbeid
-                dager.first().aktiviteter.first().timer.toString() shouldBe "PT5H30M"
+                dager.first().aktiviteter.first().timer shouldBe "PT5H30M"
                 kanSendesFra shouldBe 13.januar
                 status shouldBe Innsendt
                 bruttoBelop shouldBe null
