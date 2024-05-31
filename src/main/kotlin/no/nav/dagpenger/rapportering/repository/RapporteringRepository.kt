@@ -10,5 +10,8 @@ interface RapporteringRepository {
 
     fun hentRapporteringsperioder(): List<Rapporteringsperiode>
 
-    fun lagreRapporteringsperiode(rapporteringsperiode: Rapporteringsperiode): Rapporteringsperiode
+    fun lagreRapporteringsperiode(
+        rapporteringsperiode: Rapporteringsperiode,
+        ident: String,
+    )
 }
