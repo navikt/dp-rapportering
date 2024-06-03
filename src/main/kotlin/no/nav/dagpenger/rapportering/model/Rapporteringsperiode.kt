@@ -8,7 +8,7 @@ import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeResponse
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse
 import java.time.LocalDate
 
-open class Rapporteringsperiode(
+data class Rapporteringsperiode(
     val id: Long,
     val periode: Periode,
     val dager: List<Dag>,
