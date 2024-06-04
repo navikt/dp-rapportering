@@ -65,6 +65,13 @@ class RapporteringRepositoryPostgresTest {
     }
 
     @Test
+    fun `Uthenting av rapporteringsperiode som ikke finnes returnerer null`() {
+        withMigratedDb {
+            rapporteringRepositoryPostgres.hentRapporteringsperiode(123L, "12345678910") shouldBe null
+        }
+    }
+
+    @Test
     fun `kan lagre rapporteringsperiode`() {
         val rapporteringsperiode = getRapporteringsperiode()
         withMigratedDb {

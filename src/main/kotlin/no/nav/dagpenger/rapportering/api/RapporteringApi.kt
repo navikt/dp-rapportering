@@ -23,11 +23,15 @@ import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.model.toResponse
+import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import java.net.URI
 
 private val logger = KotlinLogging.logger {}
 
-internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnector) {
+internal fun Application.rapporteringApi(
+    meldepliktConnector: MeldepliktConnector,
+    rapporteringRepository: RapporteringRepository,
+) {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
             when (cause) {
@@ -107,6 +111,16 @@ internal fun Application.rapporteringApi(meldepliktConnector: MeldepliktConnecto
                         meldepliktConnector
                             .hentRapporteringsperioder(ident, jwtToken)
                             .minByOrNull { it.periode.fraOgMed }
+                            .let { gjeldendePeriode ->
+                                if (gjeldendePeriode != null) {
+                                    rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident)
+                                        ?: gjeldendePeriode.also {
+                                            rapporteringRepository.lagreRapporteringsperiode(gjeldendePeriode, ident)
+                                        }
+                                } else {
+                                    null
+                                }
+                            }
                             ?.also { call.respond(HttpStatusCode.OK, it) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
