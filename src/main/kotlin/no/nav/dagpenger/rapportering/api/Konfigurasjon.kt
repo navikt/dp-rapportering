@@ -16,8 +16,12 @@ import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.path
 import io.micrometer.prometheus.PrometheusMeterRegistry
+import no.nav.dagpenger.rapportering.Configuration.config
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.azureAd
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.tokenX
+import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.clean
+import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.runMigration
+import org.flywaydb.core.internal.configuration.ConfigUtils
 import org.slf4j.event.Level
 
 fun Application.konfigurasjon(
@@ -27,6 +31,9 @@ fun Application.konfigurasjon(
         jwt("azureAd") { azureAd() }
     },
 ) {
+    if (config[ConfigUtils.CLEAN_DISABLED] == "true") clean()
+    runMigration()
+
     install(CallLogging) {
         disableDefaultColors()
         filter {
