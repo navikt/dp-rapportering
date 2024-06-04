@@ -34,7 +34,7 @@ spec:
       value: {{MELDEPLIKT_ADAPTER_AUDIENCE}}
   gcp:
       sqlInstances:
-          - type: POSTGRES_14
+          - type: POSTGRES_15
             highAvailability: true
             diskAutoresize: true
             pointInTimeRecovery: true
