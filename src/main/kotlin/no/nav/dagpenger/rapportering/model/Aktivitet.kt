@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import java.util.UUID
+import kotlin.time.Duration
 import kotlin.time.DurationUnit.HOURS
 import kotlin.time.toDuration
 
@@ -28,6 +29,10 @@ class DoubleToIsoDurationStringDeserializer : JsonDeserializer<String?>() {
         ctxt: DeserializationContext,
     ): String? =
         p.currentToken?.let {
-            p.doubleValue.toDuration(HOURS).toIsoString()
+            try {
+                p.doubleValue.toDuration(HOURS).toIsoString()
+            } catch (e: Exception) {
+                Duration.parseIsoString(p.valueAsString).toIsoString()
+            }
         }
 }

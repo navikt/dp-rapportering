@@ -21,9 +21,14 @@ import io.ktor.server.routing.routing
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.auth.jwt
+import no.nav.dagpenger.rapportering.api.models.AktivitetResponse
+import no.nav.dagpenger.rapportering.api.models.AktivitetTypeResponse
+import no.nav.dagpenger.rapportering.api.models.DagInnerResponse
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
+import no.nav.dagpenger.rapportering.model.Aktivitet
+import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
@@ -252,3 +257,23 @@ data class HttpProblem(
     val instance: URI = URI.create("about:blank"),
     val errorType: String? = null,
 )
+
+private fun DagInnerResponse.toDag() =
+    Dag(
+        dato = dato,
+        aktiviteter = aktiviteter.map { it.toAktivitet() },
+        dagIndex = dagIndex.toInt(),
+    )
+
+private fun AktivitetResponse.toAktivitet() =
+    Aktivitet(
+        uuid = id,
+        type =
+            when (type) {
+                AktivitetTypeResponse.Arbeid -> AktivitetsType.Arbeid
+                AktivitetTypeResponse.Syk -> AktivitetsType.Syk
+                AktivitetTypeResponse.Utdanning -> AktivitetsType.Utdanning
+                AktivitetTypeResponse.Fravaer -> AktivitetsType.FerieEllerFravaer
+            },
+        timer = timer,
+    )
