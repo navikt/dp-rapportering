@@ -167,7 +167,7 @@ internal fun Application.rapporteringApi(
                         post {
                             val ident = call.ident()
                             val rapporteringId = call.parameters["id"]?.toLong()
-                            val dag = call.receive(Dag::class)
+                            val dag = call.receive(DagInnerResponse::class).toDag()
 
                             if (rapporteringId == null) {
                                 call.respond(HttpStatusCode.BadRequest)
