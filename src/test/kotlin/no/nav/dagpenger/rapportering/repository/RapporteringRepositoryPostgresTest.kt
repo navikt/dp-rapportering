@@ -58,9 +58,7 @@ class RapporteringRepositoryPostgresTest {
             rapporteringRepositoryPostgres.lagreRapporteringsperiode(rapporteringsperiode = rapporteringsperiode, ident = ident)
             val rapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = id, ident = ident)
 
-            with(rapporteringsperiode) {
-                id shouldBe id
-            }
+            rapporteringsperiode!!.id shouldBe id
         }
     }
 

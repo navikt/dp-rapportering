@@ -130,16 +130,16 @@ internal fun Application.rapporteringApi(
                     get {
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
-                        val id = call.parameters["id"]
+                        val rapporteringId = call.parameters["id"]
 
-                        if (id.isNullOrBlank()) {
+                        if (rapporteringId.isNullOrBlank()) {
                             call.respond(HttpStatusCode.BadRequest)
                             return@get
                         }
 
                         meldepliktConnector
                             .hentRapporteringsperioder(ident, jwtToken)
-                            .firstOrNull { it.id.toString() == id }
+                            .firstOrNull { it.id.toString() == rapporteringId }
                             .let {
                                 if (it == null) {
                                     call.respond(HttpStatusCode.NotFound)
