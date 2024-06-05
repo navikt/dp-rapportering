@@ -22,5 +22,5 @@ interface RapporteringRepository {
         dag: Dag,
     )
 
-    fun slettAktivitet(aktivitetId: UUID)
+    fun slettAktivitet(aktivitetId: UUID): Int
 }

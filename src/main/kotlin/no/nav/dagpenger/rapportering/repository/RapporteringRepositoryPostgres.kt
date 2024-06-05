@@ -145,7 +145,7 @@ class RapporteringRepositoryPostgres(private val dataSource: DataSource) : Rappo
         }
     }
 
-    override fun slettAktivitet(aktivitetId: UUID) {
+    override fun slettAktivitet(aktivitetId: UUID): Int =
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
                 tx.run(
@@ -156,7 +156,6 @@ class RapporteringRepositoryPostgres(private val dataSource: DataSource) : Rappo
                 )
             }
         }
-    }
 }
 
 private fun Row.toRapporteringsperiode() =

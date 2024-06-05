@@ -10,8 +10,10 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.request.receive
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
@@ -22,9 +24,11 @@ import no.nav.dagpenger.rapportering.api.auth.jwt
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
+import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import java.net.URI
+import java.util.UUID
 
 private val logger = KotlinLogging.logger {}
 
@@ -152,6 +156,33 @@ internal fun Application.rapporteringApi(
                     post {
                         // TODO
                         call.respond(HttpStatusCode.NotImplemented)
+                    }
+
+                    route("/aktivitet") {
+                        post {
+                            val ident = call.ident()
+                            val rapporteringId = call.parameters["id"]?.toLong()
+                            val dag = call.receive(Dag::class)
+
+                            if (rapporteringId == null) {
+                                call.respond(HttpStatusCode.BadRequest)
+                            } else {
+                                rapporteringRepository.lagreAktiviteter(rapporteringId.toLong(), dag)
+                                call.respond(HttpStatusCode.NoContent)
+                            }
+                        }
+                        route("/{aktivitetId}") {
+                            delete {
+                                val aktivitetId = call.parameters["aktivitetId"]
+
+                                if (aktivitetId == null) {
+                                    call.respond(HttpStatusCode.BadRequest)
+                                }
+
+                                rapporteringRepository.slettAktivitet(UUID.fromString(aktivitetId))
+                                call.respond(HttpStatusCode.NoContent)
+                            }
+                        }
                     }
 
                     route("/korriger") {

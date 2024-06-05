@@ -137,15 +137,24 @@ class RapporteringRepositoryPostgresTest {
                 dager.first().aktiviteter.last().uuid shouldBe dag.aktiviteter.last().uuid
             }
 
-            rapporteringRepositoryPostgres.slettAktivitet(dag.aktiviteter.first().uuid)
+            val rowsAffected = rapporteringRepositoryPostgres.slettAktivitet(dag.aktiviteter.first().uuid)
             val resultatMedEnAktivitet = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
 
+            rowsAffected shouldBe 1
             with(resultatMedEnAktivitet!!) {
                 id shouldBe rapporteringsperiode.id
                 dager.size shouldBe 14
                 dager.first().aktiviteter.size shouldBe 1
                 dager.first().aktiviteter.first().uuid shouldBe dag.aktiviteter.last().uuid
             }
+        }
+    }
+
+    @Test
+    fun `slett av ikke-eksisterende aktivitet`() {
+        withMigratedDb {
+            val rowsAffected = rapporteringRepositoryPostgres.slettAktivitet(UUID.randomUUID())
+            rowsAffected shouldBe 0
         }
     }
 }

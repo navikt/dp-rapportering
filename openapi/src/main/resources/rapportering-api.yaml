@@ -106,6 +106,47 @@ paths:
                 - tokenX: []
         parameters:
             - $ref: '#/components/parameters/periodeId'
+
+    /rapporteringsperiode/{periodeId}/aktivitet:
+        post:
+            responses:
+                204:
+                    description: OK - No Content
+                400:
+                    description: Bad Request
+            summary: Lagre aktiviteter
+            description: Oppretter aktiviteter på en dag i rapporteringsperioden
+            operationId: post-lagre-aktivitet
+            tags:
+                - Rapporteringsperiode
+            security:
+                - tokenX: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/dag'
+        parameters:
+            - $ref: '#/components/parameters/periodeId'
+    /rapporteringsperiode/{periodeId}/aktivitet/{aktivitetId}:
+        delete:
+            responses:
+                204:
+                    description: OK - No Content
+                400:
+                    description: Bad Request
+            summary: Slett aktivitet
+            description: Slett aktivitet gitt aktivitetId
+            operationId: delete-aktivitet
+            security:
+                - tokenX: []
+            tags:
+                - Rapporteringsperiode
+        parameters:
+            - $ref: '#/components/parameters/periodeId'
+            - $ref: '#/components/parameters/aktivitetId'
+
     /rapporteringsperiode/{periodeId}/korriger:
         post:
             responses:
@@ -126,6 +167,7 @@ paths:
                 - tokenX: []
         parameters:
             -   $ref: '#/components/parameters/periodeId'
+
 
 components:
     schemas:
@@ -266,6 +308,13 @@ components:
         periodeId:
             name: periodeId
             description: ID til rapporteringsperioden
+            schema:
+                type: string
+            in: path
+            required: true
+        aktivitetId:
+            name: aktivitetId
+            description: ID til aktivitet
             schema:
                 type: string
             in: path
