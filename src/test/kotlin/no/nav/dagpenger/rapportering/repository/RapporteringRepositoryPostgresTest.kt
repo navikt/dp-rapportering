@@ -8,6 +8,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.withMigratedDb
@@ -80,6 +81,48 @@ class RapporteringRepositoryPostgresTest {
     }
 
     @Test
+    fun `lagre oppdaterer eksisterende rapporteringsperiode`() {
+        val ident = "12345678910"
+        val rapporteringsperiode = getRapporteringsperiode()
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiode(rapporteringsperiode = rapporteringsperiode, ident = ident)
+
+            val lagretRapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperioder()
+
+            lagretRapporteringsperiode.size shouldBe 1
+            with(lagretRapporteringsperiode.first()) {
+                id shouldBe rapporteringsperiode.id
+                kanSendes shouldBe true
+                kanKorrigeres shouldBe false
+                bruttoBelop shouldBe null
+                status shouldBe TilUtfylling
+            }
+
+            rapporteringRepositoryPostgres.lagreRapporteringsperiode(
+                rapporteringsperiode =
+                    rapporteringsperiode.copy(
+                        kanSendes = false,
+                        kanKorrigeres = true,
+                        bruttoBelop = 100.0,
+                        status = Innsendt,
+                    ),
+                ident = ident,
+            )
+
+            val oppdatertRapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperioder()
+
+            oppdatertRapporteringsperiode.size shouldBe 1
+            with(oppdatertRapporteringsperiode.first()) {
+                id shouldBe rapporteringsperiode.id
+                kanSendes shouldBe false
+                kanKorrigeres shouldBe true
+                bruttoBelop shouldBe 100.0
+                status shouldBe Innsendt
+            }
+        }
+    }
+
+    @Test
     fun `kan lagre aktiviteter`() {
         val rapporteringsperiode = getRapporteringsperiode()
         val dag =
@@ -105,6 +148,33 @@ class RapporteringRepositoryPostgresTest {
                 id shouldBe rapporteringsperiode.id
                 dager.size shouldBe 14
                 dager.first().aktiviteter.size shouldBe 2
+            }
+        }
+    }
+
+    @Test
+    fun `lagring av aktivitet som allerede aksisterer feiler ikke`() {
+        val rapporteringsperiode = getRapporteringsperiode()
+        val dag =
+            Dag(
+                dato = 1.januar,
+                aktiviteter = listOf(Aktivitet(uuid = UUID.randomUUID(), type = Utdanning, timer = null)),
+                dagIndex = 0,
+            )
+        val ident = "12345678910"
+
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiode(rapporteringsperiode, "12345678910")
+
+            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
+            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
+
+            val result = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
+
+            with(result!!) {
+                id shouldBe rapporteringsperiode.id
+                dager.size shouldBe 14
+                dager.first().aktiviteter.size shouldBe 1
             }
         }
     }

@@ -86,24 +86,31 @@ class RapporteringRepositoryPostgres(private val dataSource: DataSource) : Rappo
                         """
                         INSERT INTO rapporteringsperiode 
                         (id, ident, kan_sendes, kan_sendes_fra, kan_korrigeres, brutto_belop, status, registrert_arbeidssoker, fom, tom) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (:id, :ident, :kan_sendes, :kan_sendes_fra, :kan_korrigeres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom)
+                        ON CONFLICT (id) DO UPDATE 
+                        SET kan_sendes = :kan_sendes, kan_korrigeres = :kan_korrigeres, brutto_belop = :brutto_belop, status = :status, registrert_arbeidssoker = :registrert_arbeidssoker
                         """.trimIndent(),
-                        rapporteringsperiode.id,
-                        ident,
-                        rapporteringsperiode.kanSendes,
-                        rapporteringsperiode.kanSendesFra,
-                        rapporteringsperiode.kanKorrigeres,
-                        rapporteringsperiode.bruttoBelop,
-                        rapporteringsperiode.status.name,
-                        rapporteringsperiode.registrertArbeidssoker,
-                        rapporteringsperiode.periode.fraOgMed,
-                        rapporteringsperiode.periode.tilOgMed,
+                        mapOf(
+                            "id" to rapporteringsperiode.id,
+                            "ident" to ident,
+                            "kan_sendes" to rapporteringsperiode.kanSendes,
+                            "kan_sendes_fra" to rapporteringsperiode.kanSendesFra,
+                            "kan_korrigeres" to rapporteringsperiode.kanKorrigeres,
+                            "brutto_belop" to rapporteringsperiode.bruttoBelop,
+                            "status" to rapporteringsperiode.status.name,
+                            "registrert_arbeidssoker" to rapporteringsperiode.registrertArbeidssoker,
+                            "fom" to rapporteringsperiode.periode.fraOgMed,
+                            "tom" to rapporteringsperiode.periode.tilOgMed,
+                        ),
                     ).asUpdate,
                 )
                 rapporteringsperiode.dager.map { dag ->
                     tx.run(
                         queryOf(
-                            "INSERT INTO dag (id, rapportering_id, dato, dag_index) VALUES (?, ?, ?, ?)",
+                            """
+                            INSERT INTO dag (id, rapportering_id, dato, dag_index) VALUES (?, ?, ?, ?) 
+                            ON CONFLICT ON CONSTRAINT rapportering_dag_unik_kobling DO NOTHING
+                            """.trimIndent(),
                             UUID.randomUUID(),
                             rapporteringsperiode.id,
                             dag.dato,
@@ -133,7 +140,10 @@ class RapporteringRepositoryPostgres(private val dataSource: DataSource) : Rappo
                 dag.aktiviteter.forEach { aktivitet ->
                     tx.run(
                         queryOf(
-                            "INSERT INTO aktivitet(uuid, dag_id, type, timer) VALUES (?, ?, ?, ?)",
+                            """
+                            INSERT INTO aktivitet(uuid, dag_id, type, timer) VALUES (?, ?, ?, ?) 
+                            ON CONFLICT (uuid) DO NOTHING
+                            """.trimIndent(),
                             aktivitet.uuid,
                             dagId,
                             aktivitet.type.name,

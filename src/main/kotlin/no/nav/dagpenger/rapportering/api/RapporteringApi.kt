@@ -122,10 +122,8 @@ internal fun Application.rapporteringApi(
                             .minByOrNull { it.periode.fraOgMed }
                             .let { gjeldendePeriode ->
                                 if (gjeldendePeriode != null) {
-                                    rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident)
-                                        ?: gjeldendePeriode.also {
-                                            rapporteringRepository.lagreRapporteringsperiode(gjeldendePeriode, ident)
-                                        }
+                                    rapporteringRepository.lagreRapporteringsperiode(gjeldendePeriode, ident)
+                                        .let { rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident) }
                                 } else {
                                     null
                                 }
