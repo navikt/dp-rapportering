@@ -123,6 +123,7 @@ internal fun Application.rapporteringApi(
                             ?.let { gjeldendePeriode ->
                                 if (rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident) == null) {
                                     rapporteringRepository.lagreRapporteringsperiodeOgDager(gjeldendePeriode, ident)
+                                    gjeldendePeriode
                                 } else {
                                     rapporteringRepository.oppdaterRapporteringsperiodeFraArena(gjeldendePeriode, ident)
                                     rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident)
@@ -150,6 +151,7 @@ internal fun Application.rapporteringApi(
                             ?.let { periode ->
                                 if (rapporteringRepository.hentRapporteringsperiode(periode.id, ident) == null) {
                                     rapporteringRepository.lagreRapporteringsperiodeOgDager(periode, ident)
+                                    periode
                                 } else {
                                     rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
                                     rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
