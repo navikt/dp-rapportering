@@ -10,13 +10,15 @@ import no.nav.dagpenger.rapportering.api.rapporteringApi
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
+import no.nav.dagpenger.rapportering.service.RapporteringService
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module).start(wait = true)
 }
 
 fun Application.module() {
+    val service = RapporteringService(MeldepliktConnector(), RapporteringRepositoryPostgres(dataSource))
     konfigurasjon(appMicrometerRegistry)
     internalApi(appMicrometerRegistry)
-    rapporteringApi(MeldepliktConnector(), RapporteringRepositoryPostgres(dataSource))
+    rapporteringApi(service)
 }

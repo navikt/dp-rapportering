@@ -24,23 +24,19 @@ import no.nav.dagpenger.rapportering.api.auth.jwt
 import no.nav.dagpenger.rapportering.api.models.AktivitetResponse
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeResponse
 import no.nav.dagpenger.rapportering.api.models.DagInnerResponse
-import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.toResponse
-import no.nav.dagpenger.rapportering.repository.RapporteringRepository
+import no.nav.dagpenger.rapportering.service.RapporteringService
 import java.net.URI
 import java.util.UUID
 
 private val logger = KotlinLogging.logger {}
 
-internal fun Application.rapporteringApi(
-    meldepliktConnector: MeldepliktConnector,
-    rapporteringRepository: RapporteringRepository,
-) {
+internal fun Application.rapporteringApi(service: RapporteringService) {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
             when (cause) {
