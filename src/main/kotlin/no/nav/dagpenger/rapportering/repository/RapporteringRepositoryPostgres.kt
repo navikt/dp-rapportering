@@ -187,7 +187,7 @@ class RapporteringRepositoryPostgres(private val dataSource: DataSource) : Rappo
                         SET kan_sendes = :kan_sendes,
                             kan_korrigeres = :kan_korrigeres,
                             brutto_belop = :brutto_belop,
-                            status = :status,
+                            status = :status
                         """.trimIndent(),
                         mapOf(
                             "kan_sendes" to rapporteringsperiode.kanSendes,

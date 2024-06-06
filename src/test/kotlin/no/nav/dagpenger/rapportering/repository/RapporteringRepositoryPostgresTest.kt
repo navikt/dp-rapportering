@@ -9,6 +9,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.withMigratedDb
@@ -164,6 +165,59 @@ class RapporteringRepositoryPostgresTest {
                 id shouldBe rapporteringsperiode.id
                 dager.size shouldBe 14
                 dager.first().aktiviteter.size shouldBe 1
+            }
+        }
+    }
+
+    @Test
+    fun `kan oppdatere rapporteringsperiode fra adapter`() {
+        val rapporteringsperiode = getRapporteringsperiode()
+        val dag =
+            Dag(
+                dato = 1.januar,
+                aktiviteter = listOf(Aktivitet(uuid = UUID.randomUUID(), type = Utdanning, timer = null)),
+                dagIndex = 0,
+            )
+        val ident = "12345678910"
+
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, "12345678910")
+
+            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
+            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
+
+            val lagretRapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
+
+            with(lagretRapporteringsperiode!!) {
+                id shouldBe rapporteringsperiode.id
+                dager.size shouldBe 14
+                dager.first().aktiviteter.size shouldBe 1
+                kanSendes shouldBe true
+                kanKorrigeres shouldBe false
+                bruttoBelop shouldBe null
+                status shouldBe TilUtfylling
+            }
+
+            rapporteringRepositoryPostgres.oppdaterRapporteringsperiodeFraArena(
+                rapporteringsperiode.copy(
+                    kanSendes = false,
+                    kanKorrigeres = true,
+                    bruttoBelop = 100.0,
+                    status = Innsendt,
+                ),
+                ident,
+            )
+
+            val oppdatertRapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
+
+            with(oppdatertRapporteringsperiode!!) {
+                id shouldBe rapporteringsperiode.id
+                dager.size shouldBe 14
+                dager.first().aktiviteter.size shouldBe 1
+                kanSendes shouldBe false
+                kanKorrigeres shouldBe true
+                bruttoBelop shouldBe 100.0
+                status shouldBe Innsendt
             }
         }
     }
