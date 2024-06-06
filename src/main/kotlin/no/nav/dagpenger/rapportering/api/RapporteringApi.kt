@@ -120,12 +120,12 @@ internal fun Application.rapporteringApi(
                         meldepliktConnector
                             .hentRapporteringsperioder(ident, jwtToken)
                             .minByOrNull { it.periode.fraOgMed }
-                            .let { gjeldendePeriode ->
-                                if (gjeldendePeriode != null) {
-                                    rapporteringRepository.lagreRapporteringsperiode(gjeldendePeriode, ident)
-                                        .let { rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident) }
+                            ?.let { gjeldendePeriode ->
+                                if (rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident) == null) {
+                                    rapporteringRepository.lagreRapporteringsperiodeOgDager(gjeldendePeriode, ident)
                                 } else {
-                                    null
+                                    rapporteringRepository.oppdaterRapporteringsperiodeFraArena(gjeldendePeriode, ident)
+                                    rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident)
                                 }
                             }
                             ?.also { call.respond(HttpStatusCode.OK, it) }
@@ -147,23 +147,25 @@ internal fun Application.rapporteringApi(
                         meldepliktConnector
                             .hentRapporteringsperioder(ident, jwtToken)
                             .firstOrNull { it.id.toString() == rapporteringId }
-                            .let {
-                                if (it == null) {
-                                    call.respond(HttpStatusCode.NotFound)
+                            ?.let { periode ->
+                                if (rapporteringRepository.hentRapporteringsperiode(periode.id, ident) == null) {
+                                    rapporteringRepository.lagreRapporteringsperiodeOgDager(periode, ident)
                                 } else {
-                                    call.respond(HttpStatusCode.OK, it.toResponse())
+                                    rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
+                                    rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
                                 }
                             }
+                            ?.also { call.respond(HttpStatusCode.OK, it) }
+                            ?: call.respond(HttpStatusCode.NotFound)
                     }
 
                     post {
                         // TODO
-                        call.respond(HttpStatusCode.NotImplemented)
+                        call.respond(HttpStatusCode.OK)
                     }
 
                     route("/aktivitet") {
                         post {
-                            val ident = call.ident()
                             val rapporteringId = call.parameters["id"]?.toLong()
                             val dag = call.receive(DagInnerResponse::class).toDag()
 

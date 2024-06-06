@@ -12,7 +12,7 @@ interface RapporteringRepository {
 
     fun hentRapporteringsperioder(): List<Rapporteringsperiode>
 
-    fun lagreRapporteringsperiode(
+    fun lagreRapporteringsperiodeOgDager(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
     )
@@ -20,6 +20,11 @@ interface RapporteringRepository {
     fun lagreAktiviteter(
         rapporteringId: Long,
         dag: Dag,
+    )
+
+    fun oppdaterRapporteringsperiodeFraArena(
+        rapporteringsperiode: Rapporteringsperiode,
+        ident: String,
     )
 
     fun slettAktivitet(aktivitetId: UUID): Int

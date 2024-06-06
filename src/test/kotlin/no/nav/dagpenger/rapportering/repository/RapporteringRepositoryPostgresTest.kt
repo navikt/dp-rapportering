@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.repository
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
@@ -8,7 +9,6 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
-import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.withMigratedDb
@@ -37,7 +37,7 @@ class RapporteringRepositoryPostgresTest {
         val ident = "12345678910"
 
         withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiode(rapporteringsperiode = rapporteringsperiode, ident = ident)
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
             val rapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = id, ident = ident)
 
             with(rapporteringsperiode) {
@@ -56,7 +56,7 @@ class RapporteringRepositoryPostgresTest {
         val ident = "12345678910"
 
         withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiode(rapporteringsperiode = rapporteringsperiode, ident = ident)
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
             val rapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = id, ident = ident)
 
             rapporteringsperiode!!.id shouldBe id
@@ -74,51 +74,40 @@ class RapporteringRepositoryPostgresTest {
     fun `kan lagre rapporteringsperiode`() {
         val rapporteringsperiode = getRapporteringsperiode()
         withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiode(rapporteringsperiode = rapporteringsperiode, ident = "12345678910")
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = rapporteringsperiode,
+                ident = "12345678910",
+            )
 
             rapporteringRepositoryPostgres.hentRapporteringsperioder().size shouldBe 1
         }
     }
 
     @Test
-    fun `lagre oppdaterer eksisterende rapporteringsperiode`() {
+    fun `lagre eksisterende rapporteringsperiode kaster exception`() {
         val ident = "12345678910"
         val rapporteringsperiode = getRapporteringsperiode()
         withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiode(rapporteringsperiode = rapporteringsperiode, ident = ident)
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
 
-            val lagretRapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperioder()
-
-            lagretRapporteringsperiode.size shouldBe 1
-            with(lagretRapporteringsperiode.first()) {
-                id shouldBe rapporteringsperiode.id
-                kanSendes shouldBe true
-                kanKorrigeres shouldBe false
-                bruttoBelop shouldBe null
-                status shouldBe TilUtfylling
+            shouldThrow<RuntimeException> {
+                rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
             }
+        }
+    }
 
-            rapporteringRepositoryPostgres.lagreRapporteringsperiode(
-                rapporteringsperiode =
-                    rapporteringsperiode.copy(
-                        kanSendes = false,
-                        kanKorrigeres = true,
-                        bruttoBelop = 100.0,
-                        status = Innsendt,
-                    ),
-                ident = ident,
+    @Test
+    fun `kan oppdaterer lagret rapporteringsperiode`() {
+        val rapporteringsperiode = getRapporteringsperiode()
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = rapporteringsperiode,
+                ident = "12345678910",
             )
 
-            val oppdatertRapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperioder()
+            val lagretRapportering = rapporteringRepositoryPostgres.hentRapporteringsperioder()
 
-            oppdatertRapporteringsperiode.size shouldBe 1
-            with(oppdatertRapporteringsperiode.first()) {
-                id shouldBe rapporteringsperiode.id
-                kanSendes shouldBe false
-                kanKorrigeres shouldBe true
-                bruttoBelop shouldBe 100.0
-                status shouldBe Innsendt
-            }
+            lagretRapportering.size shouldBe 1
         }
     }
 
@@ -138,7 +127,7 @@ class RapporteringRepositoryPostgresTest {
         val ident = "12345678910"
 
         withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiode(rapporteringsperiode, "12345678910")
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, "12345678910")
 
             rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
 
@@ -164,7 +153,7 @@ class RapporteringRepositoryPostgresTest {
         val ident = "12345678910"
 
         withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiode(rapporteringsperiode, "12345678910")
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, "12345678910")
 
             rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
             rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
@@ -195,7 +184,7 @@ class RapporteringRepositoryPostgresTest {
         val ident = "12345678910"
 
         withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiode(rapporteringsperiode, "12345678910")
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, "12345678910")
             rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
             val resultatMedToAktiviteter = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
 
