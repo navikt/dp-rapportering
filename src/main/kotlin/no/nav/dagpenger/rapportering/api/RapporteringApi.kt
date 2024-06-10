@@ -113,17 +113,7 @@ internal fun Application.rapporteringApi(service: RapporteringService) {
                     get {
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
-                        meldepliktConnector
-                            .hentRapporteringsperioder(ident, jwtToken)
-                            .minByOrNull { it.periode.fraOgMed }
-                            ?.let { gjeldendePeriode ->
-                                if (rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident) == null) {
-                                    rapporteringRepository.lagreRapporteringsperiodeOgDager(gjeldendePeriode, ident)
-                                } else {
-                                    rapporteringRepository.oppdaterRapporteringsperiodeFraArena(gjeldendePeriode, ident)
-                                    rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident)
-                                }
-                            }
+                        service.hentGjeldendePeriode(ident, jwtToken)
                             ?.also { call.respond(HttpStatusCode.OK, it) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
@@ -140,17 +130,7 @@ internal fun Application.rapporteringApi(service: RapporteringService) {
                             return@get
                         }
 
-                        meldepliktConnector
-                            .hentRapporteringsperioder(ident, jwtToken)
-                            .firstOrNull { it.id.toString() == rapporteringId }
-                            ?.let { periode ->
-                                if (rapporteringRepository.hentRapporteringsperiode(periode.id, ident) == null) {
-                                    rapporteringRepository.lagreRapporteringsperiodeOgDager(periode, ident)
-                                } else {
-                                    rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
-                                    rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
-                                }
-                            }
+                        service.hentPeriode(rapporteringId.toLong(), ident, jwtToken)
                             ?.also { call.respond(HttpStatusCode.OK, it) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
@@ -168,7 +148,7 @@ internal fun Application.rapporteringApi(service: RapporteringService) {
                             if (rapporteringId == null) {
                                 call.respond(HttpStatusCode.BadRequest)
                             } else {
-                                rapporteringRepository.lagreAktiviteter(rapporteringId.toLong(), dag)
+                                service.lagreAktiviteter(rapporteringId, dag)
                                 call.respond(HttpStatusCode.NoContent)
                             }
                         }
@@ -180,7 +160,7 @@ internal fun Application.rapporteringApi(service: RapporteringService) {
                                     call.respond(HttpStatusCode.BadRequest)
                                 }
 
-                                rapporteringRepository.slettAktivitet(UUID.fromString(aktivitetId))
+                                service.slettAktivitet(UUID.fromString(aktivitetId))
                                 call.respond(HttpStatusCode.NoContent)
                             }
                         }
