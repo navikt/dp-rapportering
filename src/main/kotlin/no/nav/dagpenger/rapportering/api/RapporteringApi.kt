@@ -135,7 +135,7 @@ internal fun Application.rapporteringApi(
                                     rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident)
                                 }
                             }
-                            ?.also { call.respond(HttpStatusCode.OK, it) }
+                            ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
                 }
@@ -163,7 +163,7 @@ internal fun Application.rapporteringApi(
                                     rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
                                 }
                             }
-                            ?.also { call.respond(HttpStatusCode.OK, it) }
+                            ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
 
