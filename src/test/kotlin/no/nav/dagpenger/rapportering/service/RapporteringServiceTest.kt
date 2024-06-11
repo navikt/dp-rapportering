@@ -5,6 +5,7 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.model.Aktivitet
@@ -13,6 +14,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.februar
@@ -159,11 +161,45 @@ class RapporteringServiceTest {
         rapporteringsperioder.size shouldBe 3
     }
 
-    // TODO: Lagre aktivitet
+    @Test
+    fun `kan lagre aktivitet på eksisterende rapporteringsperiode`() {
+        justRun { rapporteringRepository.lagreAktiviteter(any(), any()) }
 
-    // TODO: korrigerMeldekort
+        rapporteringService.lagreAktiviteter(
+            rapporteringId = 1L,
+            dag =
+                Dag(
+                    dato = 1.januar,
+                    aktiviteter = listOf(Aktivitet(uuid = UUID.randomUUID(), type = Utdanning, timer = null)),
+                    dagIndex = 0,
+                ),
+        )
 
-    // TODO hentInnsendteRapporteringsperioder
+        verify(exactly = 1) { rapporteringRepository.lagreAktiviteter(any(), any()) }
+    }
+
+    @Test
+    fun `kan korrigere meldekort`() {
+        coEvery { meldepliktConnector.hentKorrigeringId(any(), any()) } returns 321L
+
+        val korrigertId = runBlocking { rapporteringService.korrigerMeldekort(123L, token) }
+
+        korrigertId.id shouldBe 321L
+    }
+
+    @Test
+    fun `kan hente innsendte rapporteringsperioder`() {
+        coEvery {
+            meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any())
+        } returns rapporteringsperiodeListe.map { it.copy(status = Innsendt, kanSendes = false, kanKorrigeres = true) }
+
+        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token) }
+
+        innsendteRapporteringsperioder.size shouldBe 3
+        innsendteRapporteringsperioder[0].id shouldBe 3L
+        innsendteRapporteringsperioder[1].id shouldBe 2L
+        innsendteRapporteringsperioder[2].id shouldBe 1L
+    }
 }
 
 val rapporteringsperiodeListe =

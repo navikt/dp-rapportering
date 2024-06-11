@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.service
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import java.util.UUID
@@ -63,8 +64,10 @@ class RapporteringService(
     suspend fun korrigerMeldekort(
         rapporteringId: Long,
         token: String,
-    ) = meldepliktConnector
-        .hentKorrigeringId(rapporteringId, token)
+    ): PeriodeId =
+        meldepliktConnector
+            .hentKorrigeringId(rapporteringId, token)
+            .let { PeriodeId(it) }
 
     suspend fun hentInnsendteRapporteringsperioder(
         ident: String,

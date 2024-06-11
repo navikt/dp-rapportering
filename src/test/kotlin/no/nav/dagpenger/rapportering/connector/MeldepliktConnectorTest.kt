@@ -7,7 +7,6 @@ import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
-import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
@@ -215,7 +214,7 @@ class MeldepliktConnectorTest {
                 connector.hentKorrigeringId(id, subjectToken)
             }
 
-        response shouldBe PeriodeId(id)
+        response shouldBe id
     }
 
     @Test
