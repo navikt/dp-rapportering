@@ -30,6 +30,7 @@ import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import java.net.URI
@@ -168,8 +169,24 @@ internal fun Application.rapporteringApi(
                     }
 
                     post {
-                        // TODO
-                        call.respond(HttpStatusCode.OK)
+                        val jwtToken = call.request.jwt()
+                        val rapporteringsperiode = call.receive(Rapporteringsperiode::class)
+
+                        try {
+                            // Send data
+                            val response = meldepliktConnector.sendinnRapporteringsperiode(rapporteringsperiode, jwtToken)
+
+                            // Journalfør hvis status er OK
+                            if (response.status == "OK") {
+                                // TODO
+                                logger.error("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
+                            }
+
+                            call.respond(response)
+                        } catch (e: Exception) {
+                            logger.error("Feil ved innsending: $e")
+                            call.respond(HttpStatusCode.InternalServerError)
+                        }
                     }
 
                     route("/aktivitet") {
