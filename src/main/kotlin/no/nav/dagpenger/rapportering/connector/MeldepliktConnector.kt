@@ -58,7 +58,7 @@ class MeldepliktConnector(
         }
 
     suspend fun hentKorrigeringId(
-        id: String,
+        id: Long,
         subjectToken: String,
     ): PeriodeId =
         withContext(Dispatchers.IO) {

@@ -24,19 +24,24 @@ import no.nav.dagpenger.rapportering.api.auth.jwt
 import no.nav.dagpenger.rapportering.api.models.AktivitetResponse
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeResponse
 import no.nav.dagpenger.rapportering.api.models.DagInnerResponse
+import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
-import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.toResponse
+import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import java.net.URI
 import java.util.UUID
 
 private val logger = KotlinLogging.logger {}
 
-internal fun Application.rapporteringApi(service: RapporteringService) {
+internal fun Application.rapporteringApi(
+    meldepliktConnector: MeldepliktConnector,
+    rapporteringRepository: RapporteringRepository,
+    service: RapporteringService,
+) {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
             when (cause) {
@@ -130,7 +135,8 @@ internal fun Application.rapporteringApi(service: RapporteringService) {
                             return@get
                         }
 
-                        service.hentPeriode(rapporteringId.toLong(), ident, jwtToken)
+                        service
+                            .hentPeriode(rapporteringId.toLong(), ident, jwtToken)
                             ?.also { call.respond(HttpStatusCode.OK, it) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
@@ -176,8 +182,8 @@ internal fun Application.rapporteringApi(service: RapporteringService) {
                                 return@post
                             }
 
-                            meldepliktConnector
-                                .hentKorrigeringId(id, jwtToken)
+                            service
+                                .korrigerMeldekort(id.toLong(), jwtToken)
                                 .also { call.respond(HttpStatusCode.OK, it) }
                         }
                     }
@@ -188,10 +194,8 @@ internal fun Application.rapporteringApi(service: RapporteringService) {
                     val ident = call.ident()
                     val jwtToken = call.request.jwt()
 
-                    meldepliktConnector
-                        .hentRapporteringsperioder(ident, jwtToken)
-                        .sortedBy { it.periode.fraOgMed }
-                        .also { RapporteringsperiodeMetrikker.hentet.inc() }
+                    service
+                        .hentAlleRapporteringsperioder(ident, jwtToken)
                         .also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                 }
 
@@ -199,25 +203,9 @@ internal fun Application.rapporteringApi(service: RapporteringService) {
                     get {
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
-                        meldepliktConnector
+                        service
                             .hentInnsendteRapporteringsperioder(ident, jwtToken)
-                            .sortedByDescending { it.periode.fraOgMed }
                             .also { call.respond(HttpStatusCode.OK, it.toResponse()) }
-                    }
-                }
-
-                // TODO: Fjernes?
-                route("/detaljer/{id}") {
-                    get {
-                        val jwtToken = call.request.jwt()
-                        val id = call.parameters["id"]
-
-                        if (id.isNullOrBlank()) {
-                            call.respond(HttpStatusCode.BadRequest)
-                            return@get
-                        }
-
-                        call.respond(HttpStatusCode.OK, meldepliktConnector.hentAktivitetsdager(id, jwtToken))
                     }
                 }
             }

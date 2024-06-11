@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.service
 
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
@@ -29,6 +30,15 @@ class RapporteringService(
             .firstOrNull { it.id == rapporteringId }
             ?.let { lagreEllerOppdaterPeriode(it, ident) }
 
+    suspend fun hentAlleRapporteringsperioder(
+        ident: String,
+        token: String,
+    ): List<Rapporteringsperiode> =
+        meldepliktConnector
+            .hentRapporteringsperioder(ident, token)
+            .sortedBy { it.periode.fraOgMed }
+            .also { RapporteringsperiodeMetrikker.hentet.inc() }
+
     private fun lagreEllerOppdaterPeriode(
         periode: Rapporteringsperiode,
         ident: String,
@@ -48,4 +58,19 @@ class RapporteringService(
     ) = rapporteringRepository.lagreAktiviteter(rapporteringId, dag)
 
     fun slettAktivitet(aktivitetId: UUID) = rapporteringRepository.slettAktivitet(aktivitetId)
+
+    // TODO: Skal det skje noe i databasen når rapporteringsperioden korrigeres?
+    suspend fun korrigerMeldekort(
+        rapporteringId: Long,
+        token: String,
+    ) = meldepliktConnector
+        .hentKorrigeringId(rapporteringId, token)
+
+    suspend fun hentInnsendteRapporteringsperioder(
+        ident: String,
+        token: String,
+    ): List<Rapporteringsperiode> =
+        meldepliktConnector
+            .hentInnsendteRapporteringsperioder(ident, token)
+            .sortedByDescending { it.periode.fraOgMed }
 }

@@ -212,7 +212,7 @@ class MeldepliktConnectorTest {
 
         val response =
             runBlocking {
-                connector.hentKorrigeringId(ident, subjectToken)
+                connector.hentKorrigeringId(id, subjectToken)
             }
 
         response shouldBe PeriodeId(id)

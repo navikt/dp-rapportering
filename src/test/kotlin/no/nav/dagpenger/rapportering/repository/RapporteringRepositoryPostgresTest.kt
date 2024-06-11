@@ -294,7 +294,7 @@ fun getRapporteringsperiode(
     registrertArbeidssoker = registrertArbeidssoker,
 )
 
-fun getDager(startDato: LocalDate = 1.januar): List<Dag> =
+private fun getDager(startDato: LocalDate = 1.januar): List<Dag> =
     (0..13)
         .map { i ->
             Dag(

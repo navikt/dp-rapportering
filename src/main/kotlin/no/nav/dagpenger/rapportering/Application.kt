@@ -17,8 +17,10 @@ fun main() {
 }
 
 fun Application.module() {
-    val service = RapporteringService(MeldepliktConnector(), RapporteringRepositoryPostgres(dataSource))
+    val meldepliktConnector = MeldepliktConnector()
+    val rapporteringRepository = RapporteringRepositoryPostgres(dataSource)
+    val service = RapporteringService(meldepliktConnector, rapporteringRepository)
     konfigurasjon(appMicrometerRegistry)
     internalApi(appMicrometerRegistry)
-    rapporteringApi(service)
+    rapporteringApi(meldepliktConnector, rapporteringRepository, service)
 }
