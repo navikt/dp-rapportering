@@ -35,6 +35,18 @@ class MeldepliktConnectorTest {
     )
 
     @Test
+    fun `returnerer null ved henting av rapporteringsperiodeliste uten meldeplikt`() {
+        val connector = meldepliktConnector("", 204)
+
+        val response =
+            runBlocking {
+                connector.hentRapporteringsperioder(ident, subjectToken)
+            }
+
+        response shouldBe null
+    }
+
+    @Test
     fun `henter tom rapporteringsperiodeliste`() {
         val connector = meldepliktConnector("[]", 200)
 
@@ -62,7 +74,7 @@ class MeldepliktConnectorTest {
                 connector.hentRapporteringsperioder(ident, subjectToken)
             }
 
-        with(response) {
+        with(response!!) {
             size shouldBe 2
 
             with(get(0)) {
@@ -163,7 +175,7 @@ class MeldepliktConnectorTest {
                 connector.hentRapporteringsperioder(ident, subjectToken)
             }
 
-        with(response) {
+        with(response!!) {
             size shouldBe 3
 
             with(get(0)) {

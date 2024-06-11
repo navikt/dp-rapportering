@@ -69,6 +69,7 @@ internal fun Application.rapporteringApi(
                         HttpProblem(title = "Feilet", detail = cause.message),
                     )
                 }
+
                 is IllegalArgumentException -> {
                     logger.info(cause) { "Kunne ikke håndtere API kall - Bad request" }
                     MeldepliktMetrikker.meldepliktException.inc()
@@ -98,6 +99,7 @@ internal fun Application.rapporteringApi(
                         HttpProblem(title = "Feilet", detail = cause.message, status = 400),
                     )
                 }
+
                 else -> {
                     logger.error(cause) { "Kunne ikke håndtere API kall" }
                     MeldepliktMetrikker.meldepliktException.inc()
@@ -119,9 +121,13 @@ internal fun Application.rapporteringApi(
                         val jwtToken = call.request.jwt()
                         meldepliktConnector
                             .hentRapporteringsperioder(ident, jwtToken)
-                            .minByOrNull { it.periode.fraOgMed }
+                            ?.minByOrNull { it.periode.fraOgMed }
                             ?.let { gjeldendePeriode ->
-                                if (rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident) == null) {
+                                if (rapporteringRepository.hentRapporteringsperiode(
+                                        gjeldendePeriode.id,
+                                        ident,
+                                    ) == null
+                                ) {
                                     rapporteringRepository.lagreRapporteringsperiodeOgDager(gjeldendePeriode, ident)
                                     gjeldendePeriode
                                 } else {
@@ -147,7 +153,7 @@ internal fun Application.rapporteringApi(
 
                         meldepliktConnector
                             .hentRapporteringsperioder(ident, jwtToken)
-                            .firstOrNull { it.id.toString() == rapporteringId }
+                            ?.firstOrNull { it.id.toString() == rapporteringId }
                             ?.let { periode ->
                                 if (rapporteringRepository.hentRapporteringsperiode(periode.id, ident) == null) {
                                     rapporteringRepository.lagreRapporteringsperiodeOgDager(periode, ident)
@@ -216,9 +222,15 @@ internal fun Application.rapporteringApi(
 
                     meldepliktConnector
                         .hentRapporteringsperioder(ident, jwtToken)
-                        .sortedBy { it.periode.fraOgMed }
+                        ?.sortedBy { it.periode.fraOgMed }
                         .also { RapporteringsperiodeMetrikker.hentet.inc() }
-                        .also { call.respond(HttpStatusCode.OK, it.toResponse()) }
+                        .also {
+                            if (it == null) {
+                                call.respond(HttpStatusCode.NoContent)
+                            } else {
+                                call.respond(HttpStatusCode.OK, it.toResponse())
+                            }
+                        }
                 }
 
                 route("/innsendte") {

@@ -8,6 +8,7 @@ import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -28,12 +29,18 @@ class MeldepliktConnector(
     suspend fun hentRapporteringsperioder(
         ident: String,
         subjectToken: String,
-    ): List<Rapporteringsperiode> =
+    ): List<Rapporteringsperiode>? =
         withContext(Dispatchers.IO) {
-            hentData("/rapporteringsperioder", subjectToken)
-                .loggInfo { "Kall til meldeplikt-adapter for å hente perioder gikk OK" }
-                .sikkerloggInfo { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
-                .body()
+            val result =
+                hentData("/rapporteringsperioder", subjectToken)
+                    .loggInfo { "Kall til meldeplikt-adapter for å hente perioder gikk OK" }
+                    .sikkerloggInfo { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
+
+            if (result.status == HttpStatusCode.NoContent) {
+                null
+            } else {
+                result.body()
+            }
         }
 
     suspend fun hentInnsendteRapporteringsperioder(
