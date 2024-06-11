@@ -33,6 +33,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
+import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import java.net.URI
 import java.util.UUID
 
@@ -41,6 +42,8 @@ private val logger = KotlinLogging.logger {}
 internal fun Application.rapporteringApi(
     meldepliktConnector: MeldepliktConnector,
     rapporteringRepository: RapporteringRepository,
+    // rapporteringService: RapporteringService,
+    journalfoeringService: JournalfoeringService,
 ) {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
@@ -178,8 +181,8 @@ internal fun Application.rapporteringApi(
 
                             // Journalfør hvis status er OK
                             if (response.status == "OK") {
-                                // TODO
-                                logger.error("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
+                                logger.info("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
+                                journalfoeringService.journalfoer(rapporteringsperiode)
                             }
 
                             call.respond(response)
