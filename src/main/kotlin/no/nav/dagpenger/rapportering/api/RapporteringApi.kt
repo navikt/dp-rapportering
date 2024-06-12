@@ -21,6 +21,7 @@ import io.ktor.server.routing.routing
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.auth.jwt
+import no.nav.dagpenger.rapportering.api.auth.loginLevel
 import no.nav.dagpenger.rapportering.api.models.AktivitetResponse
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeResponse
 import no.nav.dagpenger.rapportering.api.models.DagInnerResponse
@@ -118,7 +119,10 @@ internal fun Application.rapporteringApi(
         authenticate("tokenX") {
             route("/rapporteringsperiode") {
                 post {
+                    val ident = call.ident()
+                    val loginLevel = call.loginLevel()
                     val jwtToken = call.request.jwt()
+
                     val rapporteringsperiode = call.receive(Rapporteringsperiode::class)
 
                     try {
@@ -128,7 +132,7 @@ internal fun Application.rapporteringApi(
                         // Journalfør hvis status er OK
                         if (response.status == "OK") {
                             logger.info("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
-                            journalfoeringService.journalfoer(rapporteringsperiode)
+                            journalfoeringService.journalfoer(ident, loginLevel, rapporteringsperiode)
                         }
 
                         call.respond(response)
@@ -161,8 +165,7 @@ internal fun Application.rapporteringApi(
                         }
 
                         rapporteringService
-                            .hentPeriode(rapporteringId.toLong(), ident, jwtToken)
-                            ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
+                            .hentPeriode(rapporteringId.toLong(), ident, jwtToken)?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
 
