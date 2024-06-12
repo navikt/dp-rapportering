@@ -5,15 +5,20 @@ import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import java.net.URI
 
@@ -27,12 +32,18 @@ class MeldepliktConnector(
     suspend fun hentRapporteringsperioder(
         ident: String,
         subjectToken: String,
-    ): List<Rapporteringsperiode> =
+    ): List<Rapporteringsperiode>? =
         withContext(Dispatchers.IO) {
-            hentData("/rapporteringsperioder", subjectToken)
-                .loggInfo { "Kall til meldeplikt-adapter for å hente perioder gikk OK" }
-                .sikkerloggInfo { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
-                .body()
+            val result =
+                hentData("/rapporteringsperioder", subjectToken)
+                    .loggInfo { "Kall til meldeplikt-adapter for å hente perioder gikk OK" }
+                    .sikkerloggInfo { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
+
+            if (result.status == HttpStatusCode.NoContent) {
+                null
+            } else {
+                result.body()
+            }
         }
 
     suspend fun hentInnsendteRapporteringsperioder(
@@ -66,6 +77,16 @@ class MeldepliktConnector(
                 .body()
         }
 
+    suspend fun sendinnRapporteringsperiode(
+        rapporteringsperiode: Rapporteringsperiode,
+        subjectToken: String,
+    ): InnsendingResponse =
+        withContext(Dispatchers.IO) {
+            sendData("/sendinn", subjectToken, rapporteringsperiode)
+                .loggInfo { "Kall til meldeplikt-adapter for å sende inn rapporteringsperiode gikk OK" }
+                .body()
+        }
+
     private suspend fun hentData(
         path: String,
         subjectToken: String,
@@ -73,6 +94,17 @@ class MeldepliktConnector(
         httpClient.get(URI("$meldepliktUrl$path").toURL()) {
             header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
             contentType(ContentType.Application.Json)
+        }
+
+    private suspend fun sendData(
+        path: String,
+        subjectToken: String,
+        body: Any?,
+    ): HttpResponse =
+        httpClient.post(URI("$meldepliktUrl$path").toURL()) {
+            header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
+            contentType(ContentType.Application.Json)
+            setBody(body)
         }
 
     private fun HttpResponse.loggInfo(msg: () -> String) = this.also { logger.info { msg } }

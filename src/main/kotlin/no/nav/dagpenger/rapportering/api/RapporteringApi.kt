@@ -29,9 +29,11 @@ import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.service.RapporteringService
+import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import java.net.URI
 import java.util.UUID
 
@@ -40,7 +42,8 @@ private val logger = KotlinLogging.logger {}
 internal fun Application.rapporteringApi(
     meldepliktConnector: MeldepliktConnector,
     rapporteringRepository: RapporteringRepository,
-    service: RapporteringService,
+    rapporteringService: RapporteringService,
+    journalfoeringService: JournalfoeringService,
 ) {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
@@ -70,6 +73,7 @@ internal fun Application.rapporteringApi(
                         HttpProblem(title = "Feilet", detail = cause.message),
                     )
                 }
+
                 is IllegalArgumentException -> {
                     logger.info(cause) { "Kunne ikke håndtere API kall - Bad request" }
                     MeldepliktMetrikker.meldepliktException.inc()
@@ -99,6 +103,7 @@ internal fun Application.rapporteringApi(
                         HttpProblem(title = "Feilet", detail = cause.message, status = 400),
                     )
                 }
+
                 else -> {
                     logger.error(cause) { "Kunne ikke håndtere API kall" }
                     MeldepliktMetrikker.meldepliktException.inc()
@@ -118,8 +123,23 @@ internal fun Application.rapporteringApi(
                     get {
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
-                        service.hentGjeldendePeriode(ident, jwtToken)
-                            ?.also { call.respond(HttpStatusCode.OK, it) }
+                        meldepliktConnector
+                            .hentRapporteringsperioder(ident, jwtToken)
+                            ?.minByOrNull { it.periode.fraOgMed }
+                            ?.let { gjeldendePeriode ->
+                                if (rapporteringRepository.hentRapporteringsperiode(
+                                        gjeldendePeriode.id,
+                                        ident,
+                                    ) == null
+                                ) {
+                                    rapporteringRepository.lagreRapporteringsperiodeOgDager(gjeldendePeriode, ident)
+                                    gjeldendePeriode
+                                } else {
+                                    rapporteringRepository.oppdaterRapporteringsperiodeFraArena(gjeldendePeriode, ident)
+                                    rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident)
+                                }
+                            }
+                            ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
                 }
@@ -135,15 +155,41 @@ internal fun Application.rapporteringApi(
                             return@get
                         }
 
-                        service
-                            .hentPeriode(rapporteringId.toLong(), ident, jwtToken)
-                            ?.also { call.respond(HttpStatusCode.OK, it) }
+                        meldepliktConnector
+                            .hentRapporteringsperioder(ident, jwtToken)
+                            ?.firstOrNull { it.id.toString() == rapporteringId }
+                            ?.let { periode ->
+                                if (rapporteringRepository.hentRapporteringsperiode(periode.id, ident) == null) {
+                                    rapporteringRepository.lagreRapporteringsperiodeOgDager(periode, ident)
+                                    periode
+                                } else {
+                                    rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
+                                    rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
+                                }
+                            }
+                            ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
 
                     post {
-                        // TODO
-                        call.respond(HttpStatusCode.OK)
+                        val jwtToken = call.request.jwt()
+                        val rapporteringsperiode = call.receive(Rapporteringsperiode::class)
+
+                        try {
+                            // Send data
+                            val response = meldepliktConnector.sendinnRapporteringsperiode(rapporteringsperiode, jwtToken)
+
+                            // Journalfør hvis status er OK
+                            if (response.status == "OK") {
+                                logger.info("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
+                                journalfoeringService.journalfoer(rapporteringsperiode)
+                            }
+
+                            call.respond(response)
+                        } catch (e: Exception) {
+                            logger.error("Feil ved innsending: $e")
+                            call.respond(HttpStatusCode.InternalServerError)
+                        }
                     }
 
                     route("/aktivitet") {
@@ -154,7 +200,7 @@ internal fun Application.rapporteringApi(
                             if (rapporteringId == null) {
                                 call.respond(HttpStatusCode.BadRequest)
                             } else {
-                                service.lagreAktiviteter(rapporteringId, dag)
+                                rapporteringService.lagreAktiviteter(rapporteringId, dag)
                                 call.respond(HttpStatusCode.NoContent)
                             }
                         }
@@ -166,7 +212,7 @@ internal fun Application.rapporteringApi(
                                     call.respond(HttpStatusCode.BadRequest)
                                 }
 
-                                service.slettAktivitet(UUID.fromString(aktivitetId))
+                                rapporteringService.slettAktivitet(UUID.fromString(aktivitetId))
                                 call.respond(HttpStatusCode.NoContent)
                             }
                         }
@@ -182,7 +228,7 @@ internal fun Application.rapporteringApi(
                                 return@post
                             }
 
-                            service
+                            rapporteringService
                                 .korrigerMeldekort(id.toLong(), jwtToken)
                                 .also { call.respond(HttpStatusCode.OK, it) }
                         }
@@ -194,16 +240,24 @@ internal fun Application.rapporteringApi(
                     val ident = call.ident()
                     val jwtToken = call.request.jwt()
 
-                    service
-                        .hentAlleRapporteringsperioder(ident, jwtToken)
-                        .also { call.respond(HttpStatusCode.OK, it.toResponse()) }
+                    meldepliktConnector
+                        .hentRapporteringsperioder(ident, jwtToken)
+                        ?.sortedBy { it.periode.fraOgMed }
+                        .also { RapporteringsperiodeMetrikker.hentet.inc() }
+                        .also {
+                            if (it == null) {
+                                call.respond(HttpStatusCode.NoContent)
+                            } else {
+                                call.respond(HttpStatusCode.OK, it.toResponse())
+                            }
+                        }
                 }
 
                 route("/innsendte") {
                     get {
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
-                        service
+                        rapporteringService
                             .hentInnsendteRapporteringsperioder(ident, jwtToken)
                             .also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                     }

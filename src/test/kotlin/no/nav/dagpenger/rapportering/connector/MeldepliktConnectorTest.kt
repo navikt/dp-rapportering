@@ -7,6 +7,9 @@ import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
+import no.nav.dagpenger.rapportering.model.Periode
+import no.nav.dagpenger.rapportering.model.PeriodeId
+import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
@@ -32,6 +35,18 @@ class MeldepliktConnectorTest {
         tokenProvider = testTokenProvider,
         engine = createMockClient(statusCode, responseBody),
     )
+
+    @Test
+    fun `returnerer null ved henting av rapporteringsperiodeliste uten meldeplikt`() {
+        val connector = meldepliktConnector("", 204)
+
+        val response =
+            runBlocking {
+                connector.hentRapporteringsperioder(ident, subjectToken)
+            }
+
+        response shouldBe null
+    }
 
     @Test
     fun `henter tom rapporteringsperiodeliste`() {
@@ -61,7 +76,7 @@ class MeldepliktConnectorTest {
                 connector.hentRapporteringsperioder(ident, subjectToken)
             }
 
-        with(response) {
+        with(response!!) {
             size shouldBe 2
 
             with(get(0)) {
@@ -162,7 +177,7 @@ class MeldepliktConnectorTest {
                 connector.hentRapporteringsperioder(ident, subjectToken)
             }
 
-        with(response) {
+        with(response!!) {
             size shouldBe 3
 
             with(get(0)) {
@@ -242,6 +257,43 @@ class MeldepliktConnectorTest {
             size shouldBe 14
             first().dato shouldBe LocalDate.now().minusWeeks(2)
             last().dato shouldBe LocalDate.now().minusDays(1)
+        }
+    }
+
+    @Test
+    fun `henter aktivitetsdagerliste med 14 elementer 2`() {
+        val innsendingResponse = //language=JSON
+            """
+            {
+              "id": 1,
+              "status": "OK",
+              "feil": []
+            }
+            """.trimIndent()
+        val connector = meldepliktConnector(innsendingResponse, 200)
+
+        val rapporteringsperiode =
+            Rapporteringsperiode(
+                1L,
+                Periode(LocalDate.now().minusDays(13), LocalDate.now()),
+                emptyList(),
+                LocalDate.now(),
+                true,
+                true,
+                0.0,
+                TilUtfylling,
+                true,
+            )
+
+        val response =
+            runBlocking {
+                connector.sendinnRapporteringsperiode(rapporteringsperiode, subjectToken)
+            }
+
+        with(response) {
+            id shouldBe 1L
+            status shouldBe "OK"
+            feil.size shouldBe 0
         }
     }
 }
