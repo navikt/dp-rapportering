@@ -165,7 +165,8 @@ internal fun Application.rapporteringApi(
                         }
 
                         rapporteringService
-                            .hentPeriode(rapporteringId.toLong(), ident, jwtToken)?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
+                            .hentPeriode(rapporteringId.toLong(), ident, jwtToken)
+                            ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
 
