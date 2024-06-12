@@ -161,6 +161,31 @@ class RapporteringRepositoryPostgres(private val dataSource: DataSource) : Rappo
         }
     }
 
+    override fun oppdaterRegistrertArbeidssoker(
+        rapporteringId: Long,
+        ident: String,
+        registrertArbeidssoker: Boolean,
+    ) {
+        using(sessionOf(dataSource)) { session ->
+            session.transaction { tx ->
+                tx.run(
+                    queryOf(
+                        """
+                        UPDATE rapporteringsperiode
+                        SET registrert_arbeidssoker = :registrert_arbeidssoker
+                        WHERE id = :id AND ident = :ident
+                        """.trimIndent(),
+                        mapOf(
+                            "registrert_arbeidssoker" to registrertArbeidssoker,
+                            "id" to rapporteringId,
+                            "ident" to ident,
+                        ),
+                    ).asUpdate,
+                ).validateRowsAffected()
+            }
+        }
+    }
+
     private fun TransactionalSession.hentDagId(
         rapporteringId: Long,
         dagIdex: Int,
@@ -188,12 +213,14 @@ class RapporteringRepositoryPostgres(private val dataSource: DataSource) : Rappo
                             kan_korrigeres = :kan_korrigeres,
                             brutto_belop = :brutto_belop,
                             status = :status
+                        WHERE id = :id
                         """.trimIndent(),
                         mapOf(
                             "kan_sendes" to rapporteringsperiode.kanSendes,
                             "kan_korrigeres" to rapporteringsperiode.kanKorrigeres,
                             "brutto_belop" to rapporteringsperiode.bruttoBelop,
                             "status" to rapporteringsperiode.status.name,
+                            "id" to rapporteringsperiode.id,
                         ),
                     ).asUpdate,
                 ).validateRowsAffected()
@@ -222,7 +249,7 @@ private fun Row.toRapporteringsperiode() =
         kanKorrigeres = boolean("kan_korrigeres"),
         bruttoBelop = doubleOrNull("brutto_belop"),
         status = RapporteringsperiodeStatus.valueOf(string("status")),
-        registrertArbeidssoker = stringOrNull("registrert_arbeidssoker")?.toBoolean(),
+        registrertArbeidssoker = stringOrNull("registrert_arbeidssoker").toBooleanOrNull(),
         dager = emptyList(),
         periode =
             Periode(
@@ -249,3 +276,5 @@ private fun Row.toAktivitet() =
 private fun Int.validateRowsAffected(excepted: Int = 1) {
     if (this != excepted) throw RuntimeException("Expected $this but got $excepted")
 }
+
+private fun String?.toBooleanOrNull(): Boolean? = this?.let { this == "t" }

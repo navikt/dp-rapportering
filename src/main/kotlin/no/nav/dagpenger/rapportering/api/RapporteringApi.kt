@@ -170,6 +170,21 @@ internal fun Application.rapporteringApi(
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
 
+                    route("/registrertArbeidssoker") {
+                        post {
+                            val ident = call.ident()
+                            val rapporteringId = call.parameters["id"]?.toLong()
+                            val registrertArbeidssoker = call.receive(Boolean::class)
+
+                            if (rapporteringId == null) {
+                                call.respond(HttpStatusCode.BadRequest)
+                            } else {
+                                rapporteringService.oppdaterRegistrertArbeidssoker(rapporteringId, ident, registrertArbeidssoker)
+                                call.respond(HttpStatusCode.NoContent)
+                            }
+                        }
+                    }
+
                     route("/aktivitet") {
                         post {
                             val rapporteringId = call.parameters["id"]?.toLong()

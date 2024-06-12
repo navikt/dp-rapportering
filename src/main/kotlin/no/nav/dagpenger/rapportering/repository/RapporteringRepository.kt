@@ -22,6 +22,12 @@ interface RapporteringRepository {
         dag: Dag,
     )
 
+    fun oppdaterRegistrertArbeidssoker(
+        rapporteringId: Long,
+        ident: String,
+        registrertArbeidssoker: Boolean,
+    )
+
     fun oppdaterRapporteringsperiodeFraArena(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,

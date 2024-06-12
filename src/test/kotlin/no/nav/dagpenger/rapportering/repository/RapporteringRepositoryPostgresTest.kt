@@ -154,7 +154,7 @@ class RapporteringRepositoryPostgresTest {
         val ident = "12345678910"
 
         withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, "12345678910")
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, ident)
 
             rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
             rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
@@ -166,6 +166,20 @@ class RapporteringRepositoryPostgresTest {
                 dager.size shouldBe 14
                 dager.first().aktiviteter.size shouldBe 1
             }
+        }
+    }
+
+    @Test
+    fun `kan oppdatere om bruker vil fortsette som registrert arbeidssoker`() {
+        val rapporteringsperiode = getRapporteringsperiode()
+        val ident = "12345678910"
+
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, ident)
+            rapporteringRepositoryPostgres.oppdaterRegistrertArbeidssoker(rapporteringsperiode.id, ident, true)
+            val oppdatertPeriode = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)!!
+
+            oppdatertPeriode.registrertArbeidssoker shouldBe true
         }
     }
 

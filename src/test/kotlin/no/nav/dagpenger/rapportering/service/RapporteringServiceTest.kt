@@ -179,6 +179,15 @@ class RapporteringServiceTest {
     }
 
     @Test
+    fun `kan oppdatere om bruker vil fortsette som registrert arbeidssoker`() {
+        justRun { rapporteringRepository.oppdaterRegistrertArbeidssoker(any(), any(), any()) }
+
+        rapporteringService.oppdaterRegistrertArbeidssoker(1L, "12345678910", true)
+
+        verify(exactly = 1) { rapporteringRepository.oppdaterRegistrertArbeidssoker(1L, "12345678910", true) }
+    }
+
+    @Test
     fun `kan korrigere meldekort`() {
         coEvery { meldepliktConnector.hentKorrigeringId(any(), any()) } returns 321L
 

@@ -58,6 +58,16 @@ class RapporteringService(
         dag: Dag,
     ) = rapporteringRepository.lagreAktiviteter(rapporteringId, dag)
 
+    fun oppdaterRegistrertArbeidssoker(
+        rapporteringId: Long,
+        ident: String,
+        registrertArbeidssoker: Boolean,
+    ) = rapporteringRepository.oppdaterRegistrertArbeidssoker(
+        rapporteringId,
+        ident,
+        registrertArbeidssoker,
+    )
+
     fun slettAktivitet(aktivitetId: UUID) = rapporteringRepository.slettAktivitet(aktivitetId)
 
     // TODO: Skal det skje noe i databasen når rapporteringsperioden korrigeres?

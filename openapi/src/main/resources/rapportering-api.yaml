@@ -107,6 +107,29 @@ paths:
         parameters:
             - $ref: '#/components/parameters/periodeId'
 
+    /rapporteringsperiode/{periodeId}/registrertArbeidssoker:
+        post:
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: boolean
+            responses:
+                204:
+                    description: No Content - OK
+                400:
+                    description: Bad Request
+            summary: Oppdater registrert arbeidssøker
+            description: Oppdatering av om om bruker vil fortsette å stå registrert som arbeidssøker i neste periode
+            tags:
+                - Rapporteringsperiode
+            security:
+                - tokenX: []
+        parameters:
+            - $ref: '#/components/parameters/periodeId'
+
+
     /rapporteringsperiode/{periodeId}/aktivitet:
         post:
             responses:
