@@ -18,7 +18,7 @@ class RapporteringService(
     ): Rapporteringsperiode? =
         meldepliktConnector
             .hentRapporteringsperioder(ident, token)
-            .minByOrNull { it.periode.fraOgMed }
+            ?.minByOrNull { it.periode.fraOgMed }
             ?.let { lagreEllerOppdaterPeriode(it, ident) }
 
     suspend fun hentPeriode(
@@ -28,16 +28,16 @@ class RapporteringService(
     ): Rapporteringsperiode? =
         meldepliktConnector
             .hentRapporteringsperioder(ident, token)
-            .firstOrNull { it.id == rapporteringId }
+            ?.firstOrNull { it.id == rapporteringId }
             ?.let { lagreEllerOppdaterPeriode(it, ident) }
 
     suspend fun hentAlleRapporteringsperioder(
         ident: String,
         token: String,
-    ): List<Rapporteringsperiode> =
+    ): List<Rapporteringsperiode>? =
         meldepliktConnector
             .hentRapporteringsperioder(ident, token)
-            .sortedBy { it.periode.fraOgMed }
+            ?.sortedBy { it.periode.fraOgMed }
             .also { RapporteringsperiodeMetrikker.hentet.inc() }
 
     private fun lagreEllerOppdaterPeriode(

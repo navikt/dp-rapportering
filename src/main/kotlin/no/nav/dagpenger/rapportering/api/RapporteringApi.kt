@@ -31,9 +31,8 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.toResponse
-import no.nav.dagpenger.rapportering.repository.RapporteringRepository
-import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
+import no.nav.dagpenger.rapportering.service.RapporteringService
 import java.net.URI
 import java.util.UUID
 
@@ -41,7 +40,6 @@ private val logger = KotlinLogging.logger {}
 
 internal fun Application.rapporteringApi(
     meldepliktConnector: MeldepliktConnector,
-    rapporteringRepository: RapporteringRepository,
     rapporteringService: RapporteringService,
     journalfoeringService: JournalfoeringService,
 ) {
@@ -123,22 +121,8 @@ internal fun Application.rapporteringApi(
                     get {
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
-                        meldepliktConnector
-                            .hentRapporteringsperioder(ident, jwtToken)
-                            ?.minByOrNull { it.periode.fraOgMed }
-                            ?.let { gjeldendePeriode ->
-                                if (rapporteringRepository.hentRapporteringsperiode(
-                                        gjeldendePeriode.id,
-                                        ident,
-                                    ) == null
-                                ) {
-                                    rapporteringRepository.lagreRapporteringsperiodeOgDager(gjeldendePeriode, ident)
-                                    gjeldendePeriode
-                                } else {
-                                    rapporteringRepository.oppdaterRapporteringsperiodeFraArena(gjeldendePeriode, ident)
-                                    rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident)
-                                }
-                            }
+
+                        rapporteringService.hentGjeldendePeriode(ident, jwtToken)
                             ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
@@ -155,18 +139,8 @@ internal fun Application.rapporteringApi(
                             return@get
                         }
 
-                        meldepliktConnector
-                            .hentRapporteringsperioder(ident, jwtToken)
-                            ?.firstOrNull { it.id.toString() == rapporteringId }
-                            ?.let { periode ->
-                                if (rapporteringRepository.hentRapporteringsperiode(periode.id, ident) == null) {
-                                    rapporteringRepository.lagreRapporteringsperiodeOgDager(periode, ident)
-                                    periode
-                                } else {
-                                    rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
-                                    rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
-                                }
-                            }
+                        rapporteringService
+                            .hentPeriode(rapporteringId.toLong(), ident, jwtToken)
                             ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
@@ -240,10 +214,8 @@ internal fun Application.rapporteringApi(
                     val ident = call.ident()
                     val jwtToken = call.request.jwt()
 
-                    meldepliktConnector
-                        .hentRapporteringsperioder(ident, jwtToken)
-                        ?.sortedBy { it.periode.fraOgMed }
-                        .also { RapporteringsperiodeMetrikker.hentet.inc() }
+                    rapporteringService
+                        .hentAlleRapporteringsperioder(ident, jwtToken)
                         .also {
                             if (it == null) {
                                 call.respond(HttpStatusCode.NoContent)

@@ -8,7 +8,6 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
 import no.nav.dagpenger.rapportering.model.Periode
-import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig

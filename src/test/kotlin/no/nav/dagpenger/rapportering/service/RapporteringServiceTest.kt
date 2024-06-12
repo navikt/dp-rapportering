@@ -153,7 +153,7 @@ class RapporteringServiceTest {
     fun `hent alle rapporteringsperioder henter alle rapporteringsperioder og sorterer listen fra eldst til nyest`() {
         coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns rapporteringsperiodeListe
 
-        val rapporteringsperioder = runBlocking { rapporteringService.hentAlleRapporteringsperioder(ident, token) }
+        val rapporteringsperioder = runBlocking { rapporteringService.hentAlleRapporteringsperioder(ident, token)!! }
 
         rapporteringsperioder[0].id shouldBe 1L
         rapporteringsperioder[1].id shouldBe 2L

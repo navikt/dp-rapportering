@@ -18,7 +18,6 @@ import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
-import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import java.net.URI
 
