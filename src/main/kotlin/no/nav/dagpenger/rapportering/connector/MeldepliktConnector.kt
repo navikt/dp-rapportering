@@ -18,7 +18,6 @@ import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
-import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import java.net.URI
 
@@ -68,13 +67,13 @@ class MeldepliktConnector(
         }
 
     suspend fun hentKorrigeringId(
-        id: String,
+        id: Long,
         subjectToken: String,
-    ): PeriodeId =
+    ): Long =
         withContext(Dispatchers.IO) {
             hentData("/korrigertMeldekort/$id", subjectToken)
                 .loggInfo { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
-                .let { PeriodeId(it.body()) }
+                .body()
         }
 
     suspend fun sendinnRapporteringsperiode(

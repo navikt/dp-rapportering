@@ -27,14 +27,13 @@ import no.nav.dagpenger.rapportering.api.models.AktivitetTypeResponse
 import no.nav.dagpenger.rapportering.api.models.DagInnerResponse
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
-import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.toResponse
-import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
+import no.nav.dagpenger.rapportering.service.RapporteringService
 import java.net.URI
 import java.util.UUID
 
@@ -42,8 +41,7 @@ private val logger = KotlinLogging.logger {}
 
 internal fun Application.rapporteringApi(
     meldepliktConnector: MeldepliktConnector,
-    rapporteringRepository: RapporteringRepository,
-    // rapporteringService: RapporteringService,
+    rapporteringService: RapporteringService,
     journalfoeringService: JournalfoeringService,
 ) {
     install(StatusPages) {
@@ -148,22 +146,9 @@ internal fun Application.rapporteringApi(
                     get {
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
-                        meldepliktConnector
-                            .hentRapporteringsperioder(ident, jwtToken)
-                            ?.minByOrNull { it.periode.fraOgMed }
-                            ?.let { gjeldendePeriode ->
-                                if (rapporteringRepository.hentRapporteringsperiode(
-                                        gjeldendePeriode.id,
-                                        ident,
-                                    ) == null
-                                ) {
-                                    rapporteringRepository.lagreRapporteringsperiodeOgDager(gjeldendePeriode, ident)
-                                    gjeldendePeriode
-                                } else {
-                                    rapporteringRepository.oppdaterRapporteringsperiodeFraArena(gjeldendePeriode, ident)
-                                    rapporteringRepository.hentRapporteringsperiode(gjeldendePeriode.id, ident)
-                                }
-                            }?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
+
+                        rapporteringService.hentGjeldendePeriode(ident, jwtToken)
+                            ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
                 }
@@ -179,18 +164,9 @@ internal fun Application.rapporteringApi(
                             return@get
                         }
 
-                        meldepliktConnector
-                            .hentRapporteringsperioder(ident, jwtToken)
-                            ?.firstOrNull { it.id.toString() == rapporteringId }
-                            ?.let { periode ->
-                                if (rapporteringRepository.hentRapporteringsperiode(periode.id, ident) == null) {
-                                    rapporteringRepository.lagreRapporteringsperiodeOgDager(periode, ident)
-                                    periode
-                                } else {
-                                    rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
-                                    rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
-                                }
-                            }?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
+                        rapporteringService
+                            .hentPeriode(rapporteringId.toLong(), ident, jwtToken)
+                            ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
 
@@ -202,7 +178,7 @@ internal fun Application.rapporteringApi(
                             if (rapporteringId == null) {
                                 call.respond(HttpStatusCode.BadRequest)
                             } else {
-                                rapporteringRepository.lagreAktiviteter(rapporteringId.toLong(), dag)
+                                rapporteringService.lagreAktiviteter(rapporteringId, dag)
                                 call.respond(HttpStatusCode.NoContent)
                             }
                         }
@@ -214,7 +190,7 @@ internal fun Application.rapporteringApi(
                                     call.respond(HttpStatusCode.BadRequest)
                                 }
 
-                                rapporteringRepository.slettAktivitet(UUID.fromString(aktivitetId))
+                                rapporteringService.slettAktivitet(UUID.fromString(aktivitetId))
                                 call.respond(HttpStatusCode.NoContent)
                             }
                         }
@@ -230,8 +206,8 @@ internal fun Application.rapporteringApi(
                                 return@post
                             }
 
-                            meldepliktConnector
-                                .hentKorrigeringId(id, jwtToken)
+                            rapporteringService
+                                .korrigerMeldekort(id.toLong(), jwtToken)
                                 .also { call.respond(HttpStatusCode.OK, it) }
                         }
                     }
@@ -242,10 +218,8 @@ internal fun Application.rapporteringApi(
                     val ident = call.ident()
                     val jwtToken = call.request.jwt()
 
-                    meldepliktConnector
-                        .hentRapporteringsperioder(ident, jwtToken)
-                        ?.sortedBy { it.periode.fraOgMed }
-                        .also { RapporteringsperiodeMetrikker.hentet.inc() }
+                    rapporteringService
+                        .hentAlleRapporteringsperioder(ident, jwtToken)
                         .also {
                             if (it == null) {
                                 call.respond(HttpStatusCode.NoContent)
@@ -259,25 +233,9 @@ internal fun Application.rapporteringApi(
                     get {
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
-                        meldepliktConnector
+                        rapporteringService
                             .hentInnsendteRapporteringsperioder(ident, jwtToken)
-                            .sortedByDescending { it.periode.fraOgMed }
                             .also { call.respond(HttpStatusCode.OK, it.toResponse()) }
-                    }
-                }
-
-                // TODO: Fjernes?
-                route("/detaljer/{id}") {
-                    get {
-                        val jwtToken = call.request.jwt()
-                        val id = call.parameters["id"]
-
-                        if (id.isNullOrBlank()) {
-                            call.respond(HttpStatusCode.BadRequest)
-                            return@get
-                        }
-
-                        call.respond(HttpStatusCode.OK, meldepliktConnector.hentAktivitetsdager(id, jwtToken))
                     }
                 }
             }

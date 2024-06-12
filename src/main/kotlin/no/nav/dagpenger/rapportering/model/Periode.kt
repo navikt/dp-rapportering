@@ -4,6 +4,7 @@ import java.time.LocalDate
 
 data class Periode(val fraOgMed: LocalDate, val tilOgMed: LocalDate) {
     init {
+
         require(tilOgMed.minusDays(13) == fraOgMed) {
             "Perioden må være 14 dager lang"
         }
