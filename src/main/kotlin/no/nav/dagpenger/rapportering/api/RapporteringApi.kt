@@ -119,6 +119,27 @@ internal fun Application.rapporteringApi(
     routing {
         authenticate("tokenX") {
             route("/rapporteringsperiode") {
+                post {
+                    val jwtToken = call.request.jwt()
+                    val rapporteringsperiode = call.receive(Rapporteringsperiode::class)
+
+                    try {
+                        // Send data
+                        val response = meldepliktConnector.sendinnRapporteringsperiode(rapporteringsperiode, jwtToken)
+
+                        // Journalfør hvis status er OK
+                        if (response.status == "OK") {
+                            logger.info("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
+                            journalfoeringService.journalfoer(rapporteringsperiode)
+                        }
+
+                        call.respond(response)
+                    } catch (e: Exception) {
+                        logger.error("Feil ved innsending: $e")
+                        call.respond(HttpStatusCode.InternalServerError)
+                    }
+                }
+
                 route("/gjeldende") {
                     get {
                         val ident = call.ident()
@@ -169,27 +190,6 @@ internal fun Application.rapporteringApi(
                             }
                             ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
-                    }
-
-                    post {
-                        val jwtToken = call.request.jwt()
-                        val rapporteringsperiode = call.receive(Rapporteringsperiode::class)
-
-                        try {
-                            // Send data
-                            val response = meldepliktConnector.sendinnRapporteringsperiode(rapporteringsperiode, jwtToken)
-
-                            // Journalfør hvis status er OK
-                            if (response.status == "OK") {
-                                logger.info("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
-                                journalfoeringService.journalfoer(rapporteringsperiode)
-                            }
-
-                            call.respond(response)
-                        } catch (e: Exception) {
-                            logger.error("Feil ved innsending: $e")
-                            call.respond(HttpStatusCode.InternalServerError)
-                        }
                     }
 
                     route("/aktivitet") {
