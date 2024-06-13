@@ -70,6 +70,12 @@ dependencies {
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
 
+    // PDF
+    implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10")
+    implementation("com.openhtmltopdf:openhtmltopdf-svg-support:1.0.10")
+    implementation("org.verapdf:validation-model:1.26.1")
+    implementation("org.jsoup:jsoup:1.17.2")
+
     testImplementation(libs.bundles.postgres.test)
     testImplementation("io.kotest:kotest-assertions-core-jvm:${libs.versions.kotest.get()}")
     testImplementation("io.mockk:mockk:${libs.versions.mockk.get()}")

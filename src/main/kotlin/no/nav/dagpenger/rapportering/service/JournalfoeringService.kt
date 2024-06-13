@@ -4,8 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import mu.KotlinLogging
+import mu.KLogging
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.utils.PDFGenerator
 import no.nav.sbl.meldekort.model.meldekort.journalpost.AvsenderIdType
 import no.nav.sbl.meldekort.model.meldekort.journalpost.AvsenderMottaker
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Bruker
@@ -20,7 +21,9 @@ import no.nav.sbl.meldekort.model.meldekort.journalpost.Sakstype
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Tema
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Tilleggsopplysning
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Variantformat
+import java.io.File
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
 import java.util.Base64
@@ -28,9 +31,7 @@ import java.util.Locale
 import java.util.UUID
 
 class JournalfoeringService {
-    companion object {
-        private val logger = KotlinLogging.logger {}
-    }
+    companion object : KLogging()
 
     private val kanal = "NAV_NO"
     private val journalfoerendeEnhet = "9999"
@@ -38,6 +39,7 @@ class JournalfoeringService {
     private val brevkodeKorrigert = "NAV 00-10.03"
 
     private val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.YYYY")
+    private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.YYYY HH:mm")
     private var locale: Locale? = Locale.of("nb", "NO") // Vi skal regne ukenummer iht norske regler
     private val woy = WeekFields.of(locale).weekOfWeekBasedYear()
 
@@ -78,7 +80,7 @@ class JournalfoeringService {
                 dokumenter = getDokumenter(rapporteringsperiode, ident, navn, loginLevel),
             )
 
-        logger.info("Opprettet journalpost $journalpost")
+        logger.info("Opprettet journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
     }
 
     private fun getTittle(rapporteringsperiode: Rapporteringsperiode): String {
@@ -157,11 +159,61 @@ class JournalfoeringService {
 
     private fun getPDF(
         rapporteringsperiode: Rapporteringsperiode,
-        fnr: String,
+        ident: String,
         navn: String,
         loginLevel: Int,
     ): DokumentVariant {
-        val pdf = null
+        val tittel = "Elektronisk innsendt meldekort"
+        /*
+            TODO: Finne ut om denne perioden er korrigert
+            var tittel = "Elektronisk innsendt meldekort"
+            if (meldekortDetaljerInn.kortType == KortType.KORRIGERT_ELEKTRONISK) {
+                tittel = "Elektronisk korrigert meldekort"
+            }
+         */
+
+        val logo = this::class.java.getResource("/nav-logo.svg")!!.readText()
+
+        val aktiviteter =
+            rapporteringsperiode.dager.joinToString("\n") { dag ->
+                "<div>" +
+                    "<b>" + dag.dato.format(dateFormatter) + ":</b> " +
+                    dag.aktiviteter.joinToString(", ") { aktivitet ->
+                        val timer =
+                            if (!aktivitet.timer.isNullOrBlank() && aktivitet.timer.toDouble() > 0) {
+                                " " + aktivitet.timer + "t"
+                            } else {
+                                ""
+                            }
+
+                        "" + aktivitet.type + timer
+                    } +
+                    "</div>"
+            }
+
+        val html =
+            """
+                <div class="info">
+                   <b>ID:</b> ${rapporteringsperiode.id}<br/>
+                   <b>Tema:</b> ${Tema.DAG.tittel}<br/>
+                   <b>Tilgangsnivå:</b> $loginLevel
+                </div>
+                
+                $logo
+                
+                <h1>$tittel</h1>
+                <div><b>${getTittle(rapporteringsperiode)}</b></div>
+                <div><b>Meldekortet ble mottatt:</b> ${LocalDateTime.now().format(dateTimeFormatter)}</div>
+                <div><b>Bruker:</b> $navn ($ident)</div>
+                <div><b>Neste meldekort kan sendes inn fra:</b> ${rapporteringsperiode.kanSendesFra.format(dateFormatter)}</div>
+                <br>
+                $aktiviteter
+                """
+
+        val pdf = PDFGenerator().createPDFA(html)
+
+        val actualFile = File("test.pdf")
+        actualFile.writeBytes(pdf)
 
         return DokumentVariant(
             filtype = Filetype.PDFA,
