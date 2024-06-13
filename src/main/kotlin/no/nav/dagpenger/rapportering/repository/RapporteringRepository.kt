@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.repository
 
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import java.util.UUID
 
 interface RapporteringRepository {
@@ -31,6 +32,12 @@ interface RapporteringRepository {
     fun oppdaterRapporteringsperiodeFraArena(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
+    )
+
+    fun oppdaterRapporteringStatus(
+        rapporteringId: Long,
+        ident: String,
+        status: RapporteringsperiodeStatus,
     )
 
     fun slettAktivitet(aktivitetId: UUID): Int
