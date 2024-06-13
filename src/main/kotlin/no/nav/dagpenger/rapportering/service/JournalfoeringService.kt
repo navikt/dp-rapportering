@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.header
@@ -26,6 +27,7 @@ import no.nav.sbl.meldekort.model.meldekort.journalpost.Dokument
 import no.nav.sbl.meldekort.model.meldekort.journalpost.DokumentVariant
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Filetype
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Journalpost
+import no.nav.sbl.meldekort.model.meldekort.journalpost.JournalpostResponse
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Journalposttype
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Sak
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Sakstype
@@ -105,11 +107,19 @@ class JournalfoeringService(
         try {
             val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
 
-            httpClient.post(URI("$dokarkivUrl$path").toURL()) {
-                header(HttpHeaders.Authorization, "Bearer $token")
-                contentType(ContentType.Application.Json)
-                setBody(journalpost)
-            }
+            val journalpostResponse =
+                httpClient
+                    .post(URI("$dokarkivUrl$path").toURL()) {
+                        header(HttpHeaders.Authorization, "Bearer $token")
+                        contentType(ContentType.Application.Json)
+                        setBody(journalpost)
+                    }.body<JournalpostResponse>()
+
+            lagreJournalpostData(
+                journalpostResponse.journalpostId,
+                journalpostResponse.dokumenter[0].dokumentInfoId,
+                rapporteringsperiode.id,
+            )
         } catch (e: Exception) {
             logger.warn("Kan ikke sende journalpost", e)
 
@@ -244,7 +254,16 @@ class JournalfoeringService(
         )
     }
 
-    fun lagreJournalpostMidlertidig(journalpost: Journalpost) {
+    private fun lagreJournalpostData(
+        journalpostId: Long,
+        dokumentInfoId: Long,
+        id: Long,
+    ) {
+        // TODO:
+        logger.info("Lagrer JournalpostData. journalpostId = $journalpostId, dokumentInfoId = $dokumentInfoId, id = $id")
+    }
+
+    private fun lagreJournalpostMidlertidig(journalpost: Journalpost) {
         // TODO:
         logger.info("Mellomlagrer journalpost $journalpost")
     }
