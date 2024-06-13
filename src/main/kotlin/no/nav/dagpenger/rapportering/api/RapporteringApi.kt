@@ -166,13 +166,17 @@ internal fun Application.rapporteringApi(
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
 
-                    route("/registrertArbeidssoker") {
+                    route("/arbeidssoker") {
                         post {
                             val ident = call.ident()
                             val rapporteringId = call.getParameter("id").toLong()
-                            val registrertArbeidssoker = call.receive(Boolean::class)
+                            val arbeidssokerRequest = call.receive(ArbeidssokerRequest::class)
 
-                            rapporteringService.oppdaterRegistrertArbeidssoker(rapporteringId, ident, registrertArbeidssoker)
+                            rapporteringService.oppdaterRegistrertArbeidssoker(
+                                rapporteringId,
+                                ident,
+                                arbeidssokerRequest.registrertArbeidssoker,
+                            )
                             call.respond(HttpStatusCode.NoContent)
                         }
                     }
@@ -246,6 +250,8 @@ data class HttpProblem(
     val instance: URI = URI.create("about:blank"),
     val errorType: String? = null,
 )
+
+data class ArbeidssokerRequest(val registrertArbeidssoker: Boolean)
 
 private fun DagInnerResponse.toDag() =
     Dag(
