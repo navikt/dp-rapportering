@@ -59,7 +59,7 @@ class RapporteringServiceTest {
     @Test
     fun `hent gjeldende periode henter ut eldste periode og populerer denne med data fra databasen hvis den finnes`() {
         val rapporteringsperiodeFraDb =
-            rapporteringsperiodeListe.filter { it.id == 1L }.first().copy(
+            rapporteringsperiodeListe.first { it.id == 1L }.copy(
                 dager =
                     getDager(
                         startDato = 1.januar,
@@ -82,7 +82,11 @@ class RapporteringServiceTest {
             periode.fraOgMed shouldBe 1.januar
             periode.tilOgMed shouldBe 14.januar
             dager.size shouldBe 14
-            dager.first().aktiviteter.first() shouldBe rapporteringsperiodeFraDb.dager.first().aktiviteter.first()
+            dager.first().aktiviteter.first() shouldBe
+                rapporteringsperiodeFraDb.dager
+                    .first()
+                    .aktiviteter
+                    .first()
             kanSendesFra shouldBe 13.januar
             kanSendes shouldBe true
             kanKorrigeres shouldBe false
@@ -118,7 +122,7 @@ class RapporteringServiceTest {
     @Test
     fun `hent periode henter spesifisert periode og populerer denne med data fra databasen hvis den finnes`() {
         val rapporteringsperiodeFraDb =
-            rapporteringsperiodeListe.filter { it.id == 2L }.first().copy(
+            rapporteringsperiodeListe.first { it.id == 2L }.copy(
                 dager =
                     getDager(
                         startDato = 14.januar,
@@ -215,7 +219,7 @@ class RapporteringServiceTest {
     @Test
     fun `kan sende inn rapporteringsperiode`() {
         val rapporteringsperiode = rapporteringsperiodeListe.first()
-        justRun { journalfoeringService.journalfoer(any(), any(), any()) }
+        coEvery { journalfoeringService.journalfoer(any(), any(), any()) } returns mockk()
         justRun { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
         coEvery { meldepliktConnector.sendinnRapporteringsperiode(rapporteringsperiode, token) } returns
             InnsendingResponse(
@@ -232,7 +236,11 @@ class RapporteringServiceTest {
         innsendingResponse.id shouldBe rapporteringsperiode.id
         innsendingResponse.status shouldBe "OK"
 
-        verify(exactly = 1) { journalfoeringService.journalfoer(any(), any(), any()) }
+        verify(exactly = 1) {
+            runBlocking {
+                journalfoeringService.journalfoer(any(), any(), any())
+            }
+        }
         verify(exactly = 1) { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
     }
 }
