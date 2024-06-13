@@ -4,6 +4,7 @@ import io.ktor.client.plugins.ResponseException
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.JsonConvertException
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.auth.authenticate
@@ -157,15 +158,10 @@ internal fun Application.rapporteringApi(
                     get {
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
-                        val rapporteringId = call.parameters["id"]
-
-                        if (rapporteringId.isNullOrBlank()) {
-                            call.respond(HttpStatusCode.BadRequest)
-                            return@get
-                        }
+                        val rapporteringId = call.getParameter("id").toLong()
 
                         rapporteringService
-                            .hentPeriode(rapporteringId.toLong(), ident, jwtToken)
+                            .hentPeriode(rapporteringId, ident, jwtToken)
                             ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
@@ -173,37 +169,25 @@ internal fun Application.rapporteringApi(
                     route("/registrertArbeidssoker") {
                         post {
                             val ident = call.ident()
-                            val rapporteringId = call.parameters["id"]?.toLong()
+                            val rapporteringId = call.getParameter("id").toLong()
                             val registrertArbeidssoker = call.receive(Boolean::class)
 
-                            if (rapporteringId == null) {
-                                call.respond(HttpStatusCode.BadRequest)
-                            } else {
-                                rapporteringService.oppdaterRegistrertArbeidssoker(rapporteringId, ident, registrertArbeidssoker)
-                                call.respond(HttpStatusCode.NoContent)
-                            }
+                            rapporteringService.oppdaterRegistrertArbeidssoker(rapporteringId, ident, registrertArbeidssoker)
+                            call.respond(HttpStatusCode.NoContent)
                         }
                     }
 
                     route("/aktivitet") {
                         post {
-                            val rapporteringId = call.parameters["id"]?.toLong()
+                            val rapporteringId = call.getParameter("id").toLong()
                             val dag = call.receive(DagInnerResponse::class).toDag()
 
-                            if (rapporteringId == null) {
-                                call.respond(HttpStatusCode.BadRequest)
-                            } else {
-                                rapporteringService.lagreAktiviteter(rapporteringId, dag)
-                                call.respond(HttpStatusCode.NoContent)
-                            }
+                            rapporteringService.lagreAktiviteter(rapporteringId, dag)
+                            call.respond(HttpStatusCode.NoContent)
                         }
                         route("/{aktivitetId}") {
                             delete {
-                                val aktivitetId = call.parameters["aktivitetId"]
-
-                                if (aktivitetId == null) {
-                                    call.respond(HttpStatusCode.BadRequest)
-                                }
+                                val aktivitetId = call.getParameter("aktivitetId")
 
                                 rapporteringService.slettAktivitet(UUID.fromString(aktivitetId))
                                 call.respond(HttpStatusCode.NoContent)
@@ -214,12 +198,7 @@ internal fun Application.rapporteringApi(
                     route("/korriger") {
                         post {
                             val jwtToken = call.request.jwt()
-                            val id = call.parameters["id"]
-
-                            if (id.isNullOrBlank()) {
-                                call.respond(HttpStatusCode.BadRequest)
-                                return@post
-                            }
+                            val id = call.getParameter("id")
 
                             rapporteringService
                                 .korrigerMeldekort(id.toLong(), jwtToken)
@@ -238,9 +217,9 @@ internal fun Application.rapporteringApi(
                         .also {
                             if (it == null) {
                                 call.respond(HttpStatusCode.NoContent)
-                            } else {
-                                call.respond(HttpStatusCode.OK, it.toResponse())
+                                return@get
                             }
+                            call.respond(HttpStatusCode.OK, it.toResponse())
                         }
                 }
 
@@ -248,6 +227,7 @@ internal fun Application.rapporteringApi(
                     get {
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
+
                         rapporteringService
                             .hentInnsendteRapporteringsperioder(ident, jwtToken)
                             .also { call.respond(HttpStatusCode.OK, it.toResponse()) }
@@ -286,3 +266,6 @@ private fun AktivitetResponse.toAktivitet() =
             },
         timer = timer,
     )
+
+private fun ApplicationCall.getParameter(name: String): String =
+    this.parameters[name] ?: throw BadRequestException("Parameter $name not found")
