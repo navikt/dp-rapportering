@@ -45,6 +45,14 @@ internal object Configuration {
 
     val meldepliktAdapterAudience by lazy { properties[Key("MELDEPLIKT_ADAPTER_AUDIENCE", stringType)] }
 
+    val dokarkivUrl by lazy {
+        properties[Key("DOKARKIV_HOST", stringType)].let {
+            "https://$it"
+        }
+    }
+
+    val dokarkivAudience by lazy { properties[Key("DOKARKIV_AUDIENCE", stringType)] }
+
     private val tokenXClient by lazy {
         val tokenX = OAuth2Config.TokenX(properties)
         CachedOauth2Client(
@@ -55,9 +63,25 @@ internal object Configuration {
 
     fun tokenXClient(audience: String) =
         { subjectToken: String ->
-            tokenXClient.tokenExchange(
-                token = subjectToken,
-                audience = audience,
-            ).accessToken
+            tokenXClient
+                .tokenExchange(
+                    token = subjectToken,
+                    audience = audience,
+                ).accessToken
+        }
+
+    private val azureAd by lazy {
+        val aad = OAuth2Config.AzureAd(properties)
+        CachedOauth2Client(
+            tokenEndpointUrl = aad.tokenEndpointUrl,
+            authType = aad.clientSecret(),
+        )
+    }
+
+    fun azureADClient() =
+        { audience: String ->
+            azureAd
+                .clientCredentials("api://$audience/.default")
+                .accessToken
         }
 }
