@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import mu.KLogging
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.utils.PDFGenerator
 import no.nav.sbl.meldekort.model.meldekort.journalpost.AvsenderIdType
 import no.nav.sbl.meldekort.model.meldekort.journalpost.AvsenderMottaker
@@ -89,14 +90,10 @@ class JournalfoeringService {
         val fra = rapporteringsperiode.periode.fraOgMed.format(dateFormatter)
         val til = rapporteringsperiode.periode.tilOgMed.format(dateFormatter)
 
-        val tittel = "Meldekort"
-        /*
-            TODO: Finne ut om denne perioden er korrigert
-            var tittel = "Meldekort"
-            if (meldekortDetaljerInn.kortType == KortType.KORRIGERT_ELEKTRONISK) {
-                tittel = "Korrigert meldekort"
-            }
-         */
+        var tittel = "Meldekort"
+        if (rapporteringsperiode.status == RapporteringsperiodeStatus.Korrigert) {
+            tittel = "Korrigert meldekort"
+        }
 
         return "$tittel for uke $uke1 - $uke2 ($fra - $til) elektronisk mottatt av NAV"
     }
@@ -120,14 +117,10 @@ class JournalfoeringService {
         navn: String,
         loginLevel: Int,
     ): List<Dokument> {
-        val brevkode = brevkode
-        /*
-            TODO: Finne ut om denne perioden er korrigert
-            var brevkode = BREVKODE
-            if (meldekortDetaljerInn.kortType == KortType.KORRIGERT_ELEKTRONISK) {
-                brevkode = BREVKODE_KORRIGERT
-            }
-         */
+        var brevkode = brevkode
+        if (rapporteringsperiode.status == RapporteringsperiodeStatus.Korrigert) {
+            brevkode = brevkodeKorrigert
+        }
 
         val meldekort =
             Dokument(
@@ -163,14 +156,10 @@ class JournalfoeringService {
         navn: String,
         loginLevel: Int,
     ): DokumentVariant {
-        val tittel = "Elektronisk innsendt meldekort"
-        /*
-            TODO: Finne ut om denne perioden er korrigert
-            var tittel = "Elektronisk innsendt meldekort"
-            if (meldekortDetaljerInn.kortType == KortType.KORRIGERT_ELEKTRONISK) {
-                tittel = "Elektronisk korrigert meldekort"
-            }
-         */
+        var tittel = "Elektronisk innsendt meldekort"
+        if (rapporteringsperiode.status == RapporteringsperiodeStatus.Korrigert) {
+            tittel = "Elektronisk korrigert meldekort"
+        }
 
         val logo = this::class.java.getResource("/nav-logo.svg")!!.readText()
 
