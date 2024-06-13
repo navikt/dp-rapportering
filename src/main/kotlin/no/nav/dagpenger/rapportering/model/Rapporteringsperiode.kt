@@ -59,6 +59,7 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
         status =
             when (this.status) {
                 RapporteringsperiodeStatus.TilUtfylling -> RapporteringsperiodeStatusResponse.TilUtfylling
+                RapporteringsperiodeStatus.Korrigert -> RapporteringsperiodeStatusResponse.Korrigert
                 RapporteringsperiodeStatus.Innsendt -> RapporteringsperiodeStatusResponse.Innsendt
                 RapporteringsperiodeStatus.Ferdig -> RapporteringsperiodeStatusResponse.Ferdig
             },
