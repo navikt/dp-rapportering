@@ -12,6 +12,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
@@ -26,7 +27,8 @@ import java.util.UUID
 class RapporteringServiceTest {
     private val meldepliktConnector = mockk<MeldepliktConnector>()
     private val rapporteringRepository = mockk<RapporteringRepository>()
-    private val rapporteringService = RapporteringService(meldepliktConnector, rapporteringRepository)
+    private val journalfoeringService = mockk<JournalfoeringService>()
+    private val rapporteringService = RapporteringService(meldepliktConnector, rapporteringRepository, journalfoeringService)
 
     private val ident = "12345678910"
     private val token = "jwtToken"
@@ -208,6 +210,30 @@ class RapporteringServiceTest {
         innsendteRapporteringsperioder[0].id shouldBe 3L
         innsendteRapporteringsperioder[1].id shouldBe 2L
         innsendteRapporteringsperioder[2].id shouldBe 1L
+    }
+
+    @Test
+    fun `kan sende inn rapporteringsperiode`() {
+        val rapporteringsperiode = rapporteringsperiodeListe.first()
+        justRun { journalfoeringService.journalfoer(any(), any(), any()) }
+        justRun { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
+        coEvery { meldepliktConnector.sendinnRapporteringsperiode(rapporteringsperiode, token) } returns
+            InnsendingResponse(
+                id = rapporteringsperiode.id,
+                status = "OK",
+                feil = listOf(),
+            )
+
+        val innsendingResponse =
+            runBlocking {
+                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, 4)
+            }
+
+        innsendingResponse.id shouldBe rapporteringsperiode.id
+        innsendingResponse.status shouldBe "OK"
+
+        verify(exactly = 1) { journalfoeringService.journalfoer(any(), any(), any()) }
+        verify(exactly = 1) { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
     }
 }
 

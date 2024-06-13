@@ -26,25 +26,19 @@ import no.nav.dagpenger.rapportering.api.auth.loginLevel
 import no.nav.dagpenger.rapportering.api.models.AktivitetResponse
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeResponse
 import no.nav.dagpenger.rapportering.api.models.DagInnerResponse
-import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.toResponse
-import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import java.net.URI
 import java.util.UUID
 
 private val logger = KotlinLogging.logger {}
 
-internal fun Application.rapporteringApi(
-    meldepliktConnector: MeldepliktConnector,
-    rapporteringService: RapporteringService,
-    journalfoeringService: JournalfoeringService,
-) {
+internal fun Application.rapporteringApi(rapporteringService: RapporteringService) {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
             when (cause) {
@@ -127,16 +121,7 @@ internal fun Application.rapporteringApi(
                     val rapporteringsperiode = call.receive(Rapporteringsperiode::class)
 
                     try {
-                        // Send data
-                        val response = meldepliktConnector.sendinnRapporteringsperiode(rapporteringsperiode, jwtToken)
-
-                        // Journalfør hvis status er OK
-                        if (response.status == "OK") {
-                            logger.info("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
-                            journalfoeringService.journalfoer(ident, loginLevel, rapporteringsperiode)
-                        }
-
-                        call.respond(response)
+                        rapporteringService.sendRapporteringsperiode(rapporteringsperiode, jwtToken, ident, loginLevel)
                     } catch (e: Exception) {
                         logger.error("Feil ved innsending: $e")
                         call.respond(HttpStatusCode.InternalServerError)
