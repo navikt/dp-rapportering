@@ -228,6 +228,31 @@ class RapporteringRepositoryPostgres(private val dataSource: DataSource) : Rappo
         }
     }
 
+    override fun oppdaterRapporteringStatus(
+        rapporteringId: Long,
+        ident: String,
+        status: RapporteringsperiodeStatus,
+    ) {
+        using(sessionOf(dataSource)) { session ->
+            session.transaction { tx ->
+                tx.run(
+                    queryOf(
+                        """
+                        UPDATE rapporteringsperiode
+                        SET status = :status
+                        WHERE id = :id AND ident = :ident
+                        """.trimIndent(),
+                        mapOf(
+                            "status" to status.name,
+                            "id" to rapporteringId,
+                            "ident" to ident,
+                        ),
+                    ).asUpdate,
+                ).validateRowsAffected()
+            }
+        }
+    }
+
     override fun slettAktivitet(aktivitetId: UUID): Int =
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->

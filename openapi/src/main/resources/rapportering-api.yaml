@@ -107,14 +107,14 @@ paths:
         parameters:
             - $ref: '#/components/parameters/periodeId'
 
-    /rapporteringsperiode/{periodeId}/registrertArbeidssoker:
+    /rapporteringsperiode/{periodeId}/arbeidssoker:
         post:
             requestBody:
                 required: true
                 content:
                     application/json:
                         schema:
-                            type: boolean
+                            $ref: '#/components/schemas/ArbeidssokerRequest'
             responses:
                 204:
                     description: No Content - OK
@@ -194,6 +194,13 @@ paths:
 
 components:
     schemas:
+        ArbeidssokerRequest:
+            required:
+                - registrertArbeidssoker
+            type: object
+            properties:
+                registrertArbeidssoker:
+                    type: boolean
         AktivitetType:
             type: string
             enum:

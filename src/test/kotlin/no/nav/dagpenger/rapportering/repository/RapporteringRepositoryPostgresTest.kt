@@ -237,6 +237,22 @@ class RapporteringRepositoryPostgresTest {
     }
 
     @Test
+    fun `kan oppdatere status for rapporteringsperiode`() {
+        val rapporteringsperiode = getRapporteringsperiode()
+        val ident = "12345678910"
+
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, ident)
+            rapporteringRepositoryPostgres.oppdaterRapporteringStatus(rapporteringsperiode.id, ident, Innsendt)
+
+            with(rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)!!) {
+                id shouldBe rapporteringsperiode.id
+                status shouldBe Innsendt
+            }
+        }
+    }
+
+    @Test
     fun `kan slette aktiviteter`() {
         val rapporteringsperiode = getRapporteringsperiode()
         val dag =

@@ -1,16 +1,22 @@
 package no.nav.dagpenger.rapportering.service
 
+import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import java.util.UUID
+
+private val logger = KotlinLogging.logger {}
 
 class RapporteringService(
     private val meldepliktConnector: MeldepliktConnector,
     private val rapporteringRepository: RapporteringRepository,
+    private val journalfoeringService: JournalfoeringService,
 ) {
     suspend fun hentGjeldendePeriode(
         ident: String,
@@ -86,4 +92,21 @@ class RapporteringService(
         meldepliktConnector
             .hentInnsendteRapporteringsperioder(ident, token)
             .sortedByDescending { it.periode.fraOgMed }
+
+    suspend fun sendRapporteringsperiode(
+        rapporteringsperiode: Rapporteringsperiode,
+        token: String,
+        ident: String,
+        loginLevel: Int,
+    ): InnsendingResponse =
+        meldepliktConnector.sendinnRapporteringsperiode(rapporteringsperiode, token)
+            .also { response ->
+                if (response.status == "OK") {
+                    logger.info("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
+                    journalfoeringService.journalfoer(ident, loginLevel, rapporteringsperiode)
+
+                    logger.info("Oppdaterer status for rapporteringsperiode ${rapporteringsperiode.id}")
+                    rapporteringRepository.oppdaterRapporteringStatus(rapporteringsperiode.id, ident, Innsendt)
+                }
+            }
 }
