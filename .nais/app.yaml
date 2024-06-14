@@ -32,6 +32,10 @@ spec:
       value: {{MELDEPLIKT_ADAPTER_HOST}}
     - name: MELDEPLIKT_ADAPTER_AUDIENCE
       value: {{MELDEPLIKT_ADAPTER_AUDIENCE}}
+    - name: DOKARKIV_HOST
+      value: {{DOKARKIV_HOST}}
+    - name: DOKARKIV_AUDIENCE
+      value: {{DOKARKIV_AUDIENCE}}
   gcp:
       sqlInstances:
           - type: POSTGRES_15

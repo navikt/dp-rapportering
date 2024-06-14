@@ -4,7 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import io.ktor.client.call.body
+import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.contentType
 import mu.KLogging
+import no.nav.dagpenger.rapportering.Configuration
+import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.utils.PDFGenerator
@@ -16,6 +27,7 @@ import no.nav.sbl.meldekort.model.meldekort.journalpost.Dokument
 import no.nav.sbl.meldekort.model.meldekort.journalpost.DokumentVariant
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Filetype
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Journalpost
+import no.nav.sbl.meldekort.model.meldekort.journalpost.JournalpostResponse
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Journalposttype
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Sak
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Sakstype
@@ -23,6 +35,7 @@ import no.nav.sbl.meldekort.model.meldekort.journalpost.Tema
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Tilleggsopplysning
 import no.nav.sbl.meldekort.model.meldekort.journalpost.Variantformat
 import java.io.File
+import java.net.URI
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -31,7 +44,11 @@ import java.util.Base64
 import java.util.Locale
 import java.util.UUID
 
-class JournalfoeringService {
+class JournalfoeringService(
+    private val dokarkivUrl: String = Configuration.dokarkivUrl,
+    private val tokenProvider: (String) -> String = Configuration.azureADClient(),
+    engine: HttpClientEngine = CIO.create {},
+) {
     companion object : KLogging()
 
     private val kanal = "NAV_NO"
@@ -44,7 +61,11 @@ class JournalfoeringService {
     private var locale: Locale? = Locale.of("nb", "NO") // Vi skal regne ukenummer iht norske regler
     private val woy = WeekFields.of(locale).weekOfWeekBasedYear()
 
-    fun journalfoer(
+    private val path = "/rest/journalpostapi/v1/journalpost"
+
+    private val httpClient = createHttpClient(engine)
+
+    suspend fun journalfoer(
         ident: String,
         loginLevel: Int,
         rapporteringsperiode: Rapporteringsperiode,
@@ -82,6 +103,28 @@ class JournalfoeringService {
             )
 
         logger.info("Opprettet journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
+
+        try {
+            val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
+
+            val journalpostResponse =
+                httpClient
+                    .post(URI("$dokarkivUrl$path").toURL()) {
+                        header(HttpHeaders.Authorization, "Bearer $token")
+                        contentType(ContentType.Application.Json)
+                        setBody(journalpost)
+                    }.body<JournalpostResponse>()
+
+            lagreJournalpostData(
+                journalpostResponse.journalpostId,
+                journalpostResponse.dokumenter[0].dokumentInfoId,
+                rapporteringsperiode.id,
+            )
+        } catch (e: Exception) {
+            logger.warn("Kan ikke sende journalpost", e)
+
+            lagreJournalpostMidlertidig(journalpost)
+        }
     }
 
     private fun getTittle(rapporteringsperiode: Rapporteringsperiode): String {
@@ -209,5 +252,19 @@ class JournalfoeringService {
             variantformat = Variantformat.ARKIV,
             fysiskDokument = Base64.getEncoder().encodeToString(pdf),
         )
+    }
+
+    private fun lagreJournalpostData(
+        journalpostId: Long,
+        dokumentInfoId: Long,
+        id: Long,
+    ) {
+        // TODO:
+        logger.info("Lagrer JournalpostData. journalpostId = $journalpostId, dokumentInfoId = $dokumentInfoId, id = $id")
+    }
+
+    private fun lagreJournalpostMidlertidig(journalpost: Journalpost) {
+        // TODO:
+        logger.info("Mellomlagrer journalpost $journalpost")
     }
 }
