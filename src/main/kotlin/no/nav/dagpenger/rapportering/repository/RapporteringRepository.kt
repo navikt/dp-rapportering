@@ -50,4 +50,6 @@ interface RapporteringRepository {
     )
 
     fun slettAktiviteter(aktivitetIdListe: List<UUID>)
+
+    fun slettRaporteringsperiode(rapporteringId: Long)
 }

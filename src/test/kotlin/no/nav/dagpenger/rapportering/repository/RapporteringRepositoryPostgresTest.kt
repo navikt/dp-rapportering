@@ -22,6 +22,8 @@ import java.util.UUID
 class RapporteringRepositoryPostgresTest {
     val rapporteringRepositoryPostgres = RapporteringRepositoryPostgres(dataSource)
 
+    val ident = "12345678910"
+
     @Test
     fun `kan hente alle rapporteringsperioder`() {
         withMigratedDb {
@@ -35,8 +37,6 @@ class RapporteringRepositoryPostgresTest {
     fun `kan hente rapporteringsperiode`() {
         val id = 6269L
         val rapporteringsperiode = getRapporteringsperiode(id = id)
-
-        val ident = "12345678910"
 
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
@@ -55,8 +55,6 @@ class RapporteringRepositoryPostgresTest {
         val id = 6269L
         val rapporteringsperiode = getRapporteringsperiode(id = id)
 
-        val ident = "12345678910"
-
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
             val rapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = id, ident = ident)
@@ -68,7 +66,7 @@ class RapporteringRepositoryPostgresTest {
     @Test
     fun `Uthenting av rapporteringsperiode som ikke finnes returnerer null`() {
         withMigratedDb {
-            rapporteringRepositoryPostgres.hentRapporteringsperiode(123L, "12345678910") shouldBe null
+            rapporteringRepositoryPostgres.hentRapporteringsperiode(id = 123L, ident = ident) shouldBe null
         }
     }
 
@@ -78,7 +76,7 @@ class RapporteringRepositoryPostgresTest {
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
                 rapporteringsperiode = rapporteringsperiode,
-                ident = "12345678910",
+                ident = ident,
             )
 
             rapporteringRepositoryPostgres.hentRapporteringsperioder().size shouldBe 1
@@ -87,7 +85,6 @@ class RapporteringRepositoryPostgresTest {
 
     @Test
     fun `lagre eksisterende rapporteringsperiode kaster exception`() {
-        val ident = "12345678910"
         val rapporteringsperiode = getRapporteringsperiode()
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
@@ -104,7 +101,7 @@ class RapporteringRepositoryPostgresTest {
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
                 rapporteringsperiode = rapporteringsperiode,
-                ident = "12345678910",
+                ident = ident,
             )
 
             val lagretRapportering = rapporteringRepositoryPostgres.hentRapporteringsperioder()
@@ -126,15 +123,14 @@ class RapporteringRepositoryPostgresTest {
                     ),
                 dagIndex = 0,
             )
-        val ident = "12345678910"
 
         withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, "12345678910")
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
 
-            val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringsperiode.id, dag.dagIndex)
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
+            val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringId = rapporteringsperiode.id, dagIdex = dag.dagIndex)
+            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringId = rapporteringsperiode.id, dagId = dagId, dag = dag)
 
-            val result = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
+            val result = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = rapporteringsperiode.id, ident = ident)
 
             with(result!!) {
                 id shouldBe rapporteringsperiode.id
@@ -153,19 +149,18 @@ class RapporteringRepositoryPostgresTest {
                 aktiviteter = listOf(Aktivitet(uuid = UUID.randomUUID(), type = Utdanning, timer = null)),
                 dagIndex = 0,
             )
-        val ident = "12345678910"
 
         withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, ident)
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
 
-            val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringsperiode.id, dag.dagIndex)
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
+            val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringId = rapporteringsperiode.id, dagIdex = dag.dagIndex)
+            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringId = rapporteringsperiode.id, dagId = dagId, dag = dag)
 
             shouldThrow<BatchUpdateException> {
-                rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
+                rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringId = rapporteringsperiode.id, dagId = dagId, dag = dag)
             }
 
-            val result = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
+            val result = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = rapporteringsperiode.id, ident = ident)
 
             with(result!!) {
                 id shouldBe rapporteringsperiode.id
@@ -178,12 +173,15 @@ class RapporteringRepositoryPostgresTest {
     @Test
     fun `kan oppdatere om bruker vil fortsette som registrert arbeidssoker`() {
         val rapporteringsperiode = getRapporteringsperiode()
-        val ident = "12345678910"
 
         withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, ident)
-            rapporteringRepositoryPostgres.oppdaterRegistrertArbeidssoker(rapporteringsperiode.id, ident, true)
-            val oppdatertPeriode = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)!!
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
+            rapporteringRepositoryPostgres.oppdaterRegistrertArbeidssoker(
+                rapporteringId = rapporteringsperiode.id,
+                ident = ident,
+                registrertArbeidssoker = true,
+            )
+            val oppdatertPeriode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = rapporteringsperiode.id, ident = ident)!!
 
             oppdatertPeriode.registrertArbeidssoker shouldBe true
         }
@@ -202,15 +200,18 @@ class RapporteringRepositoryPostgresTest {
                     ),
                 dagIndex = 0,
             )
-        val ident = "12345678910"
 
         withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, "12345678910")
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
 
-            val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringsperiode.id, dag.dagIndex)
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
+            val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringId = rapporteringsperiode.id, dagIdex = dag.dagIndex)
+            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringId = rapporteringsperiode.id, dagId = dagId, dag = dag)
 
-            val lagretRapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
+            val lagretRapporteringsperiode =
+                rapporteringRepositoryPostgres.hentRapporteringsperiode(
+                    id = rapporteringsperiode.id,
+                    ident = ident,
+                )
 
             with(lagretRapporteringsperiode!!) {
                 id shouldBe rapporteringsperiode.id
@@ -232,7 +233,11 @@ class RapporteringRepositoryPostgresTest {
                 ident,
             )
 
-            val oppdatertRapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
+            val oppdatertRapporteringsperiode =
+                rapporteringRepositoryPostgres.hentRapporteringsperiode(
+                    id = rapporteringsperiode.id,
+                    ident = ident,
+                )
 
             with(oppdatertRapporteringsperiode!!) {
                 id shouldBe rapporteringsperiode.id
@@ -249,13 +254,16 @@ class RapporteringRepositoryPostgresTest {
     @Test
     fun `kan oppdatere status for rapporteringsperiode`() {
         val rapporteringsperiode = getRapporteringsperiode()
-        val ident = "12345678910"
 
         withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, ident)
-            rapporteringRepositoryPostgres.oppdaterRapporteringStatus(rapporteringsperiode.id, ident, Innsendt)
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
+            rapporteringRepositoryPostgres.oppdaterRapporteringStatus(
+                rapporteringId = rapporteringsperiode.id,
+                ident = ident,
+                status = Innsendt,
+            )
 
-            with(rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)!!) {
+            with(rapporteringRepositoryPostgres.hentRapporteringsperiode(id = rapporteringsperiode.id, ident = ident)!!) {
                 id shouldBe rapporteringsperiode.id
                 status shouldBe Innsendt
             }
@@ -275,30 +283,49 @@ class RapporteringRepositoryPostgresTest {
                     ),
                 dagIndex = 0,
             )
-        val ident = "12345678910"
 
         withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, "12345678910")
-            val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringsperiode.id, dag.dagIndex)
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
-            val resultatMedToAktiviteter = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
+            val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringId = rapporteringsperiode.id, dagIdex = dag.dagIndex)
+            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringId = rapporteringsperiode.id, dagId = dagId, dag = dag)
+            val resultatMedToAktiviteter =
+                rapporteringRepositoryPostgres.hentRapporteringsperiode(
+                    id = rapporteringsperiode.id,
+                    ident = ident,
+                )
 
             with(resultatMedToAktiviteter!!) {
                 id shouldBe rapporteringsperiode.id
                 dager.size shouldBe 14
                 dager.first().aktiviteter.size shouldBe 2
-                dager.first().aktiviteter.first().uuid shouldBe dag.aktiviteter.first().uuid
-                dager.first().aktiviteter.last().uuid shouldBe dag.aktiviteter.last().uuid
+                dager
+                    .first()
+                    .aktiviteter
+                    .first()
+                    .uuid shouldBe dag.aktiviteter.first().uuid
+                dager
+                    .first()
+                    .aktiviteter
+                    .last()
+                    .uuid shouldBe dag.aktiviteter.last().uuid
             }
 
             rapporteringRepositoryPostgres.slettAktiviteter(aktivitetIdListe = listOf(dag.aktiviteter.first().uuid))
-            val resultatMedEnAktivitet = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
+            val resultatMedEnAktivitet =
+                rapporteringRepositoryPostgres.hentRapporteringsperiode(
+                    id = rapporteringsperiode.id,
+                    ident = ident,
+                )
 
             with(resultatMedEnAktivitet!!) {
                 id shouldBe rapporteringsperiode.id
                 dager.size shouldBe 14
                 dager.first().aktiviteter.size shouldBe 1
-                dager.first().aktiviteter.first().uuid shouldBe dag.aktiviteter.last().uuid
+                dager
+                    .first()
+                    .aktiviteter
+                    .first()
+                    .uuid shouldBe dag.aktiviteter.last().uuid
             }
         }
     }
@@ -307,7 +334,31 @@ class RapporteringRepositoryPostgresTest {
     fun `slett av ikke-eksisterende aktivitet kaster exception`() {
         withMigratedDb {
             shouldThrow<RuntimeException> {
-                rapporteringRepositoryPostgres.slettAktiviteter(listOf(UUID.randomUUID()))
+                rapporteringRepositoryPostgres.slettAktiviteter(aktivitetIdListe = listOf(UUID.randomUUID()))
+            }
+        }
+    }
+
+    @Test
+    fun `kan slette rapporteringsperiode`() {
+        val rapporteringsperiode = getRapporteringsperiode()
+
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = rapporteringsperiode,
+                ident = ident,
+            )
+            rapporteringRepositoryPostgres.slettRaporteringsperiode(rapporteringsperiode.id)
+
+            rapporteringRepositoryPostgres.hentRapporteringsperiode(id = rapporteringsperiode.id, ident = ident) shouldBe null
+        }
+    }
+
+    @Test
+    fun `sletting av rapporteringsperiode som ikke finnes kaster RuntimeException`() {
+        withMigratedDb {
+            shouldThrow<RuntimeException> {
+                rapporteringRepositoryPostgres.slettRaporteringsperiode(123L)
             }
         }
     }
