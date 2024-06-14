@@ -258,9 +258,9 @@ class RapporteringRepositoryPostgres(private val dataSource: DataSource) : Rappo
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
                 tx.batchPreparedNamedStatement(
-                    "DELETE FROM aktivitet WHERE uuid = ?",
+                    "DELETE FROM aktivitet WHERE uuid = :uuid",
                     aktivitetIdListe.map { id ->
-                        mapOf("id" to id)
+                        mapOf("uuid" to id)
                     },
                 ).sum().validateRowsAffected(excepted = aktivitetIdListe.size)
             }

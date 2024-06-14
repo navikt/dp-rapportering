@@ -15,6 +15,7 @@ import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
+import java.sql.BatchUpdateException
 import java.time.LocalDate
 import java.util.UUID
 
@@ -160,7 +161,7 @@ class RapporteringRepositoryPostgresTest {
             val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringsperiode.id, dag.dagIndex)
             rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
 
-            shouldThrow<RuntimeException> {
+            shouldThrow<BatchUpdateException> {
                 rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
             }
 
@@ -194,7 +195,11 @@ class RapporteringRepositoryPostgresTest {
         val dag =
             Dag(
                 dato = 1.januar,
-                aktiviteter = listOf(Aktivitet(uuid = UUID.randomUUID(), type = Utdanning, timer = null)),
+                aktiviteter =
+                    listOf(
+                        Aktivitet(uuid = UUID.randomUUID(), type = Utdanning, timer = null),
+                        Aktivitet(uuid = UUID.randomUUID(), type = Arbeid, timer = "PT5H30M"),
+                    ),
                 dagIndex = 0,
             )
         val ident = "12345678910"
@@ -204,14 +209,13 @@ class RapporteringRepositoryPostgresTest {
 
             val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringsperiode.id, dag.dagIndex)
             rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
 
             val lagretRapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
 
             with(lagretRapporteringsperiode!!) {
                 id shouldBe rapporteringsperiode.id
                 dager.size shouldBe 14
-                dager.first().aktiviteter.size shouldBe 1
+                dager.first().aktiviteter.size shouldBe 2
                 kanSendes shouldBe true
                 kanKorrigeres shouldBe false
                 bruttoBelop shouldBe null
@@ -233,7 +237,7 @@ class RapporteringRepositoryPostgresTest {
             with(oppdatertRapporteringsperiode!!) {
                 id shouldBe rapporteringsperiode.id
                 dager.size shouldBe 14
-                dager.first().aktiviteter.size shouldBe 1
+                dager.first().aktiviteter.size shouldBe 2
                 kanSendes shouldBe false
                 kanKorrigeres shouldBe true
                 bruttoBelop shouldBe 100.0
@@ -287,7 +291,7 @@ class RapporteringRepositoryPostgresTest {
                 dager.first().aktiviteter.last().uuid shouldBe dag.aktiviteter.last().uuid
             }
 
-            rapporteringRepositoryPostgres.slettAktiviteter(listOf(dag.aktiviteter.first().uuid))
+            rapporteringRepositoryPostgres.slettAktiviteter(aktivitetIdListe = listOf(dag.aktiviteter.first().uuid))
             val resultatMedEnAktivitet = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
 
             with(resultatMedEnAktivitet!!) {
