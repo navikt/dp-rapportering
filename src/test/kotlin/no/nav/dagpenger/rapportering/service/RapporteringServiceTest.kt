@@ -165,19 +165,26 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan lagre aktivitet på eksisterende rapporteringsperiode`() {
-        justRun { rapporteringRepository.lagreAktiviteter(any(), any()) }
+        val aktiviteter = listOf(Aktivitet(uuid = UUID.randomUUID(), type = Utdanning, timer = null))
+        every { rapporteringRepository.hentDagId(any(), any()) } returns UUID.randomUUID()
+        every { rapporteringRepository.hentAktiviteter(any()) } returns aktiviteter
+        justRun { rapporteringRepository.slettAktiviteter(any()) }
+        justRun { rapporteringRepository.lagreAktiviteter(any(), any(), any()) }
 
-        rapporteringService.lagreAktiviteter(
+        rapporteringService.lagreEllerOppdaterAktiviteter(
             rapporteringId = 1L,
             dag =
                 Dag(
                     dato = 1.januar,
-                    aktiviteter = listOf(Aktivitet(uuid = UUID.randomUUID(), type = Utdanning, timer = null)),
+                    aktiviteter = aktiviteter,
                     dagIndex = 0,
                 ),
         )
 
-        verify(exactly = 1) { rapporteringRepository.lagreAktiviteter(any(), any()) }
+        verify(exactly = 1) { rapporteringRepository.lagreAktiviteter(any(), any(), any()) }
+        verify(exactly = 1) { rapporteringRepository.slettAktiviteter(any()) }
+        verify(exactly = 1) { rapporteringRepository.hentDagId(any(), any()) }
+        verify(exactly = 1) { rapporteringRepository.hentAktiviteter(any()) }
     }
 
     @Test

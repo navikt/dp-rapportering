@@ -9,7 +9,6 @@ import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
-import java.util.UUID
 
 private val logger = KotlinLogging.logger {}
 
@@ -59,10 +58,15 @@ class RapporteringService(
                 ?: throw RuntimeException("Fant ikke rapporteringsperiode, selv om den skal ha blitt lagret")
         }
 
-    fun lagreAktiviteter(
+    fun lagreEllerOppdaterAktiviteter(
         rapporteringId: Long,
         dag: Dag,
-    ) = rapporteringRepository.lagreAktiviteter(rapporteringId, dag)
+    ) {
+        val dagId = rapporteringRepository.hentDagId(rapporteringId, dag.dagIndex)
+        val eksisterendeAktiviteter = rapporteringRepository.hentAktiviteter(dagId)
+        rapporteringRepository.slettAktiviteter(eksisterendeAktiviteter.map { it.uuid })
+        rapporteringRepository.lagreAktiviteter(rapporteringId, dagId, dag)
+    }
 
     fun oppdaterRegistrertArbeidssoker(
         rapporteringId: Long,
@@ -73,8 +77,6 @@ class RapporteringService(
         ident,
         registrertArbeidssoker,
     )
-
-    fun slettAktivitet(aktivitetId: UUID) = rapporteringRepository.slettAktivitet(aktivitetId)
 
     // TODO: Skal det skje noe i databasen når rapporteringsperioden korrigeres?
     suspend fun korrigerMeldekort(

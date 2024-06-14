@@ -130,7 +130,8 @@ class RapporteringRepositoryPostgresTest {
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, "12345678910")
 
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
+            val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringsperiode.id, dag.dagIndex)
+            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
 
             val result = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
 
@@ -143,7 +144,7 @@ class RapporteringRepositoryPostgresTest {
     }
 
     @Test
-    fun `lagring av aktivitet som allerede aksisterer feiler ikke`() {
+    fun `lagring av aktivitet som allerede aksisterer feiler`() {
         val rapporteringsperiode = getRapporteringsperiode()
         val dag =
             Dag(
@@ -156,8 +157,12 @@ class RapporteringRepositoryPostgresTest {
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, ident)
 
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
+            val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringsperiode.id, dag.dagIndex)
+            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
+
+            shouldThrow<RuntimeException> {
+                rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
+            }
 
             val result = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
 
@@ -197,8 +202,9 @@ class RapporteringRepositoryPostgresTest {
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, "12345678910")
 
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
+            val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringsperiode.id, dag.dagIndex)
+            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
+            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
 
             val lagretRapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
 
@@ -269,7 +275,8 @@ class RapporteringRepositoryPostgresTest {
 
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode, "12345678910")
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dag)
+            val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringsperiode.id, dag.dagIndex)
+            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
             val resultatMedToAktiviteter = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
 
             with(resultatMedToAktiviteter!!) {
@@ -280,10 +287,9 @@ class RapporteringRepositoryPostgresTest {
                 dager.first().aktiviteter.last().uuid shouldBe dag.aktiviteter.last().uuid
             }
 
-            val rowsAffected = rapporteringRepositoryPostgres.slettAktivitet(dag.aktiviteter.first().uuid)
+            rapporteringRepositoryPostgres.slettAktiviteter(listOf(dag.aktiviteter.first().uuid))
             val resultatMedEnAktivitet = rapporteringRepositoryPostgres.hentRapporteringsperiode(rapporteringsperiode.id, ident)
 
-            rowsAffected shouldBe 1
             with(resultatMedEnAktivitet!!) {
                 id shouldBe rapporteringsperiode.id
                 dager.size shouldBe 14
@@ -294,10 +300,11 @@ class RapporteringRepositoryPostgresTest {
     }
 
     @Test
-    fun `slett av ikke-eksisterende aktivitet`() {
+    fun `slett av ikke-eksisterende aktivitet kaster exception`() {
         withMigratedDb {
-            val rowsAffected = rapporteringRepositoryPostgres.slettAktivitet(UUID.randomUUID())
-            rowsAffected shouldBe 0
+            shouldThrow<RuntimeException> {
+                rapporteringRepositoryPostgres.slettAktiviteter(listOf(UUID.randomUUID()))
+            }
         }
     }
 }

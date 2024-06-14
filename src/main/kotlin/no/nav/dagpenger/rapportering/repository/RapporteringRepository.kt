@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.repository
 
+import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -13,6 +14,13 @@ interface RapporteringRepository {
 
     fun hentRapporteringsperioder(): List<Rapporteringsperiode>
 
+    fun hentDagId(
+        rapporteringId: Long,
+        dagIdex: Int,
+    ): UUID
+
+    fun hentAktiviteter(dagId: UUID): List<Aktivitet>
+
     fun lagreRapporteringsperiodeOgDager(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
@@ -20,6 +28,7 @@ interface RapporteringRepository {
 
     fun lagreAktiviteter(
         rapporteringId: Long,
+        dagId: UUID,
         dag: Dag,
     )
 
@@ -40,5 +49,5 @@ interface RapporteringRepository {
         status: RapporteringsperiodeStatus,
     )
 
-    fun slettAktivitet(aktivitetId: UUID): Int
+    fun slettAktiviteter(aktivitetIdListe: List<UUID>)
 }

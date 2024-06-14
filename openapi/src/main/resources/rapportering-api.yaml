@@ -138,7 +138,7 @@ paths:
                 400:
                     description: Bad Request
             summary: Lagre aktiviteter
-            description: Oppretter aktiviteter på en dag i rapporteringsperioden
+            description: Oppretter/oppdaterer aktiviteter på en dag i rapporteringsperioden
             operationId: post-lagre-aktivitet
             tags:
                 - Rapporteringsperiode
@@ -152,23 +152,6 @@ paths:
                             $ref: '#/components/schemas/dag'
         parameters:
             - $ref: '#/components/parameters/periodeId'
-    /rapporteringsperiode/{periodeId}/aktivitet/{aktivitetId}:
-        delete:
-            responses:
-                204:
-                    description: OK - No Content
-                400:
-                    description: Bad Request
-            summary: Slett aktivitet
-            description: Slett aktivitet gitt aktivitetId
-            operationId: delete-aktivitet
-            security:
-                - tokenX: []
-            tags:
-                - Rapporteringsperiode
-        parameters:
-            - $ref: '#/components/parameters/periodeId'
-            - $ref: '#/components/parameters/aktivitetId'
 
     /rapporteringsperiode/{periodeId}/korriger:
         post:

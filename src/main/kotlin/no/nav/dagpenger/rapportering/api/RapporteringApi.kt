@@ -14,7 +14,6 @@ import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.receive
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
-import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
@@ -34,7 +33,6 @@ import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import java.net.URI
-import java.util.UUID
 
 private val logger = KotlinLogging.logger {}
 
@@ -171,16 +169,8 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                             val rapporteringId = call.getParameter("id").toLong()
                             val dag = call.receive(DagInnerResponse::class).toDag()
 
-                            rapporteringService.lagreAktiviteter(rapporteringId, dag)
+                            rapporteringService.lagreEllerOppdaterAktiviteter(rapporteringId, dag)
                             call.respond(HttpStatusCode.NoContent)
-                        }
-                        route("/{aktivitetId}") {
-                            delete {
-                                val aktivitetId = call.getParameter("aktivitetId")
-
-                                rapporteringService.slettAktivitet(UUID.fromString(aktivitetId))
-                                call.respond(HttpStatusCode.NoContent)
-                            }
                         }
                     }
 

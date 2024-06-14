@@ -66,7 +66,7 @@ class RapporteringRepositoryPostgres(private val dataSource: DataSource) : Rappo
             )
         }
 
-    private fun hentAktiviteter(dagId: UUID): List<Aktivitet> =
+    override fun hentAktiviteter(dagId: UUID): List<Aktivitet> =
         using(sessionOf(dataSource)) { session ->
             session.run(
                 queryOf(
@@ -135,20 +135,17 @@ class RapporteringRepositoryPostgres(private val dataSource: DataSource) : Rappo
 
     override fun lagreAktiviteter(
         rapporteringId: Long,
+        dagId: UUID,
         dag: Dag,
     ) {
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
-                val dagId = tx.hentDagId(rapporteringId, dag.dagIndex)
-                val eksisterendeAktiviteter = hentAktiviteter(dagId).map { it.uuid }.toSet()
-                val nyeAktiviteter = dag.aktiviteter.filter { it.uuid !in eksisterendeAktiviteter }
-
                 tx.batchPreparedNamedStatement(
                     """
                     INSERT INTO aktivitet(uuid, dag_id, type, timer) 
                     VALUES (:uuid, :dag_id, :type, :timer) 
                     """.trimIndent(),
-                    nyeAktiviteter.map { aktivitet ->
+                    dag.aktiviteter.map { aktivitet ->
                         mapOf(
                             "uuid" to aktivitet.uuid,
                             "dag_id" to dagId,
@@ -156,7 +153,7 @@ class RapporteringRepositoryPostgres(private val dataSource: DataSource) : Rappo
                             "timer" to aktivitet.timer,
                         )
                     },
-                ).sum().validateRowsAffected(excepted = nyeAktiviteter.size)
+                ).sum().validateRowsAffected(excepted = dag.aktiviteter.size)
             }
         }
     }
@@ -186,18 +183,22 @@ class RapporteringRepositoryPostgres(private val dataSource: DataSource) : Rappo
         }
     }
 
-    private fun TransactionalSession.hentDagId(
+    override fun hentDagId(
         rapporteringId: Long,
         dagIdex: Int,
     ): UUID =
-        this.run(
-            queryOf(
-                "SELECT id FROM dag WHERE rapportering_id = ? AND dag_index = ?",
-                rapporteringId,
-                dagIdex,
-            ).map { row -> UUID.fromString(row.string("id")) }
-                .asSingle,
-        ) ?: throw RuntimeException("Finner ikke dag med rapporteringID $rapporteringId")
+        using(sessionOf(dataSource)) { session ->
+            session.transaction { tx ->
+                tx.run(
+                    queryOf(
+                        "SELECT id FROM dag WHERE rapportering_id = ? AND dag_index = ?",
+                        rapporteringId,
+                        dagIdex,
+                    ).map { row -> UUID.fromString(row.string("id")) }
+                        .asSingle,
+                ) ?: throw RuntimeException("Finner ikke dag med rapporteringID $rapporteringId")
+            }
+        }
 
     override fun oppdaterRapporteringsperiodeFraArena(
         rapporteringsperiode: Rapporteringsperiode,
@@ -253,15 +254,15 @@ class RapporteringRepositoryPostgres(private val dataSource: DataSource) : Rappo
         }
     }
 
-    override fun slettAktivitet(aktivitetId: UUID): Int =
+    override fun slettAktiviteter(aktivitetIdListe: List<UUID>) =
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
-                tx.run(
-                    queryOf(
-                        "DELETE FROM aktivitet WHERE uuid = ?",
-                        aktivitetId,
-                    ).asUpdate,
-                )
+                tx.batchPreparedNamedStatement(
+                    "DELETE FROM aktivitet WHERE uuid = ?",
+                    aktivitetIdListe.map { id ->
+                        mapOf("id" to id)
+                    },
+                ).sum().validateRowsAffected(excepted = aktivitetIdListe.size)
             }
         }
 }
