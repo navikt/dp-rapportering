@@ -9,7 +9,10 @@ interface JournalfoeringRepository {
         rapporteringsperiodeId: Long,
     )
 
-    fun lagreJournalpostMidlertidig(journalpost: Journalpost)
+    fun lagreJournalpostMidlertidig(
+        rapporteringsperiodeId: Long,
+        journalpost: Journalpost,
+    )
 
     fun hentMidlertidigLagredeJournalposter(): List<Triple<String, Journalpost, Int>>
 

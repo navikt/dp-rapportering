@@ -38,14 +38,17 @@ class JournalfoeringRepositoryPostgres(
         }
     }
 
-    override fun lagreJournalpostMidlertidig(journalpost: Journalpost) {
+    override fun lagreJournalpostMidlertidig(
+        rapporteringsperiodeId: Long,
+        journalpost: Journalpost,
+    ) {
         using(sessionOf(dataSource)) { session ->
             session
                 .run(
                     queryOf(
                         "INSERT INTO midlertidig_lagrede_journalposter (id, journalpost, retries) " +
                             "VALUES (?, ?, ?)",
-                        journalpost.eksternReferanseId,
+                        rapporteringsperiodeId,
                         objectMapper.writeValueAsString(journalpost),
                         0,
                     ).asUpdate,
