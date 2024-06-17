@@ -27,18 +27,24 @@ data class Dag(
         }
     }
 
-    private fun List<Aktivitet>.validerIngenDuplikateAktivitetsTyper(): Boolean = this.map { it.type }.toSet().size == this.size
+    private fun List<Aktivitet>.validerIngenDuplikateAktivitetsTyper(): Boolean =
+        this
+            .map { it.type }
+            .toSet()
+            .size == this.size
 
     private fun List<Aktivitet>.validerAktivitetsTypeKombinasjoner(): Boolean =
-        this.map { it.type }.let { typer ->
-            if (typer.isEmpty()) {
-                true
-            } else if (typer.contains(Arbeid) || typer.contains(Utdanning)) {
-                (!typer.contains(Syk) && !typer.contains(FerieEllerFravaer))
-            } else {
-                typer.contains(Syk) || typer.contains(FerieEllerFravaer) && typer.size == 1
+        this
+            .map { it.type }
+            .let { typer ->
+                if (typer.isEmpty()) {
+                    true
+                } else if (typer.contains(Arbeid) || typer.contains(Utdanning)) {
+                    (!typer.contains(Syk) && !typer.contains(FerieEllerFravaer))
+                } else {
+                    typer.contains(Syk) || typer.contains(FerieEllerFravaer) && typer.size == 1
+                }
             }
-        }
 
     private fun List<Aktivitet>.validerArbeidedeTimer(): Boolean =
         this
