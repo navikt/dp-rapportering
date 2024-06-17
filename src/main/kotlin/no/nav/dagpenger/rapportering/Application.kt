@@ -8,6 +8,7 @@ import no.nav.dagpenger.rapportering.api.internalApi
 import no.nav.dagpenger.rapportering.api.konfigurasjon
 import no.nav.dagpenger.rapportering.api.rapporteringApi
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
@@ -22,7 +23,7 @@ fun Application.module() {
         RapporteringService(
             MeldepliktConnector(),
             RapporteringRepositoryPostgres(dataSource),
-            JournalfoeringService(),
+            JournalfoeringService(JournalfoeringRepositoryPostgres(dataSource)),
         )
     konfigurasjon(appMicrometerRegistry)
     internalApi(appMicrometerRegistry)

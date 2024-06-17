@@ -33,6 +33,7 @@ import no.nav.dagpenger.rapportering.model.Sakstype
 import no.nav.dagpenger.rapportering.model.Tema
 import no.nav.dagpenger.rapportering.model.Tilleggsopplysning
 import no.nav.dagpenger.rapportering.model.Variantformat
+import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.utils.PDFGenerator
 import java.io.File
 import java.net.URI
@@ -45,6 +46,7 @@ import java.util.Locale
 import java.util.UUID
 
 class JournalfoeringService(
+    private val journalfoeringRepository: JournalfoeringRepository,
     private val dokarkivUrl: String = Configuration.dokarkivUrl,
     private val tokenProvider: (String) -> String = Configuration.azureADClient(),
     engine: HttpClientEngine = CIO.create {},
@@ -123,7 +125,7 @@ class JournalfoeringService(
         } catch (e: Exception) {
             logger.warn("Kan ikke sende journalpost", e)
 
-            lagreJournalpostMidlertidig(journalpost)
+            lagreJournalpostMidlertidig(rapporteringsperiode.id, journalpost)
         }
     }
 
@@ -257,14 +259,17 @@ class JournalfoeringService(
     private fun lagreJournalpostData(
         journalpostId: Long,
         dokumentInfoId: Long,
-        id: Long,
+        rapporteringsperiodeId: Long,
     ) {
-        // TODO:
-        logger.info("Lagrer JournalpostData. journalpostId = $journalpostId, dokumentInfoId = $dokumentInfoId, id = $id")
+        logger.info("Lagrer JournalpostData for rapporteringsperiode $rapporteringsperiodeId")
+        journalfoeringRepository.lagreJournalpostData(journalpostId, dokumentInfoId, rapporteringsperiodeId)
     }
 
-    private fun lagreJournalpostMidlertidig(journalpost: Journalpost) {
-        // TODO:
-        logger.info("Mellomlagrer journalpost $journalpost")
+    private fun lagreJournalpostMidlertidig(
+        rapporteringsperiodeId: Long,
+        journalpost: Journalpost,
+    ) {
+        logger.info("Mellomlagrer journalpost for rapporteringsperiode $rapporteringsperiodeId")
+        journalfoeringRepository.lagreJournalpostMidlertidig(rapporteringsperiodeId, journalpost)
     }
 }
