@@ -13,6 +13,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import no.nav.dagpenger.rapportering.Configuration
 import no.nav.dagpenger.rapportering.connector.createHttpClient
@@ -43,6 +44,8 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
 import java.util.Base64
 import java.util.Locale
+import java.util.Timer
+import java.util.TimerTask
 import java.util.UUID
 
 class JournalfoeringService(
@@ -52,6 +55,8 @@ class JournalfoeringService(
     engine: HttpClientEngine = CIO.create {},
 ) {
     companion object : KLogging()
+
+    private var resendInterval = 300_000L // 5 minutes by default
 
     private val kanal = "NAV_NO"
     private val journalfoerendeEnhet = "9999"
@@ -66,6 +71,83 @@ class JournalfoeringService(
     private val path = "/rest/journalpostapi/v1/journalpost"
 
     private val httpClient = createHttpClient(engine)
+
+    init {
+        val timer = Timer()
+        val timerTask: TimerTask =
+            object : TimerTask() {
+                override fun run() {
+                    sendJournalposterPaaNytt()
+                }
+            }
+
+        timer.schedule(timerTask, 10000, resendInterval)
+    }
+
+    fun sendJournalposterPaaNytt() {
+        // Les data fra DB
+        // Triple: data id, journalpost, retries
+        val journalpostData: List<Triple<String, Journalpost, Int>> =
+            journalfoeringRepository.hentMidlertidigLagredeJournalposter()
+
+        journalpostData.forEach { triple ->
+            val lagretJournalpostId = triple.first
+            val journalpost = triple.second
+            val retries = triple.third
+
+            try {
+                // Det er mulig at vi får feil et sted her, dvs. f.eks. når vi lagrer informasjon om at en journalpost har blitt opprettet
+                // (noe med DB eller connection timeout før vi får JournalpostRepspose tilbake)
+                // Da prøver på nytt. Men journalposten eksisterer allerede, vi bare vet ikke om dette
+                // Hva skjer hvis vi prøver å opprette journalpost som allerede eksisterer? No stress.
+                // Hvis journalpost med denne eksternReferanseId allerede eksisterer, returnerer createJournalpost 409 Conflict
+                // Men! Sammen men 409 Conflict returneres vanlig JournalpostReponse
+                // Dvs. vi kan lagre journalpostId og dokumentInfoId og slette midlertidig lagret journalpost fra DB
+
+                runBlocking {
+                    // Send
+                    val journalpostResponse = sendJournalpost(journalpost)
+                    val journalpostId = journalpostResponse.journalpostId
+                    val dokumentInfoId = journalpostResponse.dokumenter[0].dokumentInfoId
+                    val rapporteringsperiodeId =
+                        journalpost.tilleggsopplysninger!!
+                            .first { it.nokkel == "id" }
+                            .verdi
+                            .toLong()
+
+                    val lagretJournalpostData = journalfoeringRepository.hentJournalpostData(journalpostId)
+
+                    if (lagretJournalpostData.isEmpty()) {
+                        // Lagre journalpostId-meldekortId
+                        journalfoeringRepository.lagreJournalpostData(
+                            journalpostId,
+                            dokumentInfoId,
+                            rapporteringsperiodeId,
+                        )
+
+                        // Slette midlertidig lagret journalpost
+                        journalfoeringRepository.sletteMidlertidigLagretJournalpost(lagretJournalpostId)
+                    } else {
+                        val lagretJournalpost = lagretJournalpostData[0]
+
+                        if (lagretJournalpost.second == dokumentInfoId && lagretJournalpost.third == rapporteringsperiodeId) {
+                            // Slette midlertidig lagret journalpost
+                            journalfoeringRepository.sletteMidlertidigLagretJournalpost(lagretJournalpostId)
+                        } else {
+                            logger.error(
+                                "Journalpost med ID $journalpostId eksisterer allerede, " +
+                                    "men har uforventet dokumentInfoId og rapporteringsperiodeId",
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Kan ikke sende journalpost igjen. Oppdater teller
+                journalfoeringRepository.oppdaterMidlertidigLagretJournalpost(lagretJournalpostId, retries + 1)
+                logger.warn("Kan ikke opprette journalpost igjen. Data ID = $lagretJournalpostId, retries = $retries")
+            }
+        }
+    }
 
     suspend fun journalfoer(
         ident: String,
@@ -107,15 +189,7 @@ class JournalfoeringService(
         logger.info("Opprettet journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
 
         try {
-            val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
-
-            val journalpostResponse =
-                httpClient
-                    .post(URI("$dokarkivUrl$path").toURL()) {
-                        header(HttpHeaders.Authorization, "Bearer $token")
-                        contentType(ContentType.Application.Json)
-                        setBody(journalpost)
-                    }.body<JournalpostResponse>()
+            val journalpostResponse = sendJournalpost(journalpost)
 
             lagreJournalpostData(
                 journalpostResponse.journalpostId,
@@ -127,6 +201,17 @@ class JournalfoeringService(
 
             lagreJournalpostMidlertidig(rapporteringsperiode.id, journalpost)
         }
+    }
+
+    private suspend fun sendJournalpost(journalpost: Journalpost): JournalpostResponse {
+        val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
+
+        return httpClient
+            .post(URI("$dokarkivUrl$path").toURL()) {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(journalpost)
+            }.body<JournalpostResponse>()
     }
 
     private fun getTittle(rapporteringsperiode: Rapporteringsperiode): String {
