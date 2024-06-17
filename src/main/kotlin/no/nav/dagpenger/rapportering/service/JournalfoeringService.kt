@@ -16,24 +16,24 @@ import io.ktor.http.contentType
 import mu.KLogging
 import no.nav.dagpenger.rapportering.Configuration
 import no.nav.dagpenger.rapportering.connector.createHttpClient
+import no.nav.dagpenger.rapportering.model.AvsenderIdType
+import no.nav.dagpenger.rapportering.model.AvsenderMottaker
+import no.nav.dagpenger.rapportering.model.Bruker
+import no.nav.dagpenger.rapportering.model.BrukerIdType
+import no.nav.dagpenger.rapportering.model.Dokument
+import no.nav.dagpenger.rapportering.model.DokumentVariant
+import no.nav.dagpenger.rapportering.model.Filetype
+import no.nav.dagpenger.rapportering.model.Journalpost
+import no.nav.dagpenger.rapportering.model.JournalpostResponse
+import no.nav.dagpenger.rapportering.model.Journalposttype
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.Sak
+import no.nav.dagpenger.rapportering.model.Sakstype
+import no.nav.dagpenger.rapportering.model.Tema
+import no.nav.dagpenger.rapportering.model.Tilleggsopplysning
+import no.nav.dagpenger.rapportering.model.Variantformat
 import no.nav.dagpenger.rapportering.utils.PDFGenerator
-import no.nav.sbl.meldekort.model.meldekort.journalpost.AvsenderIdType
-import no.nav.sbl.meldekort.model.meldekort.journalpost.AvsenderMottaker
-import no.nav.sbl.meldekort.model.meldekort.journalpost.Bruker
-import no.nav.sbl.meldekort.model.meldekort.journalpost.BrukerIdType
-import no.nav.sbl.meldekort.model.meldekort.journalpost.Dokument
-import no.nav.sbl.meldekort.model.meldekort.journalpost.DokumentVariant
-import no.nav.sbl.meldekort.model.meldekort.journalpost.Filetype
-import no.nav.sbl.meldekort.model.meldekort.journalpost.Journalpost
-import no.nav.sbl.meldekort.model.meldekort.journalpost.JournalpostResponse
-import no.nav.sbl.meldekort.model.meldekort.journalpost.Journalposttype
-import no.nav.sbl.meldekort.model.meldekort.journalpost.Sak
-import no.nav.sbl.meldekort.model.meldekort.journalpost.Sakstype
-import no.nav.sbl.meldekort.model.meldekort.journalpost.Tema
-import no.nav.sbl.meldekort.model.meldekort.journalpost.Tilleggsopplysning
-import no.nav.sbl.meldekort.model.meldekort.journalpost.Variantformat
 import java.io.File
 import java.net.URI
 import java.time.LocalDate
@@ -165,7 +165,7 @@ class JournalfoeringService(
             brevkode = brevkodeKorrigert
         }
 
-        val meldekort =
+        val dokument =
             Dokument(
                 tittel = getTittle(rapporteringsperiode),
                 brevkode = brevkode,
@@ -176,7 +176,7 @@ class JournalfoeringService(
                     ),
             )
 
-        return listOf(meldekort)
+        return listOf(dokument)
     }
 
     private fun getJSON(rapporteringsperiode: Rapporteringsperiode): DokumentVariant {

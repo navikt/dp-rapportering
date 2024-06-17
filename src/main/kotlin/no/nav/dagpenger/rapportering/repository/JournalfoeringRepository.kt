@@ -1,12 +1,12 @@
 package no.nav.dagpenger.rapportering.repository
 
-import no.nav.sbl.meldekort.model.meldekort.journalpost.Journalpost
+import no.nav.dagpenger.rapportering.model.Journalpost
 
 interface JournalfoeringRepository {
     fun lagreJournalpostData(
         journalpostId: Long,
         dokumentInfoId: Long,
-        meldekortId: Long,
+        rapporteringsperiodeId: Long,
     )
 
     fun lagreJournalpostMidlertidig(journalpost: Journalpost)

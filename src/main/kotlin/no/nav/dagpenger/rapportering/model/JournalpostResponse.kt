@@ -1,4 +1,4 @@
-package no.nav.sbl.meldekort.model.meldekort.journalpost
+package no.nav.dagpenger.rapportering.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
 

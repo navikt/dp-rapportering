@@ -1,4 +1,4 @@
-package no.nav.sbl.meldekort.model.meldekort.journalpost
+package no.nav.dagpenger.rapportering.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
 
@@ -71,7 +71,9 @@ enum class Journalposttype {
 }
 
 // Se https://confluence.adeo.no/display/BOA/Tema
-enum class Tema(val tittel: String) {
+enum class Tema(
+    val tittel: String,
+) {
     DAG("Dagpenger"),
     AAP("Arbeidsavklaringspenger"),
     IND("Individstønad"),
