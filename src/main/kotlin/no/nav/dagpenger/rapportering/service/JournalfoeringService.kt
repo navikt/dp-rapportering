@@ -36,7 +36,6 @@ import no.nav.dagpenger.rapportering.model.Tilleggsopplysning
 import no.nav.dagpenger.rapportering.model.Variantformat
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.utils.PDFGenerator
-import java.io.File
 import java.net.URI
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -330,9 +329,6 @@ class JournalfoeringService(
                 """
 
         val pdf = PDFGenerator().createPDFA(html)
-
-        val actualFile = File("test.pdf")
-        actualFile.writeBytes(pdf)
 
         return DokumentVariant(
             filtype = Filetype.PDFA,
