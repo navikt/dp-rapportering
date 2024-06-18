@@ -81,7 +81,7 @@ internal object Configuration {
     fun azureADClient() =
         { audience: String ->
             azureAd
-                .clientCredentials("api://$audience/.default")
+                .clientCredentials(audience)
                 .accessToken
         }
 }
