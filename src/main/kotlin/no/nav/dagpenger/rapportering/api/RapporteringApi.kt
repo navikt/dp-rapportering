@@ -120,6 +120,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                     try {
                         rapporteringService.sendRapporteringsperiode(rapporteringsperiode, jwtToken, ident, loginLevel)
+                        call.respond(HttpStatusCode.OK)
                     } catch (e: Exception) {
                         logger.error("Feil ved innsending: $e")
                         call.respond(HttpStatusCode.InternalServerError)
@@ -131,7 +132,8 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
 
-                        rapporteringService.hentGjeldendePeriode(ident, jwtToken)
+                        rapporteringService
+                            .hentGjeldendePeriode(ident, jwtToken)
                             ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }
@@ -226,7 +228,9 @@ data class HttpProblem(
     val errorType: String? = null,
 )
 
-data class ArbeidssokerRequest(val registrertArbeidssoker: Boolean)
+data class ArbeidssokerRequest(
+    val registrertArbeidssoker: Boolean,
+)
 
 private fun DagInnerResponse.toDag() =
     Dag(
