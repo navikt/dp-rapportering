@@ -205,6 +205,8 @@ class JournalfoeringService(
     private suspend fun sendJournalpost(journalpost: Journalpost): JournalpostResponse {
         val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
 
+        logger.info("Prøver å sende journalpost " + journalpost.eksternReferanseId)
+
         val response =
             httpClient
                 .post(URI("$dokarkivUrl$path").toURL()) {
