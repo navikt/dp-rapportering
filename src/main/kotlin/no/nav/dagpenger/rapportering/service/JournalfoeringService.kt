@@ -205,12 +205,20 @@ class JournalfoeringService(
     private suspend fun sendJournalpost(journalpost: Journalpost): JournalpostResponse {
         val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
 
-        return httpClient
-            .post(URI("$dokarkivUrl$path").toURL()) {
-                header(HttpHeaders.Authorization, "Bearer $token")
-                contentType(ContentType.Application.Json)
-                setBody(journalpost)
-            }.body<JournalpostResponse>()
+        logger.info("Prøver å sende journalpost " + journalpost.eksternReferanseId)
+
+        val response =
+            httpClient
+                .post(URI("$dokarkivUrl$path").toURL()) {
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    contentType(ContentType.Application.Json)
+                    setBody(journalpost)
+                }
+
+        logger.info("Journalpost sendt. Svar " + response.status)
+        val jp = response.body<JournalpostResponse>()
+
+        return jp
     }
 
     private fun getTittle(rapporteringsperiode: Rapporteringsperiode): String {
