@@ -5,12 +5,20 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.jackson.jackson
+import java.time.Duration
 
 fun createHttpClient(engine: HttpClientEngine) =
     HttpClient(engine) {
         expectSuccess = false
+
+        install(HttpTimeout) {
+            connectTimeoutMillis = Duration.ofSeconds(60).toMillis()
+            requestTimeoutMillis = Duration.ofSeconds(60).toMillis()
+            socketTimeoutMillis = Duration.ofSeconds(60).toMillis()
+        }
 
         install(ContentNegotiation) {
             jackson {
