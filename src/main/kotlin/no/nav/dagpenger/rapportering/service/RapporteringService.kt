@@ -101,7 +101,8 @@ class RapporteringService(
         ident: String,
         loginLevel: Int,
     ): InnsendingResponse =
-        meldepliktConnector.sendinnRapporteringsperiode(rapporteringsperiode, token)
+        meldepliktConnector
+            .sendinnRapporteringsperiode(rapporteringsperiode, token)
             .also { response ->
                 if (response.status == "OK") {
                     logger.info("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
@@ -109,6 +110,13 @@ class RapporteringService(
 
                     logger.info("Oppdaterer status for rapporteringsperiode ${rapporteringsperiode.id}")
                     rapporteringRepository.oppdaterRapporteringStatus(rapporteringsperiode.id, ident, Innsendt)
+                    logger.info { "Oppdaterte status for rapporteringsperiode ${rapporteringsperiode.id} til Innsendt" }
+                }
+            }.also {
+                try {
+                    rapporteringRepository.slettRaporteringsperiode(rapporteringId = rapporteringsperiode.id)
+                } catch (e: Exception) {
+                    logger.warn(e) { "Klarte ikke å slette innsendt rapporteringsperiode." }
                 }
             }
 }
