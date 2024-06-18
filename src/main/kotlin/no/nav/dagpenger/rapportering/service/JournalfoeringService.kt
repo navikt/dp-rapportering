@@ -7,6 +7,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.request.accept
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -211,6 +212,7 @@ class JournalfoeringService(
             httpClient
                 .post(URI("$dokarkivUrl$path").toURL()) {
                     header(HttpHeaders.Authorization, "Bearer $token")
+                    accept(ContentType.Application.Json)
                     contentType(ContentType.Application.Json)
                     setBody(journalpost)
                 }
