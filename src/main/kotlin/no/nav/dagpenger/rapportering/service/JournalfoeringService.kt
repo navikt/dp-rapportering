@@ -351,6 +351,6 @@ class JournalfoeringService(
         journalpost: Journalpost,
     ) {
         logger.info("Mellomlagrer journalpost for rapporteringsperiode $rapporteringsperiodeId")
-        journalfoeringRepository.lagreJournalpostMidlertidig(rapporteringsperiodeId, journalpost)
+        journalfoeringRepository.lagreJournalpostMidlertidig(journalpost)
     }
 }
