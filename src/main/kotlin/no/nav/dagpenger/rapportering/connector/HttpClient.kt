@@ -10,7 +10,7 @@ import io.ktor.serialization.jackson.jackson
 
 fun createHttpClient(engine: HttpClientEngine) =
     HttpClient(engine) {
-        expectSuccess = true
+        expectSuccess = false
 
         install(ContentNegotiation) {
             jackson {
