@@ -108,15 +108,14 @@ class RapporteringService(
                     logger.info("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
                     journalfoeringService.journalfoer(ident, loginLevel, rapporteringsperiode)
 
-                    logger.info("Oppdaterer status for rapporteringsperiode ${rapporteringsperiode.id}")
                     rapporteringRepository.oppdaterRapporteringStatus(rapporteringsperiode.id, ident, Innsendt)
                     logger.info { "Oppdaterte status for rapporteringsperiode ${rapporteringsperiode.id} til Innsendt" }
-                }
-            }.also {
-                try {
-                    rapporteringRepository.slettRaporteringsperiode(rapporteringId = rapporteringsperiode.id)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Klarte ikke å slette innsendt rapporteringsperiode." }
+
+                    try {
+                        rapporteringRepository.slettRaporteringsperiode(rapporteringId = rapporteringsperiode.id)
+                    } catch (e: Exception) {
+                        logger.warn(e) { "Klarte ikke å slette innsendt rapporteringsperiode." }
+                    }
                 }
             }
 }
