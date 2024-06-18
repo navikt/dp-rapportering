@@ -104,41 +104,39 @@ class JournalfoeringService(
                 // Men! Sammen men 409 Conflict returneres vanlig JournalpostReponse
                 // Dvs. vi kan lagre journalpostId og dokumentInfoId og slette midlertidig lagret journalpost fra DB
 
-                runBlocking {
-                    // Send
-                    val journalpostResponse = sendJournalpost(journalpost)
-                    val journalpostId = journalpostResponse.journalpostId
-                    val dokumentInfoId = journalpostResponse.dokumenter[0].dokumentInfoId
-                    val rapporteringsperiodeId =
-                        journalpost.tilleggsopplysninger!!
-                            .first { it.nokkel == "id" }
-                            .verdi
-                            .toLong()
+                // Send
+                val journalpostResponse = sendJournalpost(journalpost)
+                val journalpostId = journalpostResponse.journalpostId
+                val dokumentInfoId = journalpostResponse.dokumenter[0].dokumentInfoId
+                val rapporteringsperiodeId =
+                    journalpost.tilleggsopplysninger!!
+                        .first { it.nokkel == "id" }
+                        .verdi
+                        .toLong()
 
-                    val lagretJournalpostData = journalfoeringRepository.hentJournalpostData(journalpostId)
+                val lagretJournalpostData = journalfoeringRepository.hentJournalpostData(journalpostId)
 
-                    if (lagretJournalpostData.isEmpty()) {
-                        // Lagre journalpostId-meldekortId
-                        journalfoeringRepository.lagreJournalpostData(
-                            journalpostId,
-                            dokumentInfoId,
-                            rapporteringsperiodeId,
-                        )
+                if (lagretJournalpostData.isEmpty()) {
+                    // Lagre journalpostId-meldekortId
+                    journalfoeringRepository.lagreJournalpostData(
+                        journalpostId,
+                        dokumentInfoId,
+                        rapporteringsperiodeId,
+                    )
 
+                    // Slette midlertidig lagret journalpost
+                    journalfoeringRepository.sletteMidlertidigLagretJournalpost(lagretJournalpostId)
+                } else {
+                    val lagretJournalpost = lagretJournalpostData[0]
+
+                    if (lagretJournalpost.second == dokumentInfoId && lagretJournalpost.third == rapporteringsperiodeId) {
                         // Slette midlertidig lagret journalpost
                         journalfoeringRepository.sletteMidlertidigLagretJournalpost(lagretJournalpostId)
                     } else {
-                        val lagretJournalpost = lagretJournalpostData[0]
-
-                        if (lagretJournalpost.second == dokumentInfoId && lagretJournalpost.third == rapporteringsperiodeId) {
-                            // Slette midlertidig lagret journalpost
-                            journalfoeringRepository.sletteMidlertidigLagretJournalpost(lagretJournalpostId)
-                        } else {
-                            logger.error(
-                                "Journalpost med ID $journalpostId eksisterer allerede, " +
-                                    "men har uforventet dokumentInfoId og rapporteringsperiodeId",
-                            )
-                        }
+                        logger.error(
+                            "Journalpost med ID $journalpostId eksisterer allerede, " +
+                                "men har uforventet dokumentInfoId og rapporteringsperiodeId",
+                        )
                     }
                 }
             } catch (e: Exception) {
@@ -203,22 +201,26 @@ class JournalfoeringService(
         }
     }
 
-    private suspend fun sendJournalpost(journalpost: Journalpost): JournalpostResponse {
-        val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
+    private fun sendJournalpost(journalpost: Journalpost): JournalpostResponse {
+        var jp: JournalpostResponse
 
-        logger.info("Prøver å sende journalpost " + journalpost.eksternReferanseId)
+        runBlocking {
+            val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
 
-        val response =
-            httpClient
-                .post(URI("$dokarkivUrl$path").toURL()) {
-                    header(HttpHeaders.Authorization, "Bearer $token")
-                    accept(ContentType.Application.Json)
-                    contentType(ContentType.Application.Json)
-                    setBody(journalpost)
-                }
+            logger.info("Prøver å sende journalpost " + journalpost.eksternReferanseId)
 
-        logger.info("Journalpost sendt. Svar " + response.status)
-        val jp = response.body<JournalpostResponse>()
+            val response =
+                httpClient
+                    .post(URI("$dokarkivUrl$path").toURL()) {
+                        header(HttpHeaders.Authorization, "Bearer $token")
+                        accept(ContentType.Application.Json)
+                        contentType(ContentType.Application.Json)
+                        setBody(journalpost)
+                    }
+
+            logger.info("Journalpost sendt. Svar " + response.status)
+            jp = response.body<JournalpostResponse>()
+        }
 
         return jp
     }
