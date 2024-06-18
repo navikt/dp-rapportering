@@ -110,12 +110,6 @@ class RapporteringService(
 
                     rapporteringRepository.oppdaterRapporteringStatus(rapporteringsperiode.id, ident, Innsendt)
                     logger.info { "Oppdaterte status for rapporteringsperiode ${rapporteringsperiode.id} til Innsendt" }
-
-                    try {
-                        rapporteringRepository.slettRaporteringsperiode(rapporteringId = rapporteringsperiode.id)
-                    } catch (e: Exception) {
-                        logger.warn(e) { "Klarte ikke å slette innsendt rapporteringsperiode." }
-                    }
                 }
             }
 }
