@@ -228,6 +228,7 @@ class RapporteringServiceTest {
         val rapporteringsperiode = rapporteringsperiodeListe.first()
         coEvery { journalfoeringService.journalfoer(any(), any(), any()) } returns mockk()
         justRun { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
+        justRun { rapporteringRepository.slettRaporteringsperiode(any()) }
         coEvery { meldepliktConnector.sendinnRapporteringsperiode(rapporteringsperiode, token) } returns
             InnsendingResponse(
                 id = rapporteringsperiode.id,
