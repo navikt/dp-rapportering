@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.bundles.jackson)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.client)
+    implementation("io.ktor:ktor-client-java:${libs.versions.ktor.get()}")
     implementation(libs.jackson.annotation)
     implementation(libs.dp.biblioteker.oauth2.klient)
     implementation("io.ktor:ktor-server-netty:${libs.versions.ktor.get()}")

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.java.Java
 import io.ktor.client.request.accept
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.post
@@ -51,7 +51,7 @@ class JournalfoeringService(
     private val journalfoeringRepository: JournalfoeringRepository,
     private val dokarkivUrl: String = Configuration.dokarkivUrl,
     private val tokenProvider: (String) -> String = Configuration.azureADClient(),
-    engine: HttpClientEngine = CIO.create {},
+    engine: HttpClientEngine = Java.create { },
 ) {
     companion object : KLogging()
 
@@ -141,7 +141,10 @@ class JournalfoeringService(
             } catch (e: Exception) {
                 // Kan ikke sende journalpost igjen. Oppdater teller
                 journalfoeringRepository.oppdaterMidlertidigLagretJournalpost(lagretJournalpostId, retries + 1)
-                logger.warn("Kan ikke opprette journalpost igjen. Data ID = $lagretJournalpostId, retries = $retries", e)
+                logger.warn(
+                    "Kan ikke opprette journalpost igjen. Data ID = $lagretJournalpostId, retries = $retries",
+                    e,
+                )
             }
         }
     }
