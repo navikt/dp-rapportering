@@ -142,7 +142,7 @@ class JournalfoeringService(
             } catch (e: Exception) {
                 // Kan ikke sende journalpost igjen. Oppdater teller
                 journalfoeringRepository.oppdaterMidlertidigLagretJournalpost(lagretJournalpostId, retries + 1)
-                logger.warn("Kan ikke opprette journalpost igjen. Data ID = $lagretJournalpostId, retries = $retries")
+                logger.warn("Kan ikke opprette journalpost igjen. Data ID = $lagretJournalpostId, retries = $retries", e)
             }
         }
     }
