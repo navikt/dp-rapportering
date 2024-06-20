@@ -60,6 +60,8 @@ spec:
     outbound:
       rules:
         - application: dp-arena-meldeplikt-adapter
+      external:
+        - host: {{ DOKARKIV_HOST }}
     inbound:
       rules:
         - application: dp-saksbehandling-frontend
