@@ -19,8 +19,6 @@ fun main() {
 }
 
 fun Application.module() {
-    System.setProperty("https.protocols", "TLSv1.3")
-
     val rapporteringService =
         RapporteringService(
             MeldepliktConnector(),
