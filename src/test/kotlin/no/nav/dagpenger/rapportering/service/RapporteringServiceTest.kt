@@ -97,7 +97,7 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `hent periode henter spesifisert periode og lagrer denne i databasen hvis den ikke finnes`() {
+    fun `hent periode henter spesifisert periode som ikke er sendt inn og lagrer denne i databasen hvis den ikke finnes`() {
         coEvery { meldepliktConnector.hentRapporteringsperioder(ident, token) } returns rapporteringsperiodeListe
         every { rapporteringRepository.hentRapporteringsperiode(2L, ident) } returns null
         justRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
@@ -115,6 +115,29 @@ class RapporteringServiceTest {
             kanKorrigeres shouldBe false
             bruttoBelop shouldBe null
             status shouldBe TilUtfylling
+            registrertArbeidssoker shouldBe null
+        }
+    }
+
+    @Test
+    fun `hent periode henter spesifisert periode som er sendt inn`() {
+        coEvery { meldepliktConnector.hentRapporteringsperioder(ident, token) } returns null
+        coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(ident, token) } returns
+            rapporteringsperiodeListe.map { it.copy(status = Innsendt) }
+
+        val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token) }
+
+        with(gjeldendePeriode!!) {
+            id shouldBe 2
+            periode.fraOgMed shouldBe 15.januar
+            periode.tilOgMed shouldBe 28.januar
+            dager.size shouldBe 14
+            dager.first().aktiviteter shouldBe emptyList()
+            kanSendesFra shouldBe 27.januar
+            kanSendes shouldBe true
+            kanKorrigeres shouldBe false
+            bruttoBelop shouldBe null
+            status shouldBe Innsendt
             registrertArbeidssoker shouldBe null
         }
     }
