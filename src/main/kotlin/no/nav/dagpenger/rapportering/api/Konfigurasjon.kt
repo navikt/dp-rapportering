@@ -54,7 +54,8 @@ fun Application.konfigurasjon(
         jackson {
             registerModule(JavaTimeModule())
             registerModule(
-                KotlinModule.Builder()
+                KotlinModule
+                    .Builder()
                     .configure(KotlinFeature.NullToEmptyCollection, true)
                     .configure(KotlinFeature.NullToEmptyMap, true)
                     .configure(KotlinFeature.NullIsSameAsDefault, true)
