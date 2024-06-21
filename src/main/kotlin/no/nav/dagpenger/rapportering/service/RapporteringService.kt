@@ -9,6 +9,11 @@ import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
+import java.time.LocalDate
+import java.util.Calendar
+import java.util.Timer
+import java.util.TimerTask
+import java.util.concurrent.TimeUnit
 
 private val logger = KotlinLogging.logger {}
 
@@ -17,6 +22,22 @@ class RapporteringService(
     private val rapporteringRepository: RapporteringRepository,
     private val journalfoeringService: JournalfoeringService,
 ) {
+    init {
+        val today = Calendar.getInstance()
+        today.set(Calendar.HOUR_OF_DAY, 0)
+        today.set(Calendar.MINUTE, 0)
+        today.set(Calendar.SECOND, 0)
+        val timer = Timer()
+        val timerTask: TimerTask =
+            object : TimerTask() {
+                override fun run() {
+                    slettMellomlagredeRapporteringsperioder()
+                }
+            }
+
+        timer.schedule(timerTask, today.time, TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS))
+    }
+
     suspend fun hentGjeldendePeriode(
         ident: String,
         token: String,
@@ -35,7 +56,8 @@ class RapporteringService(
             .hentRapporteringsperioder(ident, token)
             ?.firstOrNull { it.id == rapporteringId }
             ?.let { lagreEllerOppdaterPeriode(it, ident) }
-            ?: hentInnsendteRapporteringsperioder(ident, token)
+            ?: meldepliktConnector
+                .hentInnsendteRapporteringsperioder(ident, token)
                 .firstOrNull { it.id == rapporteringId }
 
     suspend fun hentAlleRapporteringsperioder(
@@ -114,4 +136,25 @@ class RapporteringService(
                     logger.info { "Oppdaterte status for rapporteringsperiode ${rapporteringsperiode.id} til Innsendt" }
                 }
             }
+
+    fun slettMellomlagredeRapporteringsperioder() {
+        val rapporteringsperioder = rapporteringRepository.hentRapporteringsperioder()
+
+        // Sletter innsendte rapporteringsperioder
+        rapporteringsperioder
+            .filter { it.status == Innsendt }
+            .also { "Sletter ${it.size} innsendte rapporteringsperioder" }
+            .forEach { rapporteringRepository.slettRaporteringsperiode(it.id) }
+
+        // Sleter rapporteringsperioder som ikke er sendt inn til siste frist
+        rapporteringsperioder
+            .filter {
+                val sisteFrist =
+                    it.periode.tilOgMed
+                        .plusDays(2)
+                        .plusWeeks(1)
+                it.status != Innsendt && sisteFrist.isBefore(LocalDate.now())
+            }.also { logger.info { "Sletter ${it.size} rapporteringsperioder som ikke ble sendt inn til siste frist" } }
+            .forEach { rapporteringRepository.slettRaporteringsperiode(it.id) }
+    }
 }

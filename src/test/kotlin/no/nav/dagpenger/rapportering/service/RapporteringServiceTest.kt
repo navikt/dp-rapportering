@@ -273,44 +273,97 @@ class RapporteringServiceTest {
         }
         verify(exactly = 1) { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
     }
+
+    @Test
+    fun `kan slette mellomlagrede rapporteringsperioder som er sendt inn`() {
+        every { rapporteringRepository.hentRapporteringsperioder() } returns
+            listOf(rapporteringsperiodeListe.first().copy(status = Innsendt))
+        justRun { rapporteringRepository.slettRaporteringsperiode(any()) }
+
+        rapporteringService.slettMellomlagredeRapporteringsperioder()
+
+        verify(exactly = 1) { rapporteringRepository.slettRaporteringsperiode(3) }
+    }
+
+    @Test
+    fun `kan slette mellomlagrede rapporteringsperioder som er ikke er sendt inn innen siste frist`() {
+        every { rapporteringRepository.hentRapporteringsperioder() } returns rapporteringsperiodeListe
+        justRun { rapporteringRepository.slettRaporteringsperiode(any()) }
+
+        rapporteringService.slettMellomlagredeRapporteringsperioder()
+
+        verify(exactly = 3) { rapporteringRepository.slettRaporteringsperiode(any()) }
+    }
+
+    @Test
+    fun `sletter ikke mellomlagrede rapporteringsperioder som er fortsatt skal være mellomlagret`() {
+        val test = fremtidigeRaporteringsperioder
+        every { rapporteringRepository.hentRapporteringsperioder() } returns test
+
+        rapporteringService.slettMellomlagredeRapporteringsperioder()
+
+        verify(exactly = 0) { rapporteringRepository.slettRaporteringsperiode(any()) }
+    }
 }
 
 val rapporteringsperiodeListe =
     listOf(
-        Rapporteringsperiode(
+        lagRapporteringsperiode(
             id = 3,
             periode = Periode(fraOgMed = 29.januar, tilOgMed = 11.februar),
-            dager = getDager(startDato = 29.januar),
-            kanSendesFra = 10.februar,
-            kanSendes = true,
-            kanKorrigeres = false,
-            bruttoBelop = null,
-            status = TilUtfylling,
-            registrertArbeidssoker = null,
         ),
-        Rapporteringsperiode(
+        lagRapporteringsperiode(
             id = 1,
             periode = Periode(fraOgMed = 1.januar, tilOgMed = 14.januar),
-            dager = getDager(startDato = 1.januar),
-            kanSendesFra = 13.januar,
-            kanSendes = true,
-            kanKorrigeres = false,
-            bruttoBelop = null,
-            status = TilUtfylling,
-            registrertArbeidssoker = null,
         ),
-        Rapporteringsperiode(
+        lagRapporteringsperiode(
             id = 2,
             periode = Periode(fraOgMed = 15.januar, tilOgMed = 28.januar),
-            dager = getDager(startDato = 15.januar),
-            kanSendesFra = 27.januar,
-            kanSendes = true,
-            kanKorrigeres = false,
-            bruttoBelop = null,
-            status = TilUtfylling,
-            registrertArbeidssoker = null,
         ),
     )
+
+val fremtidigeRaporteringsperioder =
+    listOf(
+        lagRapporteringsperiode(
+            id = 1,
+            periode =
+                Periode(
+                    fraOgMed = LocalDate.now().minusWeeks(3).plusDays(1),
+                    tilOgMed = LocalDate.now().minusWeeks(1),
+                ),
+        ),
+        lagRapporteringsperiode(
+            id = 2,
+            periode =
+                Periode(
+                    fraOgMed = LocalDate.now().minusWeeks(2),
+                    tilOgMed = LocalDate.now().minusDays(1),
+                ),
+        ),
+        lagRapporteringsperiode(
+            id = 3,
+            periode =
+                Periode(
+                    fraOgMed = LocalDate.now(),
+                    tilOgMed = LocalDate.now().plusWeeks(2).minusDays(1),
+                ),
+        ),
+    )
+
+fun lagRapporteringsperiode(
+    id: Long,
+    periode: Periode,
+) = Rapporteringsperiode(
+    id = id,
+    periode = periode,
+    dager = getDager(startDato = periode.fraOgMed),
+    kanSendesFra = periode.tilOgMed.minusDays(1),
+    kanSendes = true,
+    kanKorrigeres = false,
+    bruttoBelop = null,
+    status = TilUtfylling,
+    registrertArbeidssoker = null,
+)
 
 private fun getDager(
     startDato: LocalDate = 1.januar,

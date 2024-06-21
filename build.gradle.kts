@@ -77,6 +77,9 @@ dependencies {
     implementation("org.verapdf:validation-model:1.26.1")
     implementation("org.jsoup:jsoup:1.17.2")
 
+    // Scheduling
+    implementation("org.quartz-scheduler:quartz:2.3.2")
+
     testImplementation(libs.bundles.postgres.test)
     testImplementation("io.kotest:kotest-assertions-core-jvm:${libs.versions.kotest.get()}")
     testImplementation("io.mockk:mockk:${libs.versions.mockk.get()}")
