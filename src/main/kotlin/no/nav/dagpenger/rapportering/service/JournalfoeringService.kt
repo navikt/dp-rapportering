@@ -218,7 +218,7 @@ class JournalfoeringService(
                         bearerAuth(token)
                         accept(ContentType.Application.Json)
                         contentType(ContentType.Application.Json)
-                        setBody(journalpost)
+                        setBody("{}")
                     }
 
             logger.info("Journalpost sendt. Svar " + response.status)
