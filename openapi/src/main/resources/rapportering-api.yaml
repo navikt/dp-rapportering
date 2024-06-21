@@ -65,24 +65,7 @@ paths:
                 - Rapporteringsperiode
             security:
                 - tokenX: [ ]
-    /rapporteringsperiode/{periodeId}:
-        get:
-            responses:
-                '200':
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Rapporteringsperiode'
-                    description: OK
-                '404':
-                    description: Not Found
-            summary: Hent en bestemt rapporteringsperiode
-            description: Henter ut en rapporteringsperiod
-            operationId: get-rapporteringsperiode-id
-            tags:
-                - Rapporteringsperiode
-            security:
-                - tokenX: [ ]
+    /rapporteringsperiode:
         post:
             requestBody:
                 required: true
@@ -104,8 +87,25 @@ paths:
                 - Rapporteringsperiode
             security:
                 - tokenX: []
-        parameters:
-            - $ref: '#/components/parameters/periodeId'
+
+    /rapporteringsperiode/{periodeId}:
+        get:
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Rapporteringsperiode'
+                    description: OK
+                '404':
+                    description: Not Found
+            summary: Hent en bestemt rapporteringsperiode
+            description: Henter ut en rapporteringsperiod
+            operationId: get-rapporteringsperiode-id
+            tags:
+                - Rapporteringsperiode
+            security:
+                - tokenX: [ ]
 
     /rapporteringsperiode/{periodeId}/arbeidssoker:
         post:

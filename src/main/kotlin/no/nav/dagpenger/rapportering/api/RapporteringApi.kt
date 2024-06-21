@@ -194,7 +194,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                     val jwtToken = call.request.jwt()
 
                     rapporteringService
-                        .hentAlleRapporteringsperioder(ident, jwtToken)
+                        .hentAllePerioderSomKanSendes(ident, jwtToken)
                         .also {
                             if (it == null) {
                                 call.respond(HttpStatusCode.NoContent)
