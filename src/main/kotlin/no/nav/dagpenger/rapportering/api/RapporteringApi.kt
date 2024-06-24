@@ -25,11 +25,19 @@ import no.nav.dagpenger.rapportering.api.auth.loginLevel
 import no.nav.dagpenger.rapportering.api.models.AktivitetResponse
 import no.nav.dagpenger.rapportering.api.models.AktivitetTypeResponse
 import no.nav.dagpenger.rapportering.api.models.DagInnerResponse
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeResponse
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse.Ferdig
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse.Innsendt
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse.Korrigert
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse.TilUtfylling
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse.`null`
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import java.net.URI
@@ -116,10 +124,15 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                     val loginLevel = call.loginLevel()
                     val jwtToken = call.request.jwt()
 
-                    val rapporteringsperiode = call.receive(Rapporteringsperiode::class)
+                    val rapporteringsperiode = call.receive(RapporteringsperiodeResponse::class)
 
                     try {
-                        rapporteringService.sendRapporteringsperiode(rapporteringsperiode, jwtToken, ident, loginLevel)
+                        rapporteringService.sendRapporteringsperiode(
+                            rapporteringsperiode.toRapporteringsperiode(),
+                            jwtToken,
+                            ident,
+                            loginLevel,
+                        )
                         call.respond(HttpStatusCode.OK)
                     } catch (e: Exception) {
                         logger.error("Feil ved innsending: $e")
@@ -231,6 +244,26 @@ data class HttpProblem(
 data class ArbeidssokerRequest(
     val registrertArbeidssoker: Boolean,
 )
+
+private fun RapporteringsperiodeResponse.toRapporteringsperiode() =
+    Rapporteringsperiode(
+        id = this.id.toLong(),
+        periode = Periode(fraOgMed = this.periode.fraOgMed, tilOgMed = this.periode.tilOgMed),
+        dager = this.dager.map { it.toDag() },
+        kanSendesFra = this.kanSendesFra,
+        kanSendes = this.kanSendes,
+        kanKorrigeres = this.kanKorrigeres,
+        bruttoBelop = this.bruttoBelop?.toDouble(),
+        status =
+            when (this.status) {
+                TilUtfylling -> RapporteringsperiodeStatus.TilUtfylling
+                Korrigert -> RapporteringsperiodeStatus.Korrigert
+                Innsendt -> RapporteringsperiodeStatus.Innsendt
+                Ferdig -> RapporteringsperiodeStatus.Ferdig
+                `null` -> throw IllegalArgumentException("RapporteringsperiodeStatus kan ikke være null")
+            },
+        registrertArbeidssoker = this.registrertArbeidssoker,
+    )
 
 private fun DagInnerResponse.toDag() =
     Dag(
