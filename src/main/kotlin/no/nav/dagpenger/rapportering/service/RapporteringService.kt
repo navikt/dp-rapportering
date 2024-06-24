@@ -126,7 +126,7 @@ class RapporteringService(
         rapporteringsperioder
             .filter { it.status == Innsendt }
             .also { "Sletter ${it.size} innsendte rapporteringsperioder" }
-            .forEach { rapporteringRepository.slettRaporteringsperiode(it.id) }
+            .forEach { slettRapporteringsperiode(it.id) }
 
         // Sleter rapporteringsperioder som ikke er sendt inn til siste frist
         rapporteringsperioder
@@ -137,6 +137,13 @@ class RapporteringService(
                         .plusWeeks(1)
                 it.status != Innsendt && sisteFrist.isBefore(LocalDate.now())
             }.also { logger.info { "Sletter ${it.size} rapporteringsperioder som ikke ble sendt inn til siste frist" } }
-            .forEach { rapporteringRepository.slettRaporteringsperiode(it.id) }
+            .forEach { slettRapporteringsperiode(it.id) }
     }
+
+    private fun slettRapporteringsperiode(periodeId: Long) =
+        try {
+            rapporteringRepository.slettRaporteringsperiode(periodeId)
+        } catch (e: Exception) {
+            logger.error(e) { "Klarte ikke å slette rapporteringsperiode med id $periodeId" }
+        }
 }

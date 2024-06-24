@@ -106,6 +106,8 @@ paths:
                 - Rapporteringsperiode
             security:
                 - tokenX: [ ]
+        parameters:
+            - $ref: '#/components/parameters/periodeId'
 
     /rapporteringsperiode/{periodeId}/arbeidssoker:
         post:
