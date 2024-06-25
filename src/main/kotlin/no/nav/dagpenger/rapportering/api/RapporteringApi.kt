@@ -126,6 +126,8 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                     val rapporteringsperiode = call.receive(RapporteringsperiodeResponse::class)
 
+                    logger.info { "Rapporteringsperiode: $rapporteringsperiode" }
+
                     try {
                         rapporteringService.sendRapporteringsperiode(
                             rapporteringsperiode.toRapporteringsperiode(),
