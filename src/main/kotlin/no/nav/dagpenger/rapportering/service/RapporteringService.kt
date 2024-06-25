@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Korrigert
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import java.time.LocalDate
 
@@ -104,14 +105,29 @@ class RapporteringService(
         registrertArbeidssoker,
     )
 
-    // TODO: Skal det skje noe i databasen når rapporteringsperioden korrigeres?
     suspend fun korrigerMeldekort(
         rapporteringId: Long,
+        ident: String,
         token: String,
-    ): PeriodeId =
-        meldepliktConnector
-            .hentKorrigeringId(rapporteringId, token)
-            .let { PeriodeId(it) }
+    ): Rapporteringsperiode {
+        val originalPeriode =
+            rapporteringRepository.hentRapporteringsperiode(id = rapporteringId, ident = ident)
+                ?: hentPeriode(rapporteringId, ident, token)
+
+        if (originalPeriode == null) {
+            throw RuntimeException("Finner ikke original rapporteringsperiode. Kan ikke korrigere.")
+        }
+        val korrigertId =
+            meldepliktConnector
+                .hentKorrigeringId(rapporteringId, token)
+                .let { PeriodeId(it) }
+
+        val korrigertRapporteringsperiode = originalPeriode.copy(id = korrigertId.id, status = Korrigert)
+
+        lagreEllerOppdaterPeriode(korrigertRapporteringsperiode, ident)
+
+        return korrigertRapporteringsperiode
+    }
 
     suspend fun sendRapporteringsperiode(
         rapporteringsperiode: Rapporteringsperiode,

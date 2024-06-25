@@ -17,6 +17,7 @@ import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Korrigert
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.februar
@@ -231,11 +232,14 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan korrigere meldekort`() {
+        every { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns rapporteringsperiodeListe.first()
         coEvery { meldepliktConnector.hentKorrigeringId(any(), any()) } returns 321L
+        justRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
 
-        val korrigertId = runBlocking { rapporteringService.korrigerMeldekort(123L, token) }
+        val korrigertRapporteringsperiode = runBlocking { rapporteringService.korrigerMeldekort(123L, ident, token) }
 
-        korrigertId.id shouldBe 321L
+        korrigertRapporteringsperiode.id shouldBe 321L
+        korrigertRapporteringsperiode.status shouldBe Korrigert
     }
 
     @Test

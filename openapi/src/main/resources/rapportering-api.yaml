@@ -59,7 +59,7 @@ paths:
                 '404':
                     description: Not Found
             summary: Henter ut gjeldende rapporteringsperiode
-            description: Henter ut en rapporteringsperiode. Henter alltid den siste perioden som gjelder for tidsrommet og må fylles ut. Henter ikke ut påstartede korrigeringer.
+            description: Henter ut en rapporteringsperiode. Henter alltid den eldste perioden som gjelder for tidsrommet og må fylles ut. Henter ikke ut påstartede korrigeringer.
             operationId: get-rapporteringsperiode-gjeldende
             tags:
                 - Rapporteringsperiode
@@ -163,11 +163,11 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/periodeId'
+                                $ref: '#/components/schemas/Rapporteringsperiode'
                 404:
                     description: Not Found
             summary: Opprett korrigering av rapporteringsperiode
-            description: Oppretter korrigering av rapporteringsperiode. Returnerer ny periodeId
+            description: Oppretter korrigering av rapporteringsperiode. Returnerer rapporteringsperiode med ny id og status Korrigert
             operationId: post-rapporteringsperiode-id-korriger
             tags:
                 - Rapporteringsperiode

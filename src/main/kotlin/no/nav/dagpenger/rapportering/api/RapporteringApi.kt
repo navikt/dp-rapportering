@@ -191,11 +191,12 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                     route("/korriger") {
                         post {
+                            val ident = call.ident()
                             val jwtToken = call.request.jwt()
                             val id = call.getParameter("id")
 
                             rapporteringService
-                                .korrigerMeldekort(id.toLong(), jwtToken)
+                                .korrigerMeldekort(id.toLong(), ident, jwtToken)
                                 .also { call.respond(HttpStatusCode.OK, it) }
                         }
                     }
