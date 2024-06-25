@@ -16,9 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
-import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
-import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import java.net.URI
 
 class MeldepliktConnector(
@@ -31,7 +29,7 @@ class MeldepliktConnector(
     suspend fun hentRapporteringsperioder(
         ident: String,
         subjectToken: String,
-    ): List<Rapporteringsperiode>? =
+    ): List<AdapterRapporteringsperiode>? =
         withContext(Dispatchers.IO) {
             val result =
                 hentData("/rapporteringsperioder", subjectToken)
@@ -48,7 +46,7 @@ class MeldepliktConnector(
     suspend fun hentInnsendteRapporteringsperioder(
         ident: String,
         subjectToken: String,
-    ): List<Rapporteringsperiode> =
+    ): List<AdapterRapporteringsperiode> =
         withContext(Dispatchers.IO) {
             hentData("/sendterapporteringsperioder", subjectToken)
                 .loggInfo { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }
@@ -59,7 +57,7 @@ class MeldepliktConnector(
     suspend fun hentAktivitetsdager(
         id: String,
         subjectToken: String,
-    ): List<Dag> =
+    ): List<AdapterDag> =
         withContext(Dispatchers.IO) {
             hentData("/aktivitetsdager/$id", subjectToken)
                 .loggInfo { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
@@ -77,7 +75,7 @@ class MeldepliktConnector(
         }
 
     suspend fun sendinnRapporteringsperiode(
-        rapporteringsperiode: Rapporteringsperiode,
+        rapporteringsperiode: AdapterRapporteringsperiode,
         subjectToken: String,
     ): InnsendingResponse =
         withContext(Dispatchers.IO) {

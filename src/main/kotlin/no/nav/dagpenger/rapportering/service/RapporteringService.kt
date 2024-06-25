@@ -2,6 +2,8 @@ package no.nav.dagpenger.rapportering.service
 
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
+import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
@@ -22,8 +24,7 @@ class RapporteringService(
         ident: String,
         token: String,
     ): Rapporteringsperiode? =
-        meldepliktConnector
-            .hentRapporteringsperioder(ident, token)
+        hentRapporteringsperioder(ident, token)
             ?.filter { it.kanSendes }
             ?.minByOrNull { it.periode.fraOgMed }
             ?.let { lagreEllerOppdaterPeriode(it, ident) }
@@ -33,36 +34,55 @@ class RapporteringService(
         ident: String,
         token: String,
     ): Rapporteringsperiode? =
-        meldepliktConnector
-            .hentRapporteringsperioder(ident, token)
+        hentRapporteringsperioder(ident, token)
             ?.firstOrNull { it.id == rapporteringId }
             ?.let { lagreEllerOppdaterPeriode(it, ident) }
-            ?: meldepliktConnector
-                .hentInnsendteRapporteringsperioder(ident, token)
+            ?: hentInnsendteRapporteringsperioder(ident, token)
                 .firstOrNull { it.id == rapporteringId }
 
     suspend fun hentAllePerioderSomKanSendes(
         ident: String,
         token: String,
     ): List<Rapporteringsperiode>? =
-        meldepliktConnector
-            .hentRapporteringsperioder(ident, token)
+        hentRapporteringsperioder(ident, token)
             ?.filter { it.kanSendes }
             ?.sortedBy { it.periode.fraOgMed }
             .also { RapporteringsperiodeMetrikker.hentet.inc() }
 
-    private fun lagreEllerOppdaterPeriode(
+    private suspend fun hentRapporteringsperioder(
+        ident: String,
+        token: String,
+    ): List<Rapporteringsperiode>? =
+        meldepliktConnector
+            .hentRapporteringsperioder(ident, token)
+            ?.toRapporteringsperioder()
+
+    suspend fun hentInnsendteRapporteringsperioder(
+        ident: String,
+        token: String,
+    ): List<Rapporteringsperiode> =
+        meldepliktConnector
+            .hentInnsendteRapporteringsperioder(ident, token)
+            .toRapporteringsperioder()
+            .sortedByDescending { it.periode.fraOgMed }
+
+    fun lagreEllerOppdaterPeriode(
         periode: Rapporteringsperiode,
         ident: String,
-    ): Rapporteringsperiode =
-        if (rapporteringRepository.hentRapporteringsperiode(periode.id, ident) == null) {
+    ): Rapporteringsperiode {
+        val periodeFraDb = rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
+        return if (periodeFraDb == null) {
             rapporteringRepository.lagreRapporteringsperiodeOgDager(periode, ident)
             periode
         } else {
-            rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
-            rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
-                ?: throw RuntimeException("Fant ikke rapporteringsperiode, selv om den skal ha blitt lagret")
+            if (periodeFraDb.status.ordinal <= periode.status.ordinal) {
+                rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
+                rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
+                    ?: throw RuntimeException("Fant ikke rapporteringsperiode, selv om den skal ha blitt lagret")
+            }
+            periodeFraDb
         }
+    }
 
     fun lagreEllerOppdaterAktiviteter(
         rapporteringId: Long,
@@ -93,14 +113,6 @@ class RapporteringService(
             .hentKorrigeringId(rapporteringId, token)
             .let { PeriodeId(it) }
 
-    suspend fun hentInnsendteRapporteringsperioder(
-        ident: String,
-        token: String,
-    ): List<Rapporteringsperiode> =
-        meldepliktConnector
-            .hentInnsendteRapporteringsperioder(ident, token)
-            .sortedByDescending { it.periode.fraOgMed }
-
     suspend fun sendRapporteringsperiode(
         rapporteringsperiode: Rapporteringsperiode,
         token: String,
@@ -108,7 +120,7 @@ class RapporteringService(
         loginLevel: Int,
     ): InnsendingResponse =
         meldepliktConnector
-            .sendinnRapporteringsperiode(rapporteringsperiode, token)
+            .sendinnRapporteringsperiode(rapporteringsperiode.toAdapterRapporteringsperiode(), token)
             .also { response ->
                 if (response.status == "OK") {
                     logger.info("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")

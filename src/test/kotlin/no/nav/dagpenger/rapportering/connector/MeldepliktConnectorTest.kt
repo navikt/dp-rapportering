@@ -2,8 +2,8 @@ package no.nav.dagpenger.rapportering.connector
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
-import io.ktor.serialization.JsonConvertException
 import kotlinx.coroutines.runBlocking
+import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
@@ -86,7 +86,7 @@ class MeldepliktConnectorTest {
                 dager.first().dato shouldBe 1.januar
                 dager.last().dato shouldBe 14.januar
                 kanSendesFra shouldBe 13.januar
-                status shouldBe TilUtfylling
+                status shouldBe AdapterRapporteringsperiodeStatus.TilUtfylling
                 bruttoBelop shouldBe null
             }
 
@@ -98,7 +98,7 @@ class MeldepliktConnectorTest {
                 dager.first().dato shouldBe 15.januar
                 dager.last().dato shouldBe 28.januar
                 kanSendesFra shouldBe 27.januar
-                status shouldBe TilUtfylling
+                status shouldBe AdapterRapporteringsperiodeStatus.TilUtfylling
                 bruttoBelop shouldBe null
             }
         }
@@ -110,15 +110,15 @@ class MeldepliktConnectorTest {
             rapporteringsperiodeFor(id = 123L, fraOgMed = 1.januar, tilOgMed = 10.januar)
         val connector = meldepliktConnector("[$rapporteringsperioder]", 200)
 
-        shouldThrow<JsonConvertException> {
+        shouldThrow<IllegalArgumentException> {
             runBlocking {
-                connector.hentRapporteringsperioder(ident, subjectToken)
+                connector.hentRapporteringsperioder(ident, subjectToken)?.toRapporteringsperioder()
             }
         }
 
-        shouldThrow<JsonConvertException> {
+        shouldThrow<IllegalArgumentException> {
             runBlocking {
-                connector.hentInnsendteRapporteringsperioder(ident, subjectToken)
+                connector.hentInnsendteRapporteringsperioder(ident, subjectToken)?.toRapporteringsperioder()
             }
         }
     }
@@ -186,10 +186,18 @@ class MeldepliktConnectorTest {
                 dager.size shouldBe 14
                 dager.first().dato shouldBe 1.januar
                 dager.last().dato shouldBe 14.januar
-                dager.first().aktiviteter.first().type shouldBe Arbeid
-                dager.first().aktiviteter.first().timer shouldBe "PT5H30M"
+                dager
+                    .first()
+                    .aktiviteter
+                    .first()
+                    .type shouldBe AdapterAktivitetsType.Arbeid
+                dager
+                    .first()
+                    .aktiviteter
+                    .first()
+                    .timer shouldBe 5.5
                 kanSendesFra shouldBe 13.januar
-                status shouldBe Innsendt
+                status shouldBe AdapterRapporteringsperiodeStatus.Innsendt
                 bruttoBelop shouldBe null
             }
 
@@ -200,10 +208,18 @@ class MeldepliktConnectorTest {
                 dager.size shouldBe 14
                 dager.first().dato shouldBe 15.januar
                 dager.last().dato shouldBe 28.januar
-                dager.first().aktiviteter.first().type shouldBe Arbeid
-                dager.first().aktiviteter.first().timer.toString() shouldBe "PT30M"
+                dager
+                    .first()
+                    .aktiviteter
+                    .first()
+                    .type shouldBe AdapterAktivitetsType.Arbeid
+                dager
+                    .first()
+                    .aktiviteter
+                    .first()
+                    .timer shouldBe 0.5
                 kanSendesFra shouldBe 27.januar
-                status shouldBe Ferdig
+                status shouldBe AdapterRapporteringsperiodeStatus.Ferdig
                 bruttoBelop shouldBe 1000.0
             }
             with(get(2)) {
@@ -211,8 +227,16 @@ class MeldepliktConnectorTest {
                 periode.fraOgMed shouldBe 29.januar
                 periode.tilOgMed shouldBe 11.februar
                 dager.size shouldBe 14
-                dager.first().aktiviteter.first().type shouldBe Syk
-                dager.first().aktiviteter.first().timer shouldBe null
+                dager
+                    .first()
+                    .aktiviteter
+                    .first()
+                    .type shouldBe AdapterAktivitetsType.Syk
+                dager
+                    .first()
+                    .aktiviteter
+                    .first()
+                    .timer shouldBe null
                 kanSendesFra shouldBe 10.februar
             }
         }
@@ -286,7 +310,7 @@ class MeldepliktConnectorTest {
 
         val response =
             runBlocking {
-                connector.sendinnRapporteringsperiode(rapporteringsperiode, subjectToken)
+                connector.sendinnRapporteringsperiode(rapporteringsperiode.toAdapterRapporteringsperiode(), subjectToken)
             }
 
         with(response) {
