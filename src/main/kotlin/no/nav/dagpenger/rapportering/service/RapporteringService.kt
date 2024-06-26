@@ -40,6 +40,8 @@ class RapporteringService(
             ?.let { lagreEllerOppdaterPeriode(it, ident) }
             ?: hentInnsendteRapporteringsperioder(ident, token)
                 .firstOrNull { it.id == rapporteringId }
+            ?: rapporteringRepository
+                .hentRapporteringsperiode(rapporteringId, ident)
 
     suspend fun hentAllePerioderSomKanSendes(
         ident: String,
