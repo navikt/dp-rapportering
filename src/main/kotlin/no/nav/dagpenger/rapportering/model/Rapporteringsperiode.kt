@@ -38,7 +38,7 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
                     aktiviteter =
                         dag.aktiviteter.map { aktivitet ->
                             AktivitetResponse(
-                                id = aktivitet.uuid,
+                                id = aktivitet.id,
                                 type =
                                     when (aktivitet.type) {
                                         Aktivitet.AktivitetsType.Arbeid -> AktivitetTypeResponse.Arbeid

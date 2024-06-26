@@ -99,7 +99,7 @@ class RapporteringService(
     ) {
         val dagId = rapporteringRepository.hentDagId(rapporteringId, dag.dagIndex)
         val eksisterendeAktiviteter = rapporteringRepository.hentAktiviteter(dagId)
-        rapporteringRepository.slettAktiviteter(eksisterendeAktiviteter.map { it.uuid })
+        rapporteringRepository.slettAktiviteter(eksisterendeAktiviteter.map { it.id })
         rapporteringRepository.lagreAktiviteter(rapporteringId, dagId, dag)
     }
 

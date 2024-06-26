@@ -104,7 +104,7 @@ class RapporteringServiceTest {
                         startDato = 1.januar,
                         aktivitet =
                             Aktivitet(
-                                uuid = UUID.randomUUID(),
+                                id = UUID.randomUUID(),
                                 type = Arbeid,
                                 timer = "PT5H30M",
                             ),
@@ -192,7 +192,7 @@ class RapporteringServiceTest {
                         startDato = 14.januar,
                         aktivitet =
                             Aktivitet(
-                                uuid = UUID.randomUUID(),
+                                id = UUID.randomUUID(),
                                 type = Utdanning,
                                 timer = null,
                             ),
@@ -236,7 +236,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan lagre aktivitet på eksisterende rapporteringsperiode`() {
-        val aktiviteter = listOf(Aktivitet(uuid = UUID.randomUUID(), type = Utdanning, timer = null))
+        val aktiviteter = listOf(Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null))
         every { rapporteringRepository.hentDagId(any(), any()) } returns UUID.randomUUID()
         every { rapporteringRepository.hentAktiviteter(any()) } returns aktiviteter
         justRun { rapporteringRepository.slettAktiviteter(any()) }

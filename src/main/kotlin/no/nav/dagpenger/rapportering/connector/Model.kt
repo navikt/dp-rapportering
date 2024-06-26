@@ -88,7 +88,7 @@ fun AdapterDag.toDag(): Dag = Dag(dato = this.dato, aktiviteter = this.aktivitet
 
 fun AdapterAktivitet.toAktivitet(): Aktivitet =
     Aktivitet(
-        uuid = this.uuid,
+        id = this.uuid,
         type =
             when (this.type) {
                 Arbeid -> AktivitetsType.Arbeid
@@ -126,7 +126,7 @@ fun Dag.toAdapterDag(): AdapterDag =
 
 fun Aktivitet.toAdapterAktivitet(): AdapterAktivitet =
     AdapterAktivitet(
-        uuid = this.uuid,
+        uuid = this.id,
         type =
             when (this.type) {
                 AktivitetsType.Arbeid -> Arbeid
