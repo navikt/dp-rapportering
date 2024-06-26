@@ -79,6 +79,7 @@ class MeldepliktConnector(
         subjectToken: String,
     ): InnsendingResponse =
         withContext(Dispatchers.IO) {
+            logger.info { "Rapporteringsperiode som sendes til adapter: $rapporteringsperiode" }
             sendData("/sendinn", subjectToken, rapporteringsperiode)
                 .loggInfo { "Kall til meldeplikt-adapter for å sende inn rapporteringsperiode gikk OK" }
                 .body()

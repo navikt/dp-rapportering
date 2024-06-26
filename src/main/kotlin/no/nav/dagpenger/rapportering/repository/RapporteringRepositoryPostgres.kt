@@ -167,7 +167,7 @@ class RapporteringRepositoryPostgres(
                         """.trimIndent(),
                         dag.aktiviteter.map { aktivitet ->
                             mapOf(
-                                "uuid" to aktivitet.uuid,
+                                "uuid" to aktivitet.id,
                                 "dag_id" to dagId,
                                 "type" to aktivitet.type.name,
                                 "timer" to aktivitet.timer,
@@ -346,7 +346,7 @@ private fun Row.toDagPair(): Pair<UUID, Dag> =
 
 private fun Row.toAktivitet() =
     Aktivitet(
-        uuid = UUID.fromString(string("uuid")),
+        id = UUID.fromString(string("uuid")),
         type = AktivitetsType.valueOf(string("type")),
         timer = stringOrNull("timer"),
     )

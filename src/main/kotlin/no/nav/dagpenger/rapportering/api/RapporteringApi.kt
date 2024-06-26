@@ -22,22 +22,9 @@ import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.auth.jwt
 import no.nav.dagpenger.rapportering.api.auth.loginLevel
-import no.nav.dagpenger.rapportering.api.models.AktivitetResponse
-import no.nav.dagpenger.rapportering.api.models.AktivitetTypeResponse
-import no.nav.dagpenger.rapportering.api.models.DagInnerResponse
-import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeResponse
-import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse.Ferdig
-import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse.Innsendt
-import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse.Korrigert
-import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse.TilUtfylling
-import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse.`null`
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
-import no.nav.dagpenger.rapportering.model.Aktivitet
-import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
-import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
-import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import java.net.URI
@@ -124,11 +111,13 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                     val loginLevel = call.loginLevel()
                     val jwtToken = call.request.jwt()
 
-                    val rapporteringsperiode = call.receive(RapporteringsperiodeResponse::class)
+                    val rapporteringsperiode = call.receive(Rapporteringsperiode::class)
+
+                    logger.info { "Rapporteringsperiode: $rapporteringsperiode" }
 
                     try {
                         rapporteringService.sendRapporteringsperiode(
-                            rapporteringsperiode.toRapporteringsperiode(),
+                            rapporteringsperiode,
                             jwtToken,
                             ident,
                             loginLevel,
@@ -182,7 +171,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                     route("/aktivitet") {
                         post {
                             val rapporteringId = call.getParameter("id").toLong()
-                            val dag = call.receive(DagInnerResponse::class).toDag()
+                            val dag = call.receive(Dag::class)
 
                             rapporteringService.lagreEllerOppdaterAktiviteter(rapporteringId, dag)
                             call.respond(HttpStatusCode.NoContent)
@@ -191,11 +180,12 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                     route("/korriger") {
                         post {
+                            val ident = call.ident()
                             val jwtToken = call.request.jwt()
                             val id = call.getParameter("id")
 
                             rapporteringService
-                                .korrigerMeldekort(id.toLong(), jwtToken)
+                                .korrigerMeldekort(id.toLong(), ident, jwtToken)
                                 .also { call.respond(HttpStatusCode.OK, it) }
                         }
                     }
@@ -244,46 +234,6 @@ data class HttpProblem(
 data class ArbeidssokerRequest(
     val registrertArbeidssoker: Boolean,
 )
-
-private fun RapporteringsperiodeResponse.toRapporteringsperiode() =
-    Rapporteringsperiode(
-        id = this.id.toLong(),
-        periode = Periode(fraOgMed = this.periode.fraOgMed, tilOgMed = this.periode.tilOgMed),
-        dager = this.dager.map { it.toDag() },
-        kanSendesFra = this.kanSendesFra,
-        kanSendes = this.kanSendes,
-        kanKorrigeres = this.kanKorrigeres,
-        bruttoBelop = this.bruttoBelop?.toDouble(),
-        status =
-            when (this.status) {
-                TilUtfylling -> RapporteringsperiodeStatus.TilUtfylling
-                Korrigert -> RapporteringsperiodeStatus.Korrigert
-                Innsendt -> RapporteringsperiodeStatus.Innsendt
-                Ferdig -> RapporteringsperiodeStatus.Ferdig
-                `null` -> throw IllegalArgumentException("RapporteringsperiodeStatus kan ikke være null")
-            },
-        registrertArbeidssoker = this.registrertArbeidssoker,
-    )
-
-private fun DagInnerResponse.toDag() =
-    Dag(
-        dato = dato,
-        aktiviteter = aktiviteter.map { it.toAktivitet() },
-        dagIndex = dagIndex.toInt(),
-    )
-
-private fun AktivitetResponse.toAktivitet() =
-    Aktivitet(
-        uuid = id,
-        type =
-            when (type) {
-                AktivitetTypeResponse.Arbeid -> AktivitetsType.Arbeid
-                AktivitetTypeResponse.Syk -> AktivitetsType.Syk
-                AktivitetTypeResponse.Utdanning -> AktivitetsType.Utdanning
-                AktivitetTypeResponse.Fravaer -> AktivitetsType.FerieEllerFravaer
-            },
-        timer = timer,
-    )
 
 private fun ApplicationCall.getParameter(name: String): String =
     this.parameters[name] ?: throw BadRequestException("Parameter $name not found")

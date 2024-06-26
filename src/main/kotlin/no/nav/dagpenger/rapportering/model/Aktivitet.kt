@@ -3,7 +3,7 @@ package no.nav.dagpenger.rapportering.model
 import java.util.UUID
 
 data class Aktivitet(
-    val uuid: UUID,
+    val id: UUID,
     val type: AktivitetsType,
     val timer: String?,
 ) {
@@ -11,6 +11,6 @@ data class Aktivitet(
         Arbeid,
         Syk,
         Utdanning,
-        FerieEllerFravaer,
+        Fravaer,
     }
 }

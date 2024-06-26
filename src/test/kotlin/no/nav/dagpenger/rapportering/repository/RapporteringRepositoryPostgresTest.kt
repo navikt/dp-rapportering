@@ -118,8 +118,8 @@ class RapporteringRepositoryPostgresTest {
                 dato = 1.januar,
                 aktiviteter =
                     listOf(
-                        Aktivitet(uuid = UUID.randomUUID(), type = Utdanning, timer = null),
-                        Aktivitet(uuid = UUID.randomUUID(), type = Arbeid, timer = "PT5H30M"),
+                        Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
+                        Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = "PT5H30M"),
                     ),
                 dagIndex = 0,
             )
@@ -146,7 +146,7 @@ class RapporteringRepositoryPostgresTest {
         val dag =
             Dag(
                 dato = 1.januar,
-                aktiviteter = listOf(Aktivitet(uuid = UUID.randomUUID(), type = Utdanning, timer = null)),
+                aktiviteter = listOf(Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null)),
                 dagIndex = 0,
             )
 
@@ -195,8 +195,8 @@ class RapporteringRepositoryPostgresTest {
                 dato = 1.januar,
                 aktiviteter =
                     listOf(
-                        Aktivitet(uuid = UUID.randomUUID(), type = Utdanning, timer = null),
-                        Aktivitet(uuid = UUID.randomUUID(), type = Arbeid, timer = "PT5H30M"),
+                        Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
+                        Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = "PT5H30M"),
                     ),
                 dagIndex = 0,
             )
@@ -278,8 +278,8 @@ class RapporteringRepositoryPostgresTest {
                 dato = 1.januar,
                 aktiviteter =
                     listOf(
-                        Aktivitet(uuid = UUID.randomUUID(), type = Utdanning, timer = null),
-                        Aktivitet(uuid = UUID.randomUUID(), type = Arbeid, timer = "PT5H30M"),
+                        Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
+                        Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = "PT5H30M"),
                     ),
                 dagIndex = 0,
             )
@@ -302,15 +302,15 @@ class RapporteringRepositoryPostgresTest {
                     .first()
                     .aktiviteter
                     .first()
-                    .uuid shouldBe dag.aktiviteter.first().uuid
+                    .id shouldBe dag.aktiviteter.first().id
                 dager
                     .first()
                     .aktiviteter
                     .last()
-                    .uuid shouldBe dag.aktiviteter.last().uuid
+                    .id shouldBe dag.aktiviteter.last().id
             }
 
-            rapporteringRepositoryPostgres.slettAktiviteter(aktivitetIdListe = listOf(dag.aktiviteter.first().uuid))
+            rapporteringRepositoryPostgres.slettAktiviteter(aktivitetIdListe = listOf(dag.aktiviteter.first().id))
             val resultatMedEnAktivitet =
                 rapporteringRepositoryPostgres.hentRapporteringsperiode(
                     id = rapporteringsperiode.id,
@@ -325,7 +325,7 @@ class RapporteringRepositoryPostgresTest {
                     .first()
                     .aktiviteter
                     .first()
-                    .uuid shouldBe dag.aktiviteter.last().uuid
+                    .id shouldBe dag.aktiviteter.last().id
             }
         }
     }

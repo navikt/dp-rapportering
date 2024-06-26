@@ -1,7 +1,7 @@
 package no.nav.dagpenger.rapportering.connector
 
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Arbeid
-import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.FerieEllerFravaer
+import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Fravaer
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Syk
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.Ferdig
@@ -59,7 +59,7 @@ data class AdapterAktivitet(
         Arbeid,
         Syk,
         Utdanning,
-        FerieEllerFravaer,
+        Fravaer,
     }
 }
 
@@ -88,13 +88,13 @@ fun AdapterDag.toDag(): Dag = Dag(dato = this.dato, aktiviteter = this.aktivitet
 
 fun AdapterAktivitet.toAktivitet(): Aktivitet =
     Aktivitet(
-        uuid = this.uuid,
+        id = this.uuid,
         type =
             when (this.type) {
                 Arbeid -> AktivitetsType.Arbeid
                 Syk -> AktivitetsType.Syk
                 Utdanning -> AktivitetsType.Utdanning
-                FerieEllerFravaer -> AktivitetsType.FerieEllerFravaer
+                Fravaer -> AktivitetsType.Fravaer
             },
         timer = this.timer?.toDuration(HOURS)?.toIsoString(),
     )
@@ -118,7 +118,7 @@ fun Rapporteringsperiode.toAdapterRapporteringsperiode(): AdapterRapporteringspe
                 RapporteringsperiodeStatus.Innsendt -> Innsendt
                 RapporteringsperiodeStatus.Ferdig -> Ferdig
             },
-        registrertArbeidssoker = null,
+        registrertArbeidssoker = this.registrertArbeidssoker,
     )
 
 fun Dag.toAdapterDag(): AdapterDag =
@@ -126,13 +126,13 @@ fun Dag.toAdapterDag(): AdapterDag =
 
 fun Aktivitet.toAdapterAktivitet(): AdapterAktivitet =
     AdapterAktivitet(
-        uuid = this.uuid,
+        uuid = this.id,
         type =
             when (this.type) {
                 AktivitetsType.Arbeid -> Arbeid
                 AktivitetsType.Syk -> Syk
                 AktivitetsType.Utdanning -> Utdanning
-                AktivitetsType.FerieEllerFravaer -> FerieEllerFravaer
+                AktivitetsType.Fravaer -> Fravaer
             },
         timer = this.timer?.let { Duration.parseIsoString(this.timer).toDouble(HOURS) },
     )
