@@ -16,6 +16,7 @@ import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.path
 import io.micrometer.prometheus.PrometheusMeterRegistry
+import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration.config
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.azureAd
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.tokenX
@@ -31,7 +32,13 @@ fun Application.konfigurasjon(
         jwt("azureAd") { azureAd() }
     },
 ) {
-    if (config[ConfigUtils.CLEAN_DISABLED] == "true") clean()
+    val logger = KotlinLogging.logger {}
+    if (config[ConfigUtils.CLEAN_DISABLED] == "false") {
+        logger.info { "Cleaning database" }
+        clean()
+    } else {
+        logger.info { "Database cleaning is disabled" }
+    }
     runMigration()
 
     install(CallLogging) {
