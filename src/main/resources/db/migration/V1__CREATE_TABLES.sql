@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS rapporteringsperiode
 CREATE TABLE IF NOT EXISTS dag
 (
     id                      uuid            NOT NULL PRIMARY KEY,
-    rapportering_id         BIGSERIAL       NOT NULL REFERENCES rapporteringsperiode(id),
+    rapportering_id         BIGINT       NOT NULL REFERENCES rapporteringsperiode(id),
     dato                    DATE            NOT NULL,
     dag_index               INT             NOT NULL,
     CONSTRAINT rapportering_dag_unik_kobling UNIQUE (rapportering_id, dag_index)

@@ -27,7 +27,7 @@ spec:
     - name: GRUPPER_SAKSBEHANDLER
       value: {{azure.grupper.saksbehandler}}
     - name: flyway.cleanDisabled
-      value: "false"
+      value: "true"
     - name: MELDEPLIKT_ADAPTER_HOST
       value: {{MELDEPLIKT_ADAPTER_HOST}}
     - name: MELDEPLIKT_ADAPTER_AUDIENCE
