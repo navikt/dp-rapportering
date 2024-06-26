@@ -46,6 +46,7 @@ import java.util.Locale
 import java.util.Timer
 import java.util.TimerTask
 import java.util.UUID
+import kotlin.time.Duration
 
 class JournalfoeringService(
     private val journalfoeringRepository: JournalfoeringRepository,
@@ -218,7 +219,7 @@ class JournalfoeringService(
                         bearerAuth(token)
                         accept(ContentType.Application.Json)
                         contentType(ContentType.Application.Json)
-                        setBody("{}")
+                        setBody(journalpost)
                     }
 
             logger.info("Journalpost sendt. Svar " + response.status)
@@ -312,14 +313,15 @@ class JournalfoeringService(
                 "<div>" +
                     "<b>" + dag.dato.format(dateFormatter) + ":</b> " +
                     dag.aktiviteter.joinToString(", ") { aktivitet ->
-                        val timer =
-                            if (!aktivitet.timer.isNullOrBlank() && aktivitet.timer.toDouble() > 0) {
-                                " " + aktivitet.timer + "t"
-                            } else {
-                                ""
-                            }
+                        var tid = ""
 
-                        "" + aktivitet.type + timer
+                        if (aktivitet.timer != null) {
+                            val arbeidedeTimer = Duration.parseIsoString(aktivitet.timer)
+                            val timer = arbeidedeTimer.inWholeMinutes.toDouble() / 60
+                            tid = " $timer t"
+                        }
+
+                        "" + aktivitet.type + tid
                     } +
                     "</div>"
             }
