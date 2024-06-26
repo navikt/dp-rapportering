@@ -3,7 +3,6 @@ package no.nav.dagpenger.rapportering.repository
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.configuration.FluentConfiguration
-import org.flywaydb.core.internal.configuration.ConfigUtils
 import java.lang.System.getProperty
 import java.lang.System.getenv
 
@@ -28,8 +27,10 @@ internal object PostgresDataSourceBuilder {
 
     fun clean() =
         flyWayBuilder
-            .cleanDisabled(getOrThrow(ConfigUtils.CLEAN_DISABLED).toBooleanStrict())
-            .dataSource(dataSource).load().clean()
+            .cleanDisabled(false)
+            .dataSource(dataSource)
+            .load()
+            .clean()
 
     internal fun runMigration() =
         flyWayBuilder
