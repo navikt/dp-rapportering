@@ -33,12 +33,12 @@ fun Application.konfigurasjon(
     },
 ) {
     val logger = KotlinLogging.logger {}
+
     if (config[ConfigUtils.CLEAN_DISABLED] == "false") {
         logger.info { "Cleaning database" }
         clean()
-    } else {
-        logger.info { "Database cleaning is disabled" }
     }
+    clean()
     runMigration()
 
     install(CallLogging) {
