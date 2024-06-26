@@ -118,7 +118,7 @@ fun Rapporteringsperiode.toAdapterRapporteringsperiode(): AdapterRapporteringspe
                 RapporteringsperiodeStatus.Innsendt -> Innsendt
                 RapporteringsperiodeStatus.Ferdig -> Ferdig
             },
-        registrertArbeidssoker = null,
+        registrertArbeidssoker = this.registrertArbeidssoker,
     )
 
 fun Dag.toAdapterDag(): AdapterDag =

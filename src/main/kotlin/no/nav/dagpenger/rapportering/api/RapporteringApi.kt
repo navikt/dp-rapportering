@@ -124,13 +124,13 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                     val loginLevel = call.loginLevel()
                     val jwtToken = call.request.jwt()
 
-                    val rapporteringsperiode = call.receive(RapporteringsperiodeResponse::class)
+                    val rapporteringsperiode = call.receive(Rapporteringsperiode::class)
 
                     logger.info { "Rapporteringsperiode: $rapporteringsperiode" }
 
                     try {
                         rapporteringService.sendRapporteringsperiode(
-                            rapporteringsperiode.toRapporteringsperiode(),
+                            rapporteringsperiode,
                             jwtToken,
                             ident,
                             loginLevel,
