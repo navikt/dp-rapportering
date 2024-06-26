@@ -57,6 +57,14 @@ class RapporteringService(
         meldepliktConnector
             .hentRapporteringsperioder(ident, token)
             ?.toRapporteringsperioder()
+            ?.filter { periode ->
+                // Filtrerer ut perioder som har en høyere status i databasen enn det vi får fra arena
+                rapporteringRepository
+                    .hentRapporteringsperiode(periode.id, ident)
+                    ?.let { periodeFraDb ->
+                        periodeFraDb.status.ordinal <= periode.status.ordinal
+                    } ?: true
+            }
 
     suspend fun hentInnsendteRapporteringsperioder(
         ident: String,

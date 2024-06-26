@@ -16,6 +16,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Korrigert
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
@@ -39,7 +40,7 @@ class RapporteringServiceTest {
     fun `hent gjeldende periode henter kun ut eldste periode og lagrer denne i databasen hvis den ikke finnes`() {
         coEvery { meldepliktConnector.hentRapporteringsperioder(ident, token) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
-        every { rapporteringRepository.hentRapporteringsperiode(1L, ident) } returns null
+        every { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
         justRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
 
         val gjeldendePeriode = runBlocking { rapporteringService.hentGjeldendePeriode(ident, token) }
@@ -51,6 +52,41 @@ class RapporteringServiceTest {
             dager.size shouldBe 14
             dager.first().aktiviteter shouldBe emptyList()
             kanSendesFra shouldBe 13.januar
+            kanSendes shouldBe true
+            kanKorrigeres shouldBe false
+            bruttoBelop shouldBe null
+            status shouldBe TilUtfylling
+            registrertArbeidssoker shouldBe null
+        }
+    }
+
+    @Test
+    fun `hent gjeldende periode henter kun ut eldste periode som ikke er sendt inn fra før`() {
+        coEvery { meldepliktConnector.hentRapporteringsperioder(ident, token) } returns
+            rapporteringsperiodeListe.toAdapterRapporteringsperioder()
+        every { rapporteringRepository.hentRapporteringsperiode(1L, ident) } returns
+            lagRapporteringsperiode(
+                id = 1,
+                periode =
+                    Periode(
+                        fraOgMed = LocalDate.now().minusWeeks(3).plusDays(1),
+                        tilOgMed = LocalDate.now().minusWeeks(1),
+                    ),
+                status = Innsendt,
+            )
+        every { rapporteringRepository.hentRapporteringsperiode(2L, ident) } returns null
+        every { rapporteringRepository.hentRapporteringsperiode(3L, ident) } returns null
+        justRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+
+        val gjeldendePeriode = runBlocking { rapporteringService.hentGjeldendePeriode(ident, token) }
+
+        with(gjeldendePeriode!!) {
+            id shouldBe 2
+            periode.fraOgMed shouldBe 15.januar
+            periode.tilOgMed shouldBe 28.januar
+            dager.size shouldBe 14
+            dager.first().aktiviteter shouldBe emptyList()
+            kanSendesFra shouldBe 27.januar
             kanSendes shouldBe true
             kanKorrigeres shouldBe false
             bruttoBelop shouldBe null
@@ -76,7 +112,7 @@ class RapporteringServiceTest {
             )
         coEvery { meldepliktConnector.hentRapporteringsperioder(ident, token) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
-        every { rapporteringRepository.hentRapporteringsperiode(1L, ident) } returns rapporteringsperiodeFraDb
+        every { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns rapporteringsperiodeFraDb
         justRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
 
         val gjeldendePeriode = runBlocking { rapporteringService.hentGjeldendePeriode(ident, token) }
@@ -104,7 +140,7 @@ class RapporteringServiceTest {
     fun `hent periode henter spesifisert periode som ikke er sendt inn og lagrer denne i databasen hvis den ikke finnes`() {
         coEvery { meldepliktConnector.hentRapporteringsperioder(ident, token) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
-        every { rapporteringRepository.hentRapporteringsperiode(2L, ident) } returns null
+        every { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
         justRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
 
         val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token) }
@@ -164,7 +200,7 @@ class RapporteringServiceTest {
             )
         coEvery { meldepliktConnector.hentRapporteringsperioder(ident, token) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
-        every { rapporteringRepository.hentRapporteringsperiode(2L, ident) } returns rapporteringsperiodeFraDb
+        every { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns rapporteringsperiodeFraDb
         justRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
 
         val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token) }
@@ -188,6 +224,7 @@ class RapporteringServiceTest {
     fun `hent alle rapporteringsperioder henter alle rapporteringsperioder og sorterer listen fra eldst til nyest`() {
         coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
+        every { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentAllePerioderSomKanSendes(ident, token)!! }
 
@@ -395,6 +432,7 @@ val fremtidigeRaporteringsperioder =
 fun lagRapporteringsperiode(
     id: Long,
     periode: Periode,
+    status: RapporteringsperiodeStatus = TilUtfylling,
 ) = Rapporteringsperiode(
     id = id,
     periode = periode,
@@ -403,7 +441,7 @@ fun lagRapporteringsperiode(
     kanSendes = true,
     kanKorrigeres = false,
     bruttoBelop = null,
-    status = TilUtfylling,
+    status = status,
     registrertArbeidssoker = null,
 )
 
