@@ -38,7 +38,6 @@ fun Application.konfigurasjon(
         logger.info { "Cleaning database" }
         clean()
     }
-    clean()
     runMigration()
 
     install(CallLogging) {
