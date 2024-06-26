@@ -44,7 +44,7 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
                                         Aktivitet.AktivitetsType.Arbeid -> AktivitetTypeResponse.Arbeid
                                         Aktivitet.AktivitetsType.Syk -> AktivitetTypeResponse.Syk
                                         Aktivitet.AktivitetsType.Utdanning -> AktivitetTypeResponse.Utdanning
-                                        Aktivitet.AktivitetsType.FerieEllerFravaer -> AktivitetTypeResponse.Fravaer
+                                        Aktivitet.AktivitetsType.Fravaer -> AktivitetTypeResponse.Fravaer
                                     },
                                 timer = aktivitet.timer,
                             )

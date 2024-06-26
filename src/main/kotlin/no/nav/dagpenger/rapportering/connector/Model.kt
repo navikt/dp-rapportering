@@ -1,7 +1,7 @@
 package no.nav.dagpenger.rapportering.connector
 
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Arbeid
-import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.FerieEllerFravaer
+import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Fravaer
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Syk
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.Ferdig
@@ -59,7 +59,7 @@ data class AdapterAktivitet(
         Arbeid,
         Syk,
         Utdanning,
-        FerieEllerFravaer,
+        Fravaer,
     }
 }
 
@@ -94,7 +94,7 @@ fun AdapterAktivitet.toAktivitet(): Aktivitet =
                 Arbeid -> AktivitetsType.Arbeid
                 Syk -> AktivitetsType.Syk
                 Utdanning -> AktivitetsType.Utdanning
-                FerieEllerFravaer -> AktivitetsType.FerieEllerFravaer
+                Fravaer -> AktivitetsType.Fravaer
             },
         timer = this.timer?.toDuration(HOURS)?.toIsoString(),
     )
@@ -132,7 +132,7 @@ fun Aktivitet.toAdapterAktivitet(): AdapterAktivitet =
                 AktivitetsType.Arbeid -> Arbeid
                 AktivitetsType.Syk -> Syk
                 AktivitetsType.Utdanning -> Utdanning
-                AktivitetsType.FerieEllerFravaer -> FerieEllerFravaer
+                AktivitetsType.Fravaer -> Fravaer
             },
         timer = this.timer?.let { Duration.parseIsoString(this.timer).toDouble(HOURS) },
     )

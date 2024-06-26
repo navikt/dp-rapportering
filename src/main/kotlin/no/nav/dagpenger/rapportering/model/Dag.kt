@@ -1,7 +1,7 @@
 package no.nav.dagpenger.rapportering.model
 
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
-import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.FerieEllerFravaer
+import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Fravaer
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import java.time.LocalDate
@@ -40,9 +40,9 @@ data class Dag(
                 if (typer.isEmpty()) {
                     true
                 } else if (typer.contains(Arbeid) || typer.contains(Utdanning)) {
-                    (!typer.contains(Syk) && !typer.contains(FerieEllerFravaer))
+                    (!typer.contains(Syk) && !typer.contains(Fravaer))
                 } else {
-                    typer.contains(Syk) || typer.contains(FerieEllerFravaer) && typer.size == 1
+                    typer.contains(Syk) || typer.contains(Fravaer) && typer.size == 1
                 }
             }
 

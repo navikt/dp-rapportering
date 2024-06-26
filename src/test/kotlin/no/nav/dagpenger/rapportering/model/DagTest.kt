@@ -8,7 +8,7 @@ import no.nav.dagpenger.rapportering.connector.AdapterDag
 import no.nav.dagpenger.rapportering.connector.toAdapterDag
 import no.nav.dagpenger.rapportering.connector.toDag
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
-import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.FerieEllerFravaer
+import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Fravaer
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.utils.januar
@@ -56,7 +56,7 @@ class DagTest {
         val ferieDag =
             Dag(
                 dato = 2.januar,
-                aktiviteter = listOf(Aktivitet(id = UUID.randomUUID(), type = FerieEllerFravaer, timer = null)),
+                aktiviteter = listOf(Aktivitet(id = UUID.randomUUID(), type = Fravaer, timer = null)),
                 dagIndex = 1,
             )
         val utdanningDag =
@@ -70,7 +70,7 @@ class DagTest {
         }
         with(ferieDag) {
             aktiviteter.size shouldBe 1
-            aktiviteter.first().type shouldBe FerieEllerFravaer
+            aktiviteter.first().type shouldBe Fravaer
         }
         with(utdanningDag) {
             aktiviteter.size shouldBe 1
