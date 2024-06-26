@@ -32,9 +32,11 @@ class MeldepliktConnector(
     ): List<AdapterRapporteringsperiode>? =
         withContext(Dispatchers.IO) {
             val result =
-                hentData("/rapporteringsperioder", subjectToken)
-                    .loggInfo { "Kall til meldeplikt-adapter for å hente perioder gikk OK" }
-                    .sikkerloggInfo { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
+                get("/rapporteringsperioder", subjectToken)
+                    .also {
+                        logger.info { "Kall til meldeplikt-adapter for å hente perioder gikk OK" }
+                        sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
+                    }
 
             if (result.status == HttpStatusCode.NoContent) {
                 null
@@ -48,30 +50,29 @@ class MeldepliktConnector(
         subjectToken: String,
     ): List<AdapterRapporteringsperiode> =
         withContext(Dispatchers.IO) {
-            hentData("/sendterapporteringsperioder", subjectToken)
-                .loggInfo { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }
-                .sikkerloggInfo { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident gikk OK" }
-                .body()
+            hentData<List<AdapterRapporteringsperiode>>("/sendterapporteringsperioder", subjectToken)
+                .also {
+                    logger.info { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }
+                    sikkerlogg.info { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident gikk OK" }
+                }
         }
 
     suspend fun hentAktivitetsdager(
         id: String,
         subjectToken: String,
     ): List<AdapterDag> =
-        withContext(Dispatchers.IO) {
-            hentData("/aktivitetsdager/$id", subjectToken)
-                .loggInfo { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
-                .body()
-        }
+        hentData<List<AdapterDag>>("/aktivitetsdager/$id", subjectToken)
+            .also {
+                logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
+            }
 
     suspend fun hentKorrigeringId(
         id: Long,
         subjectToken: String,
     ): Long =
         withContext(Dispatchers.IO) {
-            hentData("/korrigertMeldekort/$id", subjectToken)
-                .loggInfo { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
-                .body()
+            hentData<Long>("/korrigertMeldekort/$id", subjectToken)
+                .also { logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" } }
         }
 
     suspend fun sendinnRapporteringsperiode(
@@ -80,12 +81,29 @@ class MeldepliktConnector(
     ): InnsendingResponse =
         withContext(Dispatchers.IO) {
             logger.info { "Rapporteringsperiode som sendes til adapter: $rapporteringsperiode" }
-            sendData("/sendinn", subjectToken, rapporteringsperiode)
-                .loggInfo { "Kall til meldeplikt-adapter for å sende inn rapporteringsperiode gikk OK" }
-                .body()
+            try {
+                sendData("/sendinn", subjectToken, rapporteringsperiode)
+                    .also { logger.info { "Kall til meldeplikt-adapter for å sende inn rapporteringsperiode gikk OK" } }
+                    .body()
+            } catch (e: Exception) {
+                logger.error(e) { "Feil ved sending av data til meldeplikt-adapter" }
+                throw e
+            }
         }
 
-    private suspend fun hentData(
+    private suspend inline fun <reified T> hentData(
+        path: String,
+        subjectToken: String,
+    ): T =
+        try {
+            get(path, subjectToken)
+                .body<T>()
+        } catch (e: Exception) {
+            logger.error(e) { "Feil ved henting av data fra meldeplikt-adapter. Path: $path" }
+            throw e
+        }
+
+    private suspend fun get(
         path: String,
         subjectToken: String,
     ): HttpResponse =
@@ -104,10 +122,6 @@ class MeldepliktConnector(
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-
-    private fun HttpResponse.loggInfo(msg: () -> String) = this.also { logger.info { msg } }
-
-    private fun HttpResponse.sikkerloggInfo(msg: () -> String) = this.also { sikkerlogg.info { msg } }
 
     companion object {
         private val logger = KotlinLogging.logger {}
