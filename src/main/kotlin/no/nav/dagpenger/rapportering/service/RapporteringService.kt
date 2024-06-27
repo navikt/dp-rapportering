@@ -122,12 +122,9 @@ class RapporteringService(
         token: String,
     ): Rapporteringsperiode {
         val originalPeriode =
-            rapporteringRepository.hentRapporteringsperiode(id = rapporteringId, ident = ident)
-                ?: hentPeriode(rapporteringId, ident, token)
+            hentPeriode(rapporteringId, ident, token)
+                ?: throw RuntimeException("Finner ikke original rapporteringsperiode. Kan ikke korrigere.")
 
-        if (originalPeriode == null) {
-            throw RuntimeException("Finner ikke original rapporteringsperiode. Kan ikke korrigere.")
-        }
         if (!originalPeriode.kanKorrigeres) {
             throw IllegalArgumentException("Rapporteringsperiode med id $rapporteringId kan ikke korrigeres")
         }

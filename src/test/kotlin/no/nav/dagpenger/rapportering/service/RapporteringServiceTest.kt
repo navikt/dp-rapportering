@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.service
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.every
@@ -268,8 +269,11 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `kan korrigere meldekort`() {
-        every { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns rapporteringsperiodeListe.first()
+    fun `kan korrigere rapporteringsperiode`() {
+        every { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns
+            rapporteringsperiodeListe.first().copy(kanKorrigeres = true)
+        coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns null
+        coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns emptyList()
         coEvery { meldepliktConnector.hentKorrigeringId(any(), any()) } returns 321L
         justRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
 
@@ -277,6 +281,27 @@ class RapporteringServiceTest {
 
         korrigertRapporteringsperiode.id shouldBe 321L
         korrigertRapporteringsperiode.status shouldBe Korrigert
+    }
+
+    @Test
+    fun `kan ikke korrigere rapporteringsperiode som ikke kan korrigeres`() {
+        coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns null
+        coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns emptyList()
+        every { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns
+            rapporteringsperiodeListe.first().copy(kanKorrigeres = false)
+
+        shouldThrow<IllegalArgumentException> {
+            runBlocking { rapporteringService.korrigerMeldekort(123L, ident, token) }
+        }
+    }
+
+    @Test
+    fun `kan ikke korrigere rapporteringsperiode hvis perioden ikke finnes`() {
+        every { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
+
+        shouldThrow<RuntimeException> {
+            runBlocking { rapporteringService.korrigerMeldekort(123L, ident, token) }
+        }
     }
 
     @Test
@@ -322,6 +347,20 @@ class RapporteringServiceTest {
             }
         }
         verify(exactly = 1) { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
+    }
+
+    @Test
+    fun `kan ikke sende inn rapporteringsperiode som ikke kan sendes`() {
+        shouldThrow<IllegalArgumentException> {
+            runBlocking {
+                rapporteringService.sendRapporteringsperiode(
+                    rapporteringsperiodeListe.first().copy(kanSendes = false),
+                    token,
+                    ident,
+                    4,
+                )
+            }
+        }
     }
 
     @Test
