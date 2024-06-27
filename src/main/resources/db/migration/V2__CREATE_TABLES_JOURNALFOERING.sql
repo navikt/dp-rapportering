@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS opprettede_journalposter
 (
     journalpost_id  BIGINT                              PRIMARY KEY,
-    rapportering_id BIGINT                              NOT NULL REFERENCES rapporteringsperiode(id),
+    rapportering_id BIGINT                              NOT NULL,
     dokumentinfo_id BIGINT                              NOT NULL,
     created         TIMESTAMP DEFAULT current_timestamp NOT NULL
 );
