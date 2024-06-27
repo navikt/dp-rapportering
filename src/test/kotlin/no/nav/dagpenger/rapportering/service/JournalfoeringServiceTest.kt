@@ -21,7 +21,6 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
@@ -30,6 +29,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Journalpost
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import org.junit.jupiter.api.Test
@@ -39,9 +39,17 @@ import java.util.Base64
 import java.util.UUID
 
 class JournalfoeringServiceTest {
-    @OptIn(DelicateCoroutinesApi::class)
     @Test
-    fun `kan opprette og sende journalpost`() {
+    fun `Kan opprette og sende journalpost`() {
+        test()
+    }
+
+    @Test
+    fun `Kan opprette og sende journalpost ved korrigering`() {
+        test(true)
+    }
+
+    private fun test(korrigering: Boolean = false) {
         val dokarkivUrl = "https://dokarkiv.nav.no"
 
         System.setProperty("DOKARKIV_HOST", dokarkivUrl)
@@ -121,7 +129,7 @@ class JournalfoeringServiceTest {
                 true,
                 true,
                 0.0,
-                TilUtfylling,
+                if (korrigering) RapporteringsperiodeStatus.Korrigert else TilUtfylling,
                 true,
             )
 
@@ -131,21 +139,27 @@ class JournalfoeringServiceTest {
         }
 
         // Sjekker
-        val expectedFilePath = "src/test/resources/dokarkiv_expected.pdf"
-        val actualFilePath = "actual.pdf"
-        val diffFilePath = "pdf_generator_diffOutput" // Uten .pdf
-
         mockEngine.requestHistory.size shouldBe 1
         mockEngine.responseHistory.size shouldBe 1
 
-        // Henter generert pdf vi har sendt
-        val body = mockEngine.requestHistory[0].body as OutgoingContent.WriteChannelContent
-        val channel = GlobalScope.writer(Dispatchers.IO) { body.writeTo(channel) }.channel
-        var bodyString: String
-
         runBlocking {
-            bodyString = String(channel.toByteArray())
+            checkPdf(korrigering, mockEngine.requestHistory[0].body)
         }
+    }
+
+    private suspend fun checkPdf(
+        korrigering: Boolean,
+        content: OutgoingContent,
+    ) {
+        var expectedFilePath = "src/test/resources/dokarkiv_expected.pdf"
+        if (korrigering) expectedFilePath = "src/test/resources/dokarkiv_korrigert_expected.pdf"
+        val actualFilePath = "actual.pdf"
+        val diffFilePath = "pdf_generator_diffOutput" // Uten .pdf
+
+        // Henter generert pdf vi har sendt
+        val body = content as OutgoingContent.WriteChannelContent
+        val channel = GlobalScope.writer(Dispatchers.IO) { body.writeTo(channel) }.channel
+        val bodyString = String(channel.toByteArray())
 
         val objectMapper =
             ObjectMapper()
