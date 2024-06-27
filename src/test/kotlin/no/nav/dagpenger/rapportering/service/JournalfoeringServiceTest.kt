@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import de.redsix.pdfcompare.CompareResultImpl
+import de.redsix.pdfcompare.PageArea
+import de.redsix.pdfcompare.PdfComparator
 import io.kotest.matchers.shouldBe
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -43,15 +46,18 @@ class JournalfoeringServiceTest {
         System.setProperty("DOKARKIV_AUDIENCE", "test.test.dokarkiv")
         System.setProperty("AZURE_APP_WELL_KNOWN_URL", "test.test.dokarkiv")
 
+        // Mock TokenProvider
         fun mockTokenProvider() =
             { _: String ->
                 "token"
             }
 
+        // Mock JournalfoeringRepository
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
         every { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) } just runs
         every { journalfoeringRepository.hentMidlertidigLagredeJournalposter() } returns emptyList()
 
+        // Mock svar fra Dokarkiv
         val mockEngine =
             MockEngine { _ ->
                 respond(
@@ -78,13 +84,16 @@ class JournalfoeringServiceTest {
         val journalfoeringService =
             JournalfoeringService(journalfoeringRepository, dokarkivUrl, mockTokenProvider(), mockEngine)
 
+        // Testdata
+        val fom = LocalDate.of(2024, 6, 24)
+
         val rapporteringsperiode =
             Rapporteringsperiode(
                 1L,
-                Periode(LocalDate.now().minusDays(13), LocalDate.now()),
+                Periode(fom, fom.plusDays(13)),
                 listOf(
                     Dag(
-                        LocalDate.now().minusDays(13),
+                        fom,
                         listOf(
                             Aktivitet(
                                 UUID.randomUUID(),
@@ -95,7 +104,7 @@ class JournalfoeringServiceTest {
                         1,
                     ),
                     Dag(
-                        LocalDate.now().minusDays(12),
+                        fom.plusDays(1),
                         listOf(
                             Aktivitet(
                                 UUID.randomUUID(),
@@ -106,7 +115,7 @@ class JournalfoeringServiceTest {
                         2,
                     ),
                 ),
-                LocalDate.now(),
+                fom.plusDays(12),
                 true,
                 true,
                 0.0,
@@ -114,17 +123,23 @@ class JournalfoeringServiceTest {
                 true,
             )
 
+        // Kjører
         runBlocking {
             journalfoeringService.journalfoer("01020312345", 0, rapporteringsperiode)
         }
 
+        // Sjekker
+        val expectedFilePath = "src/test/resources/dokarkiv_expected.pdf"
+        val actualFilePath = "actual.pdf"
+        val diffFilePath = "pdf_generator_diffOutput" // Uten .pdf
+
         mockEngine.requestHistory.size shouldBe 1
         mockEngine.responseHistory.size shouldBe 1
 
-        // Lagrer pdf vi har sendt
+        // Henter generert pdf vi har sendt
         val body = mockEngine.requestHistory[0].body as OutgoingContent.WriteChannelContent
         val channel = GlobalScope.writer(Dispatchers.IO) { body.writeTo(channel) }.channel
-        var bodyString = ""
+        var bodyString: String
 
         runBlocking {
             bodyString = String(channel.toByteArray())
@@ -138,11 +153,23 @@ class JournalfoeringServiceTest {
         val journalpost = objectMapper.readValue(bodyString, Journalpost::class.java)
         val pdf = Base64.getDecoder().decode(journalpost!!.dokumenter!![0].dokumentvarianter[1].fysiskDokument)
 
-        val actualFile = File("test.pdf")
+        val actualFile = File(actualFilePath)
         actualFile.writeBytes(pdf)
 
-        // TODO: Sjekk PDF
+        val diffFile = File("$diffFilePath.pdf")
+
+        // Sammenligner
+        val equal =
+            PdfComparator<CompareResultImpl>(expectedFilePath, actualFilePath)
+                .withIgnore(PageArea(1, 720, 915, 1090, 960))
+                .compare()
+                .writeTo(diffFilePath)
+
+        if (!equal) {
+            throw Exception("PDFene er ikke like")
+        }
 
         actualFile.delete()
+        diffFile.delete()
     }
 }

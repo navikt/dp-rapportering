@@ -86,4 +86,5 @@ dependencies {
     testImplementation(libs.ktor.server.test.host)
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.2")
     testImplementation(libs.ktor.client.mock)
+    testImplementation("de.redsix:pdfcompare:1.1.61")
 }
