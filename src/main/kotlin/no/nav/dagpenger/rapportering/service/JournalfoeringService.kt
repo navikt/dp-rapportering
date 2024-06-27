@@ -6,7 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.engine.jetty.Jetty
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.accept
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.post
@@ -52,7 +52,7 @@ class JournalfoeringService(
     private val journalfoeringRepository: JournalfoeringRepository,
     private val dokarkivUrl: String = Configuration.dokarkivUrl,
     private val tokenProvider: (String) -> String = Configuration.azureADClient(),
-    engine: HttpClientEngine = Jetty.create { },
+    engine: HttpClientEngine = CIO.create { },
 ) {
     companion object : KLogging()
 
