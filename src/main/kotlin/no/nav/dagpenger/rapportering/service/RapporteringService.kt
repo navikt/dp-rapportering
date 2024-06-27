@@ -128,6 +128,10 @@ class RapporteringService(
         if (originalPeriode == null) {
             throw RuntimeException("Finner ikke original rapporteringsperiode. Kan ikke korrigere.")
         }
+        if (!originalPeriode.kanKorrigeres) {
+            throw IllegalArgumentException("Rapporteringsperiode med id $rapporteringId kan ikke korrigeres")
+        }
+
         val korrigertId =
             meldepliktConnector
                 .hentKorrigeringId(rapporteringId, token)
