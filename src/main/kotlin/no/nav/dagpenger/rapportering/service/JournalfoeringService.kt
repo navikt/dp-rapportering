@@ -150,7 +150,7 @@ class JournalfoeringService(
         }
     }
 
-    suspend fun journalfoer(
+    fun journalfoer(
         ident: String,
         loginLevel: Int,
         rapporteringsperiode: Rapporteringsperiode,
