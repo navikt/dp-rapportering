@@ -76,6 +76,7 @@ class RapporteringService(
             .hentInnsendteRapporteringsperioder(ident, token)
             .toRapporteringsperioder()
             .sortedByDescending { it.periode.fraOgMed }
+            .take(5)
 
     fun lagreEllerOppdaterPeriode(
         periode: Rapporteringsperiode,
