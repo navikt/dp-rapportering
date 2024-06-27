@@ -149,8 +149,11 @@ class RapporteringService(
         token: String,
         ident: String,
         loginLevel: Int,
-    ): InnsendingResponse =
-        meldepliktConnector
+    ): InnsendingResponse {
+        rapporteringsperiode.takeIf { it.kanSendes }
+            ?: throw IllegalArgumentException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
+
+        return meldepliktConnector
             .sendinnRapporteringsperiode(rapporteringsperiode.toAdapterRapporteringsperiode(), token)
             .also { response ->
                 if (response.status == "OK") {
@@ -161,6 +164,7 @@ class RapporteringService(
                     logger.info { "Oppdaterte status for rapporteringsperiode ${rapporteringsperiode.id} til Innsendt" }
                 }
             }
+    }
 
     fun slettMellomlagredeRapporteringsperioder() {
         val rapporteringsperioder = rapporteringRepository.hentRapporteringsperioder()
