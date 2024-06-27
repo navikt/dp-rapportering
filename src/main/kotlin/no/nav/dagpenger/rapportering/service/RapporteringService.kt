@@ -76,6 +76,7 @@ class RapporteringService(
             .hentInnsendteRapporteringsperioder(ident, token)
             .toRapporteringsperioder()
             .sortedByDescending { it.periode.fraOgMed }
+            .take(5)
 
     fun lagreEllerOppdaterPeriode(
         periode: Rapporteringsperiode,
@@ -121,12 +122,13 @@ class RapporteringService(
         token: String,
     ): Rapporteringsperiode {
         val originalPeriode =
-            rapporteringRepository.hentRapporteringsperiode(id = rapporteringId, ident = ident)
-                ?: hentPeriode(rapporteringId, ident, token)
+            hentPeriode(rapporteringId, ident, token)
+                ?: throw RuntimeException("Finner ikke original rapporteringsperiode. Kan ikke korrigere.")
 
-        if (originalPeriode == null) {
-            throw RuntimeException("Finner ikke original rapporteringsperiode. Kan ikke korrigere.")
+        if (!originalPeriode.kanKorrigeres) {
+            throw IllegalArgumentException("Rapporteringsperiode med id $rapporteringId kan ikke korrigeres")
         }
+
         val korrigertId =
             meldepliktConnector
                 .hentKorrigeringId(rapporteringId, token)
@@ -144,8 +146,11 @@ class RapporteringService(
         token: String,
         ident: String,
         loginLevel: Int,
-    ): InnsendingResponse =
-        meldepliktConnector
+    ): InnsendingResponse {
+        rapporteringsperiode.takeIf { it.kanSendes }
+            ?: throw IllegalArgumentException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
+
+        return meldepliktConnector
             .sendinnRapporteringsperiode(rapporteringsperiode.toAdapterRapporteringsperiode(), token)
             .also { response ->
                 if (response.status == "OK") {
@@ -156,6 +161,7 @@ class RapporteringService(
                     logger.info { "Oppdaterte status for rapporteringsperiode ${rapporteringsperiode.id} til Innsendt" }
                 }
             }
+    }
 
     fun slettMellomlagredeRapporteringsperioder() {
         val rapporteringsperioder = rapporteringRepository.hentRapporteringsperioder()

@@ -8,10 +8,10 @@ import no.nav.dagpenger.rapportering.api.internalApi
 import no.nav.dagpenger.rapportering.api.konfigurasjon
 import no.nav.dagpenger.rapportering.api.rapporteringApi
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.jobs.SlettRapporteringsperioderJob
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
-import no.nav.dagpenger.rapportering.scheduler.initializeQuartz
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 
@@ -27,7 +27,8 @@ fun Application.module() {
             JournalfoeringService(JournalfoeringRepositoryPostgres(dataSource)),
         )
     konfigurasjon(appMicrometerRegistry)
-    initializeQuartz(rapporteringService)
     internalApi(appMicrometerRegistry)
     rapporteringApi(rapporteringService)
+
+    SlettRapporteringsperioderJob.start(rapporteringService)
 }

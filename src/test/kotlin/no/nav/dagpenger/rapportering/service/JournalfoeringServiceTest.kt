@@ -21,6 +21,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
@@ -38,6 +39,7 @@ import java.util.Base64
 import java.util.UUID
 
 class JournalfoeringServiceTest {
+    @OptIn(DelicateCoroutinesApi::class)
     @Test
     fun `kan opprette og sende journalpost`() {
         val dokarkivUrl = "https://dokarkiv.nav.no"
