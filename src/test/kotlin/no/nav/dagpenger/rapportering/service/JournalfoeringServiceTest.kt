@@ -43,6 +43,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.model.Sakstype
 import no.nav.dagpenger.rapportering.model.Tema
+import no.nav.dagpenger.rapportering.model.Tilleggsopplysning
 import no.nav.dagpenger.rapportering.model.Variantformat
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import org.junit.jupiter.api.Test
@@ -133,7 +134,10 @@ class JournalfoeringServiceTest {
             listOf(
                 Triple(
                     "1",
-                    Journalpost(Journalposttype.INNGAAENDE),
+                    Journalpost(
+                        Journalposttype.INNGAAENDE,
+                        tilleggsopplysninger = listOf(Tilleggsopplysning("id", "2")),
+                    ),
                     0,
                 ),
             )
@@ -145,8 +149,8 @@ class JournalfoeringServiceTest {
                 dokarkivUrl,
                 mockTokenProvider(),
                 mockEngine,
-                2000,
-                2000,
+                200000,
+                200000,
             )
 
         // Oppretter rapporteringsperiode
@@ -161,7 +165,11 @@ class JournalfoeringServiceTest {
         verify { journalfoeringRepository.lagreJournalpostMidlertidig(any()) }
 
         // Venter 2 sekunder
-        Thread.sleep(2000)
+        // Thread.sleep(2000)
+
+        runBlocking {
+            journalfoeringService.sendJournalposterPaaNytt()
+        }
 
         // Sjekker at JournalfoeringService prøvde å sende journalpost på nytt, fikk feil og oppdaterte retries
         verify { journalfoeringRepository.hentMidlertidigLagredeJournalposter() }
@@ -169,8 +177,12 @@ class JournalfoeringServiceTest {
 
         // Thread.sleep(3000)
 
-        // verify { journalfoeringRepository.hentJournalpostData(2) }
-        // verify { journalfoeringRepository.sletteMidlertidigLagretJournalpost("1") }
+        runBlocking {
+            journalfoeringService.sendJournalposterPaaNytt()
+        }
+
+        verify { journalfoeringRepository.hentJournalpostData(2) }
+        verify { journalfoeringRepository.sletteMidlertidigLagretJournalpost("1") }
     }
 
     private fun test(korrigering: Boolean = false) {
