@@ -54,7 +54,8 @@ class JournalfoeringService(
     private val tokenProvider: (String) -> String = Configuration.azureADClient(),
     engine: HttpClientEngine = CIO.create { },
     delay: Long = 10000,
-    resendInterval: Long = 300_000L, // 5 minutes by default
+    // 5 minutes by default
+    resendInterval: Long = 300_000L,
 ) {
     companion object : KLogging()
 
