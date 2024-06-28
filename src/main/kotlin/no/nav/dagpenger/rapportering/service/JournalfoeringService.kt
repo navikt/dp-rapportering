@@ -53,10 +53,10 @@ class JournalfoeringService(
     private val dokarkivUrl: String = Configuration.dokarkivUrl,
     private val tokenProvider: (String) -> String = Configuration.azureADClient(),
     engine: HttpClientEngine = CIO.create { },
+    delay: Long = 10000,
+    resendInterval: Long = 300_000L, // 5 minutes by default
 ) {
     companion object : KLogging()
-
-    private var resendInterval = 300_000L // 5 minutes by default
 
     private val kanal = "NAV_NO"
     private val journalfoerendeEnhet = "9999"
@@ -81,7 +81,7 @@ class JournalfoeringService(
                 }
             }
 
-        timer.schedule(timerTask, 10000, resendInterval)
+        timer.schedule(timerTask, delay, resendInterval)
     }
 
     fun sendJournalposterPaaNytt() {
