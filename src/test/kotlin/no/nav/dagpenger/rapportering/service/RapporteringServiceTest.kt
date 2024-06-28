@@ -277,7 +277,7 @@ class RapporteringServiceTest {
         coEvery { meldepliktConnector.hentKorrigeringId(any(), any()) } returns 321L
         justRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
 
-        val korrigertRapporteringsperiode = runBlocking { rapporteringService.korrigerMeldekort(123L, ident, token) }
+        val korrigertRapporteringsperiode = runBlocking { rapporteringService.korrigerRapporteringsperiode(123L, ident, token) }
 
         korrigertRapporteringsperiode.id shouldBe 321L
         korrigertRapporteringsperiode.status shouldBe Korrigert
@@ -291,7 +291,7 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe.first().copy(kanKorrigeres = false)
 
         shouldThrow<IllegalArgumentException> {
-            runBlocking { rapporteringService.korrigerMeldekort(123L, ident, token) }
+            runBlocking { rapporteringService.korrigerRapporteringsperiode(123L, ident, token) }
         }
     }
 
@@ -300,7 +300,7 @@ class RapporteringServiceTest {
         every { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
 
         shouldThrow<RuntimeException> {
-            runBlocking { rapporteringService.korrigerMeldekort(123L, ident, token) }
+            runBlocking { rapporteringService.korrigerRapporteringsperiode(123L, ident, token) }
         }
     }
 

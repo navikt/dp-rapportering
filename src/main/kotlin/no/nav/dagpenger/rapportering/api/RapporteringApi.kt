@@ -185,7 +185,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                             val id = call.getParameter("id")
 
                             rapporteringService
-                                .korrigerMeldekort(id.toLong(), ident, jwtToken)
+                                .korrigerRapporteringsperiode(id.toLong(), ident, jwtToken)
                                 .also { call.respond(HttpStatusCode.OK, it) }
                         }
                     }

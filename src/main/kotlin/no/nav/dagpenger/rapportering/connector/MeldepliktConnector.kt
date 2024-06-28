@@ -71,7 +71,7 @@ class MeldepliktConnector(
         subjectToken: String,
     ): Long =
         withContext(Dispatchers.IO) {
-            hentData<Long>("/korrigertMeldekort/$id", subjectToken)
+            hentData<Long>("/korrigerrapporteringsperiode/$id", subjectToken)
                 .also { logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" } }
         }
 
