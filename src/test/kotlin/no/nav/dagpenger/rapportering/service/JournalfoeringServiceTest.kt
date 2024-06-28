@@ -18,13 +18,17 @@ import io.ktor.http.headersOf
 import io.ktor.util.toByteArray
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.writer
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
+import io.mockk.slot
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
+import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.AvsenderIdType
 import no.nav.dagpenger.rapportering.model.BrukerIdType
@@ -33,6 +37,7 @@ import no.nav.dagpenger.rapportering.model.Filetype
 import no.nav.dagpenger.rapportering.model.Journalpost
 import no.nav.dagpenger.rapportering.model.Journalposttype
 import no.nav.dagpenger.rapportering.model.Periode
+import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
@@ -48,6 +53,8 @@ import java.util.Base64
 import java.util.UUID
 
 class JournalfoeringServiceTest {
+    private val dokarkivUrl = "https://dokarkiv.nav.no"
+
     private val objectMapper =
         ObjectMapper()
             .registerKotlinModule()
@@ -64,9 +71,8 @@ class JournalfoeringServiceTest {
         test(true)
     }
 
-    private fun test(korrigering: Boolean = false) {
-        val dokarkivUrl = "https://dokarkiv.nav.no"
-
+    @Test
+    fun `Kan lagre journalposter midlertidig ved feil og sende paa nytt`() {
         System.setProperty("DOKARKIV_HOST", dokarkivUrl)
         System.setProperty("DOKARKIV_AUDIENCE", "test.test.dokarkiv")
         System.setProperty("AZURE_APP_WELL_KNOWN_URL", "test.test.dokarkiv")
@@ -77,7 +83,111 @@ class JournalfoeringServiceTest {
                 "token"
             }
 
-        // Mock JournalfoeringRepository
+        // Mock svar fra Dokarkiv
+        var count = 0
+        val mockEngine =
+            MockEngine { _ ->
+                if (count < 2) {
+                    count++
+
+                    respond(
+                        content = "",
+                        status = HttpStatusCode.BadRequest,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                    )
+                } else {
+                    respond(
+                        content =
+                            ByteReadChannel(
+                                """
+                            {
+                                "journalpostId": 2,
+                                "journalstatus": "OK",
+                                "journalpostferdigstilt": true,
+                                "dokumenter": [
+                                    {
+                                        "dokumentInfoId": 3
+                                    }
+                                ]
+                            }
+                                """.trimMargin(),
+                            ),
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                    )
+                }
+            }
+
+        // Mock
+        val meldepliktConnector = mockk<MeldepliktConnector>()
+        coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
+
+        val aSlot = slot<Journalpost>()
+        val journalfoeringRepository = mockk<JournalfoeringRepository>()
+        every { journalfoeringRepository.lagreJournalpostMidlertidig(capture(aSlot)) } just runs
+        every { journalfoeringRepository.hentJournalpostData(any()) } returns emptyList()
+        every { journalfoeringRepository.lagreJournalpostData(any(), any(), any()) } just runs
+        every { journalfoeringRepository.oppdaterMidlertidigLagretJournalpost(any(), any()) } just runs
+        every { journalfoeringRepository.sletteMidlertidigLagretJournalpost(any()) } just runs
+        every { journalfoeringRepository.hentMidlertidigLagredeJournalposter() } returns
+            listOf(
+                Triple(
+                    "1",
+                    Journalpost(Journalposttype.INNGAAENDE),
+                    0,
+                ),
+            )
+
+        val journalfoeringService =
+            JournalfoeringService(
+                meldepliktConnector,
+                journalfoeringRepository,
+                dokarkivUrl,
+                mockTokenProvider(),
+                mockEngine,
+                2000,
+                2000,
+            )
+
+        // Oppretter rapporteringsperiode
+        val rapporteringsperiode = createRapporteringsperiode(false)
+
+        // Prøver å sende
+        runBlocking {
+            journalfoeringService.journalfoer("01020312345", 0, rapporteringsperiode)
+        }
+
+        // Får feil og sjekker at JournalfoeringService lagrer journalpost midlertidig
+        verify { journalfoeringRepository.lagreJournalpostMidlertidig(any()) }
+
+        // Venter 2 sekunder
+        Thread.sleep(2000)
+
+        // Sjekker at JournalfoeringService prøvde å sende journalpost på nytt, fikk feil og oppdaterte retries
+        verify { journalfoeringRepository.hentMidlertidigLagredeJournalposter() }
+        verify { journalfoeringRepository.oppdaterMidlertidigLagretJournalpost("1", 1) }
+
+        // Thread.sleep(3000)
+
+        // verify { journalfoeringRepository.hentJournalpostData(2) }
+        // verify { journalfoeringRepository.sletteMidlertidigLagretJournalpost("1") }
+    }
+
+    private fun test(korrigering: Boolean = false) {
+        System.setProperty("DOKARKIV_HOST", dokarkivUrl)
+        System.setProperty("DOKARKIV_AUDIENCE", "test.test.dokarkiv")
+        System.setProperty("AZURE_APP_WELL_KNOWN_URL", "test.test.dokarkiv")
+
+        // Mock TokenProvider
+        fun mockTokenProvider() =
+            { _: String ->
+                "token"
+            }
+
+        // Mock
+        val meldepliktConnector = mockk<MeldepliktConnector>()
+        coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
+
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
         every { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) } just runs
         every { journalfoeringRepository.hentMidlertidigLagredeJournalposter() } returns emptyList()
@@ -107,7 +217,13 @@ class JournalfoeringServiceTest {
             }
 
         val journalfoeringService =
-            JournalfoeringService(journalfoeringRepository, dokarkivUrl, mockTokenProvider(), mockEngine)
+            JournalfoeringService(
+                meldepliktConnector,
+                journalfoeringRepository,
+                dokarkivUrl,
+                mockTokenProvider(),
+                mockEngine,
+            )
 
         val rapporteringsperiode = createRapporteringsperiode(korrigering)
 
@@ -181,7 +297,7 @@ class JournalfoeringServiceTest {
 
         journalpost.avsenderMottaker?.id shouldBe "01020312345"
         journalpost.avsenderMottaker?.idType shouldBe AvsenderIdType.FNR
-        journalpost.avsenderMottaker?.navn shouldBe "NAVN"
+        journalpost.avsenderMottaker?.navn shouldBe "TEST TESTESSEN"
 
         journalpost.bruker?.id shouldBe "01020312345"
         journalpost.bruker?.idType shouldBe BrukerIdType.FNR
