@@ -11,15 +11,11 @@ import io.ktor.http.headersOf
 internal fun createMockClient(
     statusCode: Int,
     responseBody: String,
-): HttpClientEngine {
-    val mockEngine =
-        MockEngine {
-            respond(
-                content = responseBody,
-                status = HttpStatusCode.fromValue(statusCode),
-                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
-            )
-        }
-
-    return mockEngine
-}
+): HttpClientEngine =
+    MockEngine {
+        respond(
+            content = responseBody,
+            status = HttpStatusCode.fromValue(statusCode),
+            headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+        )
+    }
