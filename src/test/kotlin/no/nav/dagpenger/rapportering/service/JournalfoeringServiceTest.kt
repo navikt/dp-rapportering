@@ -23,7 +23,6 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
-import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -123,9 +122,8 @@ class JournalfoeringServiceTest {
         val meldepliktConnector = mockk<MeldepliktConnector>()
         coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
 
-        val aSlot = slot<Journalpost>()
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
-        every { journalfoeringRepository.lagreJournalpostMidlertidig(capture(aSlot)) } just runs
+        every { journalfoeringRepository.lagreJournalpostMidlertidig(any()) } just runs
         every { journalfoeringRepository.hentJournalpostData(any()) } returns emptyList()
         every { journalfoeringRepository.lagreJournalpostData(any(), any(), any()) } just runs
         every { journalfoeringRepository.oppdaterMidlertidigLagretJournalpost(any(), any()) } just runs
@@ -164,9 +162,6 @@ class JournalfoeringServiceTest {
         // Får feil og sjekker at JournalfoeringService lagrer journalpost midlertidig
         verify { journalfoeringRepository.lagreJournalpostMidlertidig(any()) }
 
-        // Venter 2 sekunder
-        // Thread.sleep(2000)
-
         runBlocking {
             journalfoeringService.sendJournalposterPaaNytt()
         }
@@ -174,8 +169,6 @@ class JournalfoeringServiceTest {
         // Sjekker at JournalfoeringService prøvde å sende journalpost på nytt, fikk feil og oppdaterte retries
         verify { journalfoeringRepository.hentMidlertidigLagredeJournalposter() }
         verify { journalfoeringRepository.oppdaterMidlertidigLagretJournalpost("1", 1) }
-
-        // Thread.sleep(3000)
 
         runBlocking {
             journalfoeringService.sendJournalposterPaaNytt()
