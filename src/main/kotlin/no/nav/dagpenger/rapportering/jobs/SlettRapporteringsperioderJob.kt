@@ -13,12 +13,13 @@ internal object SlettRapporteringsperioderJob {
 
     private val TIDSPUNKT_FOR_KJORING = LocalTime.of(0, 1)
     private val naa = ZonedDateTime.now()
-    private val tidspunktForNesteKjoring = naa.with(TIDSPUNKT_FOR_KJORING)
+    private val tidspunktForNesteKjoring = naa.with(TIDSPUNKT_FOR_KJORING).plusDays(1)
     private val millisekunderTilNesteKjoring =
         tidspunktForNesteKjoring.toInstant().toEpochMilli() -
             naa.toInstant().toEpochMilli() // differansen i millisekunder mellom de to tidspunktene
 
     internal fun start(rapporeringService: RapporteringService) {
+        logger.info { "Tidspunkt for neste kjøring: $tidspunktForNesteKjoring" }
         fixedRateTimer(
             name = "Slett mellomlagrede rapporteringsperioder",
             daemon = true,
