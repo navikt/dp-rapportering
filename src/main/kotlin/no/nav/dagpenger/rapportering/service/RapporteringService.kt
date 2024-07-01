@@ -116,7 +116,7 @@ class RapporteringService(
         registrertArbeidssoker,
     )
 
-    suspend fun korrigerMeldekort(
+    suspend fun korrigerRapporteringsperiode(
         rapporteringId: Long,
         ident: String,
         token: String,

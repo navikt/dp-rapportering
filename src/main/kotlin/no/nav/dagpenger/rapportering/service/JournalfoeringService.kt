@@ -16,6 +16,7 @@ import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import no.nav.dagpenger.rapportering.Configuration
+import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.AvsenderIdType
 import no.nav.dagpenger.rapportering.model.AvsenderMottaker
@@ -49,14 +50,16 @@ import java.util.UUID
 import kotlin.time.Duration
 
 class JournalfoeringService(
+    private val meldepliktConnector: MeldepliktConnector,
     private val journalfoeringRepository: JournalfoeringRepository,
     private val dokarkivUrl: String = Configuration.dokarkivUrl,
     private val tokenProvider: (String) -> String = Configuration.azureADClient(),
     engine: HttpClientEngine = CIO.create { },
+    delay: Long = 10000,
+    // 5 minutes by default
+    resendInterval: Long = 300_000L,
 ) {
     companion object : KLogging()
-
-    private var resendInterval = 300_000L // 5 minutes by default
 
     private val kanal = "NAV_NO"
     private val journalfoerendeEnhet = "9999"
@@ -77,14 +80,16 @@ class JournalfoeringService(
         val timerTask: TimerTask =
             object : TimerTask() {
                 override fun run() {
-                    sendJournalposterPaaNytt()
+                    runBlocking {
+                        sendJournalposterPaaNytt()
+                    }
                 }
             }
 
-        timer.schedule(timerTask, 10000, resendInterval)
+        timer.schedule(timerTask, delay, resendInterval)
     }
 
-    fun sendJournalposterPaaNytt() {
+    suspend fun sendJournalposterPaaNytt() {
         // Les data fra DB
         // Triple: data id, journalpost, retries
         val journalpostData: List<Triple<String, Journalpost, Int>> =
@@ -155,8 +160,8 @@ class JournalfoeringService(
         loginLevel: Int,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
-        // TODO: Hvordan kan vi hente navn?
-        val navn = "NAVN"
+        val person = meldepliktConnector.hentPerson(ident, "")
+        val navn = person?.fornavn + " " + person?.etternavn
 
         val journalpost =
             Journalpost(
@@ -204,29 +209,23 @@ class JournalfoeringService(
         }
     }
 
-    private fun sendJournalpost(journalpost: Journalpost): JournalpostResponse {
-        var jp: JournalpostResponse
+    private suspend fun sendJournalpost(journalpost: Journalpost): JournalpostResponse {
+        val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
 
-        runBlocking {
-            val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
+        logger.info("Prøver å sende journalpost " + journalpost.eksternReferanseId)
+        logger.info("URL: $dokarkivUrl$path")
 
-            logger.info("Prøver å sende journalpost " + journalpost.eksternReferanseId)
-            logger.info("URL: $dokarkivUrl$path")
+        val response =
+            httpClient
+                .post(URI("$dokarkivUrl$path").toURL()) {
+                    bearerAuth(token)
+                    accept(ContentType.Application.Json)
+                    contentType(ContentType.Application.Json)
+                    setBody(journalpost)
+                }
 
-            val response =
-                httpClient
-                    .post(URI("$dokarkivUrl$path").toURL()) {
-                        bearerAuth(token)
-                        accept(ContentType.Application.Json)
-                        contentType(ContentType.Application.Json)
-                        setBody(journalpost)
-                    }
-
-            logger.info("Journalpost sendt. Svar " + response.status)
-            jp = response.body<JournalpostResponse>()
-        }
-
-        return jp
+        logger.info("Journalpost sendt. Svar " + response.status)
+        return response.body<JournalpostResponse>()
     }
 
     private fun getTittle(rapporteringsperiode: Rapporteringsperiode): String {
@@ -291,7 +290,10 @@ class JournalfoeringService(
         return DokumentVariant(
             filtype = Filetype.JSON,
             variantformat = Variantformat.ORIGINAL,
-            fysiskDokument = Base64.getEncoder().encodeToString(objectMapper.writeValueAsBytes(rapporteringsperiode)),
+            fysiskDokument =
+                Base64
+                    .getEncoder()
+                    .encodeToString(objectMapper.writeValueAsBytes(rapporteringsperiode)),
         )
     }
 

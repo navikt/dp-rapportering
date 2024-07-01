@@ -17,6 +17,7 @@ import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.Person
 import java.net.URI
 
 class MeldepliktConnector(
@@ -36,6 +37,25 @@ class MeldepliktConnector(
                     .also {
                         logger.info { "Kall til meldeplikt-adapter for å hente perioder gikk OK" }
                         sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident gikk OK" }
+                    }
+
+            if (result.status == HttpStatusCode.NoContent) {
+                null
+            } else {
+                result.body()
+            }
+        }
+
+    suspend fun hentPerson(
+        ident: String,
+        subjectToken: String,
+    ): Person? =
+        withContext(Dispatchers.IO) {
+            val result =
+                get("/person", subjectToken)
+                    .also {
+                        logger.info { "Kall til meldeplikt-adapter for å hente person gikk OK" }
+                        sikkerlogg.info { "Kall til meldeplikt-adapter for å hente person $ident gikk OK" }
                     }
 
             if (result.status == HttpStatusCode.NoContent) {
@@ -71,7 +91,7 @@ class MeldepliktConnector(
         subjectToken: String,
     ): Long =
         withContext(Dispatchers.IO) {
-            hentData<Long>("/korrigertMeldekort/$id", subjectToken)
+            hentData<Long>("/korrigerrapporteringsperiode/$id", subjectToken)
                 .also { logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" } }
         }
 
