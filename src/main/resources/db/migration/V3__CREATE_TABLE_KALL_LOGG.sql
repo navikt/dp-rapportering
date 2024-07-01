@@ -4,7 +4,7 @@
 -------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS kall_logg
 (
-    kall_logg_id   BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    kall_logg_id   BIGINT GENERATED ALWAYS AS IDENTITY,
     korrelasjon_id VARCHAR(54)                            NOT NULL,
     tidspunkt      TIMESTAMP(6) DEFAULT current_timestamp NOT NULL,
     type           VARCHAR(10)                            NOT NULL,
@@ -28,9 +28,11 @@ CREATE INDEX IF NOT EXISTS kalo_2 ON kall_logg (korrelasjon_id);
 
 CREATE INDEX IF NOT EXISTS kalo_3 ON kall_logg (status);
 
-CREATE INDEX IF NOT EXISTS kalo_4 ON kall_logg (ident);
+CREATE INDEX IF NOT EXISTS kalo_4 ON kall_logg (kall_logg_id);
 
-CREATE INDEX IF NOT EXISTS kalo_5 ON kall_logg (tidspunkt);
+CREATE INDEX IF NOT EXISTS kalo_5 ON kall_logg (ident);
+
+CREATE INDEX IF NOT EXISTS kalo_6 ON kall_logg (tidspunkt);
 
 -- Constraints
 ALTER TABLE kall_logg

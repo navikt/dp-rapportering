@@ -6,7 +6,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import javax.sql.DataSource
 
 internal object Postgres {
-    private val database by lazy {
+    val database by lazy {
         PostgreSQLContainer("postgres:15").apply {
             start()
         }
@@ -28,7 +28,11 @@ internal object Postgres {
     }
 
     private fun withCleanDb(block: () -> Unit) {
-        flyWayBuilder.cleanDisabled(false).dataSource(dataSource).load().clean()
+        flyWayBuilder
+            .cleanDisabled(false)
+            .dataSource(dataSource)
+            .load()
+            .clean()
         block()
     }
 

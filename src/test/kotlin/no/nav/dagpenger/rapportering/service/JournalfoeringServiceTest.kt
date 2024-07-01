@@ -24,6 +24,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
@@ -285,6 +286,7 @@ class JournalfoeringServiceTest {
         )
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     private suspend fun checkJournalpost(
         korrigering: Boolean,
         content: OutgoingContent,
