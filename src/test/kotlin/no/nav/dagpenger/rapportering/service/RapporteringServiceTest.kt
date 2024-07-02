@@ -135,6 +135,35 @@ class RapporteringServiceTest {
     }
 
     @Test
+    fun `hent alle rapporteringsperioder populeres med data fra databasen hvis perioden finnes`() {
+        coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns
+            rapporteringsperiodeListe.toAdapterRapporteringsperioder()
+        every { rapporteringRepository.hentRapporteringsperiode(1L, ident) } returns
+            lagRapporteringsperiode(
+                id = 1,
+                periode = Periode(fraOgMed = 1.januar, tilOgMed = 14.januar),
+            ).copy(dager = getDager(startDato = 1.januar, aktivitet = Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null)))
+        every { rapporteringRepository.hentRapporteringsperiode(2L, ident) } returns null
+        every { rapporteringRepository.hentRapporteringsperiode(3L, ident) } returns null
+        justRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+
+        val rapporteringsperioder = runBlocking { rapporteringService.hentAllePerioderSomKanSendes(ident, token)!! }
+
+        verify(exactly = 1) { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+
+        rapporteringsperioder[0].id shouldBe 1L
+        rapporteringsperioder[0]
+            .dager
+            .first()
+            .aktiviteter
+            .first()
+            .type shouldBe Utdanning
+        rapporteringsperioder[1].id shouldBe 2L
+        rapporteringsperioder[2].id shouldBe 3L
+        rapporteringsperioder.size shouldBe 3
+    }
+
+    @Test
     fun `startUtfylling lagrer perioden i databasen`() {
         coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns null
         every { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
