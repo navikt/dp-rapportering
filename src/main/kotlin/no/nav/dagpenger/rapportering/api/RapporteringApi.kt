@@ -129,18 +129,6 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                     }
                 }
 
-                route("/gjeldende") {
-                    get {
-                        val ident = call.ident()
-                        val jwtToken = call.request.jwt()
-
-                        rapporteringService
-                            .hentGjeldendePeriode(ident, jwtToken)
-                            ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
-                            ?: call.respond(HttpStatusCode.NotFound)
-                    }
-                }
-
                 route("/{id}") {
                     get {
                         val ident = call.ident()
@@ -151,6 +139,18 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                             .hentPeriode(rapporteringId, ident, jwtToken)
                             ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
+                    }
+
+                    route("/start") {
+                        post {
+                            val ident = call.ident()
+                            val jwtToken = call.request.jwt()
+                            val rapporteringId = call.getParameter("id").toLong()
+
+                            rapporteringService
+                                .startUtfylling(rapporteringId, ident, jwtToken)
+                                .also { call.respond(HttpStatusCode.OK) }
+                        }
                     }
 
                     route("/arbeidssoker") {
