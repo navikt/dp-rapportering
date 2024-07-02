@@ -15,6 +15,11 @@ import no.nav.dagpenger.oauth2.OAuth2Config
 
 internal object Configuration {
     const val APP_NAME = "dp-rapportering"
+
+    const val MDC_CORRELATION_ID = "correlationId"
+
+    val NO_LOG_PATHS = setOf("/metrics", "/isAlive", "/isReady")
+
     private val defaultProperties =
         ConfigurationMap(
             mapOf(

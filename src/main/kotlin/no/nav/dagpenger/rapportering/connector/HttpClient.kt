@@ -8,6 +8,7 @@ import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.jackson.jackson
+import no.nav.dagpenger.rapportering.utils.OutgoingCallLoggingPlugin
 import java.time.Duration
 
 fun createHttpClient(engine: HttpClientEngine) =
@@ -26,5 +27,9 @@ fun createHttpClient(engine: HttpClientEngine) =
                 disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             }
+        }
+
+        install("OutgoingCallInterceptor") {
+            OutgoingCallLoggingPlugin().intercept(this)
         }
     }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import io.ktor.http.HttpHeaders
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -12,21 +13,31 @@ import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.AuthenticationConfig
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.metrics.micrometer.MicrometerMetrics
+import io.ktor.server.plugins.callid.CallId
+import io.ktor.server.plugins.callid.callIdMdc
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.path
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import mu.KotlinLogging
+import no.nav.dagpenger.rapportering.Configuration.MDC_CORRELATION_ID
+import no.nav.dagpenger.rapportering.Configuration.NO_LOG_PATHS
 import no.nav.dagpenger.rapportering.Configuration.config
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.azureAd
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.tokenX
+import no.nav.dagpenger.rapportering.repository.KallLoggRepository
+import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.clean
+import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.runMigration
+import no.nav.dagpenger.rapportering.utils.IncomingCallLoggingPlugin
+import no.nav.dagpenger.rapportering.utils.generateCallId
 import org.flywaydb.core.internal.configuration.ConfigUtils
 import org.slf4j.event.Level
 
 fun Application.konfigurasjon(
     appMicrometerRegistry: PrometheusMeterRegistry,
+    kallLoggRepository: KallLoggRepository = KallLoggRepositoryPostgres(dataSource),
     auth: AuthenticationConfig.() -> Unit = {
         jwt("tokenX") { tokenX() }
         jwt("azureAd") { azureAd() }
@@ -40,12 +51,33 @@ fun Application.konfigurasjon(
     }
     runMigration()
 
+    install(CallId) {
+        // Retrieve the callId from a headerName
+        // Automatically updates the response with the callId in the specified headerName
+        header(HttpHeaders.XRequestId)
+
+        // If it can't retrieve a callId from the ApplicationCall, it will try the generate-blocks coalescing until one of them is not null
+        generate { generateCallId() }
+
+        // Once a callId is generated, this optional function is called to verify if the retrieved or generated callId String is valid
+        verify { callId: String ->
+            callId.isNotEmpty()
+        }
+    }
+
     install(CallLogging) {
         disableDefaultColors()
         filter {
-            it.request.path() !in setOf("/metrics", "/isAlive", "/isReady")
+            it.request.path() !in NO_LOG_PATHS
         }
         level = Level.INFO
+
+        // Put callId into MDC
+        callIdMdc(MDC_CORRELATION_ID)
+    }
+
+    install(IncomingCallLoggingPlugin) {
+        this.kallLoggRepository = kallLoggRepository
     }
 
     install(Authentication) {
