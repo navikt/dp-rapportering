@@ -40,7 +40,15 @@ class RapporteringService(
     ): List<Rapporteringsperiode>? =
         hentRapporteringsperioder(ident, token)
             ?.filter { it.kanSendes }
-            ?.sortedBy { it.periode.fraOgMed }
+            ?.map { periode ->
+                if (rapporteringRepository.hentRapporteringsperiode(periode.id, ident) != null) {
+                    rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
+                    rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
+                        ?: throw RuntimeException("Fant ikke rapporteringsperiode, selv om den er lagret")
+                } else {
+                    periode
+                }
+            }?.sortedBy { it.periode.fraOgMed }
             .also { RapporteringsperiodeMetrikker.hentet.inc() }
 
     private suspend fun hentRapporteringsperioder(
