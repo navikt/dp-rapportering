@@ -21,6 +21,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration.MDC_CORRELATION_ID
+import no.nav.dagpenger.rapportering.Configuration.NO_LOG_PATHS
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
@@ -38,6 +39,10 @@ val IncomingCallLoggingPlugin: ApplicationPlugin<ICDLPConfig> =
         var body = ""
 
         onCall { call ->
+            if (NO_LOG_PATHS.firstOrNull { call.request.path().startsWith(it) } != null) {
+                return@onCall
+            }
+
             var ident = ""
             try {
                 ident = call.ident()
@@ -86,11 +91,19 @@ val IncomingCallLoggingPlugin: ApplicationPlugin<ICDLPConfig> =
             }
         }
 
-        on(ResponseBodyReadyForSend) { _, content ->
+        on(ResponseBodyReadyForSend) { call, content ->
+            if (NO_LOG_PATHS.firstOrNull { call.request.path().startsWith(it) } != null) {
+                return@on
+            }
+
             body = readBody(content)
         }
 
         on(ResponseSent) { call ->
+            if (NO_LOG_PATHS.firstOrNull { call.request.path().startsWith(it) } != null) {
+                return@on
+            }
+
             val kallLoggId = call.attributes[kallLoggIdAttr]
 
             val responseData =
