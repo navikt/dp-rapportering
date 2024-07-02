@@ -134,7 +134,13 @@ class RapporteringService(
                 .hentKorrigeringId(rapporteringId, token)
                 .let { PeriodeId(it.toLong()) }
 
-        val korrigertRapporteringsperiode = originalPeriode.copy(id = korrigertId.id, kanKorrigeres = false, status = Korrigert)
+        val korrigertRapporteringsperiode =
+            originalPeriode.copy(
+                id = korrigertId.id,
+                kanKorrigeres = false,
+                kanSendes = true,
+                status = Korrigert,
+            )
 
         lagreEllerOppdaterPeriode(korrigertRapporteringsperiode, ident)
 
