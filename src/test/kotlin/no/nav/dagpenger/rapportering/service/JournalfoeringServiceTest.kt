@@ -28,7 +28,9 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
+import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.AvsenderIdType
 import no.nav.dagpenger.rapportering.model.BrukerIdType
@@ -55,6 +57,8 @@ import java.util.UUID
 
 class JournalfoeringServiceTest {
     private val dokarkivUrl = "https://dokarkiv.nav.no"
+
+    private val token = "jwtToken"
 
     private val objectMapper =
         ObjectMapper()
@@ -123,6 +127,8 @@ class JournalfoeringServiceTest {
         val meldepliktConnector = mockk<MeldepliktConnector>()
         coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
 
+        val dokarkivConnector = DokarkivConnector(dokarkivUrl, mockTokenProvider(), createHttpClient(mockEngine))
+
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
         every { journalfoeringRepository.lagreJournalpostMidlertidig(any()) } just runs
         every { journalfoeringRepository.hentJournalpostData(any()) } returns emptyList()
@@ -144,10 +150,8 @@ class JournalfoeringServiceTest {
         val journalfoeringService =
             JournalfoeringService(
                 meldepliktConnector,
+                dokarkivConnector,
                 journalfoeringRepository,
-                dokarkivUrl,
-                mockTokenProvider(),
-                mockEngine,
                 200000,
                 200000,
             )
@@ -157,7 +161,7 @@ class JournalfoeringServiceTest {
 
         // Prøver å sende
         runBlocking {
-            journalfoeringService.journalfoer("01020312345", 0, rapporteringsperiode)
+            journalfoeringService.journalfoer("01020312345", token, 0, rapporteringsperiode)
         }
 
         // Får feil og sjekker at JournalfoeringService lagrer journalpost midlertidig
@@ -222,20 +226,20 @@ class JournalfoeringServiceTest {
                 )
             }
 
+        val dokarkivConnector = DokarkivConnector(dokarkivUrl, mockTokenProvider(), createHttpClient(mockEngine))
+
         val journalfoeringService =
             JournalfoeringService(
                 meldepliktConnector,
+                dokarkivConnector,
                 journalfoeringRepository,
-                dokarkivUrl,
-                mockTokenProvider(),
-                mockEngine,
             )
 
         val rapporteringsperiode = createRapporteringsperiode(korrigering)
 
         // Kjører
         runBlocking {
-            journalfoeringService.journalfoer("01020312345", 0, rapporteringsperiode)
+            journalfoeringService.journalfoer("01020312345", token, 0, rapporteringsperiode)
         }
 
         // Sjekker

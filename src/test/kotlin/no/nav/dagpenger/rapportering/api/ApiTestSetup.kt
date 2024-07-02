@@ -53,8 +53,9 @@ open class ApiTestSetup {
                 config = setEnvConfig()
             }
 
+            val httpClient = client
             application {
-                module()
+                module(httpClient)
             }
 
             block()
@@ -64,7 +65,8 @@ open class ApiTestSetup {
     private fun setEnvConfig(): MapApplicationConfig {
         System.setProperty("MELDEPLIKT_ADAPTER_HOST", "meldeplikt-adapter")
         System.setProperty("MELDEPLIKT_ADAPTER_AUDIENCE", REQUIRED_AUDIENCE)
-        System.setProperty("DOKARKIV_HOST", "https://dokarkiv")
+        System.setProperty("DOKARKIV_HOST", "dokarkiv")
+        System.setProperty("DOKARKIV_AUDIENCE", REQUIRED_AUDIENCE)
         System.setProperty("DB_JDBC_URL", "${database.jdbcUrl}&user=${database.username}&password=${database.password}")
         System.setProperty("token-x.client-id", TOKENX_ISSUER_ID)
         System.setProperty("TOKEN_X_CLIENT_ID", TOKENX_ISSUER_ID)
@@ -72,6 +74,9 @@ open class ApiTestSetup {
         System.setProperty("token-x.well-known-url", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
         System.setProperty("TOKEN_X_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
         System.setProperty("azure-app.well-known-url", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
+        System.setProperty("AZURE_APP_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
+        System.setProperty("AZURE_APP_CLIENT_ID", AZURE_ISSUER_ID)
+        System.setProperty("AZURE_APP_CLIENT_SECRET", TEST_PRIVATE_JWK)
 
         return MapApplicationConfig(
             "no.nav.security.jwt.issuers.size" to "1",

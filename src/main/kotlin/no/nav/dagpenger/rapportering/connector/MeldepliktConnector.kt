@@ -1,13 +1,13 @@
 package no.nav.dagpenger.rapportering.connector
 
+import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -23,10 +23,8 @@ import java.net.URI
 class MeldepliktConnector(
     private val meldepliktUrl: String = Configuration.meldepliktAdapterUrl,
     val tokenProvider: (String) -> String = Configuration.tokenXClient(Configuration.meldepliktAdapterAudience),
-    engine: HttpClientEngine = CIO.create {},
+    val httpClient: HttpClient,
 ) {
-    private val httpClient = createHttpClient(engine)
-
     suspend fun hentRapporteringsperioder(
         ident: String,
         subjectToken: String,
@@ -61,7 +59,9 @@ class MeldepliktConnector(
             if (result.status == HttpStatusCode.NoContent) {
                 null
             } else {
-                result.body()
+                result
+                    .bodyAsText()
+                    .let { Configuration.defaultObjectMapper.readValue(it, Person::class.java) }
             }
         }
 
@@ -105,7 +105,8 @@ class MeldepliktConnector(
             try {
                 sendData("/sendinn", subjectToken, rapporteringsperiode)
                     .also { logger.info { "Kall til meldeplikt-adapter for å sende inn rapporteringsperiode gikk OK" } }
-                    .body()
+                    .bodyAsText()
+                    .let { Configuration.defaultObjectMapper.readValue(it, InnsendingResponse::class.java) }
             } catch (e: Exception) {
                 logger.error(e) { "Feil ved sending av data til meldeplikt-adapter" }
                 throw e
@@ -141,7 +142,7 @@ class MeldepliktConnector(
         httpClient.post(URI("$meldepliktUrl$path").toURL()) {
             header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
             contentType(ContentType.Application.Json)
-            setBody(body)
+            setBody(Configuration.defaultObjectMapper.writeValueAsString(body))
         }
 
     companion object {

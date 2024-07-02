@@ -4,6 +4,7 @@ import io.kotest.matchers.shouldBe
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -13,17 +14,17 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import io.ktor.util.InternalAPI
+import no.nav.dagpenger.rapportering.Configuration
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.DokumentInfo
 import no.nav.dagpenger.rapportering.model.InnsendingFeil
+import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.UUID
 
-@OptIn(InternalAPI::class)
 class RapporteringApiTest : ApiTestSetup() {
     private val fnr = "12345678910"
 
@@ -33,7 +34,7 @@ class RapporteringApiTest : ApiTestSetup() {
             with(
                 client.post("/rapporteringsperiode") {
                     header("Content-Type", "application/json")
-                    body = rapporteringsperiodeFor()
+                    setBody(rapporteringsperiodeFor())
                 },
             ) {
                 status shouldBe HttpStatusCode.Unauthorized
@@ -43,12 +44,17 @@ class RapporteringApiTest : ApiTestSetup() {
     @Test
     fun `fff`() =
         setUpTestApplication {
+            // TODO: Må legge til rapporteringsperioden i databasen først
             externalServices {
                 hosts("https://meldeplikt-adapter") {
                     routing {
                         post("/sendinn") {
                             call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                            call.respond(HttpStatusCode.OK, innsendingResponse())
+                            call.respond(
+                                Configuration.defaultObjectMapper.writeValueAsString(
+                                    InnsendingResponse(id = 123L, status = "OK", feil = emptyList()),
+                                ),
+                            )
                         }
                         get("/person") {
                             call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
@@ -73,7 +79,7 @@ class RapporteringApiTest : ApiTestSetup() {
                     header(HttpHeaders.Authorization, "Bearer ${issueToken(fnr)}")
                     header(HttpHeaders.Accept, ContentType.Application.Json)
                     header(HttpHeaders.ContentType, ContentType.Application.Json)
-                    body = rapporteringsperiodeFor()
+                    setBody(rapporteringsperiodeFor())
                 },
             ) {
                 status shouldBe HttpStatusCode.OK
@@ -241,7 +247,7 @@ class RapporteringApiTest : ApiTestSetup() {
           "journalpostId": $journalpostId,
           "journalstatus": "$journalstatus",
           "journalpostferdigstilt": $journalpostferdigstilt,
-          "dokumenter": $dokumenter
+          "dokumenter": ${Configuration.defaultObjectMapper.writeValueAsString(dokumenter)}
         }
         """.trimIndent()
 }

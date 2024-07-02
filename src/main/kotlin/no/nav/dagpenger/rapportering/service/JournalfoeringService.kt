@@ -4,20 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import io.ktor.client.call.body
-import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.request.accept
-import io.ktor.client.request.bearerAuth
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
-import no.nav.dagpenger.rapportering.Configuration
+import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
-import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.AvsenderIdType
 import no.nav.dagpenger.rapportering.model.AvsenderMottaker
 import no.nav.dagpenger.rapportering.model.Bruker
@@ -26,7 +16,6 @@ import no.nav.dagpenger.rapportering.model.Dokument
 import no.nav.dagpenger.rapportering.model.DokumentVariant
 import no.nav.dagpenger.rapportering.model.Filetype
 import no.nav.dagpenger.rapportering.model.Journalpost
-import no.nav.dagpenger.rapportering.model.JournalpostResponse
 import no.nav.dagpenger.rapportering.model.Journalposttype
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -37,7 +26,6 @@ import no.nav.dagpenger.rapportering.model.Tilleggsopplysning
 import no.nav.dagpenger.rapportering.model.Variantformat
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.utils.PDFGenerator
-import java.net.URI
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -51,10 +39,8 @@ import kotlin.time.Duration
 
 class JournalfoeringService(
     private val meldepliktConnector: MeldepliktConnector,
+    private val dokarkivConnector: DokarkivConnector,
     private val journalfoeringRepository: JournalfoeringRepository,
-    private val dokarkivUrl: String = Configuration.dokarkivUrl,
-    private val tokenProvider: (String) -> String = Configuration.azureADClient(),
-    engine: HttpClientEngine = CIO.create { },
     delay: Long = 10000,
     // 5 minutes by default
     resendInterval: Long = 300_000L,
@@ -70,10 +56,6 @@ class JournalfoeringService(
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.YYYY HH:mm")
     private var locale: Locale? = Locale.of("nb", "NO") // Vi skal regne ukenummer iht norske regler
     private val woy = WeekFields.of(locale).weekOfWeekBasedYear()
-
-    private val path = "/rest/journalpostapi/v1/journalpost"
-
-    private val httpClient = createHttpClient(engine)
 
     init {
         val timer = Timer()
@@ -110,7 +92,7 @@ class JournalfoeringService(
                 // Dvs. vi kan lagre journalpostId og dokumentInfoId og slette midlertidig lagret journalpost fra DB
 
                 // Send
-                val journalpostResponse = sendJournalpost(journalpost)
+                val journalpostResponse = dokarkivConnector.sendJournalpost(journalpost)
                 val journalpostId = journalpostResponse.journalpostId
                 val dokumentInfoId = journalpostResponse.dokumenter[0].dokumentInfoId
                 val rapporteringsperiodeId =
@@ -157,10 +139,11 @@ class JournalfoeringService(
 
     suspend fun journalfoer(
         ident: String,
+        token: String,
         loginLevel: Int,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
-        val person = meldepliktConnector.hentPerson(ident, "")
+        val person = meldepliktConnector.hentPerson(ident, token)
         val navn = person?.fornavn + " " + person?.etternavn
 
         val journalpost =
@@ -195,7 +178,7 @@ class JournalfoeringService(
         logger.info("Opprettet journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
 
         try {
-            val journalpostResponse = sendJournalpost(journalpost)
+            val journalpostResponse = dokarkivConnector.sendJournalpost(journalpost)
 
             lagreJournalpostData(
                 journalpostResponse.journalpostId,
@@ -207,25 +190,6 @@ class JournalfoeringService(
 
             lagreJournalpostMidlertidig(rapporteringsperiode.id, journalpost)
         }
-    }
-
-    private suspend fun sendJournalpost(journalpost: Journalpost): JournalpostResponse {
-        val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
-
-        logger.info("Prøver å sende journalpost " + journalpost.eksternReferanseId)
-        logger.info("URL: $dokarkivUrl$path")
-
-        val response =
-            httpClient
-                .post(URI("$dokarkivUrl$path").toURL()) {
-                    bearerAuth(token)
-                    accept(ContentType.Application.Json)
-                    contentType(ContentType.Application.Json)
-                    setBody(journalpost)
-                }
-
-        logger.info("Journalpost sendt. Svar " + response.status)
-        return response.body<JournalpostResponse>()
     }
 
     private fun getTittle(rapporteringsperiode: Rapporteringsperiode): String {
