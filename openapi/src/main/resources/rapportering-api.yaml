@@ -47,24 +47,7 @@ paths:
                 - Rapporteringsperioder
             security:
                 - tokenX: []
-    /rapporteringsperiode/gjeldende:
-        get:
-            responses:
-                '200':
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Rapporteringsperiode'
-                    description: OK
-                '404':
-                    description: Not Found
-            summary: Henter ut gjeldende rapporteringsperiode
-            description: Henter ut en rapporteringsperiode. Henter alltid den eldste perioden som gjelder for tidsrommet og må fylles ut. Henter ikke ut påstartede korrigeringer.
-            operationId: get-rapporteringsperiode-gjeldende
-            tags:
-                - Rapporteringsperiode
-            security:
-                - tokenX: [ ]
+
     /rapporteringsperiode:
         post:
             requestBody:
@@ -106,6 +89,22 @@ paths:
                 - Rapporteringsperiode
             security:
                 - tokenX: [ ]
+        parameters:
+            - $ref: '#/components/parameters/periodeId'
+
+    /rapporteringsperiode/{periodeId}/start:
+        post:
+            responses:
+                200:
+                    description: OK
+                400:
+                    description: Bad Request
+            summary: Start utfylling av rapporteringsperiode
+            description: Lagrer rapporteringsperioden i databasen så den er klar til utfylling
+            tags:
+                - Rapporteringsperiode
+            security:
+                - tokenX: []
         parameters:
             - $ref: '#/components/parameters/periodeId'
 

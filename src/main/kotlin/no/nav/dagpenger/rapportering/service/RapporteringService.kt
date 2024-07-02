@@ -21,15 +21,6 @@ class RapporteringService(
     private val rapporteringRepository: RapporteringRepository,
     private val journalfoeringService: JournalfoeringService,
 ) {
-    suspend fun hentGjeldendePeriode(
-        ident: String,
-        token: String,
-    ): Rapporteringsperiode? =
-        hentRapporteringsperioder(ident, token)
-            ?.filter { it.kanSendes }
-            ?.minByOrNull { it.periode.fraOgMed }
-            ?.let { lagreEllerOppdaterPeriode(it, ident) }
-
     suspend fun hentPeriode(
         rapporteringId: Long,
         ident: String,
@@ -67,6 +58,17 @@ class RapporteringService(
                         periodeFraDb.status.ordinal <= periode.status.ordinal
                     } ?: true
             }
+
+    suspend fun startUtfylling(
+        rapporteringId: Long,
+        ident: String,
+        token: String,
+    ) {
+        hentRapporteringsperioder(ident, token)
+            ?.firstOrNull { it.id == rapporteringId }
+            ?.let { lagreEllerOppdaterPeriode(it, ident) }
+            ?: throw RuntimeException("Fant ingen gjeldende periode for ident $ident")
+    }
 
     suspend fun hentInnsendteRapporteringsperioder(
         ident: String,
