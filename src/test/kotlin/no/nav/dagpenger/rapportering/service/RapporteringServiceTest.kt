@@ -11,7 +11,6 @@ import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
-import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
@@ -36,106 +35,6 @@ class RapporteringServiceTest {
 
     private val ident = "12345678910"
     private val token = "jwtToken"
-
-    @Test
-    fun `hent gjeldende periode henter kun ut eldste periode og lagrer denne i databasen hvis den ikke finnes`() {
-        coEvery { meldepliktConnector.hentRapporteringsperioder(ident, token) } returns
-            rapporteringsperiodeListe.toAdapterRapporteringsperioder()
-        every { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
-        justRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
-
-        val gjeldendePeriode = runBlocking { rapporteringService.hentGjeldendePeriode(ident, token) }
-
-        with(gjeldendePeriode!!) {
-            id shouldBe 1
-            periode.fraOgMed shouldBe 1.januar
-            periode.tilOgMed shouldBe 14.januar
-            dager.size shouldBe 14
-            dager.first().aktiviteter shouldBe emptyList()
-            kanSendesFra shouldBe 13.januar
-            kanSendes shouldBe true
-            kanKorrigeres shouldBe false
-            bruttoBelop shouldBe null
-            status shouldBe TilUtfylling
-            registrertArbeidssoker shouldBe null
-        }
-    }
-
-    @Test
-    fun `hent gjeldende periode henter kun ut eldste periode som ikke er sendt inn fra før`() {
-        coEvery { meldepliktConnector.hentRapporteringsperioder(ident, token) } returns
-            rapporteringsperiodeListe.toAdapterRapporteringsperioder()
-        every { rapporteringRepository.hentRapporteringsperiode(1L, ident) } returns
-            lagRapporteringsperiode(
-                id = 1,
-                periode =
-                    Periode(
-                        fraOgMed = LocalDate.now().minusWeeks(3).plusDays(1),
-                        tilOgMed = LocalDate.now().minusWeeks(1),
-                    ),
-                status = Innsendt,
-            )
-        every { rapporteringRepository.hentRapporteringsperiode(2L, ident) } returns null
-        every { rapporteringRepository.hentRapporteringsperiode(3L, ident) } returns null
-        justRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
-
-        val gjeldendePeriode = runBlocking { rapporteringService.hentGjeldendePeriode(ident, token) }
-
-        with(gjeldendePeriode!!) {
-            id shouldBe 2
-            periode.fraOgMed shouldBe 15.januar
-            periode.tilOgMed shouldBe 28.januar
-            dager.size shouldBe 14
-            dager.first().aktiviteter shouldBe emptyList()
-            kanSendesFra shouldBe 27.januar
-            kanSendes shouldBe true
-            kanKorrigeres shouldBe false
-            bruttoBelop shouldBe null
-            status shouldBe TilUtfylling
-            registrertArbeidssoker shouldBe null
-        }
-    }
-
-    @Test
-    fun `hent gjeldende periode henter ut eldste periode og populerer denne med data fra databasen hvis den finnes`() {
-        val rapporteringsperiodeFraDb =
-            rapporteringsperiodeListe.first { it.id == 1L }.copy(
-                dager =
-                    getDager(
-                        startDato = 1.januar,
-                        aktivitet =
-                            Aktivitet(
-                                id = UUID.randomUUID(),
-                                type = Arbeid,
-                                timer = "PT5H30M",
-                            ),
-                    ),
-            )
-        coEvery { meldepliktConnector.hentRapporteringsperioder(ident, token) } returns
-            rapporteringsperiodeListe.toAdapterRapporteringsperioder()
-        every { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns rapporteringsperiodeFraDb
-        justRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
-
-        val gjeldendePeriode = runBlocking { rapporteringService.hentGjeldendePeriode(ident, token) }
-
-        with(gjeldendePeriode!!) {
-            id shouldBe 1
-            periode.fraOgMed shouldBe 1.januar
-            periode.tilOgMed shouldBe 14.januar
-            dager.size shouldBe 14
-            dager.first().aktiviteter.first() shouldBe
-                rapporteringsperiodeFraDb.dager
-                    .first()
-                    .aktiviteter
-                    .first()
-            kanSendesFra shouldBe 13.januar
-            kanSendes shouldBe true
-            kanKorrigeres shouldBe false
-            bruttoBelop shouldBe null
-            status shouldBe TilUtfylling
-            registrertArbeidssoker shouldBe null
-        }
-    }
 
     @Test
     fun `hent periode henter spesifisert periode som ikke er sendt inn og lagrer denne i databasen hvis den ikke finnes`() {
@@ -236,6 +135,57 @@ class RapporteringServiceTest {
     }
 
     @Test
+    fun `hent alle rapporteringsperioder populeres med data fra databasen hvis perioden finnes`() {
+        coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns
+            rapporteringsperiodeListe.toAdapterRapporteringsperioder()
+        every { rapporteringRepository.hentRapporteringsperiode(1L, ident) } returns
+            lagRapporteringsperiode(
+                id = 1,
+                periode = Periode(fraOgMed = 1.januar, tilOgMed = 14.januar),
+            ).copy(dager = getDager(startDato = 1.januar, aktivitet = Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null)))
+        every { rapporteringRepository.hentRapporteringsperiode(2L, ident) } returns null
+        every { rapporteringRepository.hentRapporteringsperiode(3L, ident) } returns null
+        justRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+
+        val rapporteringsperioder = runBlocking { rapporteringService.hentAllePerioderSomKanSendes(ident, token)!! }
+
+        verify(exactly = 1) { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+
+        rapporteringsperioder[0].id shouldBe 1L
+        rapporteringsperioder[0]
+            .dager
+            .first()
+            .aktiviteter
+            .first()
+            .type shouldBe Utdanning
+        rapporteringsperioder[1].id shouldBe 2L
+        rapporteringsperioder[2].id shouldBe 3L
+        rapporteringsperioder.size shouldBe 3
+    }
+
+    @Test
+    fun `startUtfylling lagrer perioden i databasen`() {
+        coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns null
+        every { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
+
+        shouldThrow<RuntimeException> {
+            runBlocking { rapporteringService.startUtfylling(1L, ident, token) }
+        }
+    }
+
+    @Test
+    fun `startUtfylling feiler hvis perioden ikke finnes`() {
+        coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns
+            rapporteringsperiodeListe.toAdapterRapporteringsperioder()
+        every { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
+        justRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+
+        runBlocking { rapporteringService.startUtfylling(1L, ident, token) }
+
+        verify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+    }
+
+    @Test
     fun `kan lagre aktivitet på eksisterende rapporteringsperiode`() {
         val aktiviteter = listOf(Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null))
         every { rapporteringRepository.hentDagId(any(), any()) } returns UUID.randomUUID()
@@ -274,7 +224,7 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe.first().copy(kanKorrigeres = true)
         coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns null
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns emptyList()
-        coEvery { meldepliktConnector.hentKorrigeringId(any(), any()) } returns 321L
+        coEvery { meldepliktConnector.hentKorrigeringId(any(), any()) } returns "321"
         justRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
 
         val korrigertRapporteringsperiode = runBlocking { rapporteringService.korrigerRapporteringsperiode(123L, ident, token) }

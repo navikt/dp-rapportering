@@ -21,15 +21,6 @@ class RapporteringService(
     private val rapporteringRepository: RapporteringRepository,
     private val journalfoeringService: JournalfoeringService,
 ) {
-    suspend fun hentGjeldendePeriode(
-        ident: String,
-        token: String,
-    ): Rapporteringsperiode? =
-        hentRapporteringsperioder(ident, token)
-            ?.filter { it.kanSendes }
-            ?.minByOrNull { it.periode.fraOgMed }
-            ?.let { lagreEllerOppdaterPeriode(it, ident) }
-
     suspend fun hentPeriode(
         rapporteringId: Long,
         ident: String,
@@ -49,7 +40,15 @@ class RapporteringService(
     ): List<Rapporteringsperiode>? =
         hentRapporteringsperioder(ident, token)
             ?.filter { it.kanSendes }
-            ?.sortedBy { it.periode.fraOgMed }
+            ?.map { periode ->
+                if (rapporteringRepository.hentRapporteringsperiode(periode.id, ident) != null) {
+                    rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
+                    rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
+                        ?: throw RuntimeException("Fant ikke rapporteringsperiode, selv om den er lagret")
+                } else {
+                    periode
+                }
+            }?.sortedBy { it.periode.fraOgMed }
             .also { RapporteringsperiodeMetrikker.hentet.inc() }
 
     private suspend fun hentRapporteringsperioder(
@@ -67,6 +66,17 @@ class RapporteringService(
                         periodeFraDb.status.ordinal <= periode.status.ordinal
                     } ?: true
             }
+
+    suspend fun startUtfylling(
+        rapporteringId: Long,
+        ident: String,
+        token: String,
+    ) {
+        hentRapporteringsperioder(ident, token)
+            ?.firstOrNull { it.id == rapporteringId }
+            ?.let { lagreEllerOppdaterPeriode(it, ident) }
+            ?: throw RuntimeException("Fant ingen gjeldende periode for ident $ident")
+    }
 
     suspend fun hentInnsendteRapporteringsperioder(
         ident: String,
@@ -132,9 +142,15 @@ class RapporteringService(
         val korrigertId =
             meldepliktConnector
                 .hentKorrigeringId(rapporteringId, token)
-                .let { PeriodeId(it) }
+                .let { PeriodeId(it.toLong()) }
 
-        val korrigertRapporteringsperiode = originalPeriode.copy(id = korrigertId.id, kanKorrigeres = false, status = Korrigert)
+        val korrigertRapporteringsperiode =
+            originalPeriode.copy(
+                id = korrigertId.id,
+                kanKorrigeres = false,
+                kanSendes = true,
+                status = Korrigert,
+            )
 
         lagreEllerOppdaterPeriode(korrigertRapporteringsperiode, ident)
 
