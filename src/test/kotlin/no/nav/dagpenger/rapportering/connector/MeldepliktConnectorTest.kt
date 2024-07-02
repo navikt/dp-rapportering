@@ -252,7 +252,7 @@ class MeldepliktConnectorTest {
                 connector.hentKorrigeringId(id, subjectToken)
             }
 
-        response shouldBe id
+        response.toLong() shouldBe id
     }
 
     @Test

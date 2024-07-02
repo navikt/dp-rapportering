@@ -132,7 +132,7 @@ class RapporteringService(
         val korrigertId =
             meldepliktConnector
                 .hentKorrigeringId(rapporteringId, token)
-                .let { PeriodeId(it) }
+                .let { PeriodeId(it.toLong()) }
 
         val korrigertRapporteringsperiode = originalPeriode.copy(id = korrigertId.id, kanKorrigeres = false, status = Korrigert)
 

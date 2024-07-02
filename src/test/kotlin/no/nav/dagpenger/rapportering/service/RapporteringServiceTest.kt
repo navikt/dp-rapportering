@@ -274,7 +274,7 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe.first().copy(kanKorrigeres = true)
         coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns null
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns emptyList()
-        coEvery { meldepliktConnector.hentKorrigeringId(any(), any()) } returns 321L
+        coEvery { meldepliktConnector.hentKorrigeringId(any(), any()) } returns "321"
         justRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
 
         val korrigertRapporteringsperiode = runBlocking { rapporteringService.korrigerRapporteringsperiode(123L, ident, token) }
