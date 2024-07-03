@@ -22,7 +22,7 @@ import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration.MDC_CORRELATION_ID
 import no.nav.dagpenger.rapportering.Configuration.NO_LOG_PATHS
-import no.nav.dagpenger.rapportering.api.auth.ident
+import no.nav.dagpenger.rapportering.api.auth.optionalIdent
 import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import org.slf4j.MDC
@@ -43,11 +43,7 @@ val IncomingCallLoggingPlugin: ApplicationPlugin<ICDLPConfig> =
                 return@onCall
             }
 
-            var ident = ""
-            try {
-                ident = call.ident()
-            } catch (_: Exception) {
-            }
+            val ident = call.optionalIdent() ?: ""
 
             val requestData =
                 StringBuilder()
