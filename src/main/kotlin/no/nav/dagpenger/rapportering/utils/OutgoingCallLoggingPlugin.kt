@@ -43,6 +43,8 @@ class OutgoingCallLoggingPlugin(
             // Execute call
             val originalCall = execute(requestBuilder)
 
+            val ident = getIdent(originalCall.request.headers)
+
             // Save data
             val request = originalCall.request
             val response = originalCall.response
