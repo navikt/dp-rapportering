@@ -19,6 +19,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import mu.KotlinLogging
+import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.auth.jwt
 import no.nav.dagpenger.rapportering.api.auth.loginLevel
@@ -214,7 +215,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                         rapporteringService
                             .hentInnsendteRapporteringsperioder(ident, jwtToken)
-                            .also { call.respond(HttpStatusCode.OK, it.toResponse()) }
+                            .also { call.respond(HttpStatusCode.OK, defaultObjectMapper.writeValueAsString(it.toResponse())) }
                     }
                 }
             }

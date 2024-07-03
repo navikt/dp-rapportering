@@ -1,10 +1,12 @@
 package no.nav.dagpenger.rapportering.api
 
+import com.fasterxml.jackson.core.type.TypeReference
 import io.kotest.matchers.shouldBe
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -15,10 +17,18 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.Configuration
+import no.nav.dagpenger.rapportering.connector.AdapterDag
+import no.nav.dagpenger.rapportering.connector.AdapterPeriode
+import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
+import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
+import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.DokumentInfo
 import no.nav.dagpenger.rapportering.model.InnsendingFeil
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.Periode
+import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import org.junit.jupiter.api.Test
@@ -27,6 +37,80 @@ import java.util.UUID
 
 class RapporteringApiTest : ApiTestSetup() {
     private val fnr = "12345678910"
+
+    @Test
+    fun `Kan hente rapporteringsperioder`() =
+        setUpTestApplication {
+            externalServices {
+                hosts("https://meldeplikt-adapter") {
+                    routing {
+                        get("/rapporteringsperioder") {
+                            call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                            call.respond(
+                                Configuration.defaultObjectMapper.writeValueAsString(
+                                    listOf(
+                                        adapterRapporteringsperiode(),
+                                        adapterRapporteringsperiode(id = 124L, fraOgMed = LocalDate.now().plusDays(1)),
+                                    ),
+                                ),
+                            )
+                        }
+                    }
+                }
+            }
+
+            val response =
+                client.get("/rapporteringsperioder") {
+                    header(HttpHeaders.Authorization, "Bearer ${issueToken(fnr)}")
+                }
+
+            response.status shouldBe HttpStatusCode.OK
+            with(
+                response.bodyAsText().let {
+                    Configuration.defaultObjectMapper.readValue(it, object : TypeReference<List<Rapporteringsperiode>>() {})
+                },
+            ) {
+                size shouldBe 2
+                first().id shouldBe 123L
+                last().id shouldBe 124L
+            }
+        }
+
+    @Test
+    fun `kan hente rapporteringsperiode med id`() =
+        setUpTestApplication {
+            externalServices {
+                hosts("https://meldeplikt-adapter") {
+                    routing {
+                        get("/rapporteringsperioder") {
+                            call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                            call.respond(
+                                Configuration.defaultObjectMapper.writeValueAsString(
+                                    listOf(
+                                        adapterRapporteringsperiode(),
+                                        adapterRapporteringsperiode(id = 124L, fraOgMed = LocalDate.now().plusDays(1)),
+                                    ),
+                                ),
+                            )
+                        }
+                    }
+                }
+            }
+
+            val response =
+                client.get("/rapporteringsperiode/123") {
+                    header(HttpHeaders.Authorization, "Bearer ${issueToken(fnr)}")
+                }
+
+            response.status shouldBe HttpStatusCode.OK
+            with(
+                response.bodyAsText().let {
+                    Configuration.defaultObjectMapper.readValue(it, Rapporteringsperiode::class.java)
+                },
+            ) {
+                id shouldBe 123L
+            }
+        }
 
     @Test
     fun `innsending av rapporteringsperiode uten token gir unauthorized`() =
@@ -42,7 +126,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    fun `fff`() =
+    fun `Kan sende rapporteringsperiode`() =
         setUpTestApplication {
             // TODO: Må legge til rapporteringsperioden i databasen først
             externalServices {
@@ -60,6 +144,17 @@ class RapporteringApiTest : ApiTestSetup() {
                             call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                             call.respond(person())
                         }
+                        get("/rapporteringsperioder") {
+                            call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                            call.respond(
+                                Configuration.defaultObjectMapper.writeValueAsString(
+                                    listOf(
+                                        adapterRapporteringsperiode(),
+                                        adapterRapporteringsperiode(id = 124L, fraOgMed = LocalDate.now().plusDays(1)),
+                                    ),
+                                ),
+                            )
+                        }
                     }
                 }
                 hosts("https://dokarkiv") {
@@ -72,14 +167,21 @@ class RapporteringApiTest : ApiTestSetup() {
                 }
             }
 
+            // Lagrer perioden i databasen
+            client.post("/rapporteringsperiode/123/start") {
+                header(HttpHeaders.Authorization, "Bearer ${issueToken(fnr)}")
+            }
+
             println("Rapporteringsperiode: ${rapporteringsperiodeFor()}")
+
+            println("RapporteringsperiodeJson: ${Configuration.defaultObjectMapper.writeValueAsString(rapporteringsperiodeFor())}")
 
             with(
                 client.post("/rapporteringsperiode") {
                     header(HttpHeaders.Authorization, "Bearer ${issueToken(fnr)}")
                     header(HttpHeaders.Accept, ContentType.Application.Json)
                     header(HttpHeaders.ContentType, ContentType.Application.Json)
-                    setBody(rapporteringsperiodeFor())
+                    setBody(Configuration.defaultObjectMapper.writeValueAsString(rapporteringsperiodeFor()))
                 },
             ) {
                 status shouldBe HttpStatusCode.OK
@@ -89,29 +191,58 @@ class RapporteringApiTest : ApiTestSetup() {
     fun rapporteringsperiodeFor(
         id: Long = 123L,
         fraOgMed: LocalDate = LocalDate.now().minusDays(13),
-        tilOgMed: LocalDate = LocalDate.now(),
-        dager: String = aktivitetsdagerlisteFor(startDato = fraOgMed),
-        kanSendesFra: LocalDate = LocalDate.now(),
+        tilOgMed: LocalDate = fraOgMed.plusDays(13),
+        aktivitet: Aktivitet? = null,
         kanSendes: Boolean = true,
         kanKorrigeres: Boolean = true,
         status: RapporteringsperiodeStatus = TilUtfylling,
         bruttoBelop: String? = null,
-    ) = //language=JSON
-        """
-        {
-          "id": $id,
-          "periode": {
-            "fraOgMed": "$fraOgMed",
-            "tilOgMed": "$tilOgMed"
-          },
-          "dager": $dager,
-          "kanSendesFra": "$kanSendesFra",
-          "kanSendes": $kanSendes,
-          "kanKorrigeres": $kanKorrigeres,
-          "bruttoBelop": $bruttoBelop,
-          "status": "${status.name}"
-        }
-        """.trimIndent()
+        registrertArbeidssoker: Boolean? = null,
+    ) = Rapporteringsperiode(
+        id = id,
+        periode = Periode(fraOgMed = fraOgMed, tilOgMed = tilOgMed),
+        dager =
+            (0..13).map {
+                Dag(
+                    dato = fraOgMed.plusDays(it.toLong()),
+                    aktiviteter = aktivitet?.let { listOf(aktivitet) } ?: emptyList(),
+                    dagIndex = it,
+                )
+            },
+        kanSendesFra = tilOgMed.minusDays(1),
+        kanSendes = kanSendes,
+        kanKorrigeres = kanKorrigeres,
+        status = status,
+        bruttoBelop = bruttoBelop?.toDouble(),
+        registrertArbeidssoker = registrertArbeidssoker,
+    )
+
+    fun adapterRapporteringsperiode(
+        id: Long = 123L,
+        fraOgMed: LocalDate = LocalDate.now().minusDays(13),
+        tilOgMed: LocalDate = fraOgMed.plusDays(13),
+    ) = AdapterRapporteringsperiode(
+        id = id,
+        periode =
+            AdapterPeriode(
+                fraOgMed = fraOgMed,
+                tilOgMed = tilOgMed,
+            ),
+        dager =
+            (0..13).map {
+                AdapterDag(
+                    dato = fraOgMed.plusDays(it.toLong()),
+                    aktiviteter = emptyList(),
+                    dagIndex = it,
+                )
+            },
+        kanSendesFra = tilOgMed.minusDays(1),
+        kanSendes = true,
+        kanKorrigeres = true,
+        status = AdapterRapporteringsperiodeStatus.TilUtfylling,
+        bruttoBelop = null,
+        registrertArbeidssoker = null,
+    )
 
     fun aktivitetsdagerlisteFor(
         startDato: LocalDate = LocalDate.now().minusWeeks(2),

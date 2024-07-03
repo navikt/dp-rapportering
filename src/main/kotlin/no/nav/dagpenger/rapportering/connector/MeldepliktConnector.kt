@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.connector
 
+import com.fasterxml.jackson.core.type.TypeReference
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -40,7 +41,11 @@ class MeldepliktConnector(
             if (result.status == HttpStatusCode.NoContent) {
                 null
             } else {
-                result.body()
+                result
+                    .bodyAsText()
+                    .let {
+                        Configuration.defaultObjectMapper.readValue(it, object : TypeReference<List<AdapterRapporteringsperiode>>() {})
+                    }
             }
         }
 
