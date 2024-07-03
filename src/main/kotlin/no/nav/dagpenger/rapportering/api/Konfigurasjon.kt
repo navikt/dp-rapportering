@@ -17,6 +17,7 @@ import io.ktor.server.plugins.callid.CallId
 import io.ktor.server.plugins.callid.callIdMdc
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.doublereceive.DoubleReceive
 import io.ktor.server.request.path
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import mu.KotlinLogging
@@ -50,6 +51,9 @@ fun Application.konfigurasjon(
         clean()
     }
     runMigration()
+
+    install(DoubleReceive) {
+    }
 
     install(CallId) {
         // Retrieve the callId from a headerName
