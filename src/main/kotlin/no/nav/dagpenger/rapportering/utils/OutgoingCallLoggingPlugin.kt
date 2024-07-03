@@ -47,6 +47,8 @@ class OutgoingCallLoggingPlugin(
             val request = originalCall.request
             val response = originalCall.response
 
+            val ident = getIdent(request.headers)
+
             val responseBody = response.bodyAsText(Charsets.UTF_8)
 
             try {
@@ -62,7 +64,7 @@ class OutgoingCallLoggingPlugin(
                         kallTid = Instant.now().toEpochMilli() - kallTid,
                         request = buildRequest(requestBuilder.executionContext, request),
                         response = buildResponse(response, responseBody),
-                        ident = "",
+                        ident = ident,
                         logginfo = "",
                     ),
                 )
