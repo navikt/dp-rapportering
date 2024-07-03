@@ -17,6 +17,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import no.nav.dagpenger.rapportering.Configuration
+import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.AdapterDag
 import no.nav.dagpenger.rapportering.connector.AdapterPeriode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
@@ -47,7 +48,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         get("/rapporteringsperioder") {
                             call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                             call.respond(
-                                Configuration.defaultObjectMapper.writeValueAsString(
+                                defaultObjectMapper.writeValueAsString(
                                     listOf(
                                         adapterRapporteringsperiode(),
                                         adapterRapporteringsperiode(id = 124L, fraOgMed = LocalDate.now().plusDays(1)),
@@ -67,7 +68,7 @@ class RapporteringApiTest : ApiTestSetup() {
             response.status shouldBe HttpStatusCode.OK
             with(
                 response.bodyAsText().let {
-                    Configuration.defaultObjectMapper.readValue(it, object : TypeReference<List<Rapporteringsperiode>>() {})
+                    defaultObjectMapper.readValue(it, object : TypeReference<List<Rapporteringsperiode>>() {})
                 },
             ) {
                 size shouldBe 2
@@ -85,7 +86,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         get("/rapporteringsperioder") {
                             call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                             call.respond(
-                                Configuration.defaultObjectMapper.writeValueAsString(
+                                defaultObjectMapper.writeValueAsString(
                                     listOf(
                                         adapterRapporteringsperiode(),
                                         adapterRapporteringsperiode(id = 124L, fraOgMed = LocalDate.now().plusDays(1)),
@@ -105,7 +106,7 @@ class RapporteringApiTest : ApiTestSetup() {
             response.status shouldBe HttpStatusCode.OK
             with(
                 response.bodyAsText().let {
-                    Configuration.defaultObjectMapper.readValue(it, Rapporteringsperiode::class.java)
+                    defaultObjectMapper.readValue(it, Rapporteringsperiode::class.java)
                 },
             ) {
                 id shouldBe 123L
@@ -118,7 +119,7 @@ class RapporteringApiTest : ApiTestSetup() {
             with(
                 client.post("/rapporteringsperiode") {
                     header("Content-Type", "application/json")
-                    setBody(rapporteringsperiodeFor())
+                    setBody(defaultObjectMapper.writeValueAsString(rapporteringsperiodeFor()))
                 },
             ) {
                 status shouldBe HttpStatusCode.Unauthorized
@@ -128,14 +129,13 @@ class RapporteringApiTest : ApiTestSetup() {
     @Test
     fun `Kan sende rapporteringsperiode`() =
         setUpTestApplication {
-            // TODO: Må legge til rapporteringsperioden i databasen først
             externalServices {
                 hosts("https://meldeplikt-adapter") {
                     routing {
                         post("/sendinn") {
                             call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                             call.respond(
-                                Configuration.defaultObjectMapper.writeValueAsString(
+                                defaultObjectMapper.writeValueAsString(
                                     InnsendingResponse(id = 123L, status = "OK", feil = emptyList()),
                                 ),
                             )
@@ -147,7 +147,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         get("/rapporteringsperioder") {
                             call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                             call.respond(
-                                Configuration.defaultObjectMapper.writeValueAsString(
+                                defaultObjectMapper.writeValueAsString(
                                     listOf(
                                         adapterRapporteringsperiode(),
                                         adapterRapporteringsperiode(id = 124L, fraOgMed = LocalDate.now().plusDays(1)),
@@ -172,16 +172,12 @@ class RapporteringApiTest : ApiTestSetup() {
                 header(HttpHeaders.Authorization, "Bearer ${issueToken(fnr)}")
             }
 
-            println("Rapporteringsperiode: ${rapporteringsperiodeFor()}")
-
-            println("RapporteringsperiodeJson: ${Configuration.defaultObjectMapper.writeValueAsString(rapporteringsperiodeFor())}")
-
             with(
                 client.post("/rapporteringsperiode") {
                     header(HttpHeaders.Authorization, "Bearer ${issueToken(fnr)}")
                     header(HttpHeaders.Accept, ContentType.Application.Json)
                     header(HttpHeaders.ContentType, ContentType.Application.Json)
-                    setBody(Configuration.defaultObjectMapper.writeValueAsString(rapporteringsperiodeFor()))
+                    setBody(defaultObjectMapper.writeValueAsString(rapporteringsperiodeFor()))
                 },
             ) {
                 status shouldBe HttpStatusCode.OK

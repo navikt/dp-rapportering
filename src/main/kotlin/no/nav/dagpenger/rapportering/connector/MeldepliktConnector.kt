@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
+import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Person
 import java.net.URI
@@ -44,7 +45,7 @@ class MeldepliktConnector(
                 result
                     .bodyAsText()
                     .let {
-                        Configuration.defaultObjectMapper.readValue(it, object : TypeReference<List<AdapterRapporteringsperiode>>() {})
+                        defaultObjectMapper.readValue(it, object : TypeReference<List<AdapterRapporteringsperiode>>() {})
                     }
             }
         }
@@ -66,7 +67,7 @@ class MeldepliktConnector(
             } else {
                 result
                     .bodyAsText()
-                    .let { Configuration.defaultObjectMapper.readValue(it, Person::class.java) }
+                    .let { defaultObjectMapper.readValue(it, Person::class.java) }
             }
         }
 
@@ -75,7 +76,8 @@ class MeldepliktConnector(
         subjectToken: String,
     ): List<AdapterRapporteringsperiode> =
         withContext(Dispatchers.IO) {
-            hentData<List<AdapterRapporteringsperiode>>("/sendterapporteringsperioder", subjectToken)
+            hentData<String>("/sendterapporteringsperioder", subjectToken)
+                .let { defaultObjectMapper.readValue(it, object : TypeReference<List<AdapterRapporteringsperiode>>() {}) }
                 .also {
                     logger.info { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }
                     sikkerlogg.info { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident gikk OK" }
