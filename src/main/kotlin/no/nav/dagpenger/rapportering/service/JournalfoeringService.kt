@@ -139,8 +139,8 @@ class JournalfoeringService(
 
     suspend fun journalfoer(
         ident: String,
-        token: String,
         loginLevel: Int,
+        token: String,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
         val person = meldepliktConnector.hentPerson(ident, token)
