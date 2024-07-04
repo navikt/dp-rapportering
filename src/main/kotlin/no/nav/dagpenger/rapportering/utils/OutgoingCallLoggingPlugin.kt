@@ -15,6 +15,7 @@ import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.readUTF8LineTo
 import io.ktor.utils.io.writer
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -77,6 +78,7 @@ class OutgoingCallLoggingPlugin(
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     private fun buildRequest(
         coroutineContext: CoroutineContext,
         request: HttpRequest,

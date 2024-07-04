@@ -17,6 +17,7 @@ import io.ktor.util.AttributeKey
 import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.readUTF8LineTo
 import io.ktor.utils.io.writer
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -143,6 +144,7 @@ fun getCallId(): String {
     return korrelasjonId
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 private fun readBody(subject: Any): String =
     when (subject) {
         is TextContent -> subject.text
