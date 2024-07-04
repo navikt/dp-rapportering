@@ -55,6 +55,7 @@ import java.util.UUID
 
 class JournalfoeringServiceTest {
     private val dokarkivUrl = "https://dokarkiv.nav.no"
+    private val token = "jwtToken"
 
     private val objectMapper =
         ObjectMapper()
@@ -157,7 +158,7 @@ class JournalfoeringServiceTest {
 
         // Prøver å sende
         runBlocking {
-            journalfoeringService.journalfoer("01020312345", 0, rapporteringsperiode)
+            journalfoeringService.journalfoer("01020312345", 0, token, rapporteringsperiode)
         }
 
         // Får feil og sjekker at JournalfoeringService lagrer journalpost midlertidig
@@ -235,7 +236,7 @@ class JournalfoeringServiceTest {
 
         // Kjører
         runBlocking {
-            journalfoeringService.journalfoer("01020312345", 0, rapporteringsperiode)
+            journalfoeringService.journalfoer("01020312345", 0, token, rapporteringsperiode)
         }
 
         // Sjekker

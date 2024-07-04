@@ -274,7 +274,7 @@ class RapporteringServiceTest {
     @Test
     fun `kan sende inn rapporteringsperiode`() {
         val rapporteringsperiode = rapporteringsperiodeListe.first()
-        coEvery { journalfoeringService.journalfoer(any(), any(), any()) } returns mockk()
+        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
         justRun { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
         coEvery { meldepliktConnector.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
@@ -291,9 +291,9 @@ class RapporteringServiceTest {
         innsendingResponse.id shouldBe rapporteringsperiode.id
         innsendingResponse.status shouldBe "OK"
 
-        verify(exactly = 0) {
+        verify(exactly = 1) {
             runBlocking {
-                journalfoeringService.journalfoer(any(), any(), any())
+                journalfoeringService.journalfoer(any(), any(), any(), any())
             }
         }
         verify(exactly = 1) { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
