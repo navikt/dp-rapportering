@@ -170,8 +170,8 @@ class RapporteringService(
             .sendinnRapporteringsperiode(rapporteringsperiode.toAdapterRapporteringsperiode(), token)
             .also { response ->
                 if (response.status == "OK") {
-                    // logger.info("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
-                    // journalfoeringService.journalfoer(ident, loginLevel, rapporteringsperiode)
+                    logger.info("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
+                    journalfoeringService.journalfoer(ident, loginLevel, token, rapporteringsperiode)
 
                     rapporteringRepository.oppdaterRapporteringStatus(rapporteringsperiode.id, ident, Innsendt)
                     logger.info { "Oppdaterte status for rapporteringsperiode ${rapporteringsperiode.id} til Innsendt" }
