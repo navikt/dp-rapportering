@@ -291,7 +291,7 @@ class RapporteringServiceTest {
         innsendingResponse.id shouldBe rapporteringsperiode.id
         innsendingResponse.status shouldBe "OK"
 
-        verify(exactly = 1) {
+        verify(exactly = 0) {
             runBlocking {
                 journalfoeringService.journalfoer(any(), any(), any())
             }
