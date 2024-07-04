@@ -107,6 +107,12 @@ class RapporteringRepositoryPostgres(
                 tx.lagreDager(rapporteringsperiode.id, rapporteringsperiode.dager).validateRowsAffected(excepted = 14)
             }
         }
+        rapporteringsperiode.dager.forEach { dag ->
+            if (dag.aktiviteter.isNotEmpty()) {
+                val dagId = hentDagId(rapporteringsperiode.id, dag.dagIndex)
+                lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
+            }
+        }
     }
 
     private fun TransactionalSession.lagreRapporteringsperiode(
