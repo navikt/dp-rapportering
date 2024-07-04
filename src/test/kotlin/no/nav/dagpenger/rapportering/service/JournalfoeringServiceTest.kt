@@ -46,6 +46,7 @@ import no.nav.dagpenger.rapportering.model.Tema
 import no.nav.dagpenger.rapportering.model.Tilleggsopplysning
 import no.nav.dagpenger.rapportering.model.Variantformat
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
+import no.nav.dagpenger.rapportering.repository.Postgres.database
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.LocalDate
@@ -75,9 +76,7 @@ class JournalfoeringServiceTest {
 
     @Test
     fun `Kan lagre journalposter midlertidig ved feil og sende paa nytt`() {
-        System.setProperty("DOKARKIV_HOST", dokarkivUrl)
-        System.setProperty("DOKARKIV_AUDIENCE", "test.test.dokarkiv")
-        System.setProperty("AZURE_APP_WELL_KNOWN_URL", "test.test.dokarkiv")
+        setProperties()
 
         // Mock TokenProvider
         fun mockTokenProvider() =
@@ -180,10 +179,18 @@ class JournalfoeringServiceTest {
         verify { journalfoeringRepository.sletteMidlertidigLagretJournalpost("1") }
     }
 
-    private fun test(korrigering: Boolean = false) {
+    private fun setProperties() {
+        System.setProperty(
+            "DB_JDBC_URL",
+            "${database.jdbcUrl}&user=${database.username}&password=${database.password}",
+        )
         System.setProperty("DOKARKIV_HOST", dokarkivUrl)
         System.setProperty("DOKARKIV_AUDIENCE", "test.test.dokarkiv")
         System.setProperty("AZURE_APP_WELL_KNOWN_URL", "test.test.dokarkiv")
+    }
+
+    private fun test(korrigering: Boolean = false) {
+        setProperties()
 
         // Mock TokenProvider
         fun mockTokenProvider() =
