@@ -42,8 +42,7 @@ open class ApiTestSetup {
                 mockOAuth2Server.start(8091)
             } catch (e: Exception) {
                 println("Failed to start mockserver")
-                mockOAuth2Server.shutdown()
-                mockOAuth2Server.start(8092)
+                e.stackTrace
             }
         }
 

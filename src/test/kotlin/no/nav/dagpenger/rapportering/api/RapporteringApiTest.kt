@@ -25,10 +25,8 @@ import no.nav.dagpenger.rapportering.connector.AdapterPeriode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.Aktivitet
-import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.DokumentInfo
-import no.nav.dagpenger.rapportering.model.InnsendingFeil
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
@@ -261,112 +259,6 @@ class RapporteringApiTest : ApiTestSetup() {
         bruttoBelop = null,
         registrertArbeidssoker = null,
     )
-
-    fun aktivitetsdagerlisteFor(
-        startDato: LocalDate = LocalDate.now().minusWeeks(2),
-        aktivitet: String? = null,
-    ) = //language=JSON
-        """
-        [
-            {
-                "dato": "$startDato",
-                "aktiviteter": ${aktivitet ?: "[]"},
-                "dagIndex": 0
-            },
-            {
-                "dato": "${startDato.plusDays(1)}",
-                "aktiviteter": ${aktivitet ?: "[]"},
-                "dagIndex": 1
-            },
-            {
-                "dato": "${startDato.plusDays(2)}",
-                "aktiviteter": ${aktivitet ?: "[]"},
-                "dagIndex": 2
-            },
-            {
-                "dato": "${startDato.plusDays(3)}",
-                "aktiviteter": ${aktivitet ?: "[]"},
-                "dagIndex": 3
-            },
-            {
-                "dato": "${startDato.plusDays(4)}",
-                "aktiviteter": ${aktivitet ?: "[]"},
-                "dagIndex": 4
-            },
-            {
-                "dato": "${startDato.plusDays(5)}",
-                "aktiviteter": ${aktivitet ?: "[]"},
-                "dagIndex": 5
-            },
-            {
-                "dato": "${startDato.plusDays(6)}",
-                "aktiviteter": ${aktivitet ?: "[]"},
-                "dagIndex": 6
-            },
-            {
-                "dato": "${startDato.plusDays(7)}",
-                "aktiviteter": ${aktivitet ?: "[]"},
-                "dagIndex": 7
-            },
-            {
-                "dato": "${startDato.plusDays(8)}",
-                "aktiviteter": ${aktivitet ?: "[]"},
-                "dagIndex": 8
-            },
-            {
-                "dato": "${startDato.plusDays(9)}",
-                "aktiviteter": ${aktivitet ?: "[]"},
-                "dagIndex": 9
-            },
-            {
-                "dato": "${startDato.plusDays(10)}",
-                "aktiviteter": ${aktivitet ?: "[]"},
-                "dagIndex": 10
-            },
-            {
-                "dato": "${startDato.plusDays(11)}",
-                "aktiviteter": ${aktivitet ?: "[]"},
-                "dagIndex": 11
-            },
-            {
-                "dato": "${startDato.plusDays(12)}",
-                "aktiviteter": ${aktivitet ?: "[]"},
-                "dagIndex": 12
-            },
-            {
-                "dato": "${startDato.plusDays(13)}",
-                "aktiviteter": ${aktivitet ?: "[]"},
-                "dagIndex": 13
-            }
-        ]
-        """.trimIndent()
-
-    fun aktivitetsliste(
-        type: AktivitetsType,
-        timer: Double? = null,
-    ) = //language=JSON
-        """
-        [
-          {
-            "uuid": "${UUID.randomUUID()}",
-            "type": "$type",
-            "timer": $timer
-          }
-        ]
-        """.trimIndent()
-
-    fun innsendingResponse(
-        id: Long = 123L,
-        status: String = "OK",
-        feil: List<InnsendingFeil> = emptyList(),
-    ) = // language=JSON
-        """
-        {
-          "id": $id,
-          "status": "$status",
-          "feil": $feil
-        }
-        """.trimIndent()
 
     fun person(
         personId: Long = 123L,

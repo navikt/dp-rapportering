@@ -309,9 +309,6 @@ class JournalfoeringServiceTest {
                 is TextContent -> content.text
                 else -> throw IllegalArgumentException("Unsupported content type")
             }
-        /* val body = content as OutgoingContent.WriteChannelContent
-        val channel = GlobalScope.writer(Dispatchers.IO) { body.writeTo(channel) }.channel
-        val bodyString = String(channel.toByteArray()) */
 
         val journalpost = objectMapper.readValue(bodyString, Journalpost::class.java)
 
