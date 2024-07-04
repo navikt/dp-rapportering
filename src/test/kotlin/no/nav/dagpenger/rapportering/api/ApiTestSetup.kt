@@ -37,12 +37,20 @@ open class ApiTestSetup {
         @BeforeAll
         @JvmStatic
         fun setup() {
-            mockOAuth2Server.start(8091)
+            try {
+                println("Start mockserver")
+                mockOAuth2Server.start(8091)
+            } catch (e: Exception) {
+                println("Failed to start mockserver")
+                mockOAuth2Server.shutdown()
+                mockOAuth2Server.start(8092)
+            }
         }
 
         @AfterAll
         @JvmStatic
         fun cleanup() {
+            println("Stopper mockserver")
             mockOAuth2Server.shutdown()
         }
     }

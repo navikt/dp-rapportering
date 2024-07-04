@@ -14,6 +14,7 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
+import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import io.ktor.util.toByteArray
 import io.ktor.utils.io.ByteReadChannel
@@ -21,6 +22,7 @@ import io.ktor.utils.io.writer
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.just
+import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
@@ -187,6 +189,7 @@ class JournalfoeringServiceTest {
         System.setProperty("DOKARKIV_HOST", dokarkivUrl)
         System.setProperty("DOKARKIV_AUDIENCE", "test.test.dokarkiv")
         System.setProperty("AZURE_APP_WELL_KNOWN_URL", "test.test.dokarkiv")
+        System.setProperty("DB_JDBC_URL", "test")
 
         // Mock TokenProvider
         fun mockTokenProvider() =
@@ -199,7 +202,7 @@ class JournalfoeringServiceTest {
         coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
 
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
-        every { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) } just runs
+        justRun { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) }
         every { journalfoeringRepository.hentMidlertidigLagredeJournalposter() } returns emptyList()
 
         // Mock svar fra Dokarkiv
@@ -297,9 +300,18 @@ class JournalfoeringServiceTest {
         opprineligRapporteringsperiode: Rapporteringsperiode,
     ) {
         // Henter Journalpost vi har sendt
-        val body = content as OutgoingContent.WriteChannelContent
+        val bodyString =
+            when (content) {
+                is OutgoingContent.WriteChannelContent -> {
+                    val channel = GlobalScope.writer(Dispatchers.IO) { content.writeTo(channel) }.channel
+                    String(channel.toByteArray())
+                }
+                is TextContent -> content.text
+                else -> throw IllegalArgumentException("Unsupported content type")
+            }
+        /* val body = content as OutgoingContent.WriteChannelContent
         val channel = GlobalScope.writer(Dispatchers.IO) { body.writeTo(channel) }.channel
-        val bodyString = String(channel.toByteArray())
+        val bodyString = String(channel.toByteArray()) */
 
         val journalpost = objectMapper.readValue(bodyString, Journalpost::class.java)
 

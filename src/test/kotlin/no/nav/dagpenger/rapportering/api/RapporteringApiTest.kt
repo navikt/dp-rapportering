@@ -16,8 +16,10 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
-import no.nav.dagpenger.rapportering.Configuration
+import io.ktor.server.testing.ExternalServicesBuilder
 import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.connector.AdapterAktivitet
+import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.connector.AdapterDag
 import no.nav.dagpenger.rapportering.connector.AdapterPeriode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
@@ -32,32 +34,23 @@ import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation
+import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
 import java.time.LocalDate
 import java.util.UUID
 
+@TestMethodOrder(OrderAnnotation::class)
 class RapporteringApiTest : ApiTestSetup() {
     private val fnr = "12345678910"
 
     @Test
+    @Order(Integer.MIN_VALUE)
     fun `Kan hente rapporteringsperioder`() =
         setUpTestApplication {
             externalServices {
-                hosts("https://meldeplikt-adapter") {
-                    routing {
-                        get("/rapporteringsperioder") {
-                            call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                            call.respond(
-                                defaultObjectMapper.writeValueAsString(
-                                    listOf(
-                                        adapterRapporteringsperiode(),
-                                        adapterRapporteringsperiode(id = 124L, fraOgMed = LocalDate.now().plusDays(1)),
-                                    ),
-                                ),
-                            )
-                        }
-                    }
-                }
+                meldepliktAdapter()
             }
 
             val response =
@@ -68,6 +61,7 @@ class RapporteringApiTest : ApiTestSetup() {
             response.status shouldBe HttpStatusCode.OK
             with(
                 response.bodyAsText().let {
+                    println("/rapporteringsperioder body: $it")
                     defaultObjectMapper.readValue(it, object : TypeReference<List<Rapporteringsperiode>>() {})
                 },
             ) {
@@ -78,24 +72,11 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
+    @Order(1)
     fun `kan hente rapporteringsperiode med id`() =
         setUpTestApplication {
             externalServices {
-                hosts("https://meldeplikt-adapter") {
-                    routing {
-                        get("/rapporteringsperioder") {
-                            call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                            call.respond(
-                                defaultObjectMapper.writeValueAsString(
-                                    listOf(
-                                        adapterRapporteringsperiode(),
-                                        adapterRapporteringsperiode(id = 124L, fraOgMed = LocalDate.now().plusDays(1)),
-                                    ),
-                                ),
-                            )
-                        }
-                    }
-                }
+                meldepliktAdapter()
             }
 
             val response =
@@ -114,6 +95,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
+    @Order(2)
     fun `innsending av rapporteringsperiode uten token gir unauthorized`() =
         setUpTestApplication {
             with(
@@ -127,44 +109,12 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
+    @Order(3)
     fun `Kan sende rapporteringsperiode`() =
         setUpTestApplication {
             externalServices {
-                hosts("https://meldeplikt-adapter") {
-                    routing {
-                        post("/sendinn") {
-                            call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                            call.respond(
-                                defaultObjectMapper.writeValueAsString(
-                                    InnsendingResponse(id = 123L, status = "OK", feil = emptyList()),
-                                ),
-                            )
-                        }
-                        get("/person") {
-                            call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                            call.respond(person())
-                        }
-                        get("/rapporteringsperioder") {
-                            call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                            call.respond(
-                                defaultObjectMapper.writeValueAsString(
-                                    listOf(
-                                        adapterRapporteringsperiode(),
-                                        adapterRapporteringsperiode(id = 124L, fraOgMed = LocalDate.now().plusDays(1)),
-                                    ),
-                                ),
-                            )
-                        }
-                    }
-                }
-                hosts("https://dokarkiv") {
-                    routing {
-                        post("/rest/journalpostapi/v1/journalpost") {
-                            call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                            call.respond(journalpostResponse())
-                        }
-                    }
-                }
+                meldepliktAdapter()
+                dokarkiv()
             }
 
             // Lagrer perioden i databasen
@@ -183,6 +133,76 @@ class RapporteringApiTest : ApiTestSetup() {
                 status shouldBe HttpStatusCode.OK
             }
         }
+
+    fun ExternalServicesBuilder.dokarkiv() {
+        hosts("https://dokarkiv") {
+            routing {
+                post("/rest/journalpostapi/v1/journalpost") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    call.respond(journalpostResponse())
+                }
+            }
+        }
+    }
+
+    fun ExternalServicesBuilder.meldepliktAdapter() {
+        hosts("https://meldeplikt-adapter") {
+            routing {
+                get("/rapporteringsperioder") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    call.respond(
+                        defaultObjectMapper.writeValueAsString(
+                            listOf(
+                                adapterRapporteringsperiode(),
+                                adapterRapporteringsperiode(id = 124L, fraOgMed = LocalDate.now().plusDays(1)),
+                            ),
+                        ),
+                    )
+                }
+                get("/sendterapporteringsperioder") {
+                    val aktivitet =
+                        AdapterAktivitet(
+                            uuid = UUID.randomUUID(),
+                            type = Arbeid,
+                            timer = 7.5,
+                        )
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    call.respond(
+                        defaultObjectMapper.writeValueAsString(
+                            listOf(
+                                adapterRapporteringsperiode(
+                                    aktivitet = aktivitet.copy(uuid = UUID.randomUUID()),
+                                    status = AdapterRapporteringsperiodeStatus.Innsendt,
+                                ),
+                                adapterRapporteringsperiode(
+                                    id = 124L,
+                                    fraOgMed = LocalDate.now().plusDays(1),
+                                    aktivitet = aktivitet,
+                                    status = AdapterRapporteringsperiodeStatus.Innsendt,
+                                ),
+                            ),
+                        ),
+                    )
+                }
+                get("/korrigerrapporteringsperiode/{id}") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    call.respond(321L)
+                }
+                post("/sendinn") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    call.respond(
+                        defaultObjectMapper.writeValueAsString(
+                            InnsendingResponse(id = 123L, status = "OK", feil = emptyList()),
+                        ),
+                    )
+                }
+                get("/person") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    call.respond(person())
+                }
+            }
+        }
+    }
 
     fun rapporteringsperiodeFor(
         id: Long = 123L,
@@ -217,6 +237,8 @@ class RapporteringApiTest : ApiTestSetup() {
         id: Long = 123L,
         fraOgMed: LocalDate = LocalDate.now().minusDays(13),
         tilOgMed: LocalDate = fraOgMed.plusDays(13),
+        aktivitet: AdapterAktivitet? = null,
+        status: AdapterRapporteringsperiodeStatus = AdapterRapporteringsperiodeStatus.TilUtfylling,
     ) = AdapterRapporteringsperiode(
         id = id,
         periode =
@@ -228,14 +250,14 @@ class RapporteringApiTest : ApiTestSetup() {
             (0..13).map {
                 AdapterDag(
                     dato = fraOgMed.plusDays(it.toLong()),
-                    aktiviteter = emptyList(),
+                    aktiviteter = aktivitet?.let { listOf(aktivitet) } ?: emptyList(),
                     dagIndex = it,
                 )
             },
         kanSendesFra = tilOgMed.minusDays(1),
         kanSendes = true,
         kanKorrigeres = true,
-        status = AdapterRapporteringsperiodeStatus.TilUtfylling,
+        status = status,
         bruttoBelop = null,
         registrertArbeidssoker = null,
     )
@@ -374,7 +396,7 @@ class RapporteringApiTest : ApiTestSetup() {
           "journalpostId": $journalpostId,
           "journalstatus": "$journalstatus",
           "journalpostferdigstilt": $journalpostferdigstilt,
-          "dokumenter": ${Configuration.defaultObjectMapper.writeValueAsString(dokumenter)}
+          "dokumenter": ${defaultObjectMapper.writeValueAsString(dokumenter)}
         }
         """.trimIndent()
 }

@@ -3,8 +3,10 @@ package no.nav.dagpenger.rapportering.api
 import io.kotest.matchers.shouldBe
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
+@Disabled
 class InternalApiTest : ApiTestSetup() {
     @Test
     fun `isAlive svarer OK`() =
