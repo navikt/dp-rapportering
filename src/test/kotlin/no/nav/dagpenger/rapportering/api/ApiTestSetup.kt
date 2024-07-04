@@ -32,17 +32,18 @@ open class ApiTestSetup {
             }
             """.trimIndent()
 
-        val mockOAuth2Server = MockOAuth2Server()
+        var mockOAuth2Server = MockOAuth2Server()
 
         @BeforeAll
         @JvmStatic
         fun setup() {
             try {
                 println("Start mockserver")
+                mockOAuth2Server = MockOAuth2Server()
                 mockOAuth2Server.start(8091)
             } catch (e: Exception) {
                 println("Failed to start mockserver")
-                e.stackTrace
+                println(e)
             }
         }
 
