@@ -1,12 +1,9 @@
 package no.nav.dagpenger.rapportering.api
 
-import com.fasterxml.jackson.core.type.TypeReference
 import io.kotest.matchers.shouldBe
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -58,27 +55,26 @@ class RapporteringApiTest : ApiTestSetup() {
     }
 
     @Test
-    fun `Kan hente rapporteringsperioder`() =
+    fun `Kan sende rapporteringsperiode`() =
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
+                dokarkiv()
             }
 
-            val response =
-                client.get("/rapporteringsperioder") {
-                    header(HttpHeaders.Authorization, "Bearer ${issueToken(fnr)}")
-                }
+            // Lagrer perioden i databasen
+            client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
 
-            response.status shouldBe HttpStatusCode.OK
-            with(
-                response.bodyAsText().let {
-                    println("/rapporteringsperioder body: $it")
-                    defaultObjectMapper.readValue(it, object : TypeReference<List<Rapporteringsperiode>>() {})
-                },
-            ) {
-                size shouldBe 2
-                first().id shouldBe 123L
-                last().id shouldBe 124L
+            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor())) {
+                status shouldBe HttpStatusCode.OK
+            }
+        }
+
+    @Test
+    fun `innsending av rapporteringsperiode uten token gir unauthorized`() =
+        setUpTestApplication {
+            with(client.doPost("/rapporteringsperiode", null, rapporteringsperiodeFor())) {
+                status shouldBe HttpStatusCode.Unauthorized
             }
         }
 
@@ -89,56 +85,70 @@ class RapporteringApiTest : ApiTestSetup() {
                 meldepliktAdapter()
             }
 
-            val response =
-                client.get("/rapporteringsperiode/123") {
-                    header(HttpHeaders.Authorization, "Bearer ${issueToken(fnr)}")
-                }
+            val response = client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
 
-            response.status shouldBe HttpStatusCode.OK
-            with(
-                response.bodyAsText().let {
-                    defaultObjectMapper.readValue(it, Rapporteringsperiode::class.java)
-                },
-            ) {
-                id shouldBe 123L
-            }
+            response.httpResponse.status shouldBe HttpStatusCode.OK
+            response.body.id shouldBe 123L
         }
 
     @Test
-    fun `innsending av rapporteringsperiode uten token gir unauthorized`() =
-        setUpTestApplication {
-            with(
-                client.post("/rapporteringsperiode") {
-                    header("Content-Type", "application/json")
-                    setBody(defaultObjectMapper.writeValueAsString(rapporteringsperiodeFor()))
-                },
-            ) {
-                status shouldBe HttpStatusCode.Unauthorized
-            }
-        }
-
-    @Test
-    fun `Kan sende rapporteringsperiode`() =
+    fun `Kan starte utfylling av rapporteringsperiode`() =
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
-                dokarkiv()
             }
 
-            // Lagrer perioden i databasen
-            client.post("/rapporteringsperiode/123/start") {
-                header(HttpHeaders.Authorization, "Bearer ${issueToken(fnr)}")
+            val startResponse = client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
+            startResponse.status shouldBe HttpStatusCode.OK
+
+            val periodeResponse = client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
+            with(periodeResponse.body) {
+                id shouldBe 123L
+                status shouldBe TilUtfylling
+                bruttoBelop shouldBe null
+                registrertArbeidssoker shouldBe null
+            }
+        }
+
+    @Test
+    fun `Kan lagre om bruker ønsker å stå som arbeidssøker`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
             }
 
-            with(
-                client.post("/rapporteringsperiode") {
-                    header(HttpHeaders.Authorization, "Bearer ${issueToken(fnr)}")
-                    header(HttpHeaders.Accept, ContentType.Application.Json)
-                    header(HttpHeaders.ContentType, ContentType.Application.Json)
-                    setBody(defaultObjectMapper.writeValueAsString(rapporteringsperiodeFor()))
-                },
-            ) {
-                status shouldBe HttpStatusCode.OK
+            client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
+
+            val response =
+                client.doPost("/rapporteringsperiode/123/arbeidssoker", issueToken(fnr), ArbeidssokerRequest(true))
+            response.status shouldBe HttpStatusCode.NoContent
+
+            val periodeResponse = client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
+            periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
+            with(periodeResponse.body) {
+                id shouldBe 123L
+                status shouldBe TilUtfylling
+                bruttoBelop shouldBe null
+                registrertArbeidssoker shouldBe true
+            }
+        }
+
+    @Test
+    fun `Kan hente rapporteringsperioder`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
+            }
+
+            val response =
+                client
+                    .doGetAndReceive<List<Rapporteringsperiode>>("/rapporteringsperioder", issueToken(fnr))
+
+            response.httpResponse.status shouldBe HttpStatusCode.OK
+            with(response.body) {
+                size shouldBe 2
+                first().id shouldBe 123L
+                last().id shouldBe 124L
             }
         }
 

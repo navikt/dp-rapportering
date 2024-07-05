@@ -1,0 +1,64 @@
+package no.nav.dagpenger.rapportering.api
+
+import com.fasterxml.jackson.core.type.TypeReference
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
+
+val objectMapper = defaultObjectMapper
+
+suspend fun HttpClient.doPost(
+    urlString: String,
+    token: String? = null,
+    body: Any? = null,
+): HttpResponse =
+    this.post(urlString) {
+        header(HttpHeaders.Accept, ContentType.Application.Json)
+        header(HttpHeaders.ContentType, ContentType.Application.Json)
+        if (token != null) {
+            header(HttpHeaders.Authorization, "Bearer $token")
+        }
+        if (body != null) {
+            setBody(objectMapper.writeValueAsString(body))
+        }
+    }
+
+suspend inline fun <reified T> HttpClient.doPostAndReceive(
+    urlString: String,
+    token: String? = null,
+    body: Any? = null,
+): Response<T> =
+    this.doPost(urlString, token, body).let {
+        Response(it, objectMapper.readValue(it.bodyAsText(), object : TypeReference<T>() {}))
+    }
+
+suspend fun HttpClient.doGet(
+    urlString: String,
+    token: String? = null,
+): HttpResponse =
+    this.get(urlString) {
+        header(HttpHeaders.Accept, ContentType.Application.Json)
+        if (token != null) {
+            header(HttpHeaders.Authorization, "Bearer $token")
+        }
+    }
+
+suspend inline fun <reified T> HttpClient.doGetAndReceive(
+    urlString: String,
+    token: String? = null,
+): Response<T> =
+    this
+        .doGet(urlString, token)
+        .let { Response(it, objectMapper.readValue(it.bodyAsText(), object : TypeReference<T>() {})) }
+
+data class Response<T>(
+    val httpResponse: HttpResponse,
+    val body: T,
+)
