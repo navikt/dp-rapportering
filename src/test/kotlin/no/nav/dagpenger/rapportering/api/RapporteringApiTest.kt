@@ -25,12 +25,14 @@ import no.nav.dagpenger.rapportering.connector.AdapterPeriode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.Aktivitet
+import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.DokumentInfo
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Korrigert
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import org.junit.jupiter.api.AfterEach
@@ -92,7 +94,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    fun `Kan starte utfylling av rapporteringsperiode`() =
+    fun `kan starte utfylling av rapporteringsperiode`() =
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
@@ -111,7 +113,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    fun `Kan lagre om bruker ønsker å stå som arbeidssøker`() =
+    fun `kan lagre om bruker ønsker å stå som arbeidssøker`() =
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
@@ -134,7 +136,57 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    fun `Kan hente rapporteringsperioder`() =
+    fun `kan lagre aktivitet`() {
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
+            }
+
+            client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
+
+            val aktivitet = Aktivitet(UUID.randomUUID(), Aktivitet.AktivitetsType.Arbeid, "PT7H30M")
+            val dagMedAktivitet = Dag(LocalDate.now(), listOf(aktivitet), 0)
+            val response = client.doPost("/rapporteringsperiode/123/aktivitet", issueToken(fnr), dagMedAktivitet)
+            response.status shouldBe HttpStatusCode.NoContent
+
+            val periodeResponse = client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
+            periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
+            with(periodeResponse.body) {
+                id shouldBe 123L
+                status shouldBe TilUtfylling
+                bruttoBelop shouldBe null
+                registrertArbeidssoker shouldBe null
+                dager.first().aktiviteter.first() shouldBe aktivitet
+            }
+        }
+    }
+
+    @Test
+    fun `Kan korrigere rapporteringsperiode`() {
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
+            }
+
+            val response = client.doPostAndReceive<Rapporteringsperiode>("/rapporteringsperiode/125/korriger", issueToken(fnr))
+            response.httpResponse.status shouldBe HttpStatusCode.OK
+            with(response.body) {
+                id shouldBe 321L
+                dager.forEach { dag ->
+                    dag.aktiviteter.forEach { aktivitet ->
+                        aktivitet.type shouldBe AktivitetsType.Arbeid
+                        aktivitet.timer shouldBe "PT7H30M"
+                    }
+                }
+                status shouldBe Korrigert
+                kanKorrigeres shouldBe false
+                kanSendes shouldBe true
+            }
+        }
+    }
+
+    @Test
+    fun `kan hente rapporteringsperioder`() =
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
@@ -151,6 +203,26 @@ class RapporteringApiTest : ApiTestSetup() {
                 last().id shouldBe 124L
             }
         }
+
+    @Test
+    fun `kan hente tidligere innsendte rapporteringsperioder`() {
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
+            }
+
+            val response =
+                client
+                    .doGetAndReceive<List<Rapporteringsperiode>>("/rapporteringsperioder/innsendte", issueToken(fnr))
+
+            response.httpResponse.status shouldBe HttpStatusCode.OK
+            with(response.body) {
+                size shouldBe 2
+                first().id shouldBe 126L
+                last().id shouldBe 125L
+            }
+        }
+    }
 
     fun ExternalServicesBuilder.dokarkiv() {
         hosts("https://dokarkiv") {
@@ -189,11 +261,12 @@ class RapporteringApiTest : ApiTestSetup() {
                         defaultObjectMapper.writeValueAsString(
                             listOf(
                                 adapterRapporteringsperiode(
+                                    id = 125L,
                                     aktivitet = aktivitet.copy(uuid = UUID.randomUUID()),
                                     status = AdapterRapporteringsperiodeStatus.Innsendt,
                                 ),
                                 adapterRapporteringsperiode(
-                                    id = 124L,
+                                    id = 126L,
                                     fraOgMed = LocalDate.now().plusDays(1),
                                     aktivitet = aktivitet,
                                     status = AdapterRapporteringsperiodeStatus.Innsendt,
@@ -204,7 +277,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 }
                 get("/korrigerrapporteringsperiode/{id}") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    call.respond(321L)
+                    call.respond("321")
                 }
                 post("/sendinn") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
@@ -268,7 +341,7 @@ class RapporteringApiTest : ApiTestSetup() {
             (0..13).map {
                 AdapterDag(
                     dato = fraOgMed.plusDays(it.toLong()),
-                    aktiviteter = aktivitet?.let { listOf(aktivitet) } ?: emptyList(),
+                    aktiviteter = aktivitet?.let { listOf(aktivitet.copy(uuid = UUID.randomUUID())) } ?: emptyList(),
                     dagIndex = it,
                 )
             },
