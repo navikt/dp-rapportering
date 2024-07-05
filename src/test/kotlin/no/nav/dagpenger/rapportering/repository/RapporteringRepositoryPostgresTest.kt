@@ -84,7 +84,7 @@ class RapporteringRepositoryPostgresTest {
     }
 
     @Test
-    fun `kan lagre rapporteringsperiode `() {
+    fun `kan lagre rapporteringsperiode med aktiviteter`() {
         val rapporteringsperiode =
             getRapporteringsperiode(dager = getDager(aktivitet = Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null)))
         withMigratedDb {
