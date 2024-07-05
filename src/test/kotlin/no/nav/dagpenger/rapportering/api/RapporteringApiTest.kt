@@ -17,6 +17,9 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.ExternalServicesBuilder
+import kotliquery.queryOf
+import kotliquery.sessionOf
+import kotliquery.using
 import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Arbeid
@@ -32,19 +35,29 @@ import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation
-import org.junit.jupiter.api.Order
+import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestMethodOrder
 import java.time.LocalDate
 import java.util.UUID
 
-@TestMethodOrder(OrderAnnotation::class)
 class RapporteringApiTest : ApiTestSetup() {
     private val fnr = "12345678910"
 
+    @AfterEach
+    fun clean() {
+        println("Cleaning database")
+        using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf(
+                    "TRUNCATE TABLE aktivitet, dag, midlertidig_lagrede_journalposter, " +
+                        "opprettede_journalposter, rapporteringsperiode, kall_logg",
+                ).asExecute,
+            )
+        }
+    }
+
     @Test
-    @Order(Integer.MIN_VALUE)
     fun `Kan hente rapporteringsperioder`() =
         setUpTestApplication {
             externalServices {
@@ -70,7 +83,6 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    @Order(1)
     fun `kan hente rapporteringsperiode med id`() =
         setUpTestApplication {
             externalServices {
@@ -93,7 +105,6 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    @Order(2)
     fun `innsending av rapporteringsperiode uten token gir unauthorized`() =
         setUpTestApplication {
             with(
@@ -107,7 +118,6 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    @Order(3)
     fun `Kan sende rapporteringsperiode`() =
         setUpTestApplication {
             externalServices {

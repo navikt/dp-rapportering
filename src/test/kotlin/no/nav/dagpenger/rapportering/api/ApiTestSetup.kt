@@ -50,7 +50,7 @@ open class ApiTestSetup {
         @AfterAll
         @JvmStatic
         fun cleanup() {
-            println("Stopper mockserver")
+            println("Stopping mockserver")
             mockOAuth2Server.shutdown()
         }
     }
