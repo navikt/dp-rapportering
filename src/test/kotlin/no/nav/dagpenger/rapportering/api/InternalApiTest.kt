@@ -7,16 +7,24 @@ import org.junit.jupiter.api.Test
 
 class InternalApiTest : ApiTestSetup() {
     @Test
-    fun testInternalApi() =
+    fun `isAlive svarer OK`() =
         setUpTestApplication {
             with(client.get("/isAlive")) {
                 status shouldBe HttpStatusCode.OK
             }
+        }
 
+    @Test
+    fun `isReady svarer OK`() =
+        setUpTestApplication {
             with(client.get("/isReady")) {
                 status shouldBe HttpStatusCode.OK
             }
+        }
 
+    @Test
+    fun `metrics svarer OK`() =
+        setUpTestApplication {
             with(client.get("/metrics")) {
                 status shouldBe HttpStatusCode.OK
             }

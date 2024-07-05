@@ -32,7 +32,7 @@ class MeldepliktConnectorTest {
     ) = MeldepliktConnector(
         meldepliktUrl = meldepliktUrl,
         tokenProvider = testTokenProvider,
-        engine = createMockClient(statusCode, responseBody),
+        httpClient = createMockClient(statusCode, responseBody),
     )
 
     @Test

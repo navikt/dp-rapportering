@@ -14,6 +14,7 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
+import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import io.ktor.util.toByteArray
 import io.ktor.utils.io.ByteReadChannel
@@ -21,6 +22,7 @@ import io.ktor.utils.io.writer
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.just
+import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
@@ -28,7 +30,9 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
+import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.AvsenderIdType
 import no.nav.dagpenger.rapportering.model.BrukerIdType
@@ -123,6 +127,8 @@ class JournalfoeringServiceTest {
         val meldepliktConnector = mockk<MeldepliktConnector>()
         coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
 
+        val dokarkivConnector = DokarkivConnector(dokarkivUrl, mockTokenProvider(), createHttpClient(mockEngine))
+
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
         every { journalfoeringRepository.lagreJournalpostMidlertidig(any()) } just runs
         every { journalfoeringRepository.hentJournalpostData(any()) } returns emptyList()
@@ -144,10 +150,8 @@ class JournalfoeringServiceTest {
         val journalfoeringService =
             JournalfoeringService(
                 meldepliktConnector,
+                dokarkivConnector,
                 journalfoeringRepository,
-                dokarkivUrl,
-                mockTokenProvider(),
-                mockEngine,
                 200000,
                 200000,
             )
@@ -203,7 +207,7 @@ class JournalfoeringServiceTest {
         coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
 
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
-        every { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) } just runs
+        justRun { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) }
         every { journalfoeringRepository.hentMidlertidigLagredeJournalposter() } returns emptyList()
 
         // Mock svar fra Dokarkiv
@@ -230,13 +234,13 @@ class JournalfoeringServiceTest {
                 )
             }
 
+        val dokarkivConnector = DokarkivConnector(dokarkivUrl, mockTokenProvider(), createHttpClient(mockEngine))
+
         val journalfoeringService =
             JournalfoeringService(
                 meldepliktConnector,
+                dokarkivConnector,
                 journalfoeringRepository,
-                dokarkivUrl,
-                mockTokenProvider(),
-                mockEngine,
             )
 
         val rapporteringsperiode = createRapporteringsperiode(korrigering)
@@ -301,9 +305,15 @@ class JournalfoeringServiceTest {
         opprineligRapporteringsperiode: Rapporteringsperiode,
     ) {
         // Henter Journalpost vi har sendt
-        val body = content as OutgoingContent.WriteChannelContent
-        val channel = GlobalScope.writer(Dispatchers.IO) { body.writeTo(channel) }.channel
-        val bodyString = String(channel.toByteArray())
+        val bodyString =
+            when (content) {
+                is OutgoingContent.WriteChannelContent -> {
+                    val channel = GlobalScope.writer(Dispatchers.IO) { content.writeTo(channel) }.channel
+                    String(channel.toByteArray())
+                }
+                is TextContent -> content.text
+                else -> throw IllegalArgumentException("Unsupported content type")
+            }
 
         val journalpost = objectMapper.readValue(bodyString, Journalpost::class.java)
 
