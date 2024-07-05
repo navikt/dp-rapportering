@@ -84,6 +84,30 @@ class RapporteringRepositoryPostgresTest {
     }
 
     @Test
+    fun `kan lagre rapporteringsperiode `() {
+        val rapporteringsperiode =
+            getRapporteringsperiode(dager = getDager(aktivitet = Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null)))
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = rapporteringsperiode,
+                ident = ident,
+            )
+
+            val periodeFraDb = rapporteringRepositoryPostgres.hentRapporteringsperioder()
+
+            periodeFraDb.size shouldBe 1
+            with(periodeFraDb.first()) {
+                id shouldBe rapporteringsperiode.id
+                dager.size shouldBe 14
+                dager.forEach { dag ->
+                    dag.aktiviteter.size shouldBe 1
+                    dag.aktiviteter.first().type shouldBe Utdanning
+                }
+            }
+        }
+    }
+
+    @Test
     fun `lagre eksisterende rapporteringsperiode kaster exception`() {
         val rapporteringsperiode = getRapporteringsperiode()
         withMigratedDb {
@@ -386,12 +410,15 @@ fun getRapporteringsperiode(
     registrertArbeidssoker = registrertArbeidssoker,
 )
 
-private fun getDager(startDato: LocalDate = 1.januar): List<Dag> =
+private fun getDager(
+    startDato: LocalDate = 1.januar,
+    aktivitet: Aktivitet? = null,
+): List<Dag> =
     (0..13)
         .map { i ->
             Dag(
                 dato = startDato.plusDays(i.toLong()),
-                aktiviteter = listOf(),
+                aktiviteter = aktivitet?.let { listOf(it.copy(id = UUID.randomUUID())) } ?: emptyList(),
                 dagIndex = i,
             )
         }
