@@ -1,9 +1,6 @@
 package no.nav.dagpenger.rapportering.api
 
 import io.kotest.matchers.shouldBe
-import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.client.request.post
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -224,7 +221,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
     }
 
-    fun ExternalServicesBuilder.dokarkiv() {
+    private fun ExternalServicesBuilder.dokarkiv() {
         hosts("https://dokarkiv") {
             routing {
                 post("/rest/journalpostapi/v1/journalpost") {
@@ -235,7 +232,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
     }
 
-    fun ExternalServicesBuilder.meldepliktAdapter() {
+    private fun ExternalServicesBuilder.meldepliktAdapter() {
         hosts("https://meldeplikt-adapter") {
             routing {
                 get("/rapporteringsperioder") {
@@ -295,7 +292,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
     }
 
-    fun rapporteringsperiodeFor(
+    private fun rapporteringsperiodeFor(
         id: Long = 123L,
         fraOgMed: LocalDate = LocalDate.now().minusDays(13),
         tilOgMed: LocalDate = fraOgMed.plusDays(13),
@@ -324,7 +321,7 @@ class RapporteringApiTest : ApiTestSetup() {
         registrertArbeidssoker = registrertArbeidssoker,
     )
 
-    fun adapterRapporteringsperiode(
+    private fun adapterRapporteringsperiode(
         id: Long = 123L,
         fraOgMed: LocalDate = LocalDate.now().minusDays(13),
         tilOgMed: LocalDate = fraOgMed.plusDays(13),
@@ -353,7 +350,7 @@ class RapporteringApiTest : ApiTestSetup() {
         registrertArbeidssoker = null,
     )
 
-    fun person(
+    private fun person(
         personId: Long = 123L,
         etternavn: String = "Nordmann",
         fornavn: String = "Kari",
@@ -370,7 +367,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
         """.trimIndent()
 
-    fun journalpostResponse(
+    private fun journalpostResponse(
         journalpostId: Long = 123L,
         journalstatus: String = "MOTTATT",
         journalpostferdigstilt: Boolean = true,
