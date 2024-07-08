@@ -385,9 +385,14 @@ class JournalfoeringServiceTest {
         journalpost.dokumenter!![0].dokumentvarianter[1].variantformat shouldBe Variantformat.ARKIV
 
         var expectedFilePath = "src/test/resources/dokarkiv_expected.pdf"
-        if (korrigering) expectedFilePath = "src/test/resources/dokarkiv_korrigert_expected.pdf"
-        val actualFilePath = "actual.pdf"
-        val diffFilePath = "pdf_generator_diffOutput" // Uten .pdf
+        var actualFilePath = "actual.pdf"
+        var diffFilePath = "diffOutput" // Uten .pdf
+
+        if (korrigering) {
+            expectedFilePath = "src/test/resources/dokarkiv_korrigert_expected.pdf"
+            actualFilePath = "korrigert_actual.pdf"
+            diffFilePath = "korrigert_diffOutput" // Uten .pdf
+        }
 
         // Henter generert pdf vi har sendt
         val pdf = Base64.getDecoder().decode(journalpost.dokumenter!![0].dokumentvarianter[1].fysiskDokument)
@@ -400,7 +405,7 @@ class JournalfoeringServiceTest {
         // Sammenligner
         val equal =
             PdfComparator<CompareResultImpl>(expectedFilePath, actualFilePath)
-                .withIgnore(PageArea(1, 720, 915, 1090, 960))
+                .withIgnore(PageArea(1, 680, 890, 1050, 940))
                 .compare()
                 .writeTo(diffFilePath)
 
