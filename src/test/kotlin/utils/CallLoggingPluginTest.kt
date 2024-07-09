@@ -20,30 +20,35 @@ import no.nav.dagpenger.rapportering.api.ApiTestSetup
 import no.nav.dagpenger.rapportering.api.doGet
 import no.nav.dagpenger.rapportering.api.doPost
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
+import no.nav.dagpenger.rapportering.model.DokumentInfo
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.JournalpostResponse
 import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
 class CallLoggingPluginTest : ApiTestSetup() {
     private val ident = "0102031234"
     private val rapporteringsperiode = rapporteringsperiodeFor(id = 123L)
     private val rapporteringsperiodeString = defaultObjectMapper.writeValueAsString(rapporteringsperiode)
-
-    @AfterEach
-    fun clean() {
-        println("Cleaning database")
-        using(sessionOf(dataSource)) { session ->
-            session.run(
-                queryOf(
-                    "TRUNCATE TABLE aktivitet, dag, midlertidig_lagrede_journalposter, " +
-                        "opprettede_journalposter, rapporteringsperiode, kall_logg",
-                ).asExecute,
-            )
-        }
-    }
+    private val sendinnResponse =
+        defaultObjectMapper.writeValueAsString(
+            InnsendingResponse(id = 123L, status = "OK", feil = emptyList()),
+        )
+    private val personResponse = defaultObjectMapper.writeValueAsString(Person(1L, "TESTESSEN", "TEST", "NO", "EMELD"))
+    private val journalpostresponse =
+        defaultObjectMapper.writeValueAsString(
+            JournalpostResponse(
+                1L,
+                "OK",
+                "",
+                true,
+                listOf(
+                    DokumentInfo(2L),
+                ),
+            ),
+        )
 
     @Test
     fun `Kan lagre get request og response`() =
@@ -78,7 +83,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 """
                 HTTP/1.1 200 OK
                 Content-Type: application/json
-                Content-Length: 953
+                Content-Length: ${rapporteringsperiodeString.length + 2}
 
                 [$rapporteringsperiodeString]
                 """.trimIndent()
@@ -91,6 +96,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
+                dokarkiv()
             }
 
             // Lagrer perioden i databasen
@@ -101,7 +107,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
 
             val list = getLogList()
 
-            list.size shouldBe 5
+            list.size shouldBe 6
             list[2].type shouldBe "REST"
             list[2].kallRetning shouldBe "INN"
             list[2].method shouldBe "POST"
@@ -124,9 +130,9 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 """
                 HTTP/1.1 200 OK
                 Content-Type: application/json
-                Content-Length: 34
+                Content-Length: ${sendinnResponse.length}
                 
-                {"id":123,"status":"OK","feil":[]}
+                $sendinnResponse
                 """.trimIndent()
             list[3].ident shouldBe ident
             list[3].logginfo shouldBe ""
@@ -141,12 +147,30 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 """
                 HTTP/1.1 200 OK
                 Content-Type: application/json
-                Content-Length: 95
+                Content-Length: ${personResponse.length}
                 
-                {"personId":1,"etternavn":"TESTESSEN","fornavn":"TEST","maalformkode":"NO","meldeform":"EMELD"}
+                $personResponse
                 """.trimIndent()
             list[4].ident shouldBe ident
             list[4].logginfo shouldBe ""
+
+            list[5].type shouldBe "REST"
+            list[5].kallRetning shouldBe "UT"
+            list[5].method shouldBe "POST"
+            list[5].operation shouldBe "/rest/journalpostapi/v1/journalpost"
+            list[5].status shouldBe 200
+            list[5].request shouldStartWith "POST https://dokarkiv:443/rest/journalpostapi/v1/journalpost"
+            list[5].request shouldContain "JOURNALPOST"
+            list[5].response.trimIndent() shouldBe
+                """
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+                Content-Length: ${journalpostresponse.length}
+                
+                $journalpostresponse
+                """.trimIndent()
+            list[5].ident shouldBe "" // Det finnes ikke ident i token når vi sender data til Dokarkiv
+            list[5].logginfo shouldBe ""
         }
 
     private fun getLogList() =
@@ -182,15 +206,22 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 }
                 get("/person") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    call.respond(defaultObjectMapper.writeValueAsString(Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")))
+                    call.respond(personResponse)
                 }
                 post("/sendinn") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    call.respond(
-                        defaultObjectMapper.writeValueAsString(
-                            InnsendingResponse(id = 123L, status = "OK", feil = emptyList()),
-                        ),
-                    )
+                    call.respond(sendinnResponse)
+                }
+            }
+        }
+    }
+
+    private fun ExternalServicesBuilder.dokarkiv() {
+        hosts("https://dokarkiv") {
+            routing {
+                post("/rest/journalpostapi/v1/journalpost") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    call.respond(journalpostresponse)
                 }
             }
         }
