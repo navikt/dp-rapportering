@@ -25,7 +25,6 @@ class DokarkivConnector(
         val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
 
         logger.info("Prøver å sende journalpost " + journalpost.eksternReferanseId)
-        logger.info("URL: $dokarkivUrl$path")
 
         val response =
             httpClient
@@ -40,7 +39,6 @@ class DokarkivConnector(
         return response
             .bodyAsText()
             .let {
-                logger.info("JournalpostResponse: $it")
                 Configuration.defaultObjectMapper.readValue(it, JournalpostResponse::class.java)
             }
     }
