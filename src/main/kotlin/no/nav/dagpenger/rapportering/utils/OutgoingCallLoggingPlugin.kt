@@ -19,6 +19,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import no.nav.dagpenger.rapportering.Configuration
 import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
@@ -91,38 +92,43 @@ class OutgoingCallLoggingPlugin(
                     appendLine("$header: ${headersToString(values)}")
                 }
 
-                // empty line before body as in HTTP request
+                // Empty line before body as in HTTP request
                 appendLine()
 
-                when (request.content) {
-                    is OutgoingContent.ByteArrayContent -> {
-                        append(
-                            String(
-                                (request.content as OutgoingContent.ByteArrayContent).bytes(),
-                                Charsets.UTF_8,
-                            ),
-                        )
-                    }
-
-                    is OutgoingContent.WriteChannelContent -> {
-                        val buffer = StringBuilder()
-                        val channel = ByteChannel(true)
-
-                        runBlocking {
-                            GlobalScope.writer(coroutineContext, autoFlush = true) {
-                                (request.content as OutgoingContent.WriteChannelContent).writeTo(channel)
-                            }
-
-                            while (!channel.isClosedForRead) {
-                                channel.readUTF8LineTo(buffer)
-                            }
+                // It's too much to store journalpost (metadata, JSON, PDF). We will just mark that it was a journalpost
+                if ("${request.url.protocol.name}://${request.url.host}" == Configuration.dokarkivUrl) {
+                    appendLine("JOURNALPOST")
+                } else {
+                    when (request.content) {
+                        is OutgoingContent.ByteArrayContent -> {
+                            append(
+                                String(
+                                    (request.content as OutgoingContent.ByteArrayContent).bytes(),
+                                    Charsets.UTF_8,
+                                ),
+                            )
                         }
 
-                        appendLine(buffer.toString())
-                    }
+                        is OutgoingContent.WriteChannelContent -> {
+                            val buffer = StringBuilder()
+                            val channel = ByteChannel(true)
 
-                    else -> {
-                        appendLine(request.content)
+                            runBlocking {
+                                GlobalScope.writer(coroutineContext, autoFlush = true) {
+                                    (request.content as OutgoingContent.WriteChannelContent).writeTo(channel)
+                                }
+
+                                while (!channel.isClosedForRead) {
+                                    channel.readUTF8LineTo(buffer)
+                                }
+                            }
+
+                            appendLine(buffer.toString())
+                        }
+
+                        else -> {
+                            appendLine(request.content)
+                        }
                     }
                 }
             }.toString()
