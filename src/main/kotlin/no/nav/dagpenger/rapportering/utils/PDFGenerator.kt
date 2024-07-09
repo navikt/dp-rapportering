@@ -1,6 +1,5 @@
 package no.nav.dagpenger.rapportering.utils
 
-import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import com.openhtmltopdf.svgsupport.BatikSVGDrawer
 import com.openhtmltopdf.util.XRLog
@@ -33,24 +32,9 @@ class PDFGenerator {
         )
     }
 
-    private val colorProfile: ByteArray = this::class.java.getResource("/sRGB2014.icc")!!.readBytes()
-    private val fonts: List<FontMetadata> =
-        listOf(
-            FontMetadata(
-                "Source Sans Pro",
-                "SourceSansPro-Regular.ttf",
-                400,
-                BaseRendererBuilder.FontStyle.NORMAL,
-                false,
-            ),
-            FontMetadata(
-                "Source Sans Pro",
-                "SourceSansPro-Bold.ttf",
-                700,
-                BaseRendererBuilder.FontStyle.NORMAL,
-                false,
-            ),
-        )
+    private val fontFamily = "Open Sans"
+    private val font = this::class.java.getResource("/OpenSans-Regular.ttf")!!.readBytes()
+    private val colorProfile = this::class.java.getResource("/sRGB2014.icc")!!.readBytes()
 
     fun createPDFA(html: String): ByteArray {
         // By default, PdfRendererBuilder requires strict XML
@@ -61,26 +45,31 @@ class PDFGenerator {
         // We also have to explicitly state in our HTML which font we want to use
         val head: Element = html5.head()
         head.append(
-            "" +
-                "<style>" +
-                "    * {" +
-                "        font-family: \"Source Sans Pro\";" +
-                "    }" +
-                "    h1 {" +
-                "        text-align: center;" +
-                "    }" +
-                "    svg {" +
-                "        margin: auto;" +
-                "    }" +
-                "    .info {" +
-                "        color: lightgrey;" +
-                "    }" +
-                "    .forklaring {" +
-                "        margin-left: 20px;" +
-                "        padding: 5px;" +
-                "        background-color: #EEEEEE;" +
-                "    }" +
-                "</style>",
+            """
+            <style>
+                * {
+                    font-family: "$fontFamily";
+                    font-size: 14px;
+                    line-height: 150%;
+                }
+                h1 {
+                    text-align: center;
+                    font-size: 28px;
+                    font-weight: bold;
+                }
+                svg {
+                    margin: auto;
+                }
+                .info {
+                    color: lightgrey;
+                }
+                .forklaring {
+                    margin-left: 20px;
+                    padding: 5px;
+                    background-color: #EEEEEE;
+                }
+            </style>
+            """.trimIndent(),
         )
 
         // Create PDF
@@ -90,18 +79,9 @@ class PDFGenerator {
             ByteArrayOutputStream()
                 .apply {
                     PdfRendererBuilder()
-                        .apply {
-                            for (font in fonts) {
-                                useFont(
-                                    { ByteArrayInputStream(font.bytes) },
-                                    font.family,
-                                    font.weight,
-                                    font.style,
-                                    font.subset,
-                                )
-                            }
-                        }.usePdfAConformance(PdfRendererBuilder.PdfAConformance.PDFA_2_U)
+                        .useFont({ ByteArrayInputStream(font) }, fontFamily)
                         .useColorProfile(colorProfile)
+                        .usePdfAConformance(PdfRendererBuilder.PdfAConformance.PDFA_2_U)
                         .useSVGDrawer(BatikSVGDrawer())
                         .withW3cDocument(W3CDom().fromJsoup(html5), null)
                         .toStream(this)
@@ -134,14 +114,4 @@ class PDFGenerator {
 
         return failures.isEmpty()
     }
-}
-
-data class FontMetadata(
-    val family: String,
-    val path: String,
-    val weight: Int,
-    val style: BaseRendererBuilder.FontStyle,
-    val subset: Boolean,
-) {
-    val bytes: ByteArray = this::class.java.getResource("/fonts/$path")!!.readBytes()
 }

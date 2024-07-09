@@ -5,6 +5,7 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import no.nav.dagpenger.rapportering.module
 import no.nav.dagpenger.rapportering.repository.Postgres.database
+import no.nav.dagpenger.rapportering.utils.OutgoingCallLoggingPlugin
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.junit.jupiter.api.AfterAll
@@ -56,12 +57,19 @@ open class ApiTestSetup {
     }
 
     fun setUpTestApplication(block: suspend ApplicationTestBuilder.() -> Unit) {
+        setEnvConfig()
+
         testApplication {
             environment {
-                config = setEnvConfig()
+                config = mapAppConfig()
             }
 
-            val httpClient = client
+            val httpClient =
+                createClient {
+                    install("OutgoingCallInterceptor") {
+                        OutgoingCallLoggingPlugin().intercept(this)
+                    }
+                }
             application {
                 module(httpClient)
             }
@@ -70,7 +78,7 @@ open class ApiTestSetup {
         }
     }
 
-    private fun setEnvConfig(): MapApplicationConfig {
+    private fun setEnvConfig() {
         System.setProperty("MELDEPLIKT_ADAPTER_HOST", "meldeplikt-adapter")
         System.setProperty("MELDEPLIKT_ADAPTER_AUDIENCE", REQUIRED_AUDIENCE)
         System.setProperty("DOKARKIV_HOST", "dokarkiv")
@@ -85,15 +93,16 @@ open class ApiTestSetup {
         System.setProperty("AZURE_APP_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
         System.setProperty("AZURE_APP_CLIENT_ID", AZURE_ISSUER_ID)
         System.setProperty("AZURE_APP_CLIENT_SECRET", TEST_PRIVATE_JWK)
+    }
 
-        return MapApplicationConfig(
+    private fun mapAppConfig(): MapApplicationConfig =
+        MapApplicationConfig(
             "no.nav.security.jwt.issuers.size" to "1",
             "no.nav.security.jwt.issuers.0.issuer_name" to TOKENX_ISSUER_ID,
             "no.nav.security.jwt.issuers.0.discoveryurl" to mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString(),
             "no.nav.security.jwt.issuers.0.accepted_audience" to REQUIRED_AUDIENCE,
             "ktor.environment" to "local",
         )
-    }
 
     fun issueToken(ident: String): String =
         mockOAuth2Server

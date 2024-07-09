@@ -28,9 +28,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.DokumentInfo
 import no.nav.dagpenger.rapportering.model.InnsendingFeil
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
-import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
-import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Korrigert
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
@@ -410,7 +408,7 @@ class RapporteringApiTest : ApiTestSetup() {
             response.status shouldBe HttpStatusCode.NoContent
         }
 
-    fun ExternalServicesBuilder.dokarkiv() {
+    private fun ExternalServicesBuilder.dokarkiv() {
         hosts("https://dokarkiv") {
             routing {
                 post("/rest/journalpostapi/v1/journalpost") {
@@ -495,36 +493,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
     }
 
-    fun rapporteringsperiodeFor(
-        id: Long = 123L,
-        fraOgMed: LocalDate = LocalDate.now().minusDays(13),
-        tilOgMed: LocalDate = fraOgMed.plusDays(13),
-        aktivitet: Aktivitet? = null,
-        kanSendes: Boolean = true,
-        kanKorrigeres: Boolean = true,
-        status: RapporteringsperiodeStatus = TilUtfylling,
-        bruttoBelop: String? = null,
-        registrertArbeidssoker: Boolean? = null,
-    ) = Rapporteringsperiode(
-        id = id,
-        periode = Periode(fraOgMed = fraOgMed, tilOgMed = tilOgMed),
-        dager =
-            (0..13).map {
-                Dag(
-                    dato = fraOgMed.plusDays(it.toLong()),
-                    aktiviteter = aktivitet?.let { listOf(aktivitet) } ?: emptyList(),
-                    dagIndex = it,
-                )
-            },
-        kanSendesFra = tilOgMed.minusDays(1),
-        kanSendes = kanSendes,
-        kanKorrigeres = kanKorrigeres,
-        status = status,
-        bruttoBelop = bruttoBelop?.toDouble(),
-        registrertArbeidssoker = registrertArbeidssoker,
-    )
-
-    fun adapterRapporteringsperiode(
+    private fun adapterRapporteringsperiode(
         id: Long = 123L,
         fraOgMed: LocalDate = LocalDate.now().minusDays(13),
         tilOgMed: LocalDate = fraOgMed.plusDays(13),
@@ -553,7 +522,7 @@ class RapporteringApiTest : ApiTestSetup() {
         registrertArbeidssoker = null,
     )
 
-    fun person(
+    private fun person(
         personId: Long = 123L,
         etternavn: String = "Nordmann",
         fornavn: String = "Kari",
@@ -570,7 +539,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
         """.trimIndent()
 
-    fun journalpostResponse(
+    private fun journalpostResponse(
         journalpostId: Long = 123L,
         journalstatus: String = "MOTTATT",
         journalpostferdigstilt: Boolean = true,

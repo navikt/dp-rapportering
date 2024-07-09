@@ -11,6 +11,13 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.model.Aktivitet
+import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.Periode
+import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import java.time.LocalDate
 
 val objectMapper = defaultObjectMapper
 
@@ -61,4 +68,33 @@ suspend inline fun <reified T> HttpClient.doGetAndReceive(
 data class Response<T>(
     val httpResponse: HttpResponse,
     val body: T,
+)
+
+fun rapporteringsperiodeFor(
+    id: Long = 123L,
+    fraOgMed: LocalDate = LocalDate.now().minusDays(13),
+    tilOgMed: LocalDate = fraOgMed.plusDays(13),
+    aktivitet: Aktivitet? = null,
+    kanSendes: Boolean = true,
+    kanKorrigeres: Boolean = true,
+    status: RapporteringsperiodeStatus = TilUtfylling,
+    bruttoBelop: String? = null,
+    registrertArbeidssoker: Boolean? = null,
+) = Rapporteringsperiode(
+    id = id,
+    periode = Periode(fraOgMed = fraOgMed, tilOgMed = tilOgMed),
+    dager =
+        (0..13).map {
+            Dag(
+                dato = fraOgMed.plusDays(it.toLong()),
+                aktiviteter = aktivitet?.let { listOf(aktivitet) } ?: emptyList(),
+                dagIndex = it,
+            )
+        },
+    kanSendesFra = tilOgMed.minusDays(1),
+    kanSendes = kanSendes,
+    kanKorrigeres = kanKorrigeres,
+    status = status,
+    bruttoBelop = bruttoBelop?.toDouble(),
+    registrertArbeidssoker = registrertArbeidssoker,
 )

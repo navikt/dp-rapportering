@@ -71,8 +71,8 @@ dependencies {
     implementation(libs.bundles.postgres)
 
     // PDF
-    implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10")
-    implementation("com.openhtmltopdf:openhtmltopdf-svg-support:1.0.10")
+    implementation("io.github.openhtmltopdf:openhtmltopdf-pdfbox:1.1.19")
+    implementation("io.github.openhtmltopdf:openhtmltopdf-svg-support:1.1.19")
     implementation("org.verapdf:validation-model:1.26.1")
     implementation("org.jsoup:jsoup:1.17.2")
 
@@ -83,5 +83,5 @@ dependencies {
     testImplementation(libs.ktor.server.test.host)
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.3")
     testImplementation(libs.ktor.client.mock)
-    testImplementation("de.redsix:pdfcompare:1.1.61")
+    testImplementation("de.redsix:pdfcompare:1.2.2")
 }
