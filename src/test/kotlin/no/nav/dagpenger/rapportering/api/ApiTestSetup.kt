@@ -3,12 +3,17 @@ package no.nav.dagpenger.rapportering.api
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
+import kotliquery.queryOf
+import kotliquery.sessionOf
+import kotliquery.using
 import no.nav.dagpenger.rapportering.module
+import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.utils.OutgoingCallLoggingPlugin
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 
 open class ApiTestSetup {
@@ -53,6 +58,19 @@ open class ApiTestSetup {
         fun cleanup() {
             println("Stopping mockserver")
             mockOAuth2Server.shutdown()
+        }
+    }
+
+    @AfterEach
+    fun clean() {
+        println("Cleaning database")
+        using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf(
+                    "TRUNCATE TABLE aktivitet, dag, midlertidig_lagrede_journalposter, " +
+                        "opprettede_journalposter, rapporteringsperiode, kall_logg",
+                ).asExecute,
+            )
         }
     }
 

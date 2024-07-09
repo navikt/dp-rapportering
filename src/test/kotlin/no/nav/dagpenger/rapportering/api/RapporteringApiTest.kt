@@ -12,9 +12,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.ExternalServicesBuilder
-import kotliquery.queryOf
-import kotliquery.sessionOf
-import kotliquery.using
 import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Arbeid
@@ -31,27 +28,12 @@ import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Korrigert
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
-import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.UUID
 
 class RapporteringApiTest : ApiTestSetup() {
     private val fnr = "12345678910"
-
-    @AfterEach
-    fun clean() {
-        println("Cleaning database")
-        using(sessionOf(dataSource)) { session ->
-            session.run(
-                queryOf(
-                    "TRUNCATE TABLE aktivitet, dag, midlertidig_lagrede_journalposter, " +
-                        "opprettede_journalposter, rapporteringsperiode, kall_logg",
-                ).asExecute,
-            )
-        }
-    }
 
     // Sende rapporteringsperiode
 
@@ -154,7 +136,10 @@ class RapporteringApiTest : ApiTestSetup() {
     fun `hente rapporteringsperiode med id som ikke funnes gir 404`() =
         setUpTestApplication {
             externalServices {
-                meldepliktAdapter(rapporteringsperioderResponse = emptyList(), sendteRapporteringsperioderResponse = emptyList())
+                meldepliktAdapter(
+                    rapporteringsperioderResponse = emptyList(),
+                    sendteRapporteringsperioderResponse = emptyList(),
+                )
             }
 
             val response = client.doGet("/rapporteringsperiode/123", issueToken(fnr))
@@ -174,7 +159,8 @@ class RapporteringApiTest : ApiTestSetup() {
             val startResponse = client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
             startResponse.status shouldBe HttpStatusCode.OK
 
-            val periodeResponse = client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
+            val periodeResponse =
+                client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
             with(periodeResponse.body) {
                 id shouldBe 123L
                 status shouldBe TilUtfylling
@@ -209,7 +195,8 @@ class RapporteringApiTest : ApiTestSetup() {
                 client.doPost("/rapporteringsperiode/123/arbeidssoker", issueToken(fnr), ArbeidssokerRequest(true))
             response.status shouldBe HttpStatusCode.NoContent
 
-            val periodeResponse = client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
+            val periodeResponse =
+                client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
             periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
             with(periodeResponse.body) {
                 id shouldBe 123L
@@ -263,7 +250,8 @@ class RapporteringApiTest : ApiTestSetup() {
             val response = client.doPost("/rapporteringsperiode/123/aktivitet", issueToken(fnr), dagMedAktivitet)
             response.status shouldBe HttpStatusCode.NoContent
 
-            val periodeResponse = client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
+            val periodeResponse =
+                client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
             periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
             with(periodeResponse.body) {
                 id shouldBe 123L
@@ -294,7 +282,8 @@ class RapporteringApiTest : ApiTestSetup() {
                 meldepliktAdapter()
             }
 
-            val response = client.doPostAndReceive<Rapporteringsperiode>("/rapporteringsperiode/125/korriger", issueToken(fnr))
+            val response =
+                client.doPostAndReceive<Rapporteringsperiode>("/rapporteringsperiode/125/korriger", issueToken(fnr))
             response.httpResponse.status shouldBe HttpStatusCode.OK
             with(response.body) {
                 id shouldBe 321L
