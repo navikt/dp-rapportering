@@ -45,7 +45,12 @@ class MeldepliktConnector(
                 result
                     .bodyAsText()
                     .let {
-                        defaultObjectMapper.readValue(it, object : TypeReference<List<AdapterRapporteringsperiode>>() {})
+                        val perioder = defaultObjectMapper.readValue(it, object : TypeReference<List<AdapterRapporteringsperiode>>() {})
+                        if (perioder.isEmpty()) {
+                            null
+                        } else {
+                            perioder
+                        }
                     }
             }
         }
@@ -74,11 +79,17 @@ class MeldepliktConnector(
     suspend fun hentInnsendteRapporteringsperioder(
         ident: String,
         subjectToken: String,
-    ): List<AdapterRapporteringsperiode> =
+    ): List<AdapterRapporteringsperiode>? =
         withContext(Dispatchers.IO) {
             hentData<String>("/sendterapporteringsperioder", subjectToken)
-                .let { defaultObjectMapper.readValue(it, object : TypeReference<List<AdapterRapporteringsperiode>>() {}) }
-                .also {
+                .let {
+                    val perioder = defaultObjectMapper.readValue(it, object : TypeReference<List<AdapterRapporteringsperiode>>() {})
+                    if (perioder.isEmpty()) {
+                        null
+                    } else {
+                        perioder
+                    }
+                }.also {
                     logger.info { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }
                     sikkerlogg.info { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident gikk OK" }
                 }

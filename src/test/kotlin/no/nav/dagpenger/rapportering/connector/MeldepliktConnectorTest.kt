@@ -13,8 +13,10 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.utils.februar
 import no.nav.dagpenger.rapportering.utils.januar
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.UUID
@@ -25,6 +27,14 @@ class MeldepliktConnectorTest {
     private val subjectToken = "gylidg_token"
     private val ident = "12345678903"
     private val rapporteringId = "1806478069"
+
+    @BeforeEach
+    fun addProperty() {
+        System.setProperty(
+            "DB_JDBC_URL",
+            "${database.jdbcUrl}&user=${database.username}&password=${database.password}",
+        )
+    }
 
     private fun meldepliktConnector(
         responseBody: String,
@@ -48,7 +58,7 @@ class MeldepliktConnectorTest {
     }
 
     @Test
-    fun `henter tom rapporteringsperiodeliste`() {
+    fun `henter tom rapporteringsperiodeliste gir null`() {
         val connector = meldepliktConnector("[]", 200)
 
         val response =
@@ -56,7 +66,7 @@ class MeldepliktConnectorTest {
                 connector.hentRapporteringsperioder(ident, subjectToken)
             }
 
-        response shouldBe emptyList()
+        response shouldBe null
     }
 
     @Test
@@ -124,7 +134,7 @@ class MeldepliktConnectorTest {
     }
 
     @Test
-    fun `henter tom liste for innsendte rapporteringsperioder`() {
+    fun `henter tom liste for innsendte rapporteringsperioder gir null`() {
         val connector = meldepliktConnector("[]", 200)
 
         val response =
@@ -132,7 +142,7 @@ class MeldepliktConnectorTest {
                 connector.hentInnsendteRapporteringsperioder(ident, subjectToken)
             }
 
-        response shouldBe emptyList()
+        response shouldBe null
     }
 
     @Test

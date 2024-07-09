@@ -126,7 +126,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                         call.respond(HttpStatusCode.OK)
                     } catch (e: Exception) {
                         logger.error("Feil ved innsending: $e")
-                        call.respond(HttpStatusCode.InternalServerError)
+                        throw e
                     }
                 }
 
@@ -215,7 +215,8 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                         rapporteringService
                             .hentInnsendteRapporteringsperioder(ident, jwtToken)
-                            .also { call.respond(HttpStatusCode.OK, defaultObjectMapper.writeValueAsString(it.toResponse())) }
+                            ?.also { call.respond(HttpStatusCode.OK, defaultObjectMapper.writeValueAsString(it.toResponse())) }
+                            ?: call.respond(HttpStatusCode.NoContent)
                     }
                 }
             }

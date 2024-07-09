@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.service
 
+import io.ktor.server.plugins.BadRequestException
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
@@ -30,7 +31,7 @@ class RapporteringService(
             ?.firstOrNull { it.id == rapporteringId }
             ?.let { lagreEllerOppdaterPeriode(it, ident) }
             ?: hentInnsendteRapporteringsperioder(ident, token)
-                .firstOrNull { it.id == rapporteringId }
+                ?.firstOrNull { it.id == rapporteringId }
             ?: rapporteringRepository
                 .hentRapporteringsperiode(rapporteringId, ident)
 
@@ -75,18 +76,18 @@ class RapporteringService(
         hentRapporteringsperioder(ident, token)
             ?.firstOrNull { it.id == rapporteringId }
             ?.let { lagreEllerOppdaterPeriode(it, ident) }
-            ?: throw RuntimeException("Fant ingen gjeldende periode for ident $ident")
+            ?: throw RuntimeException("Fant ingen ikke periode med id $rapporteringId for ident $ident")
     }
 
     suspend fun hentInnsendteRapporteringsperioder(
         ident: String,
         token: String,
-    ): List<Rapporteringsperiode> =
+    ): List<Rapporteringsperiode>? =
         meldepliktConnector
             .hentInnsendteRapporteringsperioder(ident, token)
-            .toRapporteringsperioder()
-            .sortedByDescending { it.periode.fraOgMed }
-            .take(5)
+            ?.toRapporteringsperioder()
+            ?.sortedByDescending { it.periode.fraOgMed }
+            ?.take(5)
 
     fun lagreEllerOppdaterPeriode(
         periode: Rapporteringsperiode,
@@ -164,7 +165,7 @@ class RapporteringService(
         loginLevel: Int,
     ): InnsendingResponse {
         rapporteringsperiode.takeIf { it.kanSendes }
-            ?: throw IllegalArgumentException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
+            ?: throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
 
         return meldepliktConnector
             .sendinnRapporteringsperiode(rapporteringsperiode.toAdapterRapporteringsperiode(), token)
@@ -175,6 +176,9 @@ class RapporteringService(
 
                     rapporteringRepository.oppdaterRapporteringStatus(rapporteringsperiode.id, ident, Innsendt)
                     logger.info { "Oppdaterte status for rapporteringsperiode ${rapporteringsperiode.id} til Innsendt" }
+                } else {
+                    logger.error { "Feil ved innsending av rapporteringsperiode ${rapporteringsperiode.id}: $response" }
+                    throw RuntimeException("Feil ved innsending av rapporteringsperiode ${rapporteringsperiode.id}")
                 }
             }
     }

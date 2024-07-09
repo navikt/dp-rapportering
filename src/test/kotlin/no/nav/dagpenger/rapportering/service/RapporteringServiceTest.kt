@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.service
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.ktor.server.plugins.BadRequestException
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.justRun
@@ -263,7 +264,7 @@ class RapporteringServiceTest {
                 .map { it.copy(status = Innsendt, kanSendes = false, kanKorrigeres = true) }
                 .toAdapterRapporteringsperioder()
 
-        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token) }
+        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
         innsendteRapporteringsperioder.size shouldBe 3
         innsendteRapporteringsperioder[0].id shouldBe 3L
@@ -301,7 +302,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan ikke sende inn rapporteringsperiode som ikke kan sendes`() {
-        shouldThrow<IllegalArgumentException> {
+        shouldThrow<BadRequestException> {
             runBlocking {
                 rapporteringService.sendRapporteringsperiode(
                     rapporteringsperiodeListe.first().copy(kanSendes = false),

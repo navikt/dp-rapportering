@@ -22,6 +22,8 @@ paths:
                                 items:
                                     $ref: '#/components/schemas/Rapporteringsperiode'
                     description: OK
+                '204':
+                    description: No Content
             summary: Hent alle rapporteringsperioder som ikke er sendt inn
             description: Lister ut alle rapporteringsperioder som ikke er sendt inn
             operationId: get-rapporteringsperioder
@@ -40,6 +42,8 @@ paths:
                                 items:
                                     $ref: '#/components/schemas/Rapporteringsperiode'
                     description: OK
+                '204':
+                    description: No Content
             summary: Hent alle tidligere innsendte rapporteringsperioder
             description: Lister ut alle rapporteringsperioder som har blitt sendt inn
             operationId: get-innsendte-rapporteringsperioder
