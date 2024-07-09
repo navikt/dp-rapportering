@@ -26,9 +26,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.DokumentInfo
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
-import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
-import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Korrigert
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
@@ -291,35 +289,6 @@ class RapporteringApiTest : ApiTestSetup() {
             }
         }
     }
-
-    private fun rapporteringsperiodeFor(
-        id: Long = 123L,
-        fraOgMed: LocalDate = LocalDate.now().minusDays(13),
-        tilOgMed: LocalDate = fraOgMed.plusDays(13),
-        aktivitet: Aktivitet? = null,
-        kanSendes: Boolean = true,
-        kanKorrigeres: Boolean = true,
-        status: RapporteringsperiodeStatus = TilUtfylling,
-        bruttoBelop: String? = null,
-        registrertArbeidssoker: Boolean? = null,
-    ) = Rapporteringsperiode(
-        id = id,
-        periode = Periode(fraOgMed = fraOgMed, tilOgMed = tilOgMed),
-        dager =
-            (0..13).map {
-                Dag(
-                    dato = fraOgMed.plusDays(it.toLong()),
-                    aktiviteter = aktivitet?.let { listOf(aktivitet) } ?: emptyList(),
-                    dagIndex = it,
-                )
-            },
-        kanSendesFra = tilOgMed.minusDays(1),
-        kanSendes = kanSendes,
-        kanKorrigeres = kanKorrigeres,
-        status = status,
-        bruttoBelop = bruttoBelop?.toDouble(),
-        registrertArbeidssoker = registrertArbeidssoker,
-    )
 
     private fun adapterRapporteringsperiode(
         id: Long = 123L,
