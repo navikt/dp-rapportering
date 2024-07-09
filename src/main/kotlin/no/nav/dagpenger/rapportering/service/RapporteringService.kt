@@ -183,16 +183,21 @@ class RapporteringService(
             }
     }
 
-    fun slettMellomlagredeRapporteringsperioder() {
+    fun slettMellomlagredeRapporteringsperioder(): Int {
         val rapporteringsperioder = rapporteringRepository.hentRapporteringsperioder()
+
+        var innsendtePerioder = 0
+        var foreldredePerioder = 0
 
         // Sletter innsendte rapporteringsperioder
         rapporteringsperioder
             .filter { it.status == Innsendt }
-            .also { "Sletter ${it.size} innsendte rapporteringsperioder" }
-            .forEach { slettRapporteringsperiode(it.id) }
+            .also {
+                logger.info { "Sletter ${it.size} innsendte rapporteringsperioder" }
+                innsendtePerioder = it.size
+            }.forEach { slettRapporteringsperiode(it.id) }
 
-        // Sleter rapporteringsperioder som ikke er sendt inn til siste frist
+        // Sletter rapporteringsperioder som ikke er sendt inn til siste frist
         rapporteringsperioder
             .filter {
                 val sisteFrist =
@@ -200,8 +205,12 @@ class RapporteringService(
                         .plusDays(2)
                         .plusWeeks(1)
                 it.status != Innsendt && sisteFrist.isBefore(LocalDate.now())
-            }.also { logger.info { "Sletter ${it.size} rapporteringsperioder som ikke ble sendt inn til siste frist" } }
-            .forEach { slettRapporteringsperiode(it.id) }
+            }.also {
+                logger.info { "Sletter ${it.size} rapporteringsperioder som ikke ble sendt inn til siste frist" }
+                foreldredePerioder = it.size
+            }.forEach { slettRapporteringsperiode(it.id) }
+
+        return innsendtePerioder + foreldredePerioder
     }
 
     private fun slettRapporteringsperiode(periodeId: Long) =

@@ -8,6 +8,7 @@ import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
 import no.nav.dagpenger.rapportering.model.AvsenderIdType
 import no.nav.dagpenger.rapportering.model.AvsenderMottaker
 import no.nav.dagpenger.rapportering.model.Bruker
@@ -36,6 +37,7 @@ import java.util.Timer
 import java.util.TimerTask
 import java.util.UUID
 import kotlin.time.Duration
+import kotlin.time.measureTime
 
 class JournalfoeringService(
     private val meldepliktConnector: MeldepliktConnector,
@@ -57,13 +59,25 @@ class JournalfoeringService(
     private var locale: Locale? = Locale.of("nb", "NO") // Vi skal regne ukenummer iht norske regler
     private val woy = WeekFields.of(locale).weekOfWeekBasedYear()
 
+    private val metrikker = JobbkjoringMetrikker(this::class.java.simpleName)
+
     init {
         val timer = Timer()
         val timerTask: TimerTask =
             object : TimerTask() {
                 override fun run() {
                     runBlocking {
-                        sendJournalposterPaaNytt()
+                        try {
+                            var rowsAffected: Int
+                            val tidBrukt =
+                                measureTime {
+                                    rowsAffected = sendJournalposterPaaNytt()
+                                }
+                            metrikker.jobbFullfort(tidBrukt, rowsAffected)
+                        } catch (e: Exception) {
+                            metrikker.jobbFeilet()
+                            e
+                        }
                     }
                 }
             }
@@ -71,7 +85,7 @@ class JournalfoeringService(
         timer.schedule(timerTask, delay, resendInterval)
     }
 
-    suspend fun sendJournalposterPaaNytt() {
+    suspend fun sendJournalposterPaaNytt(): Int {
         // Les data fra DB
         // Triple: data id, journalpost, retries
         val journalpostData: List<Triple<String, Journalpost, Int>> =
@@ -135,6 +149,8 @@ class JournalfoeringService(
                 )
             }
         }
+
+        return journalpostData.size
     }
 
     suspend fun journalfoer(
