@@ -9,11 +9,11 @@ import kotliquery.using
 import no.nav.dagpenger.rapportering.module
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.database
+import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.runMigration
 import no.nav.dagpenger.rapportering.utils.OutgoingCallLoggingPlugin
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 
 open class ApiTestSetup {
@@ -61,21 +61,10 @@ open class ApiTestSetup {
         }
     }
 
-    @AfterEach
-    fun clean() {
-        println("Cleaning database")
-        using(sessionOf(dataSource)) { session ->
-            session.run(
-                queryOf(
-                    "TRUNCATE TABLE aktivitet, dag, midlertidig_lagrede_journalposter, " +
-                        "opprettede_journalposter, rapporteringsperiode, kall_logg",
-                ).asExecute,
-            )
-        }
-    }
-
     fun setUpTestApplication(block: suspend ApplicationTestBuilder.() -> Unit) {
         setEnvConfig()
+        runMigration()
+        clean()
 
         testApplication {
             environment {
@@ -121,6 +110,18 @@ open class ApiTestSetup {
             "no.nav.security.jwt.issuers.0.accepted_audience" to REQUIRED_AUDIENCE,
             "ktor.environment" to "local",
         )
+
+    private fun clean() {
+        println("Cleaning database")
+        using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf(
+                    "TRUNCATE TABLE aktivitet, dag, midlertidig_lagrede_journalposter, " +
+                        "opprettede_journalposter, rapporteringsperiode, kall_logg",
+                ).asExecute,
+            )
+        }
+    }
 
     fun issueToken(ident: String): String =
         mockOAuth2Server
