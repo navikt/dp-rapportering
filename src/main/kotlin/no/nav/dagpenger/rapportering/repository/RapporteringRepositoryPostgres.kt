@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.repository
 
+import io.micrometer.core.annotation.Timed
 import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
@@ -17,6 +18,7 @@ import javax.sql.DataSource
 class RapporteringRepositoryPostgres(
     private val dataSource: DataSource,
 ) : RapporteringRepository {
+    @Timed(extraTags = ["db-hentRapporteringsperiode"])
     override fun hentRapporteringsperiode(
         id: Long,
         ident: String,
@@ -39,6 +41,7 @@ class RapporteringRepositoryPostgres(
             )
         }
 
+    @Timed(extraTags = ["db-hentRapporteringsperioder"])
     override fun hentRapporteringsperioder(): List<Rapporteringsperiode> =
         using(sessionOf(dataSource)) { session ->
             session.run(
@@ -67,6 +70,7 @@ class RapporteringRepositoryPostgres(
             )
         }
 
+    @Timed(extraTags = ["db-hentDagId"])
     override fun hentDagId(
         rapporteringId: Long,
         dagIdex: Int,
@@ -84,6 +88,7 @@ class RapporteringRepositoryPostgres(
             }
         }
 
+    @Timed(extraTags = ["db-hentAktiviteter"])
     override fun hentAktiviteter(dagId: UUID): List<Aktivitet> =
         using(sessionOf(dataSource)) { session ->
             session.run(
@@ -94,6 +99,7 @@ class RapporteringRepositoryPostgres(
             )
         }
 
+    @Timed(extraTags = ["db-lagreRapporteringsperiodeOgDager"])
     override fun lagreRapporteringsperiodeOgDager(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
@@ -158,6 +164,7 @@ class RapporteringRepositoryPostgres(
                 },
             ).sum()
 
+    @Timed(extraTags = ["db-lagreAktiviteter"])
     override fun lagreAktiviteter(
         rapporteringId: Long,
         dagId: UUID,
@@ -185,6 +192,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
+    @Timed(extraTags = ["db-oppdaterRegistrertArbeidssoker"])
     override fun oppdaterRegistrertArbeidssoker(
         rapporteringId: Long,
         ident: String,
@@ -211,6 +219,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
+    @Timed(extraTags = ["db-oppdaterRapporteringsperiodeFraArena"])
     override fun oppdaterRapporteringsperiodeFraArena(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
@@ -241,6 +250,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
+    @Timed(extraTags = ["db-oppdaterRapporteringStatus"])
     override fun oppdaterRapporteringStatus(
         rapporteringId: Long,
         ident: String,
@@ -267,6 +277,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
+    @Timed(extraTags = ["db-slettAktiviteter"])
     override fun slettAktiviteter(aktivitetIdListe: List<UUID>) =
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
@@ -281,6 +292,7 @@ class RapporteringRepositoryPostgres(
             }
         }
 
+    @Timed(extraTags = ["db-slettRaporteringsperiode"])
     override fun slettRaporteringsperiode(rapporteringId: Long) {
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
@@ -320,6 +332,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
+    @Timed(extraTags = ["db-hentAntallRapporteringsperioder"])
     override fun hentAntallRapporteringsperioder(): Int =
         using(sessionOf(dataSource)) { session ->
             session.run(

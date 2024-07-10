@@ -38,7 +38,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
             when (cause) {
                 is ResponseException -> {
                     logger.error(cause) { "Feil ved uthenting av rapporteringsperiode" }
-                    MeldepliktMetrikker.meldepliktException.inc()
+                    MeldepliktMetrikker.rapporteringApiFeil.inc()
 
                     call.respond(
                         cause.response.status,
@@ -54,7 +54,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 is JsonConvertException -> {
                     logger.error(cause) { "Feil ved mapping av rapporteringsperiode" }
-                    MeldepliktMetrikker.meldepliktException.inc()
+                    MeldepliktMetrikker.rapporteringApiFeil.inc()
 
                     call.respond(
                         HttpStatusCode.InternalServerError,
@@ -64,7 +64,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 is IllegalArgumentException -> {
                     logger.info(cause) { "Kunne ikke håndtere API kall - Bad request" }
-                    MeldepliktMetrikker.meldepliktException.inc()
+                    MeldepliktMetrikker.rapporteringApiFeil.inc()
 
                     call.respond(
                         HttpStatusCode.BadRequest,
@@ -74,7 +74,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 is NotFoundException -> {
                     logger.info(cause) { "Kunne ikke håndtere API kall - Ikke funnet" }
-                    MeldepliktMetrikker.meldepliktException.inc()
+                    MeldepliktMetrikker.rapporteringApiFeil.inc()
 
                     call.respond(
                         HttpStatusCode.NotFound,
@@ -84,7 +84,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 is BadRequestException -> {
                     logger.error(cause) { "Kunne ikke håndtere API kall - feil i request" }
-                    MeldepliktMetrikker.meldepliktException.inc()
+                    MeldepliktMetrikker.rapporteringApiFeil.inc()
 
                     call.respond(
                         HttpStatusCode.BadRequest,
@@ -94,7 +94,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 else -> {
                     logger.error(cause) { "Kunne ikke håndtere API kall" }
-                    MeldepliktMetrikker.meldepliktException.inc()
+                    MeldepliktMetrikker.rapporteringApiFeil.inc()
 
                     call.respond(
                         HttpStatusCode.InternalServerError,

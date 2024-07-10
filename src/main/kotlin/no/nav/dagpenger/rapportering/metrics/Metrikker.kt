@@ -26,7 +26,7 @@ object MeldepliktMetrikker {
             .help("Indikerer antall kall mot meldeplikt som gir en annen http status enn 200 OK")
             .register(appMicrometerRegistry.prometheusRegistry)
 
-    val meldepliktException: Counter =
+    val rapporteringApiFeil: Counter =
         Counter
             .build()
             .namespace(NAMESPACE)
