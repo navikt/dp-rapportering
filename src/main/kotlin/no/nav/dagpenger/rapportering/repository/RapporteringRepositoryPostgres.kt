@@ -18,7 +18,7 @@ import javax.sql.DataSource
 class RapporteringRepositoryPostgres(
     private val dataSource: DataSource,
 ) : RapporteringRepository {
-    @Timed(extraTags = ["db-hentRapporteringsperiode"])
+    @Timed("db-hentRapporteringsperiode")
     override fun hentRapporteringsperiode(
         id: Long,
         ident: String,
@@ -41,7 +41,7 @@ class RapporteringRepositoryPostgres(
             )
         }
 
-    @Timed(extraTags = ["db-hentRapporteringsperioder"])
+    @Timed("db-hentRapporteringsperioder")
     override fun hentRapporteringsperioder(): List<Rapporteringsperiode> =
         using(sessionOf(dataSource)) { session ->
             session.run(
@@ -70,7 +70,7 @@ class RapporteringRepositoryPostgres(
             )
         }
 
-    @Timed(extraTags = ["db-hentDagId"])
+    @Timed("db-hentDagId")
     override fun hentDagId(
         rapporteringId: Long,
         dagIdex: Int,
@@ -88,7 +88,7 @@ class RapporteringRepositoryPostgres(
             }
         }
 
-    @Timed(extraTags = ["db-hentAktiviteter"])
+    @Timed("db-hentAktiviteter")
     override fun hentAktiviteter(dagId: UUID): List<Aktivitet> =
         using(sessionOf(dataSource)) { session ->
             session.run(
@@ -99,7 +99,7 @@ class RapporteringRepositoryPostgres(
             )
         }
 
-    @Timed(extraTags = ["db-lagreRapporteringsperiodeOgDager"])
+    @Timed("db-lagreRapporteringsperiodeOgDager")
     override fun lagreRapporteringsperiodeOgDager(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
@@ -164,7 +164,7 @@ class RapporteringRepositoryPostgres(
                 },
             ).sum()
 
-    @Timed(extraTags = ["db-lagreAktiviteter"])
+    @Timed("db-lagreAktiviteter")
     override fun lagreAktiviteter(
         rapporteringId: Long,
         dagId: UUID,
@@ -192,7 +192,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    @Timed(extraTags = ["db-oppdaterRegistrertArbeidssoker"])
+    @Timed("db-oppdaterRegistrertArbeidssoker")
     override fun oppdaterRegistrertArbeidssoker(
         rapporteringId: Long,
         ident: String,
@@ -219,7 +219,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    @Timed(extraTags = ["db-oppdaterRapporteringsperiodeFraArena"])
+    @Timed("db-oppdaterRapporteringsperiodeFraArena")
     override fun oppdaterRapporteringsperiodeFraArena(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
@@ -250,7 +250,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    @Timed(extraTags = ["db-oppdaterRapporteringStatus"])
+    @Timed("db-oppdaterRapporteringStatus")
     override fun oppdaterRapporteringStatus(
         rapporteringId: Long,
         ident: String,
@@ -277,7 +277,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    @Timed(extraTags = ["db-slettAktiviteter"])
+    @Timed("db-slettAktiviteter")
     override fun slettAktiviteter(aktivitetIdListe: List<UUID>) =
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
@@ -292,7 +292,7 @@ class RapporteringRepositoryPostgres(
             }
         }
 
-    @Timed(extraTags = ["db-slettRaporteringsperiode"])
+    @Timed("db-slettRaporteringsperiode")
     override fun slettRaporteringsperiode(rapporteringId: Long) {
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
@@ -332,7 +332,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    @Timed(extraTags = ["db-hentAntallRapporteringsperioder"])
+    @Timed("db-hentAntallRapporteringsperioder")
     override fun hentAntallRapporteringsperioder(): Int =
         using(sessionOf(dataSource)) { session ->
             session.run(
