@@ -30,6 +30,9 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
+import kotliquery.queryOf
+import kotliquery.sessionOf
+import kotliquery.using
 import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.createHttpClient
@@ -50,7 +53,10 @@ import no.nav.dagpenger.rapportering.model.Tema
 import no.nav.dagpenger.rapportering.model.Tilleggsopplysning
 import no.nav.dagpenger.rapportering.model.Variantformat
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
+import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.database
+import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.runMigration
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.LocalDate
@@ -68,6 +74,19 @@ class JournalfoeringServiceTest {
             .registerModule(JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 
+    @AfterEach
+    fun clean() {
+        println("Cleaning database")
+        using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf(
+                    "TRUNCATE TABLE aktivitet, dag, midlertidig_lagrede_journalposter, " +
+                        "opprettede_journalposter, rapporteringsperiode, kall_logg",
+                ).asExecute,
+            )
+        }
+    }
+
     @Test
     fun `Kan opprette og sende journalpost`() {
         test()
@@ -81,6 +100,7 @@ class JournalfoeringServiceTest {
     @Test
     fun `Kan lagre journalposter midlertidig ved feil og sende paa nytt`() {
         setProperties()
+        runMigration()
 
         // Mock TokenProvider
         fun mockTokenProvider() =
@@ -195,6 +215,7 @@ class JournalfoeringServiceTest {
 
     private fun test(korrigering: Boolean = false) {
         setProperties()
+        runMigration()
 
         // Mock TokenProvider
         fun mockTokenProvider() =
