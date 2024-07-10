@@ -319,6 +319,15 @@ class RapporteringRepositoryPostgres(
             }
         }
     }
+
+    override fun hentAntallRapporteringsperioder(): Int =
+        using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf("SELECT COUNT(*) FROM rapporteringsperiode")
+                    .map { it.int(1) }
+                    .asSingle,
+            ) ?: 0
+        }
 }
 
 private fun Int.validateRowsAffected(excepted: Int = 1) {

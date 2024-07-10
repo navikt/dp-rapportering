@@ -21,4 +21,8 @@ interface JournalfoeringRepository {
         id: String,
         retries: Int,
     )
+
+    fun hentAntallJournalposter(): Int
+
+    fun hentAntallMidlertidligeJournalposter(): Int
 }

@@ -386,6 +386,22 @@ class RapporteringRepositoryPostgresTest {
             }
         }
     }
+
+    @Test
+    fun `hentAntallRapporteringsperioder returnerer 0 når databasen er tom`() {
+        withMigratedDb {
+            rapporteringRepositoryPostgres.hentAntallRapporteringsperioder() shouldBe 0
+        }
+    }
+
+    @Test
+    fun `hentAntallRapporteringsperioder gir riktig antall`() {
+        val rapporteringsperiode = getRapporteringsperiode()
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
+            rapporteringRepositoryPostgres.hentAntallRapporteringsperioder() shouldBe 1
+        }
+    }
 }
 
 fun getRapporteringsperiode(

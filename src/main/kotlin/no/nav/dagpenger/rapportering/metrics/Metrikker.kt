@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.metrics
 import io.prometheus.client.Counter
+import io.prometheus.client.Gauge
 import io.prometheus.client.Histogram
 import no.nav.dagpenger.rapportering.Configuration.appMicrometerRegistry
 import kotlin.time.Duration
@@ -31,6 +32,32 @@ object MeldepliktMetrikker {
             .namespace(NAMESPACE)
             .name("antall_meldeplikt_exception")
             .help("Indikerer antall feil i kall eller mapping av respons mot meldeplikt")
+            .register(appMicrometerRegistry.prometheusRegistry)
+}
+
+object DatabaseMetrikker {
+    val lagredeRapporteringsperioder: Gauge =
+        Gauge
+            .build()
+            .namespace(NAMESPACE)
+            .name("lagrede_rapporteringsperioder")
+            .help("Antall lagrede rapporteringsperioder i databasen")
+            .register(appMicrometerRegistry.prometheusRegistry)
+
+    val lagredeJournalposter: Gauge =
+        Gauge
+            .build()
+            .namespace(NAMESPACE)
+            .name("lagrede_journalposter")
+            .help("Antall lagrede journalposter i databasen")
+            .register(appMicrometerRegistry.prometheusRegistry)
+
+    val midlertidigLagredeJournalposter: Gauge =
+        Gauge
+            .build()
+            .namespace(NAMESPACE)
+            .name("midlertidig_lagrede_journalposter")
+            .help("Antall midlertidig lagrede journalposter i databasen")
             .register(appMicrometerRegistry.prometheusRegistry)
 }
 

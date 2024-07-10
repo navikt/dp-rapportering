@@ -12,6 +12,7 @@ import no.nav.dagpenger.rapportering.api.rapporteringApi
 import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.createHttpClient
+import no.nav.dagpenger.rapportering.jobs.RapporterDatabaseMetrikkerJob
 import no.nav.dagpenger.rapportering.jobs.SlettRapporteringsperioderJob
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
@@ -28,15 +29,17 @@ fun Application.module(httpClient: HttpClient = createHttpClient(CIO.create {}))
     preparePartitions()
 
     val meldepliktConnector = MeldepliktConnector(httpClient = httpClient)
+    val rapporteringRepository = RapporteringRepositoryPostgres(dataSource)
+    val journalfoeringRepository = JournalfoeringRepositoryPostgres(dataSource)
 
     val rapporteringService =
         RapporteringService(
             meldepliktConnector,
-            RapporteringRepositoryPostgres(dataSource),
+            rapporteringRepository,
             JournalfoeringService(
                 meldepliktConnector,
                 DokarkivConnector(httpClient = httpClient),
-                JournalfoeringRepositoryPostgres(dataSource),
+                journalfoeringRepository,
             ),
         )
     konfigurasjon(appMicrometerRegistry)
@@ -44,4 +47,5 @@ fun Application.module(httpClient: HttpClient = createHttpClient(CIO.create {}))
     rapporteringApi(rapporteringService)
 
     SlettRapporteringsperioderJob.start(rapporteringService)
+    RapporterDatabaseMetrikkerJob.start(rapporteringRepository, journalfoeringRepository)
 }

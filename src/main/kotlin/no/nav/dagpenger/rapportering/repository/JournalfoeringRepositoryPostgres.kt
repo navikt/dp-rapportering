@@ -1,24 +1,15 @@
 package no.nav.dagpenger.rapportering.repository
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
+import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.model.Journalpost
 import javax.sql.DataSource
 
 class JournalfoeringRepositoryPostgres(
     private val dataSource: DataSource,
 ) : JournalfoeringRepository {
-    private val objectMapper =
-        ObjectMapper()
-            .registerKotlinModule()
-            .registerModule(JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-
     override fun lagreJournalpostData(
         journalpostId: Long,
         dokumentInfoId: Long,
@@ -46,7 +37,7 @@ class JournalfoeringRepositoryPostgres(
                         "INSERT INTO midlertidig_lagrede_journalposter (id, journalpost, retries) " +
                             "VALUES (?, ?, ?)",
                         journalpost.eksternReferanseId,
-                        objectMapper.writeValueAsString(journalpost),
+                        defaultObjectMapper.writeValueAsString(journalpost),
                         0,
                     ).asUpdate,
                 ).validateRowsAffected()
@@ -61,7 +52,7 @@ class JournalfoeringRepositoryPostgres(
                 ).map {
                     Triple(
                         it.string("id"),
-                        objectMapper.readValue(it.string("journalpost"), Journalpost::class.java),
+                        defaultObjectMapper.readValue(it.string("journalpost"), Journalpost::class.java),
                         it.int("retries"),
                     )
                 }.asList,
@@ -113,6 +104,28 @@ class JournalfoeringRepositoryPostgres(
                 ).validateRowsAffected()
         }
     }
+
+    override fun hentAntallJournalposter(): Int =
+        using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf(
+                    "SELECT COUNT(*) FROM opprettede_journalposter",
+                ).map {
+                    it.int(1)
+                }.asSingle,
+            ) ?: 0
+        }
+
+    override fun hentAntallMidlertidligeJournalposter(): Int =
+        using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf(
+                    "SELECT COUNT(*) FROM midlertidig_lagrede_journalposter",
+                ).map {
+                    it.int(1)
+                }.asSingle,
+            ) ?: 0
+        }
 
     private fun Int.validateRowsAffected(excepted: Int = 1) {
         if (this != excepted) throw RuntimeException("Expected $this but got $excepted")
