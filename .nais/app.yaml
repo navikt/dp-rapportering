@@ -41,7 +41,7 @@ spec:
           - type: POSTGRES_15
             highAvailability: true
             diskAutoresize: true
-            pointInTimeRecovery: true
+            pointInTimeRecovery: false
             tier: {{gcp.sql.tier}}
             databases:
                 - name: rapportering
