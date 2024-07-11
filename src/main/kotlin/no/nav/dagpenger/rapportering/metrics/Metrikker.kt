@@ -135,7 +135,10 @@ object TimedMetrikk {
             .help("Indikerer hvor lang tid en funksjon brukte")
             .register(appMicrometerRegistry.prometheusRegistry)
 
-    fun <T> timedAction(navn: String, block: () -> T): T {
+    fun <T> timedAction(
+        navn: String,
+        block: () -> T,
+    ): T {
         val blockResult: T
         val tidBrukt =
             measureTime {

@@ -1,11 +1,11 @@
 package no.nav.dagpenger.rapportering.repository
 
-import io.micrometer.core.annotation.Timed
 import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
+import no.nav.dagpenger.rapportering.metrics.TimedMetrikk.timedAction
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
@@ -14,7 +14,6 @@ import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import java.util.UUID
 import javax.sql.DataSource
-import no.nav.dagpenger.rapportering.metrics.TimedMetrikk.timedAction
 
 class RapporteringRepositoryPostgres(
     private val dataSource: DataSource,
@@ -22,44 +21,46 @@ class RapporteringRepositoryPostgres(
     override fun hentRapporteringsperiode(
         id: Long,
         ident: String,
-    ): Rapporteringsperiode? = timedAction("db-hentRapporteringsperiode") {
-        using(sessionOf(dataSource)) { session ->
-            session.run(
-                queryOf(
-                    "SELECT * FROM rapporteringsperiode WHERE id = ? AND ident = ?",
-                    id,
-                    ident,
-                ).map { it.toRapporteringsperiode() }
-                    .asSingle,
-            )
-        }?.let {
-            it.copy(
-                dager =
-                hentDager(it.id).map { dagPair ->
-                    dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
-                },
-            )
-        }
-    }
-
-    override fun hentRapporteringsperioder(): List<Rapporteringsperiode> = timedAction("db-hentRapporteringsperioder") {
-        using(sessionOf(dataSource)) { session ->
-            session.run(
-                queryOf("SELECT * FROM rapporteringsperiode")
-                    .map { it.toRapporteringsperiode() }
-                    .asList,
-            )
-        }.map { rapporteringsperiode ->
-            val dager = hentDager(rapporteringsperiode.id)
-            rapporteringsperiode
-                .copy(
-                    dager =
-                    dager.map { dagPair ->
-                        dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
-                    },
+    ): Rapporteringsperiode? =
+        timedAction("db-hentRapporteringsperiode") {
+            using(sessionOf(dataSource)) { session ->
+                session.run(
+                    queryOf(
+                        "SELECT * FROM rapporteringsperiode WHERE id = ? AND ident = ?",
+                        id,
+                        ident,
+                    ).map { it.toRapporteringsperiode() }
+                        .asSingle,
                 )
+            }?.let {
+                it.copy(
+                    dager =
+                        hentDager(it.id).map { dagPair ->
+                            dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
+                        },
+                )
+            }
         }
-    }
+
+    override fun hentRapporteringsperioder(): List<Rapporteringsperiode> =
+        timedAction("db-hentRapporteringsperioder") {
+            using(sessionOf(dataSource)) { session ->
+                session.run(
+                    queryOf("SELECT * FROM rapporteringsperiode")
+                        .map { it.toRapporteringsperiode() }
+                        .asList,
+                )
+            }.map { rapporteringsperiode ->
+                val dager = hentDager(rapporteringsperiode.id)
+                rapporteringsperiode
+                    .copy(
+                        dager =
+                            dager.map { dagPair ->
+                                dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
+                            },
+                    )
+            }
+        }
 
     private fun hentDager(rapporteringId: Long): List<Pair<UUID, Dag>> =
         using(sessionOf(dataSource)) { session ->
@@ -74,31 +75,33 @@ class RapporteringRepositoryPostgres(
     override fun hentDagId(
         rapporteringId: Long,
         dagIdex: Int,
-    ): UUID = timedAction("db-hentDagId") {
-        using(sessionOf(dataSource)) { session ->
-            session.transaction { tx ->
-                tx.run(
-                    queryOf(
-                        "SELECT id FROM dag WHERE rapportering_id = ? AND dag_index = ?",
-                        rapporteringId,
-                        dagIdex,
-                    ).map { row -> UUID.fromString(row.string("id")) }
-                        .asSingle,
-                ) ?: throw RuntimeException("Finner ikke dag med rapporteringID $rapporteringId")
+    ): UUID =
+        timedAction("db-hentDagId") {
+            using(sessionOf(dataSource)) { session ->
+                session.transaction { tx ->
+                    tx.run(
+                        queryOf(
+                            "SELECT id FROM dag WHERE rapportering_id = ? AND dag_index = ?",
+                            rapporteringId,
+                            dagIdex,
+                        ).map { row -> UUID.fromString(row.string("id")) }
+                            .asSingle,
+                    ) ?: throw RuntimeException("Finner ikke dag med rapporteringID $rapporteringId")
+                }
             }
         }
-    }
 
-    override fun hentAktiviteter(dagId: UUID): List<Aktivitet> = timedAction("db-hentAktiviteter") {
-        using(sessionOf(dataSource)) { session ->
-            session.run(
-                queryOf(
-                    "SELECT * FROM aktivitet WHERE dag_id = ?",
-                    dagId,
-                ).map { it.toAktivitet() }.asList,
-            )
+    override fun hentAktiviteter(dagId: UUID): List<Aktivitet> =
+        timedAction("db-hentAktiviteter") {
+            using(sessionOf(dataSource)) { session ->
+                session.run(
+                    queryOf(
+                        "SELECT * FROM aktivitet WHERE dag_id = ?",
+                        dagId,
+                    ).map { it.toAktivitet() }.asList,
+                )
+            }
         }
-    }
 
     override fun lagreRapporteringsperiodeOgDager(
         rapporteringsperiode: Rapporteringsperiode,
@@ -273,69 +276,72 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    override fun slettAktiviteter(aktivitetIdListe: List<UUID>) = timedAction("db-slettAktiviteter") {
-        using(sessionOf(dataSource)) { session ->
-            session.transaction { tx ->
-                tx
-                    .batchPreparedNamedStatement(
-                        "DELETE FROM aktivitet WHERE uuid = :uuid",
-                        aktivitetIdListe.map { id ->
-                            mapOf("uuid" to id)
+    override fun slettAktiviteter(aktivitetIdListe: List<UUID>) =
+        timedAction("db-slettAktiviteter") {
+            using(sessionOf(dataSource)) { session ->
+                session.transaction { tx ->
+                    tx
+                        .batchPreparedNamedStatement(
+                            "DELETE FROM aktivitet WHERE uuid = :uuid",
+                            aktivitetIdListe.map { id ->
+                                mapOf("uuid" to id)
+                            },
+                        ).sum()
+                        .validateRowsAffected(excepted = aktivitetIdListe.size)
+                }
+            }
+        }
+
+    override fun slettRaporteringsperiode(rapporteringId: Long) =
+        timedAction("db-slettRaporteringsperiode") {
+            using(sessionOf(dataSource)) { session ->
+                session.transaction { tx ->
+                    tx.run(
+                        // Sjekker at rapporteringsperioden finnes
+                        queryOf("SELECT id FROM rapporteringsperiode WHERE id = ?", rapporteringId)
+                            .map { row -> row.long("id") }
+                            .asSingle,
+                    ) ?: throw RuntimeException("Finner ikke rapporteringsperiode med id: $rapporteringId")
+
+                    // Henter ut id for alle dagene i rapporteringsperioden
+                    val dagIdListe = (0..13).map { dagIndex -> hentDagId(rapporteringId, dagIndex) }
+
+                    // Sletter alle aktiviteter assosiert med dagId-ene
+                    tx.batchPreparedNamedStatement(
+                        "DELETE FROM aktivitet WHERE dag_id = :dag_id",
+                        dagIdListe.map { dagId ->
+                            mapOf("dag_id" to dagId)
                         },
-                    ).sum()
-                    .validateRowsAffected(excepted = aktivitetIdListe.size)
+                    )
+                    // Sletter alle dager
+                    tx.batchPreparedNamedStatement(
+                        "DELETE FROM dag WHERE id = :id",
+                        dagIdListe.map { dagId ->
+                            mapOf("id" to dagId)
+                        },
+                    )
+                    // Sletter rapporteringsperioden
+                    tx
+                        .run(
+                            queryOf(
+                                "DELETE FROM rapporteringsperiode WHERE id = ?",
+                                rapporteringId,
+                            ).asUpdate,
+                        ).validateRowsAffected()
+                }
             }
         }
-    }
 
-    override fun slettRaporteringsperiode(rapporteringId: Long) = timedAction("db-slettRaporteringsperiode") {
-        using(sessionOf(dataSource)) { session ->
-            session.transaction { tx ->
-                tx.run(
-                    // Sjekker at rapporteringsperioden finnes
-                    queryOf("SELECT id FROM rapporteringsperiode WHERE id = ?", rapporteringId)
-                        .map { row -> row.long("id") }
+    override fun hentAntallRapporteringsperioder(): Int =
+        timedAction("db-hentAntallRapporteringsperioder") {
+            using(sessionOf(dataSource)) { session ->
+                session.run(
+                    queryOf("SELECT COUNT(*) FROM rapporteringsperiode")
+                        .map { it.int(1) }
                         .asSingle,
-                ) ?: throw RuntimeException("Finner ikke rapporteringsperiode med id: $rapporteringId")
-
-                // Henter ut id for alle dagene i rapporteringsperioden
-                val dagIdListe = (0..13).map { dagIndex -> hentDagId(rapporteringId, dagIndex) }
-
-                // Sletter alle aktiviteter assosiert med dagId-ene
-                tx.batchPreparedNamedStatement(
-                    "DELETE FROM aktivitet WHERE dag_id = :dag_id",
-                    dagIdListe.map { dagId ->
-                        mapOf("dag_id" to dagId)
-                    },
-                )
-                // Sletter alle dager
-                tx.batchPreparedNamedStatement(
-                    "DELETE FROM dag WHERE id = :id",
-                    dagIdListe.map { dagId ->
-                        mapOf("id" to dagId)
-                    },
-                )
-                // Sletter rapporteringsperioden
-                tx
-                    .run(
-                        queryOf(
-                            "DELETE FROM rapporteringsperiode WHERE id = ?",
-                            rapporteringId,
-                        ).asUpdate,
-                    ).validateRowsAffected()
+                ) ?: 0
             }
         }
-    }
-
-    override fun hentAntallRapporteringsperioder(): Int = timedAction("db-hentAntallRapporteringsperioder") {
-        using(sessionOf(dataSource)) { session ->
-            session.run(
-                queryOf("SELECT COUNT(*) FROM rapporteringsperiode")
-                    .map { it.int(1) }
-                    .asSingle,
-            ) ?: 0
-        }
-    }
 }
 
 private fun Int.validateRowsAffected(excepted: Int = 1) {
