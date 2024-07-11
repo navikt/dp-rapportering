@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.repository
 
 import com.zaxxer.hikari.HikariDataSource
+import kotlinx.coroutines.runBlocking
 import org.flywaydb.core.Flyway
 import org.testcontainers.containers.PostgreSQLContainer
 import javax.sql.DataSource
@@ -20,10 +21,10 @@ internal object Postgres {
 
     private val flyWayBuilder = Flyway.configure().connectRetries(5)
 
-    fun withMigratedDb(block: () -> Unit) {
+    fun withMigratedDb(block: suspend () -> Unit) {
         withCleanDb {
             runMigration()
-            block()
+            runBlocking { block() }
         }
     }
 

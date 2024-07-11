@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.jobs
 
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.metrics.DatabaseMetrikker
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
@@ -23,9 +24,15 @@ internal object RapporterDatabaseMetrikkerJob {
             period = 10.minutes.inWholeMilliseconds,
             action = {
                 try {
-                    metrics.lagredeRapporteringsperioder.set(rapporteringRepository.hentAntallRapporteringsperioder().toDouble())
-                    metrics.lagredeJournalposter.set(journalfoeringRepository.hentAntallJournalposter().toDouble())
-                    metrics.midlertidigLagredeJournalposter.set(journalfoeringRepository.hentAntallMidlertidligeJournalposter().toDouble())
+                    runBlocking {
+                        metrics.lagredeRapporteringsperioder.set(
+                            rapporteringRepository.hentAntallRapporteringsperioder().toDouble(),
+                        )
+                        metrics.lagredeJournalposter.set(journalfoeringRepository.hentAntallJournalposter().toDouble())
+                        metrics.midlertidigLagredeJournalposter.set(
+                            journalfoeringRepository.hentAntallMidlertidligeJournalposter().toDouble(),
+                        )
+                    }
                 } catch (e: Exception) {
                     logger.warn(e) { "Uthenting av metrikker for lagrede elementer i databasen feilet" }
                     metrics.lagredeRapporteringsperioder.set(-1.0)

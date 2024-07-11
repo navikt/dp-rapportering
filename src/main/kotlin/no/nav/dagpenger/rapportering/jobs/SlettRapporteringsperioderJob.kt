@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.jobs
 
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
 import no.nav.dagpenger.rapportering.service.RapporteringService
@@ -33,7 +34,7 @@ internal object SlettRapporteringsperioderJob {
                     logger.info { "Starter jobb for å slette mellomlagrede rapporteringsperioder" }
                     val tidBrukt =
                         measureTime {
-                            rowsAffected = rapporeringService.slettMellomlagredeRapporteringsperioder()
+                            rowsAffected = runBlocking { rapporeringService.slettMellomlagredeRapporteringsperioder() }
                         }
                     logger.info {
                         "Jobb for å slette mellomlagrede rapporteringsperioder ferdig. Brukte ${tidBrukt.inWholeSeconds} sekund(er)."

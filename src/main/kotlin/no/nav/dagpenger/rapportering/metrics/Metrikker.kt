@@ -41,7 +41,7 @@ object DatabaseMetrikker {
         Gauge
             .build()
             .namespace(NAMESPACE)
-            .name("lagrede_rapporteringsperioder")
+            .name("lagrede_rapporteringsperioder_total")
             .help("Antall lagrede rapporteringsperioder i databasen")
             .register(appMicrometerRegistry.prometheusRegistry)
 
@@ -49,7 +49,7 @@ object DatabaseMetrikker {
         Gauge
             .build()
             .namespace(NAMESPACE)
-            .name("lagrede_journalposter")
+            .name("lagrede_journalposter_total")
             .help("Antall lagrede journalposter i databasen")
             .register(appMicrometerRegistry.prometheusRegistry)
 
@@ -57,7 +57,7 @@ object DatabaseMetrikker {
         Gauge
             .build()
             .namespace(NAMESPACE)
-            .name("midlertidig_lagrede_journalposter")
+            .name("midlertidig_lagrede_journalposter_total")
             .help("Antall midlertidig lagrede journalposter i databasen")
             .register(appMicrometerRegistry.prometheusRegistry)
 }
@@ -136,9 +136,9 @@ object TimedMetrikk {
             .labelNames("navn")
             .register(appMicrometerRegistry.prometheusRegistry)
 
-    fun <T> timedAction(
+    suspend fun <T> timedAction(
         navn: String,
-        block: () -> T,
+        block: suspend () -> T,
     ): T {
         val blockResult: T
         val tidBrukt =

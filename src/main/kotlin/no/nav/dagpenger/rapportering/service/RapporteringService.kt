@@ -89,7 +89,7 @@ class RapporteringService(
             ?.sortedByDescending { it.periode.fraOgMed }
             ?.take(5)
 
-    fun lagreEllerOppdaterPeriode(
+    suspend fun lagreEllerOppdaterPeriode(
         periode: Rapporteringsperiode,
         ident: String,
     ): Rapporteringsperiode {
@@ -107,7 +107,7 @@ class RapporteringService(
         }
     }
 
-    fun lagreEllerOppdaterAktiviteter(
+    suspend fun lagreEllerOppdaterAktiviteter(
         rapporteringId: Long,
         dag: Dag,
     ) {
@@ -117,7 +117,7 @@ class RapporteringService(
         rapporteringRepository.lagreAktiviteter(rapporteringId, dagId, dag)
     }
 
-    fun oppdaterRegistrertArbeidssoker(
+    suspend fun oppdaterRegistrertArbeidssoker(
         rapporteringId: Long,
         ident: String,
         registrertArbeidssoker: Boolean,
@@ -183,7 +183,7 @@ class RapporteringService(
             }
     }
 
-    fun slettMellomlagredeRapporteringsperioder(): Int {
+    suspend fun slettMellomlagredeRapporteringsperioder(): Int {
         val rapporteringsperioder = rapporteringRepository.hentRapporteringsperioder()
 
         var innsendtePerioder = 0
@@ -213,7 +213,7 @@ class RapporteringService(
         return innsendtePerioder + foreldredePerioder
     }
 
-    private fun slettRapporteringsperiode(periodeId: Long) =
+    private suspend fun slettRapporteringsperiode(periodeId: Long) =
         try {
             rapporteringRepository.slettRaporteringsperiode(periodeId)
         } catch (e: Exception) {

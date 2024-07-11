@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.repository
 
+import kotlinx.coroutines.runBlocking
 import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
@@ -18,7 +19,7 @@ import javax.sql.DataSource
 class RapporteringRepositoryPostgres(
     private val dataSource: DataSource,
 ) : RapporteringRepository {
-    override fun hentRapporteringsperiode(
+    override suspend fun hentRapporteringsperiode(
         id: Long,
         ident: String,
     ): Rapporteringsperiode? =
@@ -42,7 +43,7 @@ class RapporteringRepositoryPostgres(
             }
         }
 
-    override fun hentRapporteringsperioder(): List<Rapporteringsperiode> =
+    override suspend fun hentRapporteringsperioder(): List<Rapporteringsperiode> =
         timedAction("db-hentRapporteringsperioder") {
             using(sessionOf(dataSource)) { session ->
                 session.run(
@@ -72,7 +73,7 @@ class RapporteringRepositoryPostgres(
             )
         }
 
-    override fun hentDagId(
+    override suspend fun hentDagId(
         rapporteringId: Long,
         dagIdex: Int,
     ): UUID =
@@ -91,7 +92,7 @@ class RapporteringRepositoryPostgres(
             }
         }
 
-    override fun hentAktiviteter(dagId: UUID): List<Aktivitet> =
+    override suspend fun hentAktiviteter(dagId: UUID): List<Aktivitet> =
         timedAction("db-hentAktiviteter") {
             using(sessionOf(dataSource)) { session ->
                 session.run(
@@ -103,7 +104,7 @@ class RapporteringRepositoryPostgres(
             }
         }
 
-    override fun lagreRapporteringsperiodeOgDager(
+    override suspend fun lagreRapporteringsperiodeOgDager(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
     ) = timedAction("db-lagreRapporteringsperiodeOgDager") {
@@ -167,7 +168,7 @@ class RapporteringRepositoryPostgres(
                 },
             ).sum()
 
-    override fun lagreAktiviteter(
+    override suspend fun lagreAktiviteter(
         rapporteringId: Long,
         dagId: UUID,
         dag: Dag,
@@ -194,7 +195,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    override fun oppdaterRegistrertArbeidssoker(
+    override suspend fun oppdaterRegistrertArbeidssoker(
         rapporteringId: Long,
         ident: String,
         registrertArbeidssoker: Boolean,
@@ -220,7 +221,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    override fun oppdaterRapporteringsperiodeFraArena(
+    override suspend fun oppdaterRapporteringsperiodeFraArena(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
     ) = timedAction("db-oppdaterRapporteringsperiodeFraArena") {
@@ -250,7 +251,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    override fun oppdaterRapporteringStatus(
+    override suspend fun oppdaterRapporteringStatus(
         rapporteringId: Long,
         ident: String,
         status: RapporteringsperiodeStatus,
@@ -276,7 +277,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    override fun slettAktiviteter(aktivitetIdListe: List<UUID>) =
+    override suspend fun slettAktiviteter(aktivitetIdListe: List<UUID>) =
         timedAction("db-slettAktiviteter") {
             using(sessionOf(dataSource)) { session ->
                 session.transaction { tx ->
@@ -292,7 +293,7 @@ class RapporteringRepositoryPostgres(
             }
         }
 
-    override fun slettRaporteringsperiode(rapporteringId: Long) =
+    override suspend fun slettRaporteringsperiode(rapporteringId: Long) =
         timedAction("db-slettRaporteringsperiode") {
             using(sessionOf(dataSource)) { session ->
                 session.transaction { tx ->
@@ -304,7 +305,7 @@ class RapporteringRepositoryPostgres(
                     ) ?: throw RuntimeException("Finner ikke rapporteringsperiode med id: $rapporteringId")
 
                     // Henter ut id for alle dagene i rapporteringsperioden
-                    val dagIdListe = (0..13).map { dagIndex -> hentDagId(rapporteringId, dagIndex) }
+                    val dagIdListe = (0..13).map { dagIndex -> runBlocking { hentDagId(rapporteringId, dagIndex) } }
 
                     // Sletter alle aktiviteter assosiert med dagId-ene
                     tx.batchPreparedNamedStatement(
@@ -332,7 +333,7 @@ class RapporteringRepositoryPostgres(
             }
         }
 
-    override fun hentAntallRapporteringsperioder(): Int =
+    override suspend fun hentAntallRapporteringsperioder(): Int =
         timedAction("db-hentAntallRapporteringsperioder") {
             using(sessionOf(dataSource)) { session ->
                 session.run(

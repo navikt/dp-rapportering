@@ -18,6 +18,7 @@ import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
 import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.metrics.TimedMetrikk.timedAction
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Person
 import java.net.URI
@@ -31,27 +32,33 @@ class MeldepliktConnector(
         ident: String,
         subjectToken: String,
     ): List<AdapterRapporteringsperiode>? =
-        withContext(Dispatchers.IO) {
-            val result =
-                get("/rapporteringsperioder", subjectToken)
-                    .also {
-                        logger.info { "Kall til meldeplikt-adapter for å hente perioder ga status ${it.status}" }
-                        sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident ga status ${it.status}" }
-                    }
-
-            if (result.status == HttpStatusCode.NoContent) {
-                null
-            } else {
-                result
-                    .bodyAsText()
-                    .let {
-                        val perioder = defaultObjectMapper.readValue(it, object : TypeReference<List<AdapterRapporteringsperiode>>() {})
-                        if (perioder.isEmpty()) {
-                            null
-                        } else {
-                            perioder
+        timedAction("adapter-hentRapporteringsperioder") {
+            withContext(Dispatchers.IO) {
+                val result =
+                    get("/rapporteringsperioder", subjectToken)
+                        .also {
+                            logger.info { "Kall til meldeplikt-adapter for å hente perioder ga status ${it.status}" }
+                            sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident ga status ${it.status}" }
                         }
-                    }
+
+                if (result.status == HttpStatusCode.NoContent) {
+                    null
+                } else {
+                    result
+                        .bodyAsText()
+                        .let {
+                            val perioder =
+                                defaultObjectMapper.readValue(
+                                    it,
+                                    object : TypeReference<List<AdapterRapporteringsperiode>>() {},
+                                )
+                            if (perioder.isEmpty()) {
+                                null
+                            } else {
+                                perioder
+                            }
+                        }
+                }
             }
         }
 
@@ -59,20 +66,22 @@ class MeldepliktConnector(
         ident: String,
         subjectToken: String,
     ): Person? =
-        withContext(Dispatchers.IO) {
-            val result =
-                get("/person", subjectToken)
-                    .also {
-                        logger.info { "Kall til meldeplikt-adapter for å hente person ga status ${it.status}" }
-                        sikkerlogg.info { "Kall til meldeplikt-adapter for å hente person $ident ga status ${it.status}" }
-                    }
+        timedAction("adapter-hentPerson") {
+            withContext(Dispatchers.IO) {
+                val result =
+                    get("/person", subjectToken)
+                        .also {
+                            logger.info { "Kall til meldeplikt-adapter for å hente person ga status ${it.status}" }
+                            sikkerlogg.info { "Kall til meldeplikt-adapter for å hente person $ident ga status ${it.status}" }
+                        }
 
-            if (result.status == HttpStatusCode.NoContent) {
-                null
-            } else {
-                result
-                    .bodyAsText()
-                    .let { defaultObjectMapper.readValue(it, Person::class.java) }
+                if (result.status == HttpStatusCode.NoContent) {
+                    null
+                } else {
+                    result
+                        .bodyAsText()
+                        .let { defaultObjectMapper.readValue(it, Person::class.java) }
+                }
             }
         }
 
@@ -80,54 +89,66 @@ class MeldepliktConnector(
         ident: String,
         subjectToken: String,
     ): List<AdapterRapporteringsperiode>? =
-        withContext(Dispatchers.IO) {
-            hentData<String>("/sendterapporteringsperioder", subjectToken)
-                .let {
-                    val perioder = defaultObjectMapper.readValue(it, object : TypeReference<List<AdapterRapporteringsperiode>>() {})
-                    if (perioder.isEmpty()) {
-                        null
-                    } else {
-                        perioder
+        timedAction("adapter-hentInnsendteRapporteringsperioder") {
+            withContext(Dispatchers.IO) {
+                hentData<String>("/sendterapporteringsperioder", subjectToken)
+                    .let {
+                        val perioder =
+                            defaultObjectMapper.readValue(
+                                it,
+                                object : TypeReference<List<AdapterRapporteringsperiode>>() {},
+                            )
+                        if (perioder.isEmpty()) {
+                            null
+                        } else {
+                            perioder
+                        }
+                    }.also {
+                        logger.info { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }
+                        sikkerlogg.info { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident gikk OK" }
                     }
-                }.also {
-                    logger.info { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }
-                    sikkerlogg.info { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident gikk OK" }
-                }
+            }
         }
 
     suspend fun hentAktivitetsdager(
         id: String,
         subjectToken: String,
     ): List<AdapterDag> =
-        hentData<List<AdapterDag>>("/aktivitetsdager/$id", subjectToken)
-            .also {
-                logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
-            }
+        timedAction("adapter-hentAktivitetsdager") {
+            hentData<List<AdapterDag>>("/aktivitetsdager/$id", subjectToken)
+                .also {
+                    logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
+                }
+        }
 
     suspend fun hentKorrigeringId(
         id: Long,
         subjectToken: String,
     ): String =
-        withContext(Dispatchers.IO) {
-            hentData<String>("/korrigerrapporteringsperiode/$id", subjectToken)
-                .also { logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" } }
+        timedAction("adapter-hentKorrigeringId") {
+            withContext(Dispatchers.IO) {
+                hentData<String>("/korrigerrapporteringsperiode/$id", subjectToken)
+                    .also { logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" } }
+            }
         }
 
     suspend fun sendinnRapporteringsperiode(
         rapporteringsperiode: AdapterRapporteringsperiode,
         subjectToken: String,
     ): InnsendingResponse =
-        withContext(Dispatchers.IO) {
-            logger.info { "Rapporteringsperiode som sendes til adapter: $rapporteringsperiode" }
-            logger.info { "Meldeplikt-url: $meldepliktUrl" }
-            try {
-                sendData("/sendinn", subjectToken, rapporteringsperiode)
-                    .also { logger.info { "Kall til meldeplikt-adapter for å sende inn rapporteringsperiode ga status ${it.status}" } }
-                    .bodyAsText()
-                    .let { defaultObjectMapper.readValue(it, InnsendingResponse::class.java) }
-            } catch (e: Exception) {
-                logger.error(e) { "Feil ved sending av data til meldeplikt-adapter" }
-                throw e
+        timedAction("adapter-sendinnRapporteringsperiode") {
+            withContext(Dispatchers.IO) {
+                logger.info { "Rapporteringsperiode som sendes til adapter: $rapporteringsperiode" }
+                logger.info { "Meldeplikt-url: $meldepliktUrl" }
+                try {
+                    sendData("/sendinn", subjectToken, rapporteringsperiode)
+                        .also { logger.info { "Kall til meldeplikt-adapter for å sende inn rapporteringsperiode ga status ${it.status}" } }
+                        .bodyAsText()
+                        .let { defaultObjectMapper.readValue(it, InnsendingResponse::class.java) }
+                } catch (e: Exception) {
+                    logger.error(e) { "Feil ved sending av data til meldeplikt-adapter" }
+                    throw e
+                }
             }
         }
 
@@ -160,7 +181,7 @@ class MeldepliktConnector(
         httpClient.post(URI("$meldepliktUrl$path").toURL()) {
             header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
             contentType(ContentType.Application.Json)
-            setBody(Configuration.defaultObjectMapper.writeValueAsString(body))
+            setBody(defaultObjectMapper.writeValueAsString(body))
         }
 
     companion object {

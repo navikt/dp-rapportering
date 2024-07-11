@@ -7,51 +7,51 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import java.util.UUID
 
 interface RapporteringRepository {
-    fun hentRapporteringsperiode(
+    suspend fun hentRapporteringsperiode(
         id: Long,
         ident: String,
     ): Rapporteringsperiode?
 
-    fun hentRapporteringsperioder(): List<Rapporteringsperiode>
+    suspend fun hentRapporteringsperioder(): List<Rapporteringsperiode>
 
-    fun hentDagId(
+    suspend fun hentDagId(
         rapporteringId: Long,
         dagIdex: Int,
     ): UUID
 
-    fun hentAktiviteter(dagId: UUID): List<Aktivitet>
+    suspend fun hentAktiviteter(dagId: UUID): List<Aktivitet>
 
-    fun lagreRapporteringsperiodeOgDager(
+    suspend fun lagreRapporteringsperiodeOgDager(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
     )
 
-    fun lagreAktiviteter(
+    suspend fun lagreAktiviteter(
         rapporteringId: Long,
         dagId: UUID,
         dag: Dag,
     )
 
-    fun oppdaterRegistrertArbeidssoker(
+    suspend fun oppdaterRegistrertArbeidssoker(
         rapporteringId: Long,
         ident: String,
         registrertArbeidssoker: Boolean,
     )
 
-    fun oppdaterRapporteringsperiodeFraArena(
+    suspend fun oppdaterRapporteringsperiodeFraArena(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
     )
 
-    fun oppdaterRapporteringStatus(
+    suspend fun oppdaterRapporteringStatus(
         rapporteringId: Long,
         ident: String,
         status: RapporteringsperiodeStatus,
     )
 
-    fun slettAktiviteter(aktivitetIdListe: List<UUID>)
+    suspend fun slettAktiviteter(aktivitetIdListe: List<UUID>)
 
-    fun slettRaporteringsperiode(rapporteringId: Long)
+    suspend fun slettRaporteringsperiode(rapporteringId: Long)
 
-    fun hentAntallRapporteringsperioder(): Int
+    suspend fun hentAntallRapporteringsperioder(): Int
 }
