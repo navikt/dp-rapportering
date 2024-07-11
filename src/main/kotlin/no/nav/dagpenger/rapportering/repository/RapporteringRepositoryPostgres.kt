@@ -14,15 +14,15 @@ import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import java.util.UUID
 import javax.sql.DataSource
+import no.nav.dagpenger.rapportering.metrics.TimedMetrikk.timedAction
 
 class RapporteringRepositoryPostgres(
     private val dataSource: DataSource,
 ) : RapporteringRepository {
-    @Timed("db-hentRapporteringsperiode")
     override fun hentRapporteringsperiode(
         id: Long,
         ident: String,
-    ): Rapporteringsperiode? =
+    ): Rapporteringsperiode? = timedAction("db-hentRapporteringsperiode") {
         using(sessionOf(dataSource)) { session ->
             session.run(
                 queryOf(
@@ -35,14 +35,14 @@ class RapporteringRepositoryPostgres(
         }?.let {
             it.copy(
                 dager =
-                    hentDager(it.id).map { dagPair ->
-                        dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
-                    },
+                hentDager(it.id).map { dagPair ->
+                    dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
+                },
             )
         }
+    }
 
-    @Timed("db-hentRapporteringsperioder")
-    override fun hentRapporteringsperioder(): List<Rapporteringsperiode> =
+    override fun hentRapporteringsperioder(): List<Rapporteringsperiode> = timedAction("db-hentRapporteringsperioder") {
         using(sessionOf(dataSource)) { session ->
             session.run(
                 queryOf("SELECT * FROM rapporteringsperiode")
@@ -54,11 +54,12 @@ class RapporteringRepositoryPostgres(
             rapporteringsperiode
                 .copy(
                     dager =
-                        dager.map { dagPair ->
-                            dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
-                        },
+                    dager.map { dagPair ->
+                        dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
+                    },
                 )
         }
+    }
 
     private fun hentDager(rapporteringId: Long): List<Pair<UUID, Dag>> =
         using(sessionOf(dataSource)) { session ->
@@ -70,11 +71,10 @@ class RapporteringRepositoryPostgres(
             )
         }
 
-    @Timed("db-hentDagId")
     override fun hentDagId(
         rapporteringId: Long,
         dagIdex: Int,
-    ): UUID =
+    ): UUID = timedAction("db-hentDagId") {
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
                 tx.run(
@@ -87,9 +87,9 @@ class RapporteringRepositoryPostgres(
                 ) ?: throw RuntimeException("Finner ikke dag med rapporteringID $rapporteringId")
             }
         }
+    }
 
-    @Timed("db-hentAktiviteter")
-    override fun hentAktiviteter(dagId: UUID): List<Aktivitet> =
+    override fun hentAktiviteter(dagId: UUID): List<Aktivitet> = timedAction("db-hentAktiviteter") {
         using(sessionOf(dataSource)) { session ->
             session.run(
                 queryOf(
@@ -98,12 +98,12 @@ class RapporteringRepositoryPostgres(
                 ).map { it.toAktivitet() }.asList,
             )
         }
+    }
 
-    @Timed("db-lagreRapporteringsperiodeOgDager")
     override fun lagreRapporteringsperiodeOgDager(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
-    ) {
+    ) = timedAction("db-lagreRapporteringsperiodeOgDager") {
         if (hentRapporteringsperiode(rapporteringsperiode.id, ident) != null) {
             throw RuntimeException("Rapporteringsperioden finnes allerede")
         }
@@ -164,12 +164,11 @@ class RapporteringRepositoryPostgres(
                 },
             ).sum()
 
-    @Timed("db-lagreAktiviteter")
     override fun lagreAktiviteter(
         rapporteringId: Long,
         dagId: UUID,
         dag: Dag,
-    ) {
+    ) = timedAction("db-lagreAktiviteter") {
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
                 tx
@@ -192,12 +191,11 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    @Timed("db-oppdaterRegistrertArbeidssoker")
     override fun oppdaterRegistrertArbeidssoker(
         rapporteringId: Long,
         ident: String,
         registrertArbeidssoker: Boolean,
-    ) {
+    ) = timedAction("db-oppdaterRegistrertArbeidssoker") {
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
                 tx
@@ -219,11 +217,10 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    @Timed("db-oppdaterRapporteringsperiodeFraArena")
     override fun oppdaterRapporteringsperiodeFraArena(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
-    ) {
+    ) = timedAction("db-oppdaterRapporteringsperiodeFraArena") {
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
                 tx
@@ -250,12 +247,11 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    @Timed("db-oppdaterRapporteringStatus")
     override fun oppdaterRapporteringStatus(
         rapporteringId: Long,
         ident: String,
         status: RapporteringsperiodeStatus,
-    ) {
+    ) = timedAction("db-oppdaterRapporteringStatus") {
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
                 tx
@@ -277,8 +273,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    @Timed("db-slettAktiviteter")
-    override fun slettAktiviteter(aktivitetIdListe: List<UUID>) =
+    override fun slettAktiviteter(aktivitetIdListe: List<UUID>) = timedAction("db-slettAktiviteter") {
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
                 tx
@@ -291,9 +286,9 @@ class RapporteringRepositoryPostgres(
                     .validateRowsAffected(excepted = aktivitetIdListe.size)
             }
         }
+    }
 
-    @Timed("db-slettRaporteringsperiode")
-    override fun slettRaporteringsperiode(rapporteringId: Long) {
+    override fun slettRaporteringsperiode(rapporteringId: Long) = timedAction("db-slettRaporteringsperiode") {
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
                 tx.run(
@@ -332,8 +327,7 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    @Timed("db-hentAntallRapporteringsperioder")
-    override fun hentAntallRapporteringsperioder(): Int =
+    override fun hentAntallRapporteringsperioder(): Int = timedAction("db-hentAntallRapporteringsperioder") {
         using(sessionOf(dataSource)) { session ->
             session.run(
                 queryOf("SELECT COUNT(*) FROM rapporteringsperiode")
@@ -341,6 +335,7 @@ class RapporteringRepositoryPostgres(
                     .asSingle,
             ) ?: 0
         }
+    }
 }
 
 private fun Int.validateRowsAffected(excepted: Int = 1) {

@@ -4,6 +4,7 @@ import io.prometheus.client.Gauge
 import io.prometheus.client.Histogram
 import no.nav.dagpenger.rapportering.Configuration.appMicrometerRegistry
 import kotlin.time.Duration
+import kotlin.time.measureTime
 
 private const val NAMESPACE = "dp_rapportering"
 
@@ -122,5 +123,25 @@ internal class JobbkjoringMetrikker(
         incrementJobStatus(true)
         observeJobDuration(duration.inWholeSeconds)
         incrementAffectedRowsCount(affectedRows)
+    }
+}
+
+object TimedMetrikk {
+    val timer: Histogram =
+        Histogram
+            .build()
+            .namespace(NAMESPACE)
+            .name("navn")
+            .help("Indikerer hvor lang tid en funksjon brukte")
+            .register(appMicrometerRegistry.prometheusRegistry)
+
+    fun <T> timedAction(navn: String, block: () -> T): T {
+        val blockResult: T
+        val tidBrukt =
+            measureTime {
+                blockResult = block()
+            }
+        timer.labels(navn).observe(tidBrukt.inWholeSeconds.toDouble())
+        return blockResult
     }
 }
