@@ -131,8 +131,9 @@ object TimedMetrikk {
         Histogram
             .build()
             .namespace(NAMESPACE)
-            .name("navn")
+            .name("timer")
             .help("Indikerer hvor lang tid en funksjon brukte")
+            .labelNames("navn")
             .register(appMicrometerRegistry.prometheusRegistry)
 
     fun <T> timedAction(
