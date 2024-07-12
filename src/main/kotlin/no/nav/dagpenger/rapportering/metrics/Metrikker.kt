@@ -1,4 +1,6 @@
 package no.nav.dagpenger.rapportering.metrics
+import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
 import io.prometheus.client.Histogram
@@ -148,4 +150,20 @@ object TimedMetrikk {
         timer.labels(navn).observe(tidBrukt.inWholeSeconds.toDouble())
         return blockResult
     }
+
+    val httpTimer: Histogram =
+        Histogram
+            .build()
+            .namespace(NAMESPACE)
+            .name("http_timer")
+            .help("Indikerer hvor lang tid et http-brukte")
+            .labelNames("navn", "status", "method")
+            .register(appMicrometerRegistry.prometheusRegistry)
+
+    fun httpTimer(
+        navn: String,
+        statusCode: HttpStatusCode,
+        method: HttpMethod,
+        durationSeconds: Number,
+    ) = httpTimer.labels(navn, "$statusCode", method.value).observe(durationSeconds.toDouble())
 }

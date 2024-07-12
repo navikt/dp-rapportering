@@ -11,6 +11,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.Dispatchers
@@ -18,10 +19,11 @@ import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
 import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
-import no.nav.dagpenger.rapportering.metrics.TimedMetrikk.timedAction
+import no.nav.dagpenger.rapportering.metrics.TimedMetrikk.httpTimer
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Person
 import java.net.URI
+import kotlin.time.measureTime
 
 class MeldepliktConnector(
     private val meldepliktUrl: String = Configuration.meldepliktAdapterUrl,
@@ -32,66 +34,19 @@ class MeldepliktConnector(
         ident: String,
         subjectToken: String,
     ): List<AdapterRapporteringsperiode>? =
-        timedAction("adapter-hentRapporteringsperioder") {
-            withContext(Dispatchers.IO) {
-                val result =
-                    get("/rapporteringsperioder", subjectToken)
-                        .also {
-                            logger.info { "Kall til meldeplikt-adapter for å hente perioder ga status ${it.status}" }
-                            sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident ga status ${it.status}" }
-                        }
+        withContext(Dispatchers.IO) {
+            val result =
+                get("/rapporteringsperioder", subjectToken, "adapter-hentRapporteringsperioder")
+                    .also {
+                        logger.info { "Kall til meldeplikt-adapter for å hente perioder ga status ${it.status}" }
+                        sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident ga status ${it.status}" }
+                    }
 
-                if (result.status == HttpStatusCode.NoContent) {
-                    null
-                } else {
-                    result
-                        .bodyAsText()
-                        .let {
-                            val perioder =
-                                defaultObjectMapper.readValue(
-                                    it,
-                                    object : TypeReference<List<AdapterRapporteringsperiode>>() {},
-                                )
-                            if (perioder.isEmpty()) {
-                                null
-                            } else {
-                                perioder
-                            }
-                        }
-                }
-            }
-        }
-
-    suspend fun hentPerson(
-        ident: String,
-        subjectToken: String,
-    ): Person? =
-        timedAction("adapter-hentPerson") {
-            withContext(Dispatchers.IO) {
-                val result =
-                    get("/person", subjectToken)
-                        .also {
-                            logger.info { "Kall til meldeplikt-adapter for å hente person ga status ${it.status}" }
-                            sikkerlogg.info { "Kall til meldeplikt-adapter for å hente person $ident ga status ${it.status}" }
-                        }
-
-                if (result.status == HttpStatusCode.NoContent) {
-                    null
-                } else {
-                    result
-                        .bodyAsText()
-                        .let { defaultObjectMapper.readValue(it, Person::class.java) }
-                }
-            }
-        }
-
-    suspend fun hentInnsendteRapporteringsperioder(
-        ident: String,
-        subjectToken: String,
-    ): List<AdapterRapporteringsperiode>? =
-        timedAction("adapter-hentInnsendteRapporteringsperioder") {
-            withContext(Dispatchers.IO) {
-                hentData<String>("/sendterapporteringsperioder", subjectToken)
+            if (result.status == HttpStatusCode.NoContent) {
+                null
+            } else {
+                result
+                    .bodyAsText()
                     .let {
                         val perioder =
                             defaultObjectMapper.readValue(
@@ -103,61 +58,97 @@ class MeldepliktConnector(
                         } else {
                             perioder
                         }
-                    }.also {
-                        logger.info { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }
-                        sikkerlogg.info { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident gikk OK" }
                     }
             }
+        }
+
+    suspend fun hentPerson(
+        ident: String,
+        subjectToken: String,
+    ): Person? =
+        withContext(Dispatchers.IO) {
+            val result =
+                get("/person", subjectToken, "adapter-hentPerson")
+                    .also {
+                        logger.info { "Kall til meldeplikt-adapter for å hente person ga status ${it.status}" }
+                        sikkerlogg.info { "Kall til meldeplikt-adapter for å hente person $ident ga status ${it.status}" }
+                    }
+
+            if (result.status == HttpStatusCode.NoContent) {
+                null
+            } else {
+                result
+                    .bodyAsText()
+                    .let { defaultObjectMapper.readValue(it, Person::class.java) }
+            }
+        }
+
+    suspend fun hentInnsendteRapporteringsperioder(
+        ident: String,
+        subjectToken: String,
+    ): List<AdapterRapporteringsperiode>? =
+        withContext(Dispatchers.IO) {
+            hentData<String>("/sendterapporteringsperioder", subjectToken, "adapter-hentInnsendteRapporteringsperioder")
+                .let {
+                    val perioder =
+                        defaultObjectMapper.readValue(
+                            it,
+                            object : TypeReference<List<AdapterRapporteringsperiode>>() {},
+                        )
+                    if (perioder.isEmpty()) {
+                        null
+                    } else {
+                        perioder
+                    }
+                }.also {
+                    logger.info { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }
+                    sikkerlogg.info { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident gikk OK" }
+                }
         }
 
     suspend fun hentAktivitetsdager(
         id: String,
         subjectToken: String,
     ): List<AdapterDag> =
-        timedAction("adapter-hentAktivitetsdager") {
-            hentData<List<AdapterDag>>("/aktivitetsdager/$id", subjectToken)
-                .also {
-                    logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
-                }
-        }
+        hentData<List<AdapterDag>>("/aktivitetsdager/$id", subjectToken, "adapter-hentAktivitetsdager")
+            .also {
+                logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
+            }
 
     suspend fun hentKorrigeringId(
         id: Long,
         subjectToken: String,
     ): String =
-        timedAction("adapter-hentKorrigeringId") {
-            withContext(Dispatchers.IO) {
-                hentData<String>("/korrigerrapporteringsperiode/$id", subjectToken)
-                    .also { logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" } }
-            }
+        withContext(Dispatchers.IO) {
+            hentData<String>("/korrigerrapporteringsperiode/$id", subjectToken, "adapter-hentKorrigeringId")
+                .also { logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" } }
         }
 
     suspend fun sendinnRapporteringsperiode(
         rapporteringsperiode: AdapterRapporteringsperiode,
         subjectToken: String,
     ): InnsendingResponse =
-        timedAction("adapter-sendinnRapporteringsperiode") {
-            withContext(Dispatchers.IO) {
-                logger.info { "Rapporteringsperiode som sendes til adapter: $rapporteringsperiode" }
-                logger.info { "Meldeplikt-url: $meldepliktUrl" }
-                try {
-                    sendData("/sendinn", subjectToken, rapporteringsperiode)
-                        .also { logger.info { "Kall til meldeplikt-adapter for å sende inn rapporteringsperiode ga status ${it.status}" } }
-                        .bodyAsText()
-                        .let { defaultObjectMapper.readValue(it, InnsendingResponse::class.java) }
-                } catch (e: Exception) {
-                    logger.error(e) { "Feil ved sending av data til meldeplikt-adapter" }
-                    throw e
-                }
+        withContext(Dispatchers.IO) {
+            logger.info { "Rapporteringsperiode som sendes til adapter: $rapporteringsperiode" }
+            logger.info { "Meldeplikt-url: $meldepliktUrl" }
+            try {
+                sendData("/sendinn", subjectToken, "adapter-sendinnRapporteringsperiode", rapporteringsperiode)
+                    .also { logger.info { "Kall til meldeplikt-adapter for å sende inn rapporteringsperiode ga status ${it.status}" } }
+                    .bodyAsText()
+                    .let { defaultObjectMapper.readValue(it, InnsendingResponse::class.java) }
+            } catch (e: Exception) {
+                logger.error(e) { "Feil ved sending av data til meldeplikt-adapter" }
+                throw e
             }
         }
 
     private suspend inline fun <reified T> hentData(
         path: String,
         subjectToken: String,
+        metrikkNavn: String,
     ): T =
         try {
-            get(path, subjectToken)
+            get(path, subjectToken, metrikkNavn)
                 .body<T>()
         } catch (e: Exception) {
             logger.error(e) { "Feil ved henting av data fra meldeplikt-adapter. Path: $path" }
@@ -167,22 +158,40 @@ class MeldepliktConnector(
     private suspend fun get(
         path: String,
         subjectToken: String,
-    ): HttpResponse =
-        httpClient.get(URI("$meldepliktUrl$path").toURL()) {
-            header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
-            contentType(ContentType.Application.Json)
-        }
+        metrikkNavn: String,
+    ): HttpResponse {
+        val response: HttpResponse
+        val tidBrukt =
+            measureTime {
+                response =
+                    httpClient.get(URI("$meldepliktUrl$path").toURL()) {
+                        header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
+                        contentType(ContentType.Application.Json)
+                    }
+            }
+        httpTimer(metrikkNavn, response.status, HttpMethod.Get, tidBrukt.inWholeSeconds)
+        return response
+    }
 
     private suspend fun sendData(
         path: String,
         subjectToken: String,
+        metrikkNavn: String,
         body: Any?,
-    ): HttpResponse =
-        httpClient.post(URI("$meldepliktUrl$path").toURL()) {
-            header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
-            contentType(ContentType.Application.Json)
-            setBody(defaultObjectMapper.writeValueAsString(body))
-        }
+    ): HttpResponse {
+        val response: HttpResponse
+        val tidBrukt =
+            measureTime {
+                response =
+                    httpClient.post(URI("$meldepliktUrl$path").toURL()) {
+                        header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
+                        contentType(ContentType.Application.Json)
+                        setBody(defaultObjectMapper.writeValueAsString(body))
+                    }
+            }
+        httpTimer(metrikkNavn, response.status, HttpMethod.Post, tidBrukt.inWholeSeconds)
+        return response
+    }
 
     companion object {
         private val logger = KotlinLogging.logger {}

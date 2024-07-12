@@ -5,14 +5,18 @@ import io.ktor.client.request.accept
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.Configuration
+import no.nav.dagpenger.rapportering.metrics.TimedMetrikk.httpTimer
 import no.nav.dagpenger.rapportering.model.Journalpost
 import no.nav.dagpenger.rapportering.model.JournalpostResponse
 import java.net.URI
+import kotlin.time.measureTime
 
 class DokarkivConnector(
     private val dokarkivUrl: String = Configuration.dokarkivUrl,
@@ -22,19 +26,23 @@ class DokarkivConnector(
     private val path = "/rest/journalpostapi/v1/journalpost"
 
     suspend fun sendJournalpost(journalpost: Journalpost): JournalpostResponse {
-        val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
+        val response: HttpResponse
+        val tidBrukt =
+            measureTime {
+                val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
 
-        logger.info("Prøver å sende journalpost " + journalpost.eksternReferanseId)
+                logger.info("Prøver å sende journalpost " + journalpost.eksternReferanseId)
 
-        val response =
-            httpClient
-                .post(URI("$dokarkivUrl$path").toURL()) {
-                    bearerAuth(token)
-                    accept(ContentType.Application.Json)
-                    contentType(ContentType.Application.Json)
-                    setBody(Configuration.defaultObjectMapper.writeValueAsString(journalpost))
-                }
-
+                response =
+                    httpClient
+                        .post(URI("$dokarkivUrl$path").toURL()) {
+                            bearerAuth(token)
+                            accept(ContentType.Application.Json)
+                            contentType(ContentType.Application.Json)
+                            setBody(Configuration.defaultObjectMapper.writeValueAsString(journalpost))
+                        }
+            }
+        httpTimer("dokarkiv-sendJournalpost", response.status, HttpMethod.Post, tidBrukt.inWholeSeconds)
         logger.info("Journalpost sendt. Svar " + response.status)
         return response
             .bodyAsText()
