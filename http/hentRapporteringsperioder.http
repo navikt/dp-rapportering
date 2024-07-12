@@ -1,3 +1,4 @@
+# Sett token og periodeId i http-client filene. Velg miljø før kjøring.
 ###
 GET {{url}}/rapporteringsperioder
 Accept: application/json

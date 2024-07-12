@@ -1,108 +1,97 @@
+# Sett token og periodeId i http-client filene. Velg miljø før kjøring.
 ###
 POST {{url}}/rapporteringsperiode
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "id": "1813236948",
-  "periode": {
-    "fraOgMed": "2024-02-26",
-    "tilOgMed": "2024-03-10"
-  },
-  "dager": [
-    {
-      "dato": "2024-02-26",
-      "aktiviteter": [
+    "id": "1813236955",
+    "periode": {
+        "fraOgMed": "2024-03-11",
+        "tilOgMed": "2024-03-24"
+    },
+    "dager": [
         {
-          "id": "4e69e571-6384-4eab-9c2e-3f4d48d30b9a",
-          "type": "Arbeid",
-          "timer": "PT8H30M"
-        }
-      ],
-      "dagIndex": 0
-    },
-    {
-      "dato": "2024-02-27",
-      "aktiviteter": [
+            "dato": "2024-03-11",
+            "aktiviteter": [
+                {
+                    "id": "7e69e571-6384-4eab-9c2e-3f4d48d30b9a",
+                    "type": "Arbeid",
+                    "timer": "PT8H30M"
+                }
+            ],
+            "dagIndex": 0
+        },
         {
-          "id": "5e69e571-6384-4eab-9c2e-3f4d48d30b9a",
-          "type": "Arbeid",
-          "timer": "PT8H30M"
-        }
-      ],
-      "dagIndex": 1
-    },
-    {
-      "dato": "2024-02-28",
-      "aktiviteter": [
+            "dato": "2024-03-12",
+            "aktiviteter": [],
+            "dagIndex": 1
+        },
         {
-          "id": "6e69e571-6384-4eab-9c2e-3f4d48d30b9a",
-          "type": "Arbeid",
-          "timer": "PT8H30M"
+            "dato": "2024-03-13",
+            "aktiviteter": [],
+            "dagIndex": 2
+        },
+        {
+            "dato": "2024-03-14",
+            "aktiviteter": [],
+            "dagIndex": 3
+        },
+        {
+            "dato": "2024-03-15",
+            "aktiviteter": [],
+            "dagIndex": 4
+        },
+        {
+            "dato": "2024-03-16",
+            "aktiviteter": [],
+            "dagIndex": 5
+        },
+        {
+            "dato": "2024-03-17",
+            "aktiviteter": [],
+            "dagIndex": 6
+        },
+        {
+            "dato": "2024-03-18",
+            "aktiviteter": [],
+            "dagIndex": 7
+        },
+        {
+            "dato": "2024-03-19",
+            "aktiviteter": [],
+            "dagIndex": 8
+        },
+        {
+            "dato": "2024-03-20",
+            "aktiviteter": [],
+            "dagIndex": 9
+        },
+        {
+            "dato": "2024-03-21",
+            "aktiviteter": [],
+            "dagIndex": 10
+        },
+        {
+            "dato": "2024-03-22",
+            "aktiviteter": [],
+            "dagIndex": 11
+        },
+        {
+            "dato": "2024-03-23",
+            "aktiviteter": [],
+            "dagIndex": 12
+        },
+        {
+            "dato": "2024-03-24",
+            "aktiviteter": [],
+            "dagIndex": 13
         }
-      ],
-      "dagIndex": 2
-    },
-    {
-      "dato": "2024-02-29",
-      "aktiviteter": [],
-      "dagIndex": 3
-    },
-    {
-      "dato": "2024-03-01",
-      "aktiviteter": [],
-      "dagIndex": 4
-    },
-    {
-      "dato": "2024-03-02",
-      "aktiviteter": [],
-      "dagIndex": 5
-    },
-    {
-      "dato": "2024-03-03",
-      "aktiviteter": [],
-      "dagIndex": 6
-    },
-    {
-      "dato": "2024-03-04",
-      "aktiviteter": [],
-      "dagIndex": 7
-    },
-    {
-      "dato": "2024-03-05",
-      "aktiviteter": [],
-      "dagIndex": 8
-    },
-    {
-      "dato": "2024-03-06",
-      "aktiviteter": [],
-      "dagIndex": 9
-    },
-    {
-      "dato": "2024-03-07",
-      "aktiviteter": [],
-      "dagIndex": 10
-    },
-    {
-      "dato": "2024-03-08",
-      "aktiviteter": [],
-      "dagIndex": 11
-    },
-    {
-      "dato": "2024-03-09",
-      "aktiviteter": [],
-      "dagIndex": 12
-    },
-    {
-      "dato": "2024-03-10",
-      "aktiviteter": [],
-      "dagIndex": 13
-    }
-  ],
-  "kanSendesFra": "2024-03-09",
-  "kanSendes": true,
-  "kanKorrigeres": true,
-  "status": "TilUtfylling",
-  "bruttoBelop": null,
-  "registrertArbeidssoker": true
+    ],
+    "kanSendesFra": "2024-03-23",
+    "kanSendes": true,
+    "kanKorrigeres": true,
+    "status": "TilUtfylling",
+    "bruttoBelop": null,
+    "registrertArbeidssoker": true
 }

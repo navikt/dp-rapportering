@@ -1,4 +1,5 @@
+# Sett token og periodeId i http-client filene. Velg miljø før kjøring.
 ###
-GET {{url}}/rapporteringsperiode/123
+GET {{url}}/rapporteringsperiode/{{periodeId}}
 Accept: application/json
 Authorization: Bearer {{token}}
