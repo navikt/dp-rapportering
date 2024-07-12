@@ -43,8 +43,28 @@ class RapporteringRepositoryPostgres(
             }
         }
 
-    override suspend fun hentRapporteringsperioder(): List<Rapporteringsperiode> =
+    override suspend fun hentLagredeRapporteringsperioder(ident: String): List<Rapporteringsperiode> =
         timedAction("db-hentRapporteringsperioder") {
+            using(sessionOf(dataSource)) { session ->
+                session.run(
+                    queryOf("SELECT * FROM rapporteringsperiode where ident = ?", ident)
+                        .map { it.toRapporteringsperiode() }
+                        .asList,
+                )
+            }.map { rapporteringsperiode ->
+                val dager = hentDager(rapporteringsperiode.id)
+                rapporteringsperiode
+                    .copy(
+                        dager =
+                            dager.map { dagPair ->
+                                dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
+                            },
+                    )
+            }
+        }
+
+    override suspend fun hentAlleLagredeRapporteringsperioder(): List<Rapporteringsperiode> =
+        timedAction("db-hentAlleRapporteringsperioder") {
             using(sessionOf(dataSource)) { session ->
                 session.run(
                     queryOf("SELECT * FROM rapporteringsperiode")

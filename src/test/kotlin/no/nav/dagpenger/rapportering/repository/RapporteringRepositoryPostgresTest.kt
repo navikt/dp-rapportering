@@ -27,7 +27,7 @@ class RapporteringRepositoryPostgresTest {
     @Test
     fun `kan hente alle rapporteringsperioder`() {
         withMigratedDb {
-            val rapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperioder()
+            val rapporteringsperiode = rapporteringRepositoryPostgres.hentAlleLagredeRapporteringsperioder()
 
             rapporteringsperiode.size shouldBe 0
         }
@@ -79,7 +79,7 @@ class RapporteringRepositoryPostgresTest {
                 ident = ident,
             )
 
-            rapporteringRepositoryPostgres.hentRapporteringsperioder().size shouldBe 1
+            rapporteringRepositoryPostgres.hentAlleLagredeRapporteringsperioder().size shouldBe 1
         }
     }
 
@@ -93,7 +93,7 @@ class RapporteringRepositoryPostgresTest {
                 ident = ident,
             )
 
-            val periodeFraDb = rapporteringRepositoryPostgres.hentRapporteringsperioder()
+            val periodeFraDb = rapporteringRepositoryPostgres.hentAlleLagredeRapporteringsperioder()
 
             periodeFraDb.size shouldBe 1
             with(periodeFraDb.first()) {
@@ -128,7 +128,7 @@ class RapporteringRepositoryPostgresTest {
                 ident = ident,
             )
 
-            val lagretRapportering = rapporteringRepositoryPostgres.hentRapporteringsperioder()
+            val lagretRapportering = rapporteringRepositoryPostgres.hentAlleLagredeRapporteringsperioder()
 
             lagretRapportering.size shouldBe 1
         }

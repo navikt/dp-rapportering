@@ -66,6 +66,7 @@ class RapporteringServiceTest {
         coEvery { meldepliktConnector.hentRapporteringsperioder(ident, token) } returns null
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(ident, token) } returns
             rapporteringsperiodeListe.map { it.copy(status = Innsendt) }.toAdapterRapporteringsperioder()
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
         val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token) }
 
@@ -229,6 +230,7 @@ class RapporteringServiceTest {
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns emptyList()
         coEvery { meldepliktConnector.hentKorrigeringId(any(), any()) } returns "321"
         coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
         val korrigertRapporteringsperiode = runBlocking { rapporteringService.korrigerRapporteringsperiode(123L, ident, token) }
 
@@ -242,6 +244,7 @@ class RapporteringServiceTest {
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns emptyList()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns
             rapporteringsperiodeListe.first().copy(kanKorrigeres = false)
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
         shouldThrow<IllegalArgumentException> {
             runBlocking { rapporteringService.korrigerRapporteringsperiode(123L, ident, token) }
@@ -265,6 +268,7 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe
                 .map { it.copy(status = Innsendt, kanSendes = false, kanKorrigeres = true) }
                 .toAdapterRapporteringsperioder()
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
         val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
@@ -272,6 +276,28 @@ class RapporteringServiceTest {
         innsendteRapporteringsperioder[0].id shouldBe 3L
         innsendteRapporteringsperioder[1].id shouldBe 2L
         innsendteRapporteringsperioder[2].id shouldBe 1L
+    }
+
+    @Test
+    fun `liste med innsendte rapporteringsperioder blir populert med manglende perioder fra databasen som har riktig status`() {
+        val perioderFraArena =
+            rapporteringsperiodeListe
+                .map { it.copy(status = Innsendt, kanSendes = false, kanKorrigeres = true) }
+                .toAdapterRapporteringsperioder()
+        coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns perioderFraArena
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns
+            listOf(
+                lagRapporteringsperiode(4, Periode(1.januar, 14.januar), status = Innsendt),
+                lagRapporteringsperiode(5, Periode(15.januar, 28.januar)),
+            )
+
+        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
+
+        innsendteRapporteringsperioder.size shouldBe 4
+        innsendteRapporteringsperioder[0].id shouldBe 3L
+        innsendteRapporteringsperioder[1].id shouldBe 2L
+        innsendteRapporteringsperioder[2].id shouldBe 1L
+        innsendteRapporteringsperioder[3].id shouldBe 4L
     }
 
     @Test
@@ -348,7 +374,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan slette mellomlagrede rapporteringsperioder som er sendt inn`() {
-        coEvery { rapporteringRepository.hentRapporteringsperioder() } returns
+        coEvery { rapporteringRepository.hentAlleLagredeRapporteringsperioder() } returns
             listOf(rapporteringsperiodeListe.first().copy(status = Innsendt))
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
 
@@ -359,7 +385,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan slette mellomlagrede rapporteringsperioder som er ikke er sendt inn innen siste frist`() {
-        coEvery { rapporteringRepository.hentRapporteringsperioder() } returns rapporteringsperiodeListe
+        coEvery { rapporteringRepository.hentAlleLagredeRapporteringsperioder() } returns rapporteringsperiodeListe
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
 
         runBlocking { rapporteringService.slettMellomlagredeRapporteringsperioder() }
@@ -369,7 +395,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `sletter ikke mellomlagrede rapporteringsperioder som er fortsatt skal være mellomlagret`() {
-        coEvery { rapporteringRepository.hentRapporteringsperioder() } returns fremtidigeRaporteringsperioder
+        coEvery { rapporteringRepository.hentAlleLagredeRapporteringsperioder() } returns fremtidigeRaporteringsperioder
 
         runBlocking { rapporteringService.slettMellomlagredeRapporteringsperioder() }
 

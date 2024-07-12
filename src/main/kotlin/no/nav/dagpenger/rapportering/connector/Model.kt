@@ -63,7 +63,8 @@ data class AdapterAktivitet(
     }
 }
 
-fun List<AdapterRapporteringsperiode>.toRapporteringsperioder(): List<Rapporteringsperiode> = this.map { it.toRapporteringsperiode() }
+fun List<AdapterRapporteringsperiode>?.toRapporteringsperioder(): List<Rapporteringsperiode> =
+    this?.map { it.toRapporteringsperiode() } ?: emptyList()
 
 fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
     Rapporteringsperiode(

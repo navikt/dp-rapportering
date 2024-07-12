@@ -12,7 +12,9 @@ interface RapporteringRepository {
         ident: String,
     ): Rapporteringsperiode?
 
-    suspend fun hentRapporteringsperioder(): List<Rapporteringsperiode>
+    suspend fun hentLagredeRapporteringsperioder(ident: String): List<Rapporteringsperiode>
+
+    suspend fun hentAlleLagredeRapporteringsperioder(): List<Rapporteringsperiode>
 
     suspend fun hentDagId(
         rapporteringId: Long,

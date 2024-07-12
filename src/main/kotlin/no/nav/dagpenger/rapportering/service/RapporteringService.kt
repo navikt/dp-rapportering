@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Korrigert
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
@@ -85,9 +86,24 @@ class RapporteringService(
     ): List<Rapporteringsperiode>? =
         meldepliktConnector
             .hentInnsendteRapporteringsperioder(ident, token)
-            ?.toRapporteringsperioder()
-            ?.sortedByDescending { it.periode.fraOgMed }
-            ?.take(5)
+            .toRapporteringsperioder()
+            .populerMedPerioderFraDatabase(ident)
+            .sortedByDescending { it.periode.fraOgMed }
+            .take(5)
+            .ifEmpty { null }
+
+    private suspend fun List<Rapporteringsperiode>.populerMedPerioderFraDatabase(ident: String): List<Rapporteringsperiode> {
+        val innsendteRapporteringsperioder = this.toMutableList()
+        rapporteringRepository
+            .hentLagredeRapporteringsperioder(ident)
+            .filter { it.status == Innsendt || it.status == Ferdig }
+            .forEach { periodeFraDb ->
+                if (innsendteRapporteringsperioder.none { it.id == periodeFraDb.id }) {
+                    innsendteRapporteringsperioder.add(periodeFraDb)
+                }
+            }
+        return innsendteRapporteringsperioder
+    }
 
     suspend fun lagreEllerOppdaterPeriode(
         periode: Rapporteringsperiode,
@@ -184,7 +200,7 @@ class RapporteringService(
     }
 
     suspend fun slettMellomlagredeRapporteringsperioder(): Int {
-        val rapporteringsperioder = rapporteringRepository.hentRapporteringsperioder()
+        val rapporteringsperioder = rapporteringRepository.hentAlleLagredeRapporteringsperioder()
 
         var innsendtePerioder = 0
         var foreldredePerioder = 0
