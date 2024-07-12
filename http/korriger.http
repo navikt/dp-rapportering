@@ -1,0 +1,4 @@
+###
+POST {{url}}/rapporteringsperiode{{periodeId}}/korriger
+Content-Type: application/json
+Authorization: Bearer {{token}}

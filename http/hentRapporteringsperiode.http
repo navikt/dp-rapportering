@@ -1,0 +1,4 @@
+###
+GET {{url}}/rapporteringsperiode/123
+Accept: application/json
+Authorization: Bearer {{token}}

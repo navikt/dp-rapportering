@@ -1,0 +1,8 @@
+###
+POST {{url}}/rapporteringsperiode/{{periodeId}}/arbeidssoker
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "registrertArbeidssoker": true
+}
