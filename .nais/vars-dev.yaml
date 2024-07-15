@@ -20,4 +20,4 @@ azure:
 MELDEPLIKT_ADAPTER_HOST: dp-arena-meldeplikt-adapter.intern.dev.nav.no
 MELDEPLIKT_ADAPTER_AUDIENCE: dev-gcp:teamdagpenger:dp-arena-meldeplikt-adapter
 DOKARKIV_HOST: dokarkiv.dev-fss-pub.nais.io
-DOKARKIV_AUDIENCE: dev-fss.teamdokumenthandtering.dokarkiv-q1
+DOKARKIV_AUDIENCE: dev-fss.teamdokumenthandtering.dokarkiv-q2
