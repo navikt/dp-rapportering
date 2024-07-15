@@ -5,7 +5,7 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import java.util.UUID
 
-fun generateCallId(): String = "dp-rapportering-${UUID.randomUUID()}"
+fun generateCallId(): String = "dp-rapp-${UUID.randomUUID()}"
 
 fun headersToString(headers: List<String>): String {
     if (headers.size == 1) {
