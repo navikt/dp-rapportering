@@ -15,7 +15,7 @@ import io.ktor.serialization.jackson.jackson
 import io.ktor.server.auth.jwt.JWTAuthenticationProvider
 import io.ktor.server.auth.jwt.JWTPrincipal
 import kotlinx.coroutines.runBlocking
-import no.nav.dagpenger.rapportering.Configuration
+import no.nav.dagpenger.rapportering.config.Configuration
 import java.net.URI
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -76,7 +76,9 @@ object AuthFactory {
         realm = Configuration.APP_NAME
         validate { credentials ->
             require(
-                credentials.payload.claims["groups"]?.asList(String::class.java)?.contains(saksbehandlerGruppe)
+                credentials.payload.claims["groups"]
+                    ?.asList(String::class.java)
+                    ?.contains(saksbehandlerGruppe)
                     ?: false,
             )
             JWTPrincipal(credentials.payload)

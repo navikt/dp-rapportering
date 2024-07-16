@@ -19,10 +19,10 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import mu.KotlinLogging
-import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.auth.jwt
 import no.nav.dagpenger.rapportering.api.auth.loginLevel
+import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode

@@ -3,7 +3,7 @@ package no.nav.dagpenger.rapportering.repository
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
-import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.model.Journalpost
 import javax.sql.DataSource
 

@@ -11,7 +11,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import mu.KotlinLogging
-import no.nav.dagpenger.rapportering.Configuration
+import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.metrics.TimedMetrikk.httpTimer
 import no.nav.dagpenger.rapportering.model.Journalpost
 import no.nav.dagpenger.rapportering.model.JournalpostResponse

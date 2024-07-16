@@ -12,7 +12,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.ExternalServicesBuilder
-import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.connector.AdapterDag

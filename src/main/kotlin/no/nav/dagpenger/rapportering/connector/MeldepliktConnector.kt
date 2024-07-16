@@ -17,8 +17,8 @@ import io.ktor.http.contentType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
-import no.nav.dagpenger.rapportering.Configuration
-import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.config.Configuration
+import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.TimedMetrikk.httpTimer
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Person

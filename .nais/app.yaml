@@ -21,6 +21,9 @@ spec:
   tokenx:
     enabled: true
 
+  kafka:
+    pool: {{ kafka.pool }}
+
   env:
     - name: BEREGNINGSDATO_STRATEGI
       value: {{beregningsdato.strategi}}

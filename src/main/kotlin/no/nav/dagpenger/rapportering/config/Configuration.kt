@@ -1,4 +1,4 @@
-package no.nav.dagpenger.rapportering
+package no.nav.dagpenger.rapportering.config
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -30,6 +30,11 @@ internal object Configuration {
             mapOf(
                 "beregningsdato_strategi" to "tom",
                 "Grupper.saksbehandler" to "123",
+                "RAPID_APP_NAME" to "dp-rapportering",
+                "KAFKA_CONSUMER_GROUP_ID" to "dp-rapportering-v1",
+                "KAFKA_RAPID_TOPIC" to "teamdagpenger.rapid.v1",
+                "KAFKA_RESET_POLICY" to "latest",
+                "KAFKA_BOOTSTRAP_SERVERS" to "127.0.0.1:9092",
             ),
         )
 
@@ -45,7 +50,6 @@ internal object Configuration {
         properties.list().reversed().fold(emptyMap()) { map, pair ->
             map + pair.second
         }
-    internal val beregningsdato_strategi by stringType
 
     val meldepliktAdapterUrl by lazy {
         properties[Key("MELDEPLIKT_ADAPTER_HOST", stringType)].let {

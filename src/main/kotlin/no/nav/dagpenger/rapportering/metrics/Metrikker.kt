@@ -4,7 +4,7 @@ import io.ktor.http.HttpStatusCode
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
 import io.prometheus.client.Histogram
-import no.nav.dagpenger.rapportering.Configuration.appMicrometerRegistry
+import no.nav.dagpenger.rapportering.config.Configuration.appMicrometerRegistry
 import kotlin.time.Duration
 import kotlin.time.measureTime
 

@@ -6,10 +6,18 @@ import io.ktor.server.testing.testApplication
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
-import no.nav.dagpenger.rapportering.module
+import no.nav.dagpenger.rapportering.config.Configuration.appMicrometerRegistry
+import no.nav.dagpenger.rapportering.config.konfigurasjon
+import no.nav.dagpenger.rapportering.connector.DokarkivConnector
+import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.database
+import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.runMigration
+import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
+import no.nav.dagpenger.rapportering.service.JournalfoeringService
+import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.OutgoingCallLoggingPlugin
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
@@ -77,8 +85,24 @@ open class ApiTestSetup {
                         OutgoingCallLoggingPlugin().intercept(this)
                     }
                 }
+            val meldepliktConnector = MeldepliktConnector(httpClient = httpClient)
+            val rapporteringRepository = RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
+            val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
+            val rapporteringService =
+                RapporteringService(
+                    meldepliktConnector,
+                    rapporteringRepository,
+                    JournalfoeringService(
+                        meldepliktConnector,
+                        DokarkivConnector(httpClient = httpClient),
+                        journalfoeringRepository,
+                    ),
+                )
+
             application {
-                module(httpClient)
+                konfigurasjon(appMicrometerRegistry)
+                internalApi(appMicrometerRegistry)
+                rapporteringApi(rapporteringService)
             }
 
             block()

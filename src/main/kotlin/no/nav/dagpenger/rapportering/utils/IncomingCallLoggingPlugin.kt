@@ -21,8 +21,8 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import no.nav.dagpenger.rapportering.Configuration.MDC_CORRELATION_ID
-import no.nav.dagpenger.rapportering.Configuration.NO_LOG_PATHS
+import no.nav.dagpenger.rapportering.config.Configuration.MDC_CORRELATION_ID
+import no.nav.dagpenger.rapportering.config.Configuration.NO_LOG_PATHS
 import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import org.slf4j.MDC

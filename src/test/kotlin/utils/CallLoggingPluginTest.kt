@@ -15,11 +15,11 @@ import io.ktor.server.testing.ExternalServicesBuilder
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
-import no.nav.dagpenger.rapportering.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.api.ApiTestSetup
 import no.nav.dagpenger.rapportering.api.doGet
 import no.nav.dagpenger.rapportering.api.doPost
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
+import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.model.DokumentInfo
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.JournalpostResponse
