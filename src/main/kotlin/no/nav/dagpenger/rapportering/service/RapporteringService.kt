@@ -15,6 +15,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Korrigert
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import java.time.LocalDate
+import java.util.UUID
 
 private val logger = KotlinLogging.logger {}
 
@@ -167,6 +168,7 @@ class RapporteringService(
                 kanKorrigeres = false,
                 kanSendes = true,
                 status = Korrigert,
+                dager = originalPeriode.dager.map { it.copy(aktiviteter = it.aktiviteter.map { it.copy(id = UUID.randomUUID()) }) },
             )
 
         lagreEllerOppdaterPeriode(korrigertRapporteringsperiode, ident)

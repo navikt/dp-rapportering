@@ -301,6 +301,48 @@ class RapporteringApiTest : ApiTestSetup() {
     }
 
     @Test
+    fun `Kan korrigere rapporteringsperiode når original periode ligger i databasen`() {
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter(
+                    rapporteringsperioderResponse =
+                        listOf(
+                            adapterRapporteringsperiode(
+                                id = 125L,
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                status = AdapterRapporteringsperiodeStatus.Innsendt,
+                            ),
+                            adapterRapporteringsperiode(
+                                id = 126L,
+                                fraOgMed = LocalDate.now().plusDays(1),
+                                aktivitet = defaultAdapterAktivitet,
+                                status = AdapterRapporteringsperiodeStatus.Innsendt,
+                            ),
+                        ),
+                )
+            }
+
+            client.doPost("/rapporteringsperiode/125/start", issueToken(fnr))
+
+            val response =
+                client.doPostAndReceive<Rapporteringsperiode>("/rapporteringsperiode/125/korriger", issueToken(fnr))
+            response.httpResponse.status shouldBe HttpStatusCode.OK
+            with(response.body) {
+                id shouldBe 321L
+                dager.forEach { dag ->
+                    dag.aktiviteter.forEach { aktivitet ->
+                        aktivitet.type shouldBe AktivitetsType.Arbeid
+                        aktivitet.timer shouldBe "PT7H30M"
+                    }
+                }
+                status shouldBe Korrigert
+                kanKorrigeres shouldBe false
+                kanSendes shouldBe true
+            }
+        }
+    }
+
+    @Test
     fun `korrigering feiler hvis original rapporteringsperiode ikke finnes`() =
         setUpTestApplication {
             externalServices {
@@ -315,7 +357,7 @@ class RapporteringApiTest : ApiTestSetup() {
     fun `korrigering feiler hvis original rapporteringsperiode ikke kan korrigeres`() =
         setUpTestApplication {
             externalServices {
-                meldepliktAdapter(rapporteringsperioderResponse = listOf(rapporteringsperiodeFor(kanKorrigeres = false)))
+                meldepliktAdapter(rapporteringsperioderResponse = listOf(adapterRapporteringsperiode(kanKorrigeres = false)))
             }
 
             val response = client.doPost("/rapporteringsperiode/123/korriger", issueToken(fnr))
@@ -416,10 +458,10 @@ class RapporteringApiTest : ApiTestSetup() {
         )
 
     fun ExternalServicesBuilder.meldepliktAdapter(
-        rapporteringsperioderResponse: List<Rapporteringsperiode> =
+        rapporteringsperioderResponse: List<AdapterRapporteringsperiode> =
             listOf(
-                rapporteringsperiodeFor(),
-                rapporteringsperiodeFor(id = 124L, fraOgMed = LocalDate.now().plusDays(1)),
+                adapterRapporteringsperiode(),
+                adapterRapporteringsperiode(id = 124L, fraOgMed = LocalDate.now().plusDays(1)),
             ),
         rapporteringsperioderResponseStatus: HttpStatusCode = HttpStatusCode.OK,
         sendteRapporteringsperioderResponse: List<AdapterRapporteringsperiode> =
@@ -487,7 +529,11 @@ class RapporteringApiTest : ApiTestSetup() {
         fraOgMed: LocalDate = LocalDate.now().minusDays(13),
         tilOgMed: LocalDate = fraOgMed.plusDays(13),
         aktivitet: AdapterAktivitet? = null,
+        kanSendes: Boolean = true,
+        kanKorrigeres: Boolean = true,
         status: AdapterRapporteringsperiodeStatus = AdapterRapporteringsperiodeStatus.TilUtfylling,
+        bruttoBelop: Double? = null,
+        registrertArbeidssoker: Boolean? = null,
     ) = AdapterRapporteringsperiode(
         id = id,
         periode =
@@ -504,11 +550,11 @@ class RapporteringApiTest : ApiTestSetup() {
                 )
             },
         kanSendesFra = tilOgMed.minusDays(1),
-        kanSendes = true,
-        kanKorrigeres = true,
+        kanSendes = kanSendes,
+        kanKorrigeres = kanKorrigeres,
         status = status,
-        bruttoBelop = null,
-        registrertArbeidssoker = null,
+        bruttoBelop = bruttoBelop,
+        registrertArbeidssoker = registrertArbeidssoker,
     )
 
     private fun person(
