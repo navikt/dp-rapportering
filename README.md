@@ -9,7 +9,7 @@ konverterer meldekort til rapporteringsperioder og motsatt.
 - Mellomlagrer rapporteringsperioder som er til utfylling. 
 - Mellomlagrede rapporteringsperioder som er sendt inn eller som er forbi siste frist for innsending blir slettet av en jobb som kjører hver natt.
 - Jornalfører innsendte rapporteringsperioder i dokarkiv.
-- Kall-logg for alle innkommende og utgående kall lagres i 3 måneder.
+- Kall-logg for alle innkommende og utgående kall lagres i 90 dager.
 
 ## Mer dokumentasjon
 - OpenAPI: https://navikt.github.io/dp-rapportering/

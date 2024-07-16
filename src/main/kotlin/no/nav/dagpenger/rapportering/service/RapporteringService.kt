@@ -168,7 +168,15 @@ class RapporteringService(
                 kanKorrigeres = false,
                 kanSendes = true,
                 status = Korrigert,
-                dager = originalPeriode.dager.map { it.copy(aktiviteter = it.aktiviteter.map { it.copy(id = UUID.randomUUID()) }) },
+                dager =
+                    originalPeriode.dager.map { dag ->
+                        dag.copy(
+                            aktiviteter =
+                                dag.aktiviteter.map { aktivitet ->
+                                    aktivitet.copy(id = UUID.randomUUID())
+                                },
+                        )
+                    },
             )
 
         lagreEllerOppdaterPeriode(korrigertRapporteringsperiode, ident)
