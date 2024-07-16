@@ -4,7 +4,6 @@ import io.ktor.http.HttpStatusCode
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
 import io.prometheus.client.Histogram
-import no.nav.dagpenger.rapportering.config.Configuration.appMicrometerRegistry
 import kotlin.time.Duration
 import kotlin.time.measureTime
 
@@ -17,7 +16,7 @@ object RapporteringsperiodeMetrikker {
             .namespace(NAMESPACE)
             .name("antall_personer_hentet")
             .help("Indikerer antall uthentede personer med rapporteringsperioder")
-            .register(appMicrometerRegistry.prometheusRegistry)
+            .register()
 }
 
 object MeldepliktMetrikker {
@@ -27,7 +26,7 @@ object MeldepliktMetrikker {
             .namespace(NAMESPACE)
             .name("antall_meldeplikt_feil_status")
             .help("Indikerer antall kall mot meldeplikt som gir en annen http status enn 200 OK")
-            .register(appMicrometerRegistry.prometheusRegistry)
+            .register()
 
     val rapporteringApiFeil: Counter =
         Counter
@@ -35,7 +34,7 @@ object MeldepliktMetrikker {
             .namespace(NAMESPACE)
             .name("antall_meldeplikt_exception")
             .help("Indikerer antall feil i kall eller mapping av respons mot meldeplikt")
-            .register(appMicrometerRegistry.prometheusRegistry)
+            .register()
 }
 
 object DatabaseMetrikker {
@@ -45,7 +44,7 @@ object DatabaseMetrikker {
             .namespace(NAMESPACE)
             .name("lagrede_rapporteringsperioder_total")
             .help("Antall lagrede rapporteringsperioder i databasen")
-            .register(appMicrometerRegistry.prometheusRegistry)
+            .register()
 
     val lagredeJournalposter: Gauge =
         Gauge
@@ -53,7 +52,7 @@ object DatabaseMetrikker {
             .namespace(NAMESPACE)
             .name("lagrede_journalposter_total")
             .help("Antall lagrede journalposter i databasen")
-            .register(appMicrometerRegistry.prometheusRegistry)
+            .register()
 
     val midlertidigLagredeJournalposter: Gauge =
         Gauge
@@ -61,7 +60,7 @@ object DatabaseMetrikker {
             .namespace(NAMESPACE)
             .name("midlertidig_lagrede_journalposter_total")
             .help("Antall midlertidig lagrede journalposter i databasen")
-            .register(appMicrometerRegistry.prometheusRegistry)
+            .register()
 }
 
 internal class JobbkjoringMetrikker(
@@ -75,7 +74,7 @@ internal class JobbkjoringMetrikker(
                 .name("job_execution_status")
                 .help("Indikerer status for kjøring av jobb")
                 .labelNames("navn")
-                .register(appMicrometerRegistry.prometheusRegistry)
+                .register()
 
         private val jobDuration: Histogram =
             Histogram
@@ -84,7 +83,7 @@ internal class JobbkjoringMetrikker(
                 .name("job_execution_duration_seconds")
                 .help("Varighet for kjøring av jobb i sekunder")
                 .labelNames("navn")
-                .register(appMicrometerRegistry.prometheusRegistry)
+                .register()
 
         private val affectedRowsCount: Counter =
             Counter
@@ -93,7 +92,7 @@ internal class JobbkjoringMetrikker(
                 .name("affected_rows_count")
                 .help("Antall rader påvirket av jobb")
                 .labelNames("navn")
-                .register(appMicrometerRegistry.prometheusRegistry)
+                .register()
 
         private val jobErrors: Counter =
             Counter
@@ -102,7 +101,7 @@ internal class JobbkjoringMetrikker(
                 .name("job_errors_total")
                 .help("Antall feil under kjøring av jobb")
                 .labelNames("navn")
-                .register(appMicrometerRegistry.prometheusRegistry)
+                .register()
     }
 
     private fun incrementJobStatus(success: Boolean) = jobStatus.labels(navn).inc(if (success) 1.0 else 0.0)
@@ -136,7 +135,7 @@ object TimedMetrikk {
             .name("timer")
             .help("Indikerer hvor lang tid en funksjon brukte")
             .labelNames("navn")
-            .register(appMicrometerRegistry.prometheusRegistry)
+            .register()
 
     suspend fun <T> timedAction(
         navn: String,
@@ -158,7 +157,7 @@ object TimedMetrikk {
             .name("http_timer")
             .help("Indikerer hvor lang tid et http-brukte")
             .labelNames("navn", "status", "method")
-            .register(appMicrometerRegistry.prometheusRegistry)
+            .register()
 
     fun httpTimer(
         navn: String,

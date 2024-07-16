@@ -12,14 +12,12 @@ import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.AuthenticationConfig
 import io.ktor.server.auth.jwt.jwt
-import io.ktor.server.metrics.micrometer.MicrometerMetrics
 import io.ktor.server.plugins.callid.CallId
 import io.ktor.server.plugins.callid.callIdMdc
 import io.ktor.server.plugins.callloging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.doublereceive.DoubleReceive
 import io.ktor.server.request.path
-import io.micrometer.prometheus.PrometheusMeterRegistry
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.azureAd
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.tokenX
@@ -37,7 +35,6 @@ import org.flywaydb.core.internal.configuration.ConfigUtils
 import org.slf4j.event.Level
 
 fun Application.konfigurasjon(
-    appMicrometerRegistry: PrometheusMeterRegistry,
     kallLoggRepository: KallLoggRepository = KallLoggRepositoryPostgres(dataSource),
     auth: AuthenticationConfig.() -> Unit = {
         jwt("tokenX") { tokenX() }
@@ -86,10 +83,6 @@ fun Application.konfigurasjon(
 
     install(Authentication) {
         auth()
-    }
-
-    install(MicrometerMetrics) {
-        registry = appMicrometerRegistry
     }
 
     install(ContentNegotiation) {

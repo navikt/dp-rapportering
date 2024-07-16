@@ -5,7 +5,6 @@ import io.ktor.client.engine.cio.CIO
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.api.internalApi
 import no.nav.dagpenger.rapportering.api.rapporteringApi
-import no.nav.dagpenger.rapportering.config.Configuration.appMicrometerRegistry
 import no.nav.dagpenger.rapportering.config.konfigurasjon
 import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
@@ -47,8 +46,8 @@ class ApplicationBuilder(
         RapidApplication
             .Builder(RapidApplication.RapidApplicationConfig.fromEnv(configuration))
             .withKtorModule {
-                konfigurasjon(appMicrometerRegistry)
-                internalApi(appMicrometerRegistry)
+                konfigurasjon()
+                internalApi()
                 rapporteringApi(rapporteringService)
             }.build()
 

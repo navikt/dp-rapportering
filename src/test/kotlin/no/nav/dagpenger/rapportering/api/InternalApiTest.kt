@@ -21,12 +21,4 @@ class InternalApiTest : ApiTestSetup() {
                 status shouldBe HttpStatusCode.OK
             }
         }
-
-    @Test
-    fun `metrics svarer OK`() =
-        setUpTestApplication {
-            with(client.get("/metrics")) {
-                status shouldBe HttpStatusCode.OK
-            }
-        }
 }

@@ -13,8 +13,6 @@ import com.natpryce.konfig.PropertyGroup
 import com.natpryce.konfig.getValue
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
-import io.micrometer.prometheus.PrometheusConfig
-import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.dagpenger.oauth2.CachedOauth2Client
 import no.nav.dagpenger.oauth2.OAuth2Config
 
@@ -37,8 +35,6 @@ internal object Configuration {
                 "KAFKA_BOOTSTRAP_SERVERS" to "127.0.0.1:9092",
             ),
         )
-
-    val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
     object Grupper : PropertyGroup() {
         val saksbehandler by stringType

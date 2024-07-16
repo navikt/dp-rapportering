@@ -6,7 +6,6 @@ import io.ktor.server.testing.testApplication
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
-import no.nav.dagpenger.rapportering.config.Configuration.appMicrometerRegistry
 import no.nav.dagpenger.rapportering.config.konfigurasjon
 import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
@@ -100,8 +99,8 @@ open class ApiTestSetup {
                 )
 
             application {
-                konfigurasjon(appMicrometerRegistry)
-                internalApi(appMicrometerRegistry)
+                konfigurasjon()
+                internalApi()
                 rapporteringApi(rapporteringService)
             }
 
