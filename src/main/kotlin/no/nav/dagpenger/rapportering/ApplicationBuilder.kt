@@ -51,8 +51,11 @@ class ApplicationBuilder(
                 rapporteringApi(rapporteringService)
             }.build()
 
+    private val mediator = Mediator(rapidsConnection)
+
     init {
         rapidsConnection.register(this)
+        SøknadMottak(rapidsConnection, mediator)
     }
 
     internal fun start() {
