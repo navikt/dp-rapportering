@@ -1,4 +1,4 @@
-package utils
+package no.nav.dagpenger.rapportering.utils
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
