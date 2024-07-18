@@ -74,4 +74,8 @@ class ApplicationBuilder(
             logger.info { "Startet jobb for rapportering av metrikker" }
         }
     }
+
+    override fun onShutdown(rapidsConnection: RapidsConnection) {
+        logger.info { "Skrur av applikasjonen" }
+    }
 }

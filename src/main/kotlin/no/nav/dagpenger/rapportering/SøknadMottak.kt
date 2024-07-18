@@ -33,6 +33,7 @@ internal class SøknadMottak(
         packet: JsonMessage,
         context: MessageContext,
     ) {
+        logger.info { "Mottok søknad" }
         val ident = packet["fødselsnummer"].asText()
         val søknadId = packet["søknadsData"]["søknad_uuid"].asUUID()
 
