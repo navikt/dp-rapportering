@@ -1,0 +1,27 @@
+on:
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: 'Environment to run tests against'
+                type: choice
+                default: dev
+                options:
+                    - dev
+                    # - prod
+                required: true
+
+jobs:
+    deploy-branch:
+        name: Deploy branch
+        needs: [ build ]
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}-gcp
+        steps:
+            - uses: actions/checkout@v4
+            - uses: nais/deploy/actions/deploy@v2
+              env:
+                  APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+                  CLUSTER: ${{ inputs.environment }}-gcp
+                  RESOURCE: .nais/app.yaml
+                  VAR: image=${{ needs.build.outputs.image }}
+                  VARS: .nais/vars-${{ inputs.environment }}.yaml
