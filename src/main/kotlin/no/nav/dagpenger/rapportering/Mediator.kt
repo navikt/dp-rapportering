@@ -12,14 +12,14 @@ class Mediator(
         private val logger = KotlinLogging.logger {}
     }
 
-    fun behandle(hendelse: SøknadInnsendtHendelse) {
+    fun behandle(hendelse: SoknadInnsendtHendelse) {
         logger.info { "Mottok SøknadInnsendtHendelse: $hendelse" }
     }
 }
 
-class SøknadInnsendtHendelse(
-    meldingsreferanseId: UUID,
-    ident: String,
+data class SoknadInnsendtHendelse(
+    val meldingsreferanseId: UUID,
+    val ident: String,
     internal val opprettet: LocalDateTime,
     internal val søknadId: UUID,
 ) : PersonHendelse(meldingsreferanseId, ident)

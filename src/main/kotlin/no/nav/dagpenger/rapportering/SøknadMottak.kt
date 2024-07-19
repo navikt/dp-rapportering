@@ -11,7 +11,7 @@ import no.nav.helse.rapids_rivers.asLocalDateTime
 import org.slf4j.Logger
 import java.util.UUID
 
-internal class SøknadMottak(
+class SøknadMottak(
     rapidsConnection: RapidsConnection,
     private val mediator: Mediator,
 ) : River.PacketListener {
@@ -20,6 +20,7 @@ internal class SøknadMottak(
     }
 
     init {
+        logger.info { "Initierer SøknadMottak!" }
         River(rapidsConnection).apply {
             validate { it.demandValue("@event_name", "innsending_ferdigstilt") }
             validate { it.demandAny("type", listOf("NySøknad")) }
@@ -27,6 +28,7 @@ internal class SøknadMottak(
             validate { it.require("søknadsData") { data -> data["søknad_uuid"].asUUID() } }
             validate { it.interestedIn("@id", "@opprettet") }
         }
+        logger.info { "Init av SøknadMottak er ferdig!" }
     }
 
     override fun onPacket(
@@ -53,9 +55,9 @@ internal class SøknadInnsendtMelding(
     override val ident: String,
     private val søknadId: UUID,
 ) : HendelseMessage(packet) {
-    private val søknadInnsendtHendelse: SøknadInnsendtHendelse
+    private val søknadInnsendtHendelse: SoknadInnsendtHendelse
         get() {
-            return SøknadInnsendtHendelse(id, ident, opprettet, søknadId)
+            return SoknadInnsendtHendelse(id, ident, opprettet, søknadId)
         }
 
     override fun behandle(
