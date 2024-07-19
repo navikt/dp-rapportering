@@ -366,7 +366,7 @@ class RapporteringRepositoryPostgres(
 }
 
 private fun Int.validateRowsAffected(excepted: Int = 1) {
-    if (this != excepted) throw RuntimeException("Expected $this but got $excepted")
+    if (this != excepted) throw RuntimeException("Expected $excepted but got $this")
 }
 
 private fun Row.toRapporteringsperiode() =

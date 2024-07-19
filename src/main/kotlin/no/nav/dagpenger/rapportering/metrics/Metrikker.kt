@@ -20,14 +20,6 @@ object RapporteringsperiodeMetrikker {
 }
 
 object MeldepliktMetrikker {
-    val meldepliktError: Counter =
-        Counter
-            .build()
-            .namespace(NAMESPACE)
-            .name("antall_meldeplikt_feil_status")
-            .help("Indikerer antall kall mot meldeplikt som gir en annen http status enn 200 OK")
-            .register()
-
     val rapporteringApiFeil: Counter =
         Counter
             .build()
