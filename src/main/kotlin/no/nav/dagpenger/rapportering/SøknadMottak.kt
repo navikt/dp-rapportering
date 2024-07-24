@@ -27,7 +27,7 @@ class SøknadMottak(
             validate { it.requireKey("fødselsnummer") }
             validate { it.require("søknadsData") { data -> data["søknad_uuid"].asUUID() } }
             validate { it.interestedIn("@id", "@opprettet") }
-        }
+        }.register(this)
         logger.info { "Init av SøknadMottak er ferdig!" }
     }
 
