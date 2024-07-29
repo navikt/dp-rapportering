@@ -1,11 +1,8 @@
 package no.nav.dagpenger.rapportering.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
+import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
@@ -260,22 +257,15 @@ class JournalfoeringService(
         return listOf(dokument)
     }
 
-    private fun getJSON(rapporteringsperiode: Rapporteringsperiode): DokumentVariant {
-        val objectMapper =
-            ObjectMapper()
-                .registerKotlinModule()
-                .registerModule(JavaTimeModule())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-
-        return DokumentVariant(
+    private fun getJSON(rapporteringsperiode: Rapporteringsperiode): DokumentVariant =
+        DokumentVariant(
             filtype = Filetype.JSON,
             variantformat = Variantformat.ORIGINAL,
             fysiskDokument =
                 Base64
                     .getEncoder()
-                    .encodeToString(objectMapper.writeValueAsBytes(rapporteringsperiode)),
+                    .encodeToString(defaultObjectMapper.writeValueAsBytes(rapporteringsperiode)),
         )
-    }
 
     private fun getPDF(
         rapporteringsperiode: Rapporteringsperiode,

@@ -12,6 +12,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.config.Configuration
+import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.TimedMetrikk.httpTimer
 import no.nav.dagpenger.rapportering.model.Journalpost
 import no.nav.dagpenger.rapportering.model.JournalpostResponse
@@ -39,7 +40,7 @@ class DokarkivConnector(
                             bearerAuth(token)
                             accept(ContentType.Application.Json)
                             contentType(ContentType.Application.Json)
-                            setBody(Configuration.defaultObjectMapper.writeValueAsString(journalpost))
+                            setBody(defaultObjectMapper.writeValueAsString(journalpost))
                         }
             }
         httpTimer("dokarkiv-sendJournalpost", response.status, HttpMethod.Post, tidBrukt.inWholeSeconds)
@@ -47,7 +48,7 @@ class DokarkivConnector(
         return response
             .bodyAsText()
             .let {
-                Configuration.defaultObjectMapper.readValue(it, JournalpostResponse::class.java)
+                defaultObjectMapper.readValue(it, JournalpostResponse::class.java)
             }
     }
 
