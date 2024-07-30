@@ -1,11 +1,11 @@
 package no.nav.dagpenger.rapportering.model.hendelse
 
-import java.time.LocalDate
 import java.util.UUID
+import no.nav.dagpenger.rapportering.model.Periode
 
 data class InnsendtPeriodeHendelse(
-    val meldeingsreferanseId: UUID = UUID.randomUUID(),
+    val meldingsreferanseId: UUID = UUID.randomUUID(),
     val ident: String,
     val rapporteringsperiodeId: UUID,
-    val dato: LocalDate = LocalDate.now(),
-): PersonHendelse(meldeingsreferanseId, ident)
+    val periode: Periode,
+): PersonHendelse(meldingsreferanseId, ident)
