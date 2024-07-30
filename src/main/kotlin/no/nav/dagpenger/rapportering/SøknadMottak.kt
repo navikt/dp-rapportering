@@ -3,6 +3,8 @@ package no.nav.dagpenger.rapportering
 import com.fasterxml.jackson.databind.JsonNode
 import mu.KotlinLogging
 import mu.withLoggingContext
+import no.nav.dagpenger.rapportering.mediator.Mediator
+import no.nav.dagpenger.rapportering.model.hendelse.SoknadInnsendtHendelse
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidsConnection

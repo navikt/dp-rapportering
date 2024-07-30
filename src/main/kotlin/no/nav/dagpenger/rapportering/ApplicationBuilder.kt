@@ -11,6 +11,7 @@ import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.jobs.RapporterDatabaseMetrikkerJob
 import no.nav.dagpenger.rapportering.jobs.SlettRapporteringsperioderJob
+import no.nav.dagpenger.rapportering.mediator.Mediator
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.preparePartitions

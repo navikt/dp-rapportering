@@ -1,5 +1,6 @@
-package no.nav.dagpenger.rapportering
+package no.nav.dagpenger.rapportering.mediator
 
+import no.nav.dagpenger.rapportering.model.hendelse.SoknadInnsendtHendelse
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime

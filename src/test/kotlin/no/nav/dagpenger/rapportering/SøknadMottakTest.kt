@@ -5,6 +5,8 @@ import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import no.nav.dagpenger.rapportering.mediator.Mediator
+import no.nav.dagpenger.rapportering.model.hendelse.SoknadInnsendtHendelse
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
