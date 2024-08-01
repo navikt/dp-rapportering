@@ -3,8 +3,8 @@ package no.nav.dagpenger.rapportering.mediator
 import mu.KotlinLogging
 import mu.withLoggingContext
 import no.nav.dagpenger.rapportering.model.hendelse.InnsendtPeriodeHendelse
+import no.nav.dagpenger.rapportering.model.hendelse.MeldingOmPeriodeInnsendt
 import no.nav.dagpenger.rapportering.model.hendelse.SoknadInnsendtHendelse
-import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.RapidsConnection
 
 class Mediator(
@@ -21,24 +21,14 @@ class Mediator(
 
     override fun behandle(hendelse: InnsendtPeriodeHendelse) {
         logger.info { "Behandler InnsendtPeriodeHendelse: $hendelse" }
-        val melding =
-            JsonMessage.newMessage(
-                "rapporteringsperiode_innsendt_hendelse",
-                mapOf(
-                    "ident" to hendelse.ident,
-                    "rapporteringsId" to hendelse.rapporteringsperiodeId,
-                    "fom" to hendelse.periode.fraOgMed,
-                    "tom" to hendelse.periode.tilOgMed,
-                    // "dager" to hendelse.dager,
-                ),
-            )
+        val melding = MeldingOmPeriodeInnsendt(hendelse).asMessage().toJson()
         withLoggingContext(
             "rapporteringsId" to hendelse.rapporteringsperiodeId.toString(),
         ) {
             logger.info { "Publiserer hendelse for innsendt rapporteringsperiode" }
-            sikkerlogg.info { "Publiserer hendelse for innsendt rapporteringsperiode. Melding: ${melding.toJson()}" }
+            sikkerlogg.info { "Publiserer hendelse for innsendt rapporteringsperiode. Melding: $melding" }
 
-            rapidsConnection.publish(hendelse.ident(), melding.toJson())
+            rapidsConnection.publish(hendelse.ident(), melding)
         }
     }
 }
