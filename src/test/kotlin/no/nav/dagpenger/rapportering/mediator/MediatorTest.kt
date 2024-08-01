@@ -33,7 +33,7 @@ class MediatorTest {
         rapid.inspektør.message(0).let {
             it["@event_name"].asText() shouldBe "rapporteringsperiode_innsendt_hendelse"
             it["ident"].asText() shouldBe testIdent
-            it["rapporteringsId"].asLong() shouldBe 1
+            it["rapporteringsperiodeId"].asLong() shouldBe 1
             it["fom"].asText() shouldBe 1.januar.toString()
             it["tom"].asText() shouldBe 14.januar.toString()
         }
