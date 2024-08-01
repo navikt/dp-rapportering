@@ -9,6 +9,7 @@ import kotliquery.using
 import no.nav.dagpenger.rapportering.config.konfigurasjon
 import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.mediator.Mediator
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.database
@@ -18,6 +19,7 @@ import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.OutgoingCallLoggingPlugin
+import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.junit.jupiter.api.AfterAll
@@ -87,6 +89,7 @@ open class ApiTestSetup {
             val meldepliktConnector = MeldepliktConnector(httpClient = httpClient)
             val rapporteringRepository = RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
             val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
+            val mediator = Mediator(TestRapid())
             val rapporteringService =
                 RapporteringService(
                     meldepliktConnector,
@@ -96,6 +99,7 @@ open class ApiTestSetup {
                         DokarkivConnector(httpClient = httpClient),
                         journalfoeringRepository,
                     ),
+                    mediator,
                 )
 
             application {

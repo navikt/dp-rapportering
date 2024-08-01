@@ -5,6 +5,7 @@ import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
+import no.nav.dagpenger.rapportering.mediator.Mediator
 import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
@@ -13,6 +14,7 @@ import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Korrigert
+import no.nav.dagpenger.rapportering.model.hendelse.InnsendtPeriodeHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import java.time.LocalDate
 import java.util.UUID
@@ -23,6 +25,7 @@ class RapporteringService(
     private val meldepliktConnector: MeldepliktConnector,
     private val rapporteringRepository: RapporteringRepository,
     private val journalfoeringService: JournalfoeringService,
+    private val mediator: Mediator,
 ) {
     suspend fun hentPeriode(
         rapporteringId: Long,
@@ -202,6 +205,15 @@ class RapporteringService(
 
                     rapporteringRepository.oppdaterRapporteringStatus(rapporteringsperiode.id, ident, Innsendt)
                     logger.info { "Oppdaterte status for rapporteringsperiode ${rapporteringsperiode.id} til Innsendt" }
+
+                    mediator.behandle(
+                        InnsendtPeriodeHendelse(
+                            ident = ident,
+                            rapporteringsperiodeId = rapporteringsperiode.id,
+                            periode = rapporteringsperiode.periode,
+                        ),
+                    )
+                    logger.info { "Publiserte InnsendtPeriodeHendelse for perioden" }
                 } else {
                     logger.error { "Feil ved innsending av rapporteringsperiode ${rapporteringsperiode.id}: $response" }
                     throw RuntimeException("Feil ved innsending av rapporteringsperiode ${rapporteringsperiode.id}")

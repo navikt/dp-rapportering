@@ -32,16 +32,7 @@ class ApplicationBuilder(
     private val meldepliktConnector = MeldepliktConnector(httpClient = httpClient)
     private val rapporteringRepository = RapporteringRepositoryPostgres(dataSource)
     private val journalfoeringRepository = JournalfoeringRepositoryPostgres(dataSource)
-    private val rapporteringService =
-        RapporteringService(
-            meldepliktConnector,
-            rapporteringRepository,
-            JournalfoeringService(
-                meldepliktConnector,
-                DokarkivConnector(httpClient = httpClient),
-                journalfoeringRepository,
-            ),
-        )
+    private lateinit var rapporteringService: RapporteringService
 
     private val rapidsConnection =
         RapidApplication
@@ -55,6 +46,17 @@ class ApplicationBuilder(
     private val mediator = Mediator(rapidsConnection)
 
     init {
+        rapporteringService =
+            RapporteringService(
+                meldepliktConnector,
+                rapporteringRepository,
+                JournalfoeringService(
+                    meldepliktConnector,
+                    DokarkivConnector(httpClient = httpClient),
+                    journalfoeringRepository,
+                ),
+                mediator,
+            )
         rapidsConnection.register(this)
         SøknadMottak(rapidsConnection, mediator)
     }
