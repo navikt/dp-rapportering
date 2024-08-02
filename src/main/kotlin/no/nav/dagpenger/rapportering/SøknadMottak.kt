@@ -71,8 +71,6 @@ internal class SøknadInnsendtMelding(
     }
 }
 
-internal class R
-
 internal abstract class HendelseMessage(
     private val packet: JsonMessage,
 ) {
@@ -86,10 +84,6 @@ internal abstract class HendelseMessage(
         mediator: Mediator,
         context: MessageContext,
     )
-
-    /* internal fun lagreMelding(repository: HendelseRepository) {
-        repository.lagreMelding(this, ident, id, toJson())
-    }*/
 
     internal fun logReplays(
         logger: Logger,
