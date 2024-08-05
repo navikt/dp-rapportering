@@ -23,13 +23,14 @@ class SøknadMottak(
 
     init {
         logger.info { "Initierer SøknadMottak!" }
-        River(rapidsConnection).apply {
-            validate { it.demandValue("@event_name", "innsending_ferdigstilt") }
-            validate { it.demandAny("type", listOf("NySøknad")) }
-            validate { it.requireKey("fødselsnummer") }
-            validate { it.require("søknadsData") { data -> data["søknad_uuid"].asUUID() } }
-            validate { it.interestedIn("@id", "@opprettet") }
-        }.register(this)
+        River(rapidsConnection)
+            .apply {
+                validate { it.demandValue("@event_name", "innsending_ferdigstilt") }
+                validate { it.demandAny("type", listOf("NySøknad")) }
+                validate { it.requireKey("fødselsnummer") }
+                validate { it.require("søknadsData") { data -> data["søknad_uuid"].asUUID() } }
+                validate { it.interestedIn("@id", "@opprettet") }
+            }.register(this)
         logger.info { "Init av SøknadMottak er ferdig!" }
     }
 
@@ -83,10 +84,6 @@ internal abstract class HendelseMessage(
         mediator: Mediator,
         context: MessageContext,
     )
-
-    /* internal fun lagreMelding(repository: HendelseRepository) {
-        repository.lagreMelding(this, ident, id, toJson())
-    }*/
 
     internal fun logReplays(
         logger: Logger,

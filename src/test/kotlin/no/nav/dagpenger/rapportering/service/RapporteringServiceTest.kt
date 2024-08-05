@@ -6,11 +6,13 @@ import io.ktor.server.plugins.BadRequestException
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify
+import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperioder
+import no.nav.dagpenger.rapportering.mediator.Mediator
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.model.Dag
@@ -21,6 +23,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Korrigert
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.hendelse.InnsendtPeriodeHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.februar
 import no.nav.dagpenger.rapportering.utils.januar
@@ -32,7 +35,14 @@ class RapporteringServiceTest {
     private val meldepliktConnector = mockk<MeldepliktConnector>()
     private val rapporteringRepository = mockk<RapporteringRepository>()
     private val journalfoeringService = mockk<JournalfoeringService>()
-    private val rapporteringService = RapporteringService(meldepliktConnector, rapporteringRepository, journalfoeringService)
+    private val mediator = mockk<Mediator>()
+    private val rapporteringService =
+        RapporteringService(
+            meldepliktConnector,
+            rapporteringRepository,
+            journalfoeringService,
+            mediator,
+        )
 
     private val ident = "12345678910"
     private val token = "jwtToken"
@@ -305,6 +315,7 @@ class RapporteringServiceTest {
         val rapporteringsperiode = rapporteringsperiodeListe.first()
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
+        justRun { mediator.behandle(any<InnsendtPeriodeHendelse>()) }
         coEvery { meldepliktConnector.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
                 id = rapporteringsperiode.id,
