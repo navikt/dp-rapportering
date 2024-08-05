@@ -23,7 +23,7 @@ class Mediator(
         logger.info { "Behandler InnsendtPeriodeHendelse: $hendelse" }
         val melding = MeldingOmPeriodeInnsendt(hendelse).asMessage().toJson()
         withLoggingContext(
-            "rapporteringsId" to hendelse.rapporteringsperiodeId.toString(),
+            "rapporteringsId" to hendelse.rapporteringsperiode.id.toString(),
         ) {
             logger.info { "Publiserer hendelse for innsendt rapporteringsperiode" }
             sikkerlogg.info { "Publiserer hendelse for innsendt rapporteringsperiode. Melding: $melding" }

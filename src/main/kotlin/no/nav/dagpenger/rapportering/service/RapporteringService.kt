@@ -209,8 +209,7 @@ class RapporteringService(
                     mediator.behandle(
                         InnsendtPeriodeHendelse(
                             ident = ident,
-                            rapporteringsperiodeId = rapporteringsperiode.id,
-                            periode = rapporteringsperiode.periode,
+                            rapporteringsperiode = rapporteringsperiode,
                         ),
                     )
                     logger.info { "Publiserte InnsendtPeriodeHendelse for perioden" }

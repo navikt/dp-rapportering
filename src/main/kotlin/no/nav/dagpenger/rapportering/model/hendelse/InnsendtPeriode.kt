@@ -1,14 +1,13 @@
 package no.nav.dagpenger.rapportering.model.hendelse
 
-import no.nav.dagpenger.rapportering.model.Periode
+import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.helse.rapids_rivers.JsonMessage
 import java.util.UUID
 
 data class InnsendtPeriodeHendelse(
     val meldingsreferanseId: UUID = UUID.randomUUID(),
     val ident: String,
-    val rapporteringsperiodeId: Long,
-    val periode: Periode,
+    val rapporteringsperiode: Rapporteringsperiode,
 ) : PersonHendelse(meldingsreferanseId, ident)
 
 class MeldingOmPeriodeInnsendt(
@@ -20,9 +19,24 @@ class MeldingOmPeriodeInnsendt(
             map =
                 mapOf(
                     "ident" to innsendtPeriodeHendelse.ident,
-                    "rapporteringsperiodeId" to innsendtPeriodeHendelse.rapporteringsperiodeId,
-                    "fom" to innsendtPeriodeHendelse.periode.fraOgMed,
-                    "tom" to innsendtPeriodeHendelse.periode.tilOgMed,
+                    "rapporteringsperiodeId" to innsendtPeriodeHendelse.rapporteringsperiode.id,
+                    "fom" to innsendtPeriodeHendelse.rapporteringsperiode.periode.fraOgMed,
+                    "tom" to innsendtPeriodeHendelse.rapporteringsperiode.periode.tilOgMed,
+                    "dager" to
+                        innsendtPeriodeHendelse.rapporteringsperiode.dager.map { dag ->
+                            mapOf(
+                                "dato" to dag.dato,
+                                "dagIndex" to dag.dagIndex,
+                                "aktiviteter" to
+                                    dag.aktiviteter.map { aktivitet ->
+                                        mapOf(
+                                            "id" to aktivitet.id,
+                                            "type" to aktivitet.type,
+                                            "timer" to aktivitet.timer,
+                                        )
+                                    },
+                            )
+                        },
                 ),
         )
 }
