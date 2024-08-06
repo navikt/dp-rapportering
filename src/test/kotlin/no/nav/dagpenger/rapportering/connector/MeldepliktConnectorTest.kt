@@ -98,6 +98,7 @@ class MeldepliktConnectorTest {
                 kanSendesFra shouldBe 13.januar
                 status shouldBe AdapterRapporteringsperiodeStatus.TilUtfylling
                 bruttoBelop shouldBe null
+                begrunnelseKorrigering shouldBe null
             }
 
             with(get(1)) {
@@ -314,6 +315,7 @@ class MeldepliktConnectorTest {
                 true,
                 true,
                 0.0,
+                null,
                 TilUtfylling,
                 true,
             )

@@ -461,6 +461,7 @@ fun lagRapporteringsperiode(
     bruttoBelop = null,
     status = status,
     registrertArbeidssoker = null,
+    begrunnelseKorrigering = null,
 )
 
 private fun getDager(

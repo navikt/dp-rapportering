@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS rapporteringsperiode
     kan_sendes              BOOLEAN         NOT NULL,
     kan_korrigeres          BOOLEAN         NOT NULL,
     brutto_belop            DECIMAL         NULL,
+    begrunnelse_korrigering VARCHAR         NULL,
     registrert_arbeidssoker BOOLEAN         NULL,
     status                  VARCHAR         NOT NULL
 );

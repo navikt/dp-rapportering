@@ -414,6 +414,7 @@ fun getRapporteringsperiode(
     bruttoBelop: Double? = null,
     status: RapporteringsperiodeStatus = TilUtfylling,
     registrertArbeidssoker: Boolean? = null,
+    begrunnelseKorrigering: String? = null,
 ) = Rapporteringsperiode(
     id = id,
     periode = periode,
@@ -424,6 +425,7 @@ fun getRapporteringsperiode(
     bruttoBelop = bruttoBelop,
     status = status,
     registrertArbeidssoker = registrertArbeidssoker,
+    begrunnelseKorrigering = begrunnelseKorrigering,
 )
 
 private fun getDager(

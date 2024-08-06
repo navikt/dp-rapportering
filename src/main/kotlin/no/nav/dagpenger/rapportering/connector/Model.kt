@@ -28,6 +28,7 @@ data class AdapterRapporteringsperiode(
     val kanSendes: Boolean,
     val kanKorrigeres: Boolean,
     val bruttoBelop: Double?,
+    val begrunnelseKorrigering: String?,
     val status: AdapterRapporteringsperiodeStatus,
     val registrertArbeidssoker: Boolean?,
 )
@@ -82,6 +83,7 @@ fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
                 Innsendt -> RapporteringsperiodeStatus.Innsendt
                 Ferdig -> RapporteringsperiodeStatus.Ferdig
             },
+        begrunnelseKorrigering = this.begrunnelseKorrigering,
         registrertArbeidssoker = this.registrertArbeidssoker,
     )
 
@@ -112,6 +114,7 @@ fun Rapporteringsperiode.toAdapterRapporteringsperiode(): AdapterRapporteringspe
         kanSendes = this.kanSendes,
         kanKorrigeres = this.kanKorrigeres,
         bruttoBelop = this.bruttoBelop,
+        begrunnelseKorrigering = this.begrunnelseKorrigering,
         status =
             when (this.status) {
                 RapporteringsperiodeStatus.TilUtfylling -> TilUtfylling

@@ -534,6 +534,7 @@ class RapporteringApiTest : ApiTestSetup() {
         status: AdapterRapporteringsperiodeStatus = AdapterRapporteringsperiodeStatus.TilUtfylling,
         bruttoBelop: Double? = null,
         registrertArbeidssoker: Boolean? = null,
+        begrunnelseKorrigering: String? = null,
     ) = AdapterRapporteringsperiode(
         id = id,
         periode =
@@ -555,6 +556,7 @@ class RapporteringApiTest : ApiTestSetup() {
         status = status,
         bruttoBelop = bruttoBelop,
         registrertArbeidssoker = registrertArbeidssoker,
+        begrunnelseKorrigering = begrunnelseKorrigering,
     )
 
     private fun person(

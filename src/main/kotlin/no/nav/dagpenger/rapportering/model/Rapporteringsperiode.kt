@@ -16,6 +16,7 @@ data class Rapporteringsperiode(
     val kanSendes: Boolean,
     val kanKorrigeres: Boolean,
     val bruttoBelop: Double?,
+    val begrunnelseKorrigering: String?,
     val status: RapporteringsperiodeStatus,
     val registrertArbeidssoker: Boolean?,
 )
