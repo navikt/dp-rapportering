@@ -30,6 +30,23 @@ class MeldepliktConnector(
     val tokenProvider: (String) -> String = Configuration.tokenXClient(Configuration.meldepliktAdapterAudience),
     val httpClient: HttpClient,
 ) {
+    suspend fun harMeldeplikt(
+        ident: String,
+        subjectToken: String,
+    ): String = withContext(Dispatchers.IO) {
+        val result = get("/harmeldeplikt", subjectToken, "adapter-harMeldeplikt")
+            .also {
+                logger.info { "Kall til meldeplikt-adapter for å hente meldeplikt ga status ${it.status}" }
+                sikkerlogg.info { "Kall til meldeplikt-adapter for å hente meldeplikt for $ident ga status ${it.status}" }
+            }
+
+        if (result.status != HttpStatusCode.OK) {
+            "false"
+        } else {
+            result.bodyAsText()
+        }
+    }
+
     suspend fun hentRapporteringsperioder(
         ident: String,
         subjectToken: String,

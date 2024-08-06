@@ -46,6 +46,41 @@ class MeldepliktConnectorTest {
     )
 
     @Test
+    fun `harMeldeplikt returnerer det som returnerer adapter`() {
+        // True
+        var connector = meldepliktConnector("true", 200)
+
+        var response =
+            runBlocking {
+                connector.harMeldeplikt(ident, subjectToken)
+            }
+
+        response shouldBe "true"
+
+        // False
+        connector = meldepliktConnector("false", 200)
+
+        response =
+            runBlocking {
+                connector.harMeldeplikt(ident, subjectToken)
+            }
+
+        response shouldBe "false"
+    }
+
+    @Test
+    fun `harMeldeplikt returnerer false ved feil`() {
+        val connector = meldepliktConnector("", 503)
+
+        val response =
+            runBlocking {
+                connector.harMeldeplikt(ident, subjectToken)
+            }
+
+        response shouldBe "false"
+    }
+
+    @Test
     fun `returnerer null ved henting av rapporteringsperiodeliste uten meldeplikt`() {
         val connector = meldepliktConnector("", 204)
 

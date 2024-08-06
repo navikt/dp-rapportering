@@ -2,12 +2,14 @@ package no.nav.dagpenger.rapportering.api
 
 import io.kotest.matchers.shouldBe
 import io.ktor.client.call.body
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
@@ -34,6 +36,29 @@ import java.util.UUID
 
 class RapporteringApiTest : ApiTestSetup() {
     private val fnr = "12345678910"
+
+    // Sjekk om bruker har DP meldeplikt
+
+    @Test
+    fun `harMeldekort uten token gir unauthorized`() =
+        setUpTestApplication {
+            with(client.doGet("/harmeldeplikt", null)) {
+                status shouldBe HttpStatusCode.Unauthorized
+            }
+        }
+
+    @Test
+    fun `Kan hente harMeldeplikt`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
+            }
+
+            val response = client.doGet("/harmeldeplikt", issueToken(fnr))
+
+            response.status shouldBe HttpStatusCode.OK
+            response.bodyAsText() shouldBe "true"
+        }
 
     // Sende rapporteringsperiode
 
@@ -488,6 +513,10 @@ class RapporteringApiTest : ApiTestSetup() {
     ) {
         hosts("https://meldeplikt-adapter") {
             routing {
+                get("/harmeldeplikt") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Text.Plain.toString())
+                    call.respond(HttpStatusCode.OK, "true")
+                }
                 get("/rapporteringsperioder") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond(

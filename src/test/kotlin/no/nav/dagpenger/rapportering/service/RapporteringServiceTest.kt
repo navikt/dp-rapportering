@@ -38,6 +38,23 @@ class RapporteringServiceTest {
     private val token = "jwtToken"
 
     @Test
+    fun `harMeldeplikt returnerer det som returnerer meldepliktConnector`() {
+        // True
+        coEvery { meldepliktConnector.harMeldeplikt(ident, token) } returns "true"
+
+        var harMeldeplikt = runBlocking { rapporteringService.harMeldeplikt(ident, token) }
+
+        harMeldeplikt shouldBe "true"
+
+        // False
+        coEvery { meldepliktConnector.harMeldeplikt(ident, token) } returns "false"
+
+        harMeldeplikt = runBlocking { rapporteringService.harMeldeplikt(ident, token) }
+
+        harMeldeplikt shouldBe "false"
+    }
+
+    @Test
     fun `hent periode henter spesifisert periode som ikke er sendt inn og lagrer denne i databasen hvis den ikke finnes`() {
         coEvery { meldepliktConnector.hentRapporteringsperioder(ident, token) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
