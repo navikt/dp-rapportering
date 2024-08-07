@@ -46,7 +46,7 @@ class MeldepliktConnectorTest {
     )
 
     @Test
-    fun `harMeldeplikt returnerer det som returnerer adapter`() {
+    fun `harMeldeplikt returnerer samme verdi som adapter returnerer`() {
         // True
         var connector = meldepliktConnector("true", 200)
 

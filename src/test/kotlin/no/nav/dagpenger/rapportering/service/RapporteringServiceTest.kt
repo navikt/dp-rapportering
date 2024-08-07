@@ -38,7 +38,7 @@ class RapporteringServiceTest {
     private val token = "jwtToken"
 
     @Test
-    fun `harMeldeplikt returnerer det som returnerer meldepliktConnector`() {
+    fun `harMeldeplikt returnerer det samme som meldepliktConnector returnerer`() {
         // True
         coEvery { meldepliktConnector.harMeldeplikt(ident, token) } returns "true"
 
