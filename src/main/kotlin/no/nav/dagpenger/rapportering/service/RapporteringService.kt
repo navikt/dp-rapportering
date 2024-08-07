@@ -27,8 +27,7 @@ class RapporteringService(
     suspend fun harMeldeplikt(
         ident: String,
         token: String,
-    ): String =
-        meldepliktConnector.harMeldeplikt(ident, token)
+    ): String = meldepliktConnector.harMeldeplikt(ident, token)
 
     suspend fun hentPeriode(
         rapporteringId: Long,
