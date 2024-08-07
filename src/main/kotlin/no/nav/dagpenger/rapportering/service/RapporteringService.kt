@@ -27,6 +27,11 @@ class RapporteringService(
     private val journalfoeringService: JournalfoeringService,
     private val mediator: Mediator,
 ) {
+    suspend fun harMeldeplikt(
+        ident: String,
+        token: String,
+    ): String = meldepliktConnector.harMeldeplikt(ident, token)
+
     suspend fun hentPeriode(
         rapporteringId: Long,
         ident: String,

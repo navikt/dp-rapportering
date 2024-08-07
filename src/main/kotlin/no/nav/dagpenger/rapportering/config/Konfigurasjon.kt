@@ -47,6 +47,7 @@ fun Application.konfigurasjon(
         logger.info { "Cleaning database" }
         clean()
     }
+
     runMigration()
 
     install(DoubleReceive) {

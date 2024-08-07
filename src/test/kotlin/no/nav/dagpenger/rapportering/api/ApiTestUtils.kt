@@ -80,6 +80,7 @@ fun rapporteringsperiodeFor(
     status: RapporteringsperiodeStatus = TilUtfylling,
     bruttoBelop: String? = null,
     registrertArbeidssoker: Boolean? = null,
+    begrunnelseKorrigering: String? = null,
 ) = Rapporteringsperiode(
     id = id,
     periode = Periode(fraOgMed = fraOgMed, tilOgMed = tilOgMed),
@@ -97,4 +98,5 @@ fun rapporteringsperiodeFor(
     status = status,
     bruttoBelop = bruttoBelop?.toDouble(),
     registrertArbeidssoker = registrertArbeidssoker,
+    begrunnelseKorrigering = begrunnelseKorrigering,
 )

@@ -106,6 +106,16 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
     }
     routing {
         authenticate("tokenX") {
+            route("/harmeldeplikt") {
+                get {
+                    val ident = call.ident()
+                    val jwtToken = call.request.jwt()
+
+                    rapporteringService
+                        .harMeldeplikt(ident, jwtToken)
+                        .also { call.respond(HttpStatusCode.OK, it) }
+                }
+            }
             route("/rapporteringsperiode") {
                 post {
                     val ident = call.ident()

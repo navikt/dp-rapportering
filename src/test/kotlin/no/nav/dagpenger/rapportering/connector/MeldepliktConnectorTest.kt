@@ -46,6 +46,40 @@ class MeldepliktConnectorTest {
     )
 
     @Test
+    fun `harMeldeplikt returnerer samme verdi som adapter returnerer`() {
+        // True
+        var connector = meldepliktConnector("true", 200)
+
+        var response =
+            runBlocking {
+                connector.harMeldeplikt(ident, subjectToken)
+            }
+
+        response shouldBe "true"
+
+        // False
+        connector = meldepliktConnector("false", 200)
+
+        response =
+            runBlocking {
+                connector.harMeldeplikt(ident, subjectToken)
+            }
+
+        response shouldBe "false"
+    }
+
+    @Test
+    fun `harMeldeplikt kaster Exception ved feil`() {
+        val connector = meldepliktConnector("", 503)
+
+        shouldThrow<Exception> {
+            runBlocking {
+                connector.harMeldeplikt(ident, subjectToken)
+            }
+        }
+    }
+
+    @Test
     fun `returnerer null ved henting av rapporteringsperiodeliste uten meldeplikt`() {
         val connector = meldepliktConnector("", 204)
 
@@ -98,6 +132,7 @@ class MeldepliktConnectorTest {
                 kanSendesFra shouldBe 13.januar
                 status shouldBe AdapterRapporteringsperiodeStatus.TilUtfylling
                 bruttoBelop shouldBe null
+                begrunnelseKorrigering shouldBe null
             }
 
             with(get(1)) {
@@ -314,6 +349,7 @@ class MeldepliktConnectorTest {
                 true,
                 true,
                 0.0,
+                null,
                 TilUtfylling,
                 true,
             )
