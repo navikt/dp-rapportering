@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.api
 
 import io.kotest.matchers.shouldBe
 import io.ktor.client.call.body
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -34,6 +35,54 @@ import java.util.UUID
 
 class RapporteringApiTest : ApiTestSetup() {
     private val fnr = "12345678910"
+
+    // Sjekk om bruker har DP meldeplikt
+
+    @Test
+    fun `harMeldekort uten token gir unauthorized`() =
+        setUpTestApplication {
+            with(client.doGet("/harmeldeplikt", null)) {
+                status shouldBe HttpStatusCode.Unauthorized
+            }
+        }
+
+    @Test
+    fun `harMeldeplikt returnerer InternalServerError hvis feil i meldepliktAdapter`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter(harMeldepliktResponseStatus = HttpStatusCode.InternalServerError, harMeldepliktResponse = "false")
+            }
+
+            val response = client.doGet("/harmeldeplikt", issueToken(fnr))
+
+            response.status shouldBe HttpStatusCode.InternalServerError
+        }
+
+    @Test
+    fun `Kan hente harMeldeplikt true`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter(harMeldepliktResponse = "true")
+            }
+
+            val response = client.doGet("/harmeldeplikt", issueToken(fnr))
+
+            response.status shouldBe HttpStatusCode.OK
+            response.bodyAsText() shouldBe "true"
+        }
+
+    @Test
+    fun `Kan hente harMeldeplikt false`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter(harMeldepliktResponse = "false")
+            }
+
+            val response = client.doGet("/harmeldeplikt", issueToken(fnr))
+
+            response.status shouldBe HttpStatusCode.OK
+            response.bodyAsText() shouldBe "false"
+        }
 
     // Sende rapporteringsperiode
 
@@ -485,9 +534,15 @@ class RapporteringApiTest : ApiTestSetup() {
         sendInnResponseStatus: HttpStatusCode = HttpStatusCode.OK,
         personResponse: String = person(),
         personResponseStatus: HttpStatusCode = HttpStatusCode.OK,
+        harMeldepliktResponse: String = "true",
+        harMeldepliktResponseStatus: HttpStatusCode = HttpStatusCode.OK,
     ) {
         hosts("https://meldeplikt-adapter") {
             routing {
+                get("/harmeldeplikt") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Text.Plain.toString())
+                    call.respond(harMeldepliktResponseStatus, harMeldepliktResponse)
+                }
                 get("/rapporteringsperioder") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond(

@@ -11,6 +11,24 @@ servers:
     - url: https://dp-rapportering.intern.nav.no
       description: prod
 paths:
+    /harmeldeplikt:
+        get:
+            responses:
+                '200':
+                    content:
+                        text/plain:
+                            schema:
+                                type: string
+                                example: true
+                    description: OK
+            summary: Sjekker om bruker har DP-meldeplikt
+            description: Returnerer "true" hvis bruker har DP-meldeplikt, ellers returnerer "false"
+            operationId: get-har-meldeplikt
+            tags:
+                - HarMeldeplikt
+            security:
+                -   tokenX: [ ]
+
     /rapporteringsperioder:
         get:
             responses:
@@ -31,6 +49,7 @@ paths:
                 - Rapporteringsperioder
             security:
                 - tokenX: [ ]
+
     /rapporteringsperioder/innsendte:
         get:
             responses:
@@ -133,7 +152,6 @@ paths:
                 - tokenX: []
         parameters:
             - $ref: '#/components/parameters/periodeId'
-
 
     /rapporteringsperiode/{periodeId}/aktivitet:
         post:
