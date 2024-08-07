@@ -13,6 +13,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import java.time.LocalDateTime
 import java.util.UUID
 import javax.sql.DataSource
 
@@ -153,8 +154,8 @@ class RapporteringRepositoryPostgres(
             queryOf(
                 """
                 INSERT INTO rapporteringsperiode 
-                (id, ident, kan_sendes, kan_sendes_fra, kan_korrigeres, brutto_belop, status, registrert_arbeidssoker, fom, tom) 
-                VALUES (:id, :ident, :kan_sendes, :kan_sendes_fra, :kan_korrigeres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom)
+                (id, ident, kan_sendes, kan_sendes_fra, kan_korrigeres, brutto_belop, status, registrert_arbeidssoker, fom, tom, sist_oppdatert) 
+                VALUES (:id, :ident, :kan_sendes, :kan_sendes_fra, :kan_korrigeres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :sist_oppdatert)
                 """.trimIndent(),
                 mapOf(
                     "id" to rapporteringsperiode.id,
@@ -167,6 +168,7 @@ class RapporteringRepositoryPostgres(
                     "registrert_arbeidssoker" to rapporteringsperiode.registrertArbeidssoker,
                     "fom" to rapporteringsperiode.periode.fraOgMed,
                     "tom" to rapporteringsperiode.periode.tilOgMed,
+                    "sist_oppdatert" to LocalDateTime.now(),
                 ),
             ).asUpdate,
         )
@@ -211,6 +213,7 @@ class RapporteringRepositoryPostgres(
                         },
                     ).sum()
                     .validateRowsAffected(excepted = dag.aktiviteter.size)
+                tx.oppdaterSistOppdatert(rapporteringId)
             }
         }
     }
@@ -237,6 +240,7 @@ class RapporteringRepositoryPostgres(
                             ),
                         ).asUpdate,
                     ).validateRowsAffected()
+                tx.oppdaterSistOppdatert(rapporteringId)
             }
         }
     }
@@ -267,6 +271,7 @@ class RapporteringRepositoryPostgres(
                             ),
                         ).asUpdate,
                     ).validateRowsAffected()
+                tx.oppdaterSistOppdatert(rapporteringsperiode.id)
             }
         }
     }
@@ -293,6 +298,7 @@ class RapporteringRepositoryPostgres(
                             ),
                         ).asUpdate,
                     ).validateRowsAffected()
+                tx.oppdaterSistOppdatert(rapporteringId)
             }
         }
     }
@@ -363,6 +369,28 @@ class RapporteringRepositoryPostgres(
                 ) ?: 0
             }
         }
+
+    override fun hentSistOppdatert(rapporteringId: Long): LocalDateTime =
+        using(sessionOf(dataSource)) { session ->
+            session.run(
+                queryOf("SELECT sist_oppdatert FROM rapporteringsperiode where id = ?", rapporteringId)
+                    .map { it.localDateTime(1) }
+                    .asSingle,
+            ) ?: throw RuntimeException("Finner ikke sist oppdatert for rapporteringId $rapporteringId")
+        }
+
+    private fun TransactionalSession.oppdaterSistOppdatert(rapporteringId: Long) {
+        this
+            .run(
+                queryOf(
+                    "UPDATE rapporteringsperiode SET sist_oppdatert = :sist_oppdatert WHERE id = :id",
+                    mapOf(
+                        "sist_oppdatert" to LocalDateTime.now(),
+                        "id" to rapporteringId,
+                    ),
+                ).asUpdate,
+            ).validateRowsAffected()
+    }
 }
 
 private fun Int.validateRowsAffected(excepted: Int = 1) {

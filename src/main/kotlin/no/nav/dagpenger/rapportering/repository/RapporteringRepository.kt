@@ -4,6 +4,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import java.time.LocalDateTime
 import java.util.UUID
 
 interface RapporteringRepository {
@@ -56,4 +57,6 @@ interface RapporteringRepository {
     suspend fun slettRaporteringsperiode(rapporteringId: Long)
 
     suspend fun hentAntallRapporteringsperioder(): Int
+
+    fun hentSistOppdatert(rapporteringId: Long): LocalDateTime
 }

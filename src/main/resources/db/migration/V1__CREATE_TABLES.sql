@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS rapporteringsperiode
     brutto_belop            DECIMAL         NULL,
     begrunnelse_korrigering VARCHAR         NULL,
     registrert_arbeidssoker BOOLEAN         NULL,
-    status                  VARCHAR         NOT NULL
+    status                  VARCHAR         NOT NULL,
+    sist_oppdatert          TIMESTAMP       NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS dag

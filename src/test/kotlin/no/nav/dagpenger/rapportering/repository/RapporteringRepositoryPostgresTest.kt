@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.repository
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
@@ -17,6 +18,7 @@ import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
 import java.sql.BatchUpdateException
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 class RapporteringRepositoryPostgresTest {
@@ -400,6 +402,23 @@ class RapporteringRepositoryPostgresTest {
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
             rapporteringRepositoryPostgres.hentAntallRapporteringsperioder() shouldBe 1
+        }
+    }
+
+    @Test
+    fun `kan hente sist oppdatert`() {
+        val rapporteringsperiode = getRapporteringsperiode()
+        val naa = LocalDateTime.now()
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
+            with(rapporteringRepositoryPostgres.hentSistOppdatert(rapporteringsperiode.id)) {
+                year shouldBe naa.year
+                monthValue shouldBe naa.monthValue
+                dayOfMonth shouldBe naa.dayOfMonth
+                hour shouldBeGreaterThanOrEqual naa.hour
+                minute shouldBeGreaterThanOrEqual naa.minute
+                second shouldBeGreaterThanOrEqual naa.second
+            }
         }
     }
 }
