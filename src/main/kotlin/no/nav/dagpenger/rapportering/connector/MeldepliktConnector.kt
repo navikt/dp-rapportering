@@ -42,10 +42,10 @@ class MeldepliktConnector(
                         sikkerlogg.info { "Kall til meldeplikt-adapter for å hente meldeplikt for $ident ga status ${it.status}" }
                     }
 
-            if (result.status != HttpStatusCode.OK) {
-                "false"
-            } else {
+            if (result.status == HttpStatusCode.OK) {
                 result.bodyAsText()
+            } else {
+                throw Exception("Uforventet HTTP status ${result.status.value} ved henting av meldeplikt")
             }
         }
 

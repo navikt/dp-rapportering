@@ -69,15 +69,14 @@ class MeldepliktConnectorTest {
     }
 
     @Test
-    fun `harMeldeplikt returnerer false ved feil`() {
+    fun `harMeldeplikt kaster Exception ved feil`() {
         val connector = meldepliktConnector("", 503)
 
-        val response =
+        shouldThrow<Exception> {
             runBlocking {
                 connector.harMeldeplikt(ident, subjectToken)
             }
-
-        response shouldBe "false"
+        }
     }
 
     @Test

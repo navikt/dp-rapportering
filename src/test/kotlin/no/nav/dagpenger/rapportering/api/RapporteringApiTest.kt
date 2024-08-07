@@ -47,16 +47,41 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    fun `Kan hente harMeldeplikt`() =
+    fun `harMeldeplikt returnerer InternalServerError hvis feil i meldepliktAdapter`() =
         setUpTestApplication {
             externalServices {
-                meldepliktAdapter()
+                meldepliktAdapter(harMeldepliktResponseStatus = HttpStatusCode.InternalServerError, harMeldepliktResponse = "false")
+            }
+
+            val response = client.doGet("/harmeldeplikt", issueToken(fnr))
+
+            response.status shouldBe HttpStatusCode.InternalServerError
+        }
+
+    @Test
+    fun `Kan hente harMeldeplikt true`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter(harMeldepliktResponse = "true")
             }
 
             val response = client.doGet("/harmeldeplikt", issueToken(fnr))
 
             response.status shouldBe HttpStatusCode.OK
             response.bodyAsText() shouldBe "true"
+        }
+
+    @Test
+    fun `Kan hente harMeldeplikt false`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter(harMeldepliktResponse = "false")
+            }
+
+            val response = client.doGet("/harmeldeplikt", issueToken(fnr))
+
+            response.status shouldBe HttpStatusCode.OK
+            response.bodyAsText() shouldBe "false"
         }
 
     // Sende rapporteringsperiode
@@ -509,12 +534,14 @@ class RapporteringApiTest : ApiTestSetup() {
         sendInnResponseStatus: HttpStatusCode = HttpStatusCode.OK,
         personResponse: String = person(),
         personResponseStatus: HttpStatusCode = HttpStatusCode.OK,
+        harMeldepliktResponse: String = "true",
+        harMeldepliktResponseStatus: HttpStatusCode = HttpStatusCode.OK,
     ) {
         hosts("https://meldeplikt-adapter") {
             routing {
                 get("/harmeldeplikt") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Text.Plain.toString())
-                    call.respond(HttpStatusCode.OK, "true")
+                    call.respond(harMeldepliktResponseStatus, harMeldepliktResponse)
                 }
                 get("/rapporteringsperioder") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
