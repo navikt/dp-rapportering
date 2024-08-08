@@ -198,7 +198,7 @@ class RapporteringService(
         ident: String,
         loginLevel: Int,
     ): InnsendingResponse {
-        rapporteringsperiode.takeIf { it.kanSendes }
+        rapporteringsperiode.takeIf { it.kanSendes && it.registrertArbeidssoker != null }
             ?: throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
 
         return meldepliktConnector

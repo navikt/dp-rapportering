@@ -97,7 +97,7 @@ class RapporteringApiTest : ApiTestSetup() {
             // Lagrer perioden i databasen
             client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
 
-            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor())) {
+            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(registrertArbeidssoker = true))) {
                 status shouldBe HttpStatusCode.OK
             }
         }
@@ -113,7 +113,21 @@ class RapporteringApiTest : ApiTestSetup() {
     @Test
     fun `sender ikke inn hvis perioden ikke kan sendes`() =
         setUpTestApplication {
-            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(kanSendes = false))) {
+            with(
+                client.doPost(
+                    "/rapporteringsperiode",
+                    issueToken(fnr),
+                    rapporteringsperiodeFor(kanSendes = false, registrertArbeidssoker = true),
+                ),
+            ) {
+                status shouldBe HttpStatusCode.BadRequest
+            }
+        }
+
+    @Test
+    fun `sender ikke inn hvis bruker ikke har svar på om hen vil fortsette å være arbeidssøker neste periode`() =
+        setUpTestApplication {
+            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor())) {
                 status shouldBe HttpStatusCode.BadRequest
             }
         }
@@ -132,7 +146,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 )
             }
 
-            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor())) {
+            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(registrertArbeidssoker = false))) {
                 status shouldBe HttpStatusCode.InternalServerError
             }
         }
@@ -147,7 +161,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 )
             }
 
-            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor())) {
+            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(registrertArbeidssoker = false))) {
                 status shouldBe HttpStatusCode.InternalServerError
                 println("Body: ${body<String>()}")
             }

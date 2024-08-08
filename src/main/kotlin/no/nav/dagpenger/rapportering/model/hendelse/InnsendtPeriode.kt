@@ -40,3 +40,19 @@ class MeldingOmPeriodeInnsendt(
                 ),
         )
 }
+
+class MeldingOmArbeidssokerNestePeriode(
+    private val innsendtPeriodeHendelse: InnsendtPeriodeHendelse,
+) {
+    fun asMessage(): JsonMessage =
+        JsonMessage.newMessage(
+            eventName = "arbeidssoker_neste_periode_hendelse",
+            map =
+                mapOf(
+                    "ident" to innsendtPeriodeHendelse.ident,
+                    "fom" to innsendtPeriodeHendelse.rapporteringsperiode.kanSendesFra.plusDays(1),
+                    "tom" to innsendtPeriodeHendelse.rapporteringsperiode.kanSendesFra.plusDays(14),
+                    "registrertArbeidssoker" to innsendtPeriodeHendelse.rapporteringsperiode.registrertArbeidssoker!!,
+                ),
+        )
+}

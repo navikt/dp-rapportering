@@ -329,7 +329,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan sende inn rapporteringsperiode`() {
-        val rapporteringsperiode = rapporteringsperiodeListe.first()
+        val rapporteringsperiode = rapporteringsperiodeListe.first().copy(registrertArbeidssoker = true)
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
         justRun { mediator.behandle(any<InnsendtPeriodeHendelse>()) }

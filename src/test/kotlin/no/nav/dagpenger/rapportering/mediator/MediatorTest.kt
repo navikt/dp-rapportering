@@ -65,12 +65,13 @@ class MediatorTest {
                 bruttoBelop = null,
                 status = TilUtfylling,
                 registrertArbeidssoker = true,
+                begrunnelseKorrigering = null,
             )
         val innsendtPeriodeHendelse =
             InnsendtPeriodeHendelse(UUID.randomUUID(), testIdent, rapporteringsperiode)
         mediator.behandle(innsendtPeriodeHendelse)
 
-        rapid.inspektør.size shouldBe 1
+        rapid.inspektør.size shouldBe 2
         rapid.inspektør.message(0).let {
             it["@event_name"].asText() shouldBe "rapporteringsperiode_innsendt_hendelse"
             it["ident"].asText() shouldBe testIdent
@@ -88,6 +89,13 @@ class MediatorTest {
                 dager.last()["aktiviteter"].last()["type"].asText() shouldBe "Utdanning"
                 dager.last()["aktiviteter"].last()["timer"].isNull shouldBe true
             }
+        }
+        rapid.inspektør.message(1).let {
+            it["@event_name"].asText() shouldBe "arbeidssoker_neste_periode_hendelse"
+            it["ident"].asText() shouldBe testIdent
+            it["fom"].asText() shouldBe rapporteringsperiode.kanSendesFra.plusDays(1).toString()
+            it["tom"].asText() shouldBe rapporteringsperiode.kanSendesFra.plusDays(14).toString()
+            it["registrertArbeidssoker"].asBoolean() shouldBe true
         }
     }
 }

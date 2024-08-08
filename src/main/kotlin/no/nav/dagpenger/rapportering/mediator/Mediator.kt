@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.mediator
 import mu.KotlinLogging
 import mu.withLoggingContext
 import no.nav.dagpenger.rapportering.model.hendelse.InnsendtPeriodeHendelse
+import no.nav.dagpenger.rapportering.model.hendelse.MeldingOmArbeidssokerNestePeriode
 import no.nav.dagpenger.rapportering.model.hendelse.MeldingOmPeriodeInnsendt
 import no.nav.dagpenger.rapportering.model.hendelse.SoknadInnsendtHendelse
 import no.nav.helse.rapids_rivers.RapidsConnection
@@ -21,14 +22,18 @@ class Mediator(
 
     override fun behandle(hendelse: InnsendtPeriodeHendelse) {
         logger.info { "Behandler InnsendtPeriodeHendelse: $hendelse" }
-        val melding = MeldingOmPeriodeInnsendt(hendelse).asMessage().toJson()
+        val innsendtPeriodeMelding = MeldingOmPeriodeInnsendt(hendelse).asMessage().toJson()
+        val arbeidssokerNestePeriodeMelding = MeldingOmArbeidssokerNestePeriode(hendelse).asMessage().toJson()
         withLoggingContext(
             "rapporteringsId" to hendelse.rapporteringsperiode.id.toString(),
         ) {
             logger.info { "Publiserer hendelse for innsendt rapporteringsperiode" }
-            sikkerlogg.info { "Publiserer hendelse for innsendt rapporteringsperiode. Melding: $melding" }
+            sikkerlogg.info { "Publiserer hendelse for innsendt rapporteringsperiode. Melding: $innsendtPeriodeMelding" }
+            rapidsConnection.publish(hendelse.ident(), innsendtPeriodeMelding)
 
-            rapidsConnection.publish(hendelse.ident(), melding)
+            logger.info { "Publiserer hendelse for arbeidssøker neste periode" }
+            sikkerlogg.info { "Publiserer hendelse for arbeidssøker neste periode. Melding: $arbeidssokerNestePeriodeMelding" }
+            rapidsConnection.publish(hendelse.ident(), arbeidssokerNestePeriodeMelding)
         }
     }
 }

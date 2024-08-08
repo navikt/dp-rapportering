@@ -98,12 +98,14 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 meldepliktAdapter()
                 dokarkiv()
             }
+            val rapporteringsperiodeTilInnsending = rapporteringsperiode.copy(registrertArbeidssoker = true)
+            val rapporteringsperiodeTilInnsendingString = defaultObjectMapper.writeValueAsString(rapporteringsperiodeTilInnsending)
 
             // Lagrer perioden i databasen
             client.doPost("/rapporteringsperiode/123/start", issueToken(ident))
 
             val path = "/rapporteringsperiode"
-            client.doPost(path, issueToken(ident), rapporteringsperiode)
+            client.doPost(path, issueToken(ident), rapporteringsperiodeTilInnsending)
 
             val list = getLogList()
 
@@ -114,7 +116,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[2].operation shouldBe path
             list[2].status shouldBe 200
             list[2].request shouldStartWith "POST localhost:80$path HTTP/1.1"
-            list[2].request shouldContain rapporteringsperiodeString
+            list[2].request shouldContain rapporteringsperiodeTilInnsendingString
             list[2].response shouldStartWith "200 OK"
             list[2].ident shouldBe ident
             list[2].logginfo shouldBe ""
@@ -125,7 +127,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[3].operation shouldBe "/sendinn"
             list[3].status shouldBe 200
             list[3].request shouldStartWith "POST https://meldeplikt-adapter:443/sendinn"
-            list[3].request shouldContain rapporteringsperiodeString
+            list[3].request shouldContain rapporteringsperiodeTilInnsendingString
             list[3].response.trimIndent() shouldBe
                 """
                 HTTP/1.1 200 OK
