@@ -212,7 +212,7 @@ class JournalfoeringService(
         val til = rapporteringsperiode.periode.tilOgMed.format(dateFormatter)
 
         var tittel = "Meldekort"
-        if (rapporteringsperiode.status == RapporteringsperiodeStatus.Korrigert) {
+        if (rapporteringsperiode.status == RapporteringsperiodeStatus.Endret) {
             tittel = "Korrigert meldekort"
         }
 
@@ -239,7 +239,7 @@ class JournalfoeringService(
         loginLevel: Int,
     ): List<Dokument> {
         var brevkode = brevkode
-        if (rapporteringsperiode.status == RapporteringsperiodeStatus.Korrigert) {
+        if (rapporteringsperiode.status == RapporteringsperiodeStatus.Endret) {
             brevkode = brevkodeKorrigert
         }
 
@@ -274,7 +274,7 @@ class JournalfoeringService(
         loginLevel: Int,
     ): DokumentVariant {
         var tittel = "Elektronisk innsendt meldekort"
-        if (rapporteringsperiode.status == RapporteringsperiodeStatus.Korrigert) {
+        if (rapporteringsperiode.status == RapporteringsperiodeStatus.Endret) {
             tittel = "Elektronisk korrigert meldekort"
         }
 

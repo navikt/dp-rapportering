@@ -176,7 +176,7 @@ paths:
         parameters:
             - $ref: '#/components/parameters/periodeId'
 
-    /rapporteringsperiode/{periodeId}/korriger:
+    /rapporteringsperiode/{periodeId}/endre:
         post:
             responses:
                 200:
@@ -193,7 +193,7 @@ paths:
             tags:
                 - Rapporteringsperiode
             security:
-                - tokenX: []
+                -   tokenX: [ ]
         parameters:
             -   $ref: '#/components/parameters/periodeId'
 

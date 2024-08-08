@@ -74,16 +74,16 @@ fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
         dager = this.dager.map { it.toDag() },
         kanSendesFra = this.kanSendesFra,
         kanSendes = this.kanSendes,
-        kanKorrigeres = this.kanKorrigeres,
+        kanEndres = this.kanKorrigeres,
         bruttoBelop = this.bruttoBelop,
         status =
             when (this.status) {
                 TilUtfylling -> RapporteringsperiodeStatus.TilUtfylling
-                Korrigert -> RapporteringsperiodeStatus.Korrigert
+                Korrigert -> RapporteringsperiodeStatus.Endret
                 Innsendt -> RapporteringsperiodeStatus.Innsendt
                 Ferdig -> RapporteringsperiodeStatus.Ferdig
             },
-        begrunnelseKorrigering = this.begrunnelseKorrigering,
+        begrunnelseEndring = this.begrunnelseKorrigering,
         registrertArbeidssoker = this.registrertArbeidssoker,
     )
 
@@ -112,13 +112,13 @@ fun Rapporteringsperiode.toAdapterRapporteringsperiode(): AdapterRapporteringspe
         dager = this.dager.map { it.toAdapterDag() },
         kanSendesFra = this.kanSendesFra,
         kanSendes = this.kanSendes,
-        kanKorrigeres = this.kanKorrigeres,
+        kanKorrigeres = this.kanEndres,
         bruttoBelop = this.bruttoBelop,
-        begrunnelseKorrigering = this.begrunnelseKorrigering,
+        begrunnelseKorrigering = this.begrunnelseEndring,
         status =
             when (this.status) {
                 RapporteringsperiodeStatus.TilUtfylling -> TilUtfylling
-                RapporteringsperiodeStatus.Korrigert -> Korrigert
+                RapporteringsperiodeStatus.Endret -> Korrigert
                 RapporteringsperiodeStatus.Innsendt -> Innsendt
                 RapporteringsperiodeStatus.Ferdig -> Ferdig
             },

@@ -294,7 +294,7 @@ class JournalfoeringServiceTest {
             true,
             0.0,
             null,
-            if (korrigering) RapporteringsperiodeStatus.Korrigert else TilUtfylling,
+            if (korrigering) RapporteringsperiodeStatus.Endret else TilUtfylling,
             true,
         )
     }

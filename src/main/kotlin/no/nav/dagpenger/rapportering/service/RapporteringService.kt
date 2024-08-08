@@ -10,9 +10,9 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
-import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Korrigert
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import java.time.LocalDate
 import java.util.UUID
@@ -149,30 +149,30 @@ class RapporteringService(
         registrertArbeidssoker,
     )
 
-    suspend fun korrigerRapporteringsperiode(
+    suspend fun endreRapporteringsperiode(
         rapporteringId: Long,
         ident: String,
         token: String,
     ): Rapporteringsperiode {
         val originalPeriode =
             hentPeriode(rapporteringId, ident, token)
-                ?: throw RuntimeException("Finner ikke original rapporteringsperiode. Kan ikke korrigere.")
+                ?: throw RuntimeException("Finner ikke original rapporteringsperiode. Kan ikke endre.")
 
-        if (!originalPeriode.kanKorrigeres) {
-            throw IllegalArgumentException("Rapporteringsperiode med id $rapporteringId kan ikke korrigeres")
+        if (!originalPeriode.kanEndres) {
+            throw IllegalArgumentException("Rapporteringsperiode med id $rapporteringId kan ikke endres")
         }
 
-        val korrigertId =
+        val endringId =
             meldepliktConnector
                 .hentKorrigeringId(rapporteringId, token)
                 .let { PeriodeId(it.toLong()) }
 
-        val korrigertRapporteringsperiode =
+        val endretRapporteringsperiode =
             originalPeriode.copy(
-                id = korrigertId.id,
-                kanKorrigeres = false,
+                id = endringId.id,
+                kanEndres = false,
                 kanSendes = true,
-                status = Korrigert,
+                status = Endret,
                 dager =
                     originalPeriode.dager.map { dag ->
                         dag.copy(
@@ -184,9 +184,9 @@ class RapporteringService(
                     },
             )
 
-        lagreEllerOppdaterPeriode(korrigertRapporteringsperiode, ident)
+        lagreEllerOppdaterPeriode(endretRapporteringsperiode, ident)
 
-        return korrigertRapporteringsperiode
+        return endretRapporteringsperiode
     }
 
     suspend fun sendRapporteringsperiode(

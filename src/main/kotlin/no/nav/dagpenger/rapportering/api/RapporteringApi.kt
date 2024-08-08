@@ -189,14 +189,14 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                         }
                     }
 
-                    route("/korriger") {
+                    route("/endre") {
                         post {
                             val ident = call.ident()
                             val jwtToken = call.request.jwt()
                             val id = call.getParameter("id")
 
                             rapporteringService
-                                .korrigerRapporteringsperiode(id.toLong(), ident, jwtToken)
+                                .endreRapporteringsperiode(id.toLong(), ident, jwtToken)
                                 .also { call.respond(HttpStatusCode.OK, it) }
                         }
                     }

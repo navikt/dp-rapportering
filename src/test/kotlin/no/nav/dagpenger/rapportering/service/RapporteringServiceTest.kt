@@ -18,8 +18,8 @@ import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
-import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Korrigert
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.februar
@@ -71,7 +71,7 @@ class RapporteringServiceTest {
             dager.first().aktiviteter shouldBe emptyList()
             kanSendesFra shouldBe 27.januar
             kanSendes shouldBe true
-            kanKorrigeres shouldBe false
+            kanEndres shouldBe false
             bruttoBelop shouldBe null
             status shouldBe TilUtfylling
             registrertArbeidssoker shouldBe null
@@ -95,7 +95,7 @@ class RapporteringServiceTest {
             dager.first().aktiviteter shouldBe emptyList()
             kanSendesFra shouldBe 27.januar
             kanSendes shouldBe true
-            kanKorrigeres shouldBe false
+            kanEndres shouldBe false
             bruttoBelop shouldBe null
             status shouldBe Innsendt
             registrertArbeidssoker shouldBe null
@@ -132,7 +132,7 @@ class RapporteringServiceTest {
             dager shouldBe rapporteringsperiodeFraDb.dager
             kanSendesFra shouldBe 27.januar
             kanSendes shouldBe true
-            kanKorrigeres shouldBe false
+            kanEndres shouldBe false
             bruttoBelop shouldBe null
             status shouldBe TilUtfylling
             registrertArbeidssoker shouldBe null
@@ -242,17 +242,17 @@ class RapporteringServiceTest {
     @Test
     fun `kan korrigere rapporteringsperiode`() {
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns
-            rapporteringsperiodeListe.first().copy(kanKorrigeres = true)
+            rapporteringsperiodeListe.first().copy(kanEndres = true)
         coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns null
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns emptyList()
         coEvery { meldepliktConnector.hentKorrigeringId(any(), any()) } returns "321"
         coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
-        val korrigertRapporteringsperiode = runBlocking { rapporteringService.korrigerRapporteringsperiode(123L, ident, token) }
+        val korrigertRapporteringsperiode = runBlocking { rapporteringService.endreRapporteringsperiode(123L, ident, token) }
 
         korrigertRapporteringsperiode.id shouldBe 321L
-        korrigertRapporteringsperiode.status shouldBe Korrigert
+        korrigertRapporteringsperiode.status shouldBe Endret
     }
 
     @Test
@@ -260,11 +260,11 @@ class RapporteringServiceTest {
         coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns null
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns emptyList()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns
-            rapporteringsperiodeListe.first().copy(kanKorrigeres = false)
+            rapporteringsperiodeListe.first().copy(kanEndres = false)
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
         shouldThrow<IllegalArgumentException> {
-            runBlocking { rapporteringService.korrigerRapporteringsperiode(123L, ident, token) }
+            runBlocking { rapporteringService.endreRapporteringsperiode(123L, ident, token) }
         }
     }
 
@@ -273,7 +273,7 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
 
         shouldThrow<RuntimeException> {
-            runBlocking { rapporteringService.korrigerRapporteringsperiode(123L, ident, token) }
+            runBlocking { rapporteringService.endreRapporteringsperiode(123L, ident, token) }
         }
     }
 
@@ -283,7 +283,7 @@ class RapporteringServiceTest {
             meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any())
         } returns
             rapporteringsperiodeListe
-                .map { it.copy(status = Innsendt, kanSendes = false, kanKorrigeres = true) }
+                .map { it.copy(status = Innsendt, kanSendes = false, kanEndres = true) }
                 .toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
@@ -299,7 +299,7 @@ class RapporteringServiceTest {
     fun `liste med innsendte rapporteringsperioder blir populert med manglende perioder fra databasen som har riktig status`() {
         val perioderFraArena =
             rapporteringsperiodeListe
-                .map { it.copy(status = Innsendt, kanSendes = false, kanKorrigeres = true) }
+                .map { it.copy(status = Innsendt, kanSendes = false, kanEndres = true) }
                 .toAdapterRapporteringsperioder()
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns perioderFraArena
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns
@@ -474,11 +474,11 @@ fun lagRapporteringsperiode(
     dager = getDager(startDato = periode.fraOgMed),
     kanSendesFra = periode.tilOgMed.minusDays(1),
     kanSendes = true,
-    kanKorrigeres = false,
+    kanEndres = false,
     bruttoBelop = null,
     status = status,
     registrertArbeidssoker = null,
-    begrunnelseKorrigering = null,
+    begrunnelseEndring = null,
 )
 
 private fun getDager(

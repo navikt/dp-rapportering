@@ -27,7 +27,7 @@ import no.nav.dagpenger.rapportering.model.DokumentInfo
 import no.nav.dagpenger.rapportering.model.InnsendingFeil
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
-import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Korrigert
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -322,17 +322,17 @@ class RapporteringApiTest : ApiTestSetup() {
         }
     }
 
-    // Korriger rapporteringsperiode
+    // Endre rapporteringsperiode
 
     @Test
-    fun `Kan korrigere rapporteringsperiode`() {
+    fun `Kan endre rapporteringsperiode`() {
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
             }
 
             val response =
-                client.doPostAndReceive<Rapporteringsperiode>("/rapporteringsperiode/125/korriger", issueToken(fnr))
+                client.doPostAndReceive<Rapporteringsperiode>("/rapporteringsperiode/125/endre", issueToken(fnr))
             response.httpResponse.status shouldBe HttpStatusCode.OK
             with(response.body) {
                 id shouldBe 321L
@@ -342,15 +342,15 @@ class RapporteringApiTest : ApiTestSetup() {
                         aktivitet.timer shouldBe "PT7H30M"
                     }
                 }
-                status shouldBe Korrigert
-                kanKorrigeres shouldBe false
+                status shouldBe Endret
+                kanEndres shouldBe false
                 kanSendes shouldBe true
             }
         }
     }
 
     @Test
-    fun `Kan korrigere rapporteringsperiode når original periode ligger i databasen`() {
+    fun `Kan endre rapporteringsperiode når original periode ligger i databasen`() {
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter(
@@ -374,7 +374,7 @@ class RapporteringApiTest : ApiTestSetup() {
             client.doPost("/rapporteringsperiode/125/start", issueToken(fnr))
 
             val response =
-                client.doPostAndReceive<Rapporteringsperiode>("/rapporteringsperiode/125/korriger", issueToken(fnr))
+                client.doPostAndReceive<Rapporteringsperiode>("/rapporteringsperiode/125/endre", issueToken(fnr))
             response.httpResponse.status shouldBe HttpStatusCode.OK
             with(response.body) {
                 id shouldBe 321L
@@ -384,32 +384,32 @@ class RapporteringApiTest : ApiTestSetup() {
                         aktivitet.timer shouldBe "PT7H30M"
                     }
                 }
-                status shouldBe Korrigert
-                kanKorrigeres shouldBe false
+                status shouldBe Endret
+                kanEndres shouldBe false
                 kanSendes shouldBe true
             }
         }
     }
 
     @Test
-    fun `korrigering feiler hvis original rapporteringsperiode ikke finnes`() =
+    fun `endring feiler hvis original rapporteringsperiode ikke finnes`() =
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter(rapporteringsperioderResponse = emptyList())
             }
 
-            val response = client.doPost("/rapporteringsperiode/123/korriger", issueToken(fnr))
+            val response = client.doPost("/rapporteringsperiode/123/endre", issueToken(fnr))
             response.status shouldBe HttpStatusCode.InternalServerError
         }
 
     @Test
-    fun `korrigering feiler hvis original rapporteringsperiode ikke kan korrigeres`() =
+    fun `endring feiler hvis original rapporteringsperiode ikke kan endres`() =
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter(rapporteringsperioderResponse = listOf(adapterRapporteringsperiode(kanKorrigeres = false)))
             }
 
-            val response = client.doPost("/rapporteringsperiode/123/korriger", issueToken(fnr))
+            val response = client.doPost("/rapporteringsperiode/123/endre", issueToken(fnr))
             response.status shouldBe HttpStatusCode.BadRequest
         }
 
@@ -528,8 +528,8 @@ class RapporteringApiTest : ApiTestSetup() {
                 ),
             ),
         sendteRapporteringsperioderResponseStatus: HttpStatusCode = HttpStatusCode.OK,
-        korrigerRapporteringsperiodeResponse: Long = 321L,
-        korrigerRapporteringsperiodeResponseStatus: HttpStatusCode = HttpStatusCode.OK,
+        endreRapporteringsperiodeResponse: Long = 321L,
+        endreRapporteringsperiodeResponseStatus: HttpStatusCode = HttpStatusCode.OK,
         sendInnResponse: InnsendingResponse? = InnsendingResponse(id = 123L, status = "OK", feil = emptyList()),
         sendInnResponseStatus: HttpStatusCode = HttpStatusCode.OK,
         personResponse: String = person(),
@@ -560,8 +560,8 @@ class RapporteringApiTest : ApiTestSetup() {
                 get("/korrigerrapporteringsperiode/{id}") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond(
-                        status = korrigerRapporteringsperiodeResponseStatus,
-                        defaultObjectMapper.writeValueAsString(korrigerRapporteringsperiodeResponse),
+                        status = endreRapporteringsperiodeResponseStatus,
+                        defaultObjectMapper.writeValueAsString(endreRapporteringsperiodeResponse),
                     )
                 }
                 post("/sendinn") {
