@@ -164,7 +164,7 @@ class RapporteringService(
 
         val endringId =
             meldepliktConnector
-                .hentKorrigeringId(rapporteringId, token)
+                .hentEndringId(rapporteringId, token)
                 .let { PeriodeId(it.toLong()) }
 
         val endretRapporteringsperiode =

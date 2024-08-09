@@ -132,7 +132,7 @@ class MeldepliktConnectorTest {
                 kanSendesFra shouldBe 13.januar
                 status shouldBe AdapterRapporteringsperiodeStatus.TilUtfylling
                 bruttoBelop shouldBe null
-                begrunnelseKorrigering shouldBe null
+                begrunnelseEndring shouldBe null
             }
 
             with(get(1)) {
@@ -288,13 +288,13 @@ class MeldepliktConnectorTest {
     }
 
     @Test
-    fun `henter korringeringId`() {
+    fun `henter endringId`() {
         val id = 1806985352L
         val connector = meldepliktConnector(id.toString(), 200)
 
         val response =
             runBlocking {
-                connector.hentKorrigeringId(id, subjectToken)
+                connector.hentEndringId(id, subjectToken)
             }
 
         response.toLong() shouldBe id
@@ -374,7 +374,7 @@ fun rapporteringsperiodeFor(
     dager: String = aktivitetsdagerlisteFor(startDato = fraOgMed),
     kanSendesFra: LocalDate = LocalDate.now(),
     kanSendes: Boolean = true,
-    kanKorrigeres: Boolean = true,
+    kanEndres: Boolean = true,
     status: RapporteringsperiodeStatus = TilUtfylling,
     bruttoBelop: String? = null,
 ) = //language=JSON
@@ -388,7 +388,7 @@ fun rapporteringsperiodeFor(
       "dager": $dager,
       "kanSendesFra": "$kanSendesFra",
       "kanSendes": $kanSendes,
-      "kanKorrigeres": $kanKorrigeres,
+      "kanEndres": $kanEndres,
       "bruttoBelop": $bruttoBelop,
       "status": "${status.name}"
     }

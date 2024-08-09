@@ -240,23 +240,23 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `kan korrigere rapporteringsperiode`() {
+    fun `kan endre rapporteringsperiode`() {
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns
             rapporteringsperiodeListe.first().copy(kanEndres = true)
         coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns null
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns emptyList()
-        coEvery { meldepliktConnector.hentKorrigeringId(any(), any()) } returns "321"
+        coEvery { meldepliktConnector.hentEndringId(any(), any()) } returns "321"
         coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
-        val korrigertRapporteringsperiode = runBlocking { rapporteringService.endreRapporteringsperiode(123L, ident, token) }
+        val endretRapporteringsperiode = runBlocking { rapporteringService.endreRapporteringsperiode(123L, ident, token) }
 
-        korrigertRapporteringsperiode.id shouldBe 321L
-        korrigertRapporteringsperiode.status shouldBe Endret
+        endretRapporteringsperiode.id shouldBe 321L
+        endretRapporteringsperiode.status shouldBe Endret
     }
 
     @Test
-    fun `kan ikke korrigere rapporteringsperiode som ikke kan korrigeres`() {
+    fun `kan ikke endre rapporteringsperiode som ikke kan endres`() {
         coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns null
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns emptyList()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns
@@ -269,7 +269,7 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `kan ikke korrigere rapporteringsperiode hvis perioden ikke finnes`() {
+    fun `kan ikke endre rapporteringsperiode hvis perioden ikke finnes`() {
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
 
         shouldThrow<RuntimeException> {

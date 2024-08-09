@@ -406,7 +406,7 @@ class RapporteringApiTest : ApiTestSetup() {
     fun `endring feiler hvis original rapporteringsperiode ikke kan endres`() =
         setUpTestApplication {
             externalServices {
-                meldepliktAdapter(rapporteringsperioderResponse = listOf(adapterRapporteringsperiode(kanKorrigeres = false)))
+                meldepliktAdapter(rapporteringsperioderResponse = listOf(adapterRapporteringsperiode(kanEndres = false)))
             }
 
             val response = client.doPost("/rapporteringsperiode/123/endre", issueToken(fnr))
@@ -557,7 +557,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         defaultObjectMapper.writeValueAsString(sendteRapporteringsperioderResponse),
                     )
                 }
-                get("/korrigerrapporteringsperiode/{id}") {
+                get("/endrerapporteringsperiode/{id}") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond(
                         status = endreRapporteringsperiodeResponseStatus,
@@ -585,11 +585,11 @@ class RapporteringApiTest : ApiTestSetup() {
         tilOgMed: LocalDate = fraOgMed.plusDays(13),
         aktivitet: AdapterAktivitet? = null,
         kanSendes: Boolean = true,
-        kanKorrigeres: Boolean = true,
+        kanEndres: Boolean = true,
         status: AdapterRapporteringsperiodeStatus = AdapterRapporteringsperiodeStatus.TilUtfylling,
         bruttoBelop: Double? = null,
         registrertArbeidssoker: Boolean? = null,
-        begrunnelseKorrigering: String? = null,
+        begrunnelseEndring: String? = null,
     ) = AdapterRapporteringsperiode(
         id = id,
         periode =
@@ -607,11 +607,11 @@ class RapporteringApiTest : ApiTestSetup() {
             },
         kanSendesFra = tilOgMed.minusDays(1),
         kanSendes = kanSendes,
-        kanKorrigeres = kanKorrigeres,
+        kanEndres = kanEndres,
         status = status,
         bruttoBelop = bruttoBelop,
         registrertArbeidssoker = registrertArbeidssoker,
-        begrunnelseKorrigering = begrunnelseKorrigering,
+        begrunnelseEndring = begrunnelseEndring,
     )
 
     private fun person(

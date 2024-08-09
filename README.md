@@ -1,6 +1,6 @@
 # dp-rapportering
 ## Formål
-> Levere endepunkter som gjør det mulig å hente, fylle ut, sende inn og korrigere rapporteringsperioder. 
+> Levere endepunkter som gjør det mulig å hente, fylle ut, sende inn og endre rapporteringsperioder. 
 Endepunktene benyttes av [**`dp-rapportering-frontend`**][dp-rapportering-frontend] som eksponerer funksjonalitetene til bruker.
 
 ## Funksjonalitet

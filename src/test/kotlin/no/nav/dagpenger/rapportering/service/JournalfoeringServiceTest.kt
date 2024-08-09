@@ -74,7 +74,7 @@ class JournalfoeringServiceTest {
     }
 
     @Test
-    fun `Kan opprette og sende journalpost ved korrigering`() {
+    fun `Kan opprette og sende journalpost ved endring`() {
         test(true)
     }
 
@@ -193,7 +193,7 @@ class JournalfoeringServiceTest {
         System.setProperty("AZURE_APP_WELL_KNOWN_URL", "test.test.dokarkiv")
     }
 
-    private fun test(korrigering: Boolean = false) {
+    private fun test(endring: Boolean = false) {
         setProperties()
 
         // Mock TokenProvider
@@ -243,7 +243,7 @@ class JournalfoeringServiceTest {
                 journalfoeringRepository,
             )
 
-        val rapporteringsperiode = createRapporteringsperiode(korrigering)
+        val rapporteringsperiode = createRapporteringsperiode(endring)
 
         // Kjører
         runBlocking {
@@ -255,11 +255,11 @@ class JournalfoeringServiceTest {
         mockEngine.responseHistory.size shouldBe 1
 
         runBlocking {
-            checkJournalpost(korrigering, mockEngine.requestHistory[0].body, rapporteringsperiode)
+            checkJournalpost(endring, mockEngine.requestHistory[0].body, rapporteringsperiode)
         }
     }
 
-    private fun createRapporteringsperiode(korrigering: Boolean): Rapporteringsperiode {
+    private fun createRapporteringsperiode(endring: Boolean): Rapporteringsperiode {
         val fom = LocalDate.of(2024, 6, 24)
 
         return Rapporteringsperiode(
@@ -294,14 +294,14 @@ class JournalfoeringServiceTest {
             true,
             0.0,
             null,
-            if (korrigering) RapporteringsperiodeStatus.Endret else TilUtfylling,
+            if (endring) RapporteringsperiodeStatus.Endret else TilUtfylling,
             true,
         )
     }
 
     @OptIn(DelicateCoroutinesApi::class)
     private suspend fun checkJournalpost(
-        korrigering: Boolean,
+        endring: Boolean,
         content: OutgoingContent,
         opprineligRapporteringsperiode: Rapporteringsperiode,
     ) {
@@ -333,7 +333,7 @@ class JournalfoeringServiceTest {
         journalpost.kanal shouldBe "NAV_NO"
         journalpost.journalfoerendeEnhet shouldBe "9999"
         journalpost.datoMottatt shouldBe LocalDate.now().format(DateTimeFormatter.ISO_DATE)
-        if (korrigering) {
+        if (endring) {
             journalpost.tittel shouldBe "Korrigert meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av NAV"
         } else {
             journalpost.tittel shouldBe "Meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av NAV"
@@ -349,7 +349,7 @@ class JournalfoeringServiceTest {
 
         journalpost.dokumenter?.size shouldBe 1
         val dokument = journalpost.dokumenter?.get(0)
-        if (korrigering) {
+        if (endring) {
             dokument?.tittel shouldBe "Korrigert meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av NAV"
             dokument?.brevkode shouldBe "NAV 00-10.03"
         } else {
@@ -360,7 +360,7 @@ class JournalfoeringServiceTest {
         dokument?.dokumentvarianter?.size shouldBe 2
 
         checkJson(journalpost, opprineligRapporteringsperiode)
-        checkPdf(korrigering, journalpost)
+        checkPdf(endring, journalpost)
     }
 
     private fun checkJson(
@@ -380,7 +380,7 @@ class JournalfoeringServiceTest {
     }
 
     private fun checkPdf(
-        korrigering: Boolean,
+        endring: Boolean,
         journalpost: Journalpost,
     ) {
         journalpost.dokumenter!![0].dokumentvarianter[1].filtype shouldBe Filetype.PDFA
@@ -390,7 +390,7 @@ class JournalfoeringServiceTest {
         var actualFilePath = "actual.pdf"
         var diffFilePath = "diffOutput" // Uten .pdf
 
-        if (korrigering) {
+        if (endring) {
             expectedFilePath = "src/test/resources/dokarkiv_korrigert_expected.pdf"
             actualFilePath = "korrigert_actual.pdf"
             diffFilePath = "korrigert_diffOutput" // Uten .pdf

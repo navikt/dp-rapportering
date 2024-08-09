@@ -410,22 +410,22 @@ fun getRapporteringsperiode(
     dager: List<Dag> = getDager(),
     kanSendesFra: LocalDate = 13.januar,
     kanSendes: Boolean = true,
-    kanKorrigeres: Boolean = false,
+    kanEndres: Boolean = false,
     bruttoBelop: Double? = null,
     status: RapporteringsperiodeStatus = TilUtfylling,
     registrertArbeidssoker: Boolean? = null,
-    begrunnelseKorrigering: String? = null,
+    begrunnelseEndring: String? = null,
 ) = Rapporteringsperiode(
     id = id,
     periode = periode,
     dager = dager,
     kanSendesFra = kanSendesFra,
     kanSendes = kanSendes,
-    kanEndres = kanKorrigeres,
+    kanEndres = kanEndres,
     bruttoBelop = bruttoBelop,
     status = status,
     registrertArbeidssoker = registrertArbeidssoker,
-    begrunnelseEndring = begrunnelseKorrigering,
+    begrunnelseEndring = begrunnelseEndring,
 )
 
 private fun getDager(

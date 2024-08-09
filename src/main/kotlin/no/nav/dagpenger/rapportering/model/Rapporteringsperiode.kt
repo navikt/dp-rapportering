@@ -55,12 +55,12 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
             },
         kanSendesFra = this.kanSendesFra,
         kanSendes = this.kanSendes,
-        kanKorrigeres = this.kanEndres,
+        kanEndres = this.kanEndres,
         bruttoBelop = this.bruttoBelop?.toBigDecimal(),
         status =
             when (this.status) {
                 RapporteringsperiodeStatus.TilUtfylling -> RapporteringsperiodeStatusResponse.TilUtfylling
-                RapporteringsperiodeStatus.Endret -> RapporteringsperiodeStatusResponse.Korrigert
+                RapporteringsperiodeStatus.Endret -> RapporteringsperiodeStatusResponse.Endret
                 RapporteringsperiodeStatus.Innsendt -> RapporteringsperiodeStatusResponse.Innsendt
                 RapporteringsperiodeStatus.Ferdig -> RapporteringsperiodeStatusResponse.Ferdig
             },
