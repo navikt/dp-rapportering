@@ -1,5 +1,5 @@
 # Sett token og periodeId i http-client filene. Velg miljø før kjøring.
 ###
-POST {{url}}/rapporteringsperiode{{periodeId}}/korriger
+POST {{url}}/rapporteringsperiode{{periodeId}}/endre
 Content-Type: application/json
 Authorization: Bearer {{token}}

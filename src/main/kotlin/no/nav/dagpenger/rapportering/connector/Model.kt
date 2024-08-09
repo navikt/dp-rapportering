@@ -6,7 +6,7 @@ import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitet
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.Innsendt
-import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.Korrigert
+import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
@@ -26,16 +26,16 @@ data class AdapterRapporteringsperiode(
     val dager: List<AdapterDag>,
     val kanSendesFra: LocalDate,
     val kanSendes: Boolean,
-    val kanKorrigeres: Boolean,
+    val kanEndres: Boolean,
     val bruttoBelop: Double?,
-    val begrunnelseKorrigering: String?,
+    val begrunnelseEndring: String?,
     val status: AdapterRapporteringsperiodeStatus,
     val registrertArbeidssoker: Boolean?,
 )
 
 enum class AdapterRapporteringsperiodeStatus {
     TilUtfylling,
-    Korrigert,
+    Endret,
     Innsendt,
     Ferdig,
 }
@@ -74,16 +74,16 @@ fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
         dager = this.dager.map { it.toDag() },
         kanSendesFra = this.kanSendesFra,
         kanSendes = this.kanSendes,
-        kanKorrigeres = this.kanKorrigeres,
+        kanEndres = this.kanEndres,
         bruttoBelop = this.bruttoBelop,
         status =
             when (this.status) {
                 TilUtfylling -> RapporteringsperiodeStatus.TilUtfylling
-                Korrigert -> RapporteringsperiodeStatus.Korrigert
+                Endret -> RapporteringsperiodeStatus.Endret
                 Innsendt -> RapporteringsperiodeStatus.Innsendt
                 Ferdig -> RapporteringsperiodeStatus.Ferdig
             },
-        begrunnelseKorrigering = this.begrunnelseKorrigering,
+        begrunnelseEndring = this.begrunnelseEndring,
         registrertArbeidssoker = this.registrertArbeidssoker,
     )
 
@@ -112,13 +112,13 @@ fun Rapporteringsperiode.toAdapterRapporteringsperiode(): AdapterRapporteringspe
         dager = this.dager.map { it.toAdapterDag() },
         kanSendesFra = this.kanSendesFra,
         kanSendes = this.kanSendes,
-        kanKorrigeres = this.kanKorrigeres,
+        kanEndres = this.kanEndres,
         bruttoBelop = this.bruttoBelop,
-        begrunnelseKorrigering = this.begrunnelseKorrigering,
+        begrunnelseEndring = this.begrunnelseEndring,
         status =
             when (this.status) {
                 RapporteringsperiodeStatus.TilUtfylling -> TilUtfylling
-                RapporteringsperiodeStatus.Korrigert -> Korrigert
+                RapporteringsperiodeStatus.Endret -> Endret
                 RapporteringsperiodeStatus.Innsendt -> Innsendt
                 RapporteringsperiodeStatus.Ferdig -> Ferdig
             },

@@ -153,15 +153,15 @@ class RapporteringRepositoryPostgres(
             queryOf(
                 """
                 INSERT INTO rapporteringsperiode 
-                (id, ident, kan_sendes, kan_sendes_fra, kan_korrigeres, brutto_belop, status, registrert_arbeidssoker, fom, tom) 
-                VALUES (:id, :ident, :kan_sendes, :kan_sendes_fra, :kan_korrigeres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom)
+                (id, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom) 
+                VALUES (:id, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom)
                 """.trimIndent(),
                 mapOf(
                     "id" to rapporteringsperiode.id,
                     "ident" to ident,
                     "kan_sendes" to rapporteringsperiode.kanSendes,
                     "kan_sendes_fra" to rapporteringsperiode.kanSendesFra,
-                    "kan_korrigeres" to rapporteringsperiode.kanKorrigeres,
+                    "kan_endres" to rapporteringsperiode.kanEndres,
                     "brutto_belop" to rapporteringsperiode.bruttoBelop,
                     "status" to rapporteringsperiode.status.name,
                     "registrert_arbeidssoker" to rapporteringsperiode.registrertArbeidssoker,
@@ -253,14 +253,14 @@ class RapporteringRepositoryPostgres(
                             """
                             UPDATE rapporteringsperiode
                             SET kan_sendes = :kan_sendes,
-                                kan_korrigeres = :kan_korrigeres,
+                                kan_endres = :kan_endres,
                                 brutto_belop = :brutto_belop,
                                 status = :status
                             WHERE id = :id
                             """.trimIndent(),
                             mapOf(
                                 "kan_sendes" to rapporteringsperiode.kanSendes,
-                                "kan_korrigeres" to rapporteringsperiode.kanKorrigeres,
+                                "kan_endres" to rapporteringsperiode.kanEndres,
                                 "brutto_belop" to rapporteringsperiode.bruttoBelop,
                                 "status" to rapporteringsperiode.status.name,
                                 "id" to rapporteringsperiode.id,
@@ -374,7 +374,7 @@ private fun Row.toRapporteringsperiode() =
         id = long("id"),
         kanSendesFra = localDate("kan_sendes_fra"),
         kanSendes = boolean("kan_sendes"),
-        kanKorrigeres = boolean("kan_korrigeres"),
+        kanEndres = boolean("kan_endres"),
         bruttoBelop = doubleOrNull("brutto_belop"),
         status = RapporteringsperiodeStatus.valueOf(string("status")),
         registrertArbeidssoker = stringOrNull("registrert_arbeidssoker").toBooleanOrNull(),
@@ -384,7 +384,7 @@ private fun Row.toRapporteringsperiode() =
                 fraOgMed = localDate("fom"),
                 tilOgMed = localDate("tom"),
             ),
-        begrunnelseKorrigering = stringOrNull("begrunnelse_korrigering"),
+        begrunnelseEndring = stringOrNull("begrunnelse_endring"),
     )
 
 private fun Row.toDagPair(): Pair<UUID, Dag> =

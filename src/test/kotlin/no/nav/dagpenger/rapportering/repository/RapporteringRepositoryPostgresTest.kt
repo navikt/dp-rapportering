@@ -242,7 +242,7 @@ class RapporteringRepositoryPostgresTest {
                 dager.size shouldBe 14
                 dager.first().aktiviteter.size shouldBe 2
                 kanSendes shouldBe true
-                kanKorrigeres shouldBe false
+                kanEndres shouldBe false
                 bruttoBelop shouldBe null
                 status shouldBe TilUtfylling
             }
@@ -250,7 +250,7 @@ class RapporteringRepositoryPostgresTest {
             rapporteringRepositoryPostgres.oppdaterRapporteringsperiodeFraArena(
                 rapporteringsperiode.copy(
                     kanSendes = false,
-                    kanKorrigeres = true,
+                    kanEndres = true,
                     bruttoBelop = 100.0,
                     status = Innsendt,
                 ),
@@ -268,7 +268,7 @@ class RapporteringRepositoryPostgresTest {
                 dager.size shouldBe 14
                 dager.first().aktiviteter.size shouldBe 2
                 kanSendes shouldBe false
-                kanKorrigeres shouldBe true
+                kanEndres shouldBe true
                 bruttoBelop shouldBe 100.0
                 status shouldBe Innsendt
             }
@@ -410,22 +410,22 @@ fun getRapporteringsperiode(
     dager: List<Dag> = getDager(),
     kanSendesFra: LocalDate = 13.januar,
     kanSendes: Boolean = true,
-    kanKorrigeres: Boolean = false,
+    kanEndres: Boolean = false,
     bruttoBelop: Double? = null,
     status: RapporteringsperiodeStatus = TilUtfylling,
     registrertArbeidssoker: Boolean? = null,
-    begrunnelseKorrigering: String? = null,
+    begrunnelseEndring: String? = null,
 ) = Rapporteringsperiode(
     id = id,
     periode = periode,
     dager = dager,
     kanSendesFra = kanSendesFra,
     kanSendes = kanSendes,
-    kanKorrigeres = kanKorrigeres,
+    kanEndres = kanEndres,
     bruttoBelop = bruttoBelop,
     status = status,
     registrertArbeidssoker = registrertArbeidssoker,
-    begrunnelseKorrigering = begrunnelseKorrigering,
+    begrunnelseEndring = begrunnelseEndring,
 )
 
 private fun getDager(

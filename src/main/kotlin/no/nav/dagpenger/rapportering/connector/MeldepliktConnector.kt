@@ -134,12 +134,12 @@ class MeldepliktConnector(
                 logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" }
             }
 
-    suspend fun hentKorrigeringId(
+    suspend fun hentEndringId(
         id: Long,
         subjectToken: String,
     ): String =
         withContext(Dispatchers.IO) {
-            hentData<String>("/korrigerrapporteringsperiode/$id", subjectToken, "adapter-hentKorrigeringId")
+            hentData<String>("/endrerapporteringsperiode/$id", subjectToken, "adapter-hentEndringId")
                 .also { logger.info { "Kall til meldeplikt-adapter for å hente aktivitetsdager gikk OK" } }
         }
 
