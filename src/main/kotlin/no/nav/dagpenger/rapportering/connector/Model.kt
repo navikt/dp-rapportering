@@ -4,9 +4,9 @@ import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitet
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Fravaer
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Syk
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Utdanning
+import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.Innsendt
-import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
