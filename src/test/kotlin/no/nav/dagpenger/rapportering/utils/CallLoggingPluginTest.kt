@@ -20,7 +20,6 @@ import no.nav.dagpenger.rapportering.api.doGet
 import no.nav.dagpenger.rapportering.api.doPost
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
-import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.model.DokumentInfo
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.JournalpostResponse
@@ -102,11 +101,6 @@ class CallLoggingPluginTest : ApiTestSetup() {
             val rapporteringsperiodeTilInnsending = rapporteringsperiode.copy(registrertArbeidssoker = true)
             val rapporteringsperiodeTilInnsendingString = defaultObjectMapper.writeValueAsString(rapporteringsperiodeTilInnsending)
 
-            val adapterRapporteringsperiodeString =
-                defaultObjectMapper.writeValueAsString(
-                    rapporteringsperiode.toAdapterRapporteringsperiode(),
-                )
-
             // Lagrer perioden i databasen
             client.doPost("/rapporteringsperiode/123/start", issueToken(ident))
 
@@ -133,7 +127,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[3].operation shouldBe "/sendinn"
             list[3].status shouldBe 200
             list[3].request shouldStartWith "POST https://meldeplikt-adapter:443/sendinn"
-            list[3].request shouldContain adapterRapporteringsperiodeString
+            list[3].request shouldContain rapporteringsperiodeTilInnsendingString
             list[3].response.trimIndent() shouldBe
                 """
                 HTTP/1.1 200 OK

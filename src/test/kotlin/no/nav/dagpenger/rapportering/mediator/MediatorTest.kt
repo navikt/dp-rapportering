@@ -61,11 +61,11 @@ class MediatorTest {
                     },
                 kanSendesFra = 13.januar,
                 kanSendes = true,
-                kanKorrigeres = false,
+                kanEndres = false,
                 bruttoBelop = null,
                 status = TilUtfylling,
                 registrertArbeidssoker = true,
-                begrunnelseKorrigering = null,
+                begrunnelseEndring = null,
             )
         val innsendtPeriodeHendelse =
             InnsendtPeriodeHendelse(UUID.randomUUID(), testIdent, rapporteringsperiode)

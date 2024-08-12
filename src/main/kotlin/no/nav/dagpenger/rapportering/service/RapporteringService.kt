@@ -14,6 +14,7 @@ import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
+import no.nav.dagpenger.rapportering.model.hendelse.InnsendtPeriodeHendelse
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import java.time.LocalDate
 import java.util.UUID
