@@ -90,7 +90,7 @@ Authorization: Bearer {{token}}
     ],
     "kanSendesFra": "2024-03-23",
     "kanSendes": true,
-    "kanKorrigeres": true,
+    "kanEndres": true,
     "status": "TilUtfylling",
     "bruttoBelop": null,
     "registrertArbeidssoker": true

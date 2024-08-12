@@ -14,9 +14,9 @@ data class Rapporteringsperiode(
     val dager: List<Dag>,
     val kanSendesFra: LocalDate,
     val kanSendes: Boolean,
-    val kanKorrigeres: Boolean,
+    val kanEndres: Boolean,
     val bruttoBelop: Double?,
-    val begrunnelseKorrigering: String?,
+    val begrunnelseEndring: String?,
     val status: RapporteringsperiodeStatus,
     val registrertArbeidssoker: Boolean?,
 )
@@ -55,12 +55,12 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
             },
         kanSendesFra = this.kanSendesFra,
         kanSendes = this.kanSendes,
-        kanKorrigeres = this.kanKorrigeres,
+        kanEndres = this.kanEndres,
         bruttoBelop = this.bruttoBelop?.toBigDecimal(),
         status =
             when (this.status) {
                 RapporteringsperiodeStatus.TilUtfylling -> RapporteringsperiodeStatusResponse.TilUtfylling
-                RapporteringsperiodeStatus.Korrigert -> RapporteringsperiodeStatusResponse.Korrigert
+                RapporteringsperiodeStatus.Endret -> RapporteringsperiodeStatusResponse.Endret
                 RapporteringsperiodeStatus.Innsendt -> RapporteringsperiodeStatusResponse.Innsendt
                 RapporteringsperiodeStatus.Ferdig -> RapporteringsperiodeStatusResponse.Ferdig
             },
