@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.service
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
 import io.ktor.server.plugins.BadRequestException
 import io.mockk.coEvery
@@ -10,6 +11,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
@@ -315,6 +317,40 @@ class RapporteringServiceTest {
         innsendteRapporteringsperioder[1].id shouldBe 2L
         innsendteRapporteringsperioder[2].id shouldBe 1L
         innsendteRapporteringsperioder[3].id shouldBe 4L
+    }
+
+    @Test
+    fun `liste med innsendte rapporteringsperioder blir sortert riktig med endret meldekort før originalt meldekort`() {
+        val perioderFraArena =
+            rapporteringsperiodeListe
+                .map { it.copy(status = Innsendt, kanSendes = false, kanEndres = true) }
+                .toAdapterRapporteringsperioder() +
+                rapporteringsperiodeListe
+                    .first()
+                    .copy(
+                        id = 10,
+                        status = Innsendt,
+                        kanSendes = false,
+                        begrunnelseEndring = "Korrigert",
+                    ).toAdapterRapporteringsperiode()
+        coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns perioderFraArena
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns
+            listOf(
+                lagRapporteringsperiode(4, Periode(1.januar, 14.januar), status = Innsendt),
+                lagRapporteringsperiode(5, Periode(15.januar, 28.januar)),
+            )
+
+        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
+
+        println("Perioder: $innsendteRapporteringsperioder")
+
+        innsendteRapporteringsperioder.size shouldBe 5
+        innsendteRapporteringsperioder[0].id shouldBe 10L
+        innsendteRapporteringsperioder[0].periode shouldBeEqual innsendteRapporteringsperioder[1].periode
+        innsendteRapporteringsperioder[1].id shouldBe 3L
+        innsendteRapporteringsperioder[2].id shouldBe 2L
+        innsendteRapporteringsperioder[3].id shouldBe 1L
+        innsendteRapporteringsperioder[4].id shouldBe 4L
     }
 
     @Test

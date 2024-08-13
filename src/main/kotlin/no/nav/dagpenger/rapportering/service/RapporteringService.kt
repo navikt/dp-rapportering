@@ -94,8 +94,10 @@ class RapporteringService(
             .hentInnsendteRapporteringsperioder(ident, token)
             .toRapporteringsperioder()
             .populerMedPerioderFraDatabase(ident)
-            .sortedByDescending { it.periode.fraOgMed }
-            .take(5)
+            .sortedWith(
+                compareByDescending<Rapporteringsperiode> { it.periode.fraOgMed }
+                    .thenByDescending { it.begrunnelseEndring != null },
+            ).take(5)
             .ifEmpty { null }
 
     private suspend fun List<Rapporteringsperiode>.populerMedPerioderFraDatabase(ident: String): List<Rapporteringsperiode> {
