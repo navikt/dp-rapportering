@@ -200,6 +200,12 @@ class RapporteringService(
         rapporteringsperiode.takeIf { it.kanSendes }
             ?: throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
 
+        if (rapporteringsperiode.status == Endret && rapporteringsperiode.begrunnelseEndring.isNullOrBlank()) {
+            throw BadRequestException(
+                "Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes. Begrunnelse for endring må oppgis",
+            )
+        }
+
         return meldepliktConnector
             .sendinnRapporteringsperiode(rapporteringsperiode.toAdapterRapporteringsperiode(), token)
             .also { response ->

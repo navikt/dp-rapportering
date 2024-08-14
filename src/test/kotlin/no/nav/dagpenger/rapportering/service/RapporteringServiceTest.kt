@@ -396,6 +396,48 @@ class RapporteringServiceTest {
     }
 
     @Test
+    fun `kan sende inn endret rapporteringsperiode med begrunnelse`() {
+        val rapporteringsperiode = rapporteringsperiodeListe.first().copy(status = Endret, begrunnelseEndring = "Endring")
+        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
+        coJustRun { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
+        coEvery { meldepliktConnector.sendinnRapporteringsperiode(any(), token) } returns
+            InnsendingResponse(
+                id = rapporteringsperiode.id,
+                status = "OK",
+                feil = listOf(),
+            )
+
+        val innsendingResponse =
+            runBlocking {
+                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, 4)
+            }
+
+        innsendingResponse.id shouldBe rapporteringsperiode.id
+        innsendingResponse.status shouldBe "OK"
+
+        verify(exactly = 1) {
+            runBlocking {
+                journalfoeringService.journalfoer(any(), any(), any(), any())
+            }
+        }
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
+    }
+
+    @Test
+    fun `kan ikke sende inn endret rapporteringsperiode uten begrunnelse`() {
+        shouldThrow<BadRequestException> {
+            runBlocking {
+                rapporteringService.sendRapporteringsperiode(
+                    rapporteringsperiodeListe.first().copy(status = Endret, begrunnelseEndring = null),
+                    token,
+                    ident,
+                    4,
+                )
+            }
+        }
+    }
+
+    @Test
     fun `lagreEllerOppdaterPeriode lagrer perioden hvis den ikke finnes i databasen`() {
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
