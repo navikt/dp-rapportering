@@ -27,7 +27,7 @@ import kotlin.time.measureTime
 
 class MeldepliktConnector(
     private val meldepliktUrl: String = Configuration.meldepliktAdapterUrl,
-    val tokenProvider: (String) -> String = Configuration.tokenXClient(Configuration.meldepliktAdapterAudience),
+    val tokenProvider: (String) -> String? = Configuration.tokenXClient(Configuration.meldepliktAdapterAudience),
     val httpClient: HttpClient,
 ) {
     suspend fun harMeldeplikt(
@@ -180,11 +180,12 @@ class MeldepliktConnector(
         metrikkNavn: String,
     ): HttpResponse {
         val response: HttpResponse
+        val token = tokenProvider.invoke(subjectToken) ?: throw RuntimeException("Fant ikke token")
         val tidBrukt =
             measureTime {
                 response =
                     httpClient.get(URI("$meldepliktUrl$path").toURL()) {
-                        header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
+                        header(HttpHeaders.Authorization, "Bearer $token")
                         contentType(ContentType.Application.Json)
                     }
             }
@@ -199,11 +200,12 @@ class MeldepliktConnector(
         body: Any?,
     ): HttpResponse {
         val response: HttpResponse
+        val token = tokenProvider.invoke(subjectToken) ?: throw RuntimeException("Fant ikke token")
         val tidBrukt =
             measureTime {
                 response =
                     httpClient.post(URI("$meldepliktUrl$path").toURL()) {
-                        header(HttpHeaders.Authorization, "Bearer ${tokenProvider.invoke(subjectToken)}")
+                        header(HttpHeaders.Authorization, "Bearer $token")
                         contentType(ContentType.Application.Json)
                         setBody(defaultObjectMapper.writeValueAsString(body))
                     }

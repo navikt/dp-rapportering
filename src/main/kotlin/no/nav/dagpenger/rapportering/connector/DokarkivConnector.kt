@@ -21,7 +21,7 @@ import kotlin.time.measureTime
 
 class DokarkivConnector(
     private val dokarkivUrl: String = Configuration.dokarkivUrl,
-    private val tokenProvider: (String) -> String = Configuration.azureADClient(),
+    private val tokenProvider: (String) -> String? = Configuration.azureADClient(),
     val httpClient: HttpClient,
 ) {
     private val path = "/rest/journalpostapi/v1/journalpost"
@@ -30,7 +30,8 @@ class DokarkivConnector(
         val response: HttpResponse
         val tidBrukt =
             measureTime {
-                val token = tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default")
+                val token =
+                    tokenProvider.invoke("api://${Configuration.dokarkivAudience}/.default") ?: throw RuntimeException("Fant ikke token")
 
                 logger.info("Prøver å sende journalpost " + journalpost.eksternReferanseId)
 
