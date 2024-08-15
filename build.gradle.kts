@@ -81,7 +81,7 @@ dependencies {
     testImplementation("io.mockk:mockk:${libs.versions.mockk.get()}")
     testImplementation(libs.mock.oauth2.server)
     testImplementation(libs.ktor.server.test.host)
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.11.0")
     testImplementation(libs.ktor.client.mock)
     testImplementation("de.redsix:pdfcompare:1.2.2")
 }
