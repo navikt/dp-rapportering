@@ -185,8 +185,10 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Rapporteringsperiode'
-                404:
-                    description: Not Found
+                400:
+                    description: Bad request - kunne ikke endre rapporteringsperiode
+                500:
+                    description: Internal server error - Finner ikke original rapporteringsperiode
             summary: Opprett endring av rapporteringsperiode
             description: Oppretter endring av rapporteringsperiode. Returnerer rapporteringsperiode med ny id og status Endret
             operationId: post-rapporteringsperiode-id-endre

@@ -8,14 +8,13 @@ import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
-import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import java.time.LocalDate
-import java.util.UUID
+import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
@@ -86,6 +85,28 @@ class RapporteringService(
             ?: throw RuntimeException("Fant ingen ikke periode med id $rapporteringId for ident $ident")
     }
 
+    suspend fun startEndring(
+        rapporteringId: Long,
+        ident: String,
+        token: String,
+    ): Rapporteringsperiode =
+        hentInnsendteRapporteringsperioder(ident, token)
+            ?.firstOrNull { it.id == rapporteringId }
+            .run { this ?: throw RuntimeException("Fant ingen innsendt periode med id $rapporteringId for ident $ident") }
+            .takeIf { it.kanEndres }
+            .run { this ?: throw IllegalArgumentException("Perioden med id $rapporteringId kan ikke endres") }
+            .let { originalPeriode ->
+                lagreEllerOppdaterPeriode(
+                    originalPeriode.copy(
+                        id = originalPeriode.id + Random.nextLong(),
+                        kanEndres = false,
+                        kanSendes = true,
+                        status = Endret,
+                    ),
+                    ident,
+                )
+            }
+
     suspend fun hentInnsendteRapporteringsperioder(
         ident: String,
         token: String,
@@ -151,7 +172,7 @@ class RapporteringService(
         registrertArbeidssoker,
     )
 
-    suspend fun endreRapporteringsperiode(
+    /*suspend fun endreRapporteringsperiode(
         rapporteringId: Long,
         ident: String,
         token: String,
@@ -189,7 +210,7 @@ class RapporteringService(
         lagreEllerOppdaterPeriode(endretRapporteringsperiode, ident)
 
         return endretRapporteringsperiode
-    }
+    }*/
 
     suspend fun sendRapporteringsperiode(
         rapporteringsperiode: Rapporteringsperiode,
