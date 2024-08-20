@@ -322,6 +322,39 @@ class RapporteringApiTest : ApiTestSetup() {
         }
     }
 
+    // Oppdater begrunnelse
+    @Test
+    fun `kan oppdatere begrunnelse`() {
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
+            }
+
+            val endringResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
+            endringResponse.status shouldBe HttpStatusCode.OK
+            val endretPeriode = objectMapper.readValue(endringResponse.bodyAsText(), Rapporteringsperiode::class.java)
+
+            val response =
+                client.doPost(
+                    "/rapporteringsperiode/${endretPeriode.id}/begrunnelse",
+                    issueToken(fnr),
+                    BegrunnelseRequest("Dette er en begrunnelse"),
+                )
+            response.status shouldBe HttpStatusCode.NoContent
+
+            val periodeResponse =
+                client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/${endretPeriode.id}", issueToken(fnr))
+            periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
+            with(periodeResponse.body) {
+                id shouldBe endretPeriode.id
+                status shouldBe Endret
+                bruttoBelop shouldBe null
+                registrertArbeidssoker shouldBe null
+                begrunnelseEndring shouldBe "Dette er en begrunnelse"
+            }
+        }
+    }
+
     // Endre rapporteringsperiode
 
     @Test

@@ -212,6 +212,23 @@ class RapporteringRepositoryPostgresTest {
     }
 
     @Test
+    fun `kan oppdatere begrunnelse for endring`() {
+        val rapporteringsperiode = getRapporteringsperiode()
+
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
+            rapporteringRepositoryPostgres.oppdaterBegrunnelse(
+                rapporteringId = rapporteringsperiode.id,
+                ident = ident,
+                begrunnelse = "Dette er en begrunnelse",
+            )
+            val oppdatertPeriode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = rapporteringsperiode.id, ident = ident)!!
+
+            oppdatertPeriode.begrunnelseEndring shouldBe "Dette er en begrunnelse"
+        }
+    }
+
+    @Test
     fun `kan oppdatere rapporteringsperiode fra adapter`() {
         val rapporteringsperiode = getRapporteringsperiode()
         val dag =

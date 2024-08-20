@@ -151,6 +151,12 @@ class RapporteringService(
         registrertArbeidssoker,
     )
 
+    suspend fun oppdaterBegrunnelse(
+        rapporteringId: Long,
+        ident: String,
+        begrunnelse: String,
+    ) = rapporteringRepository.oppdaterBegrunnelse(rapporteringId, ident, begrunnelse)
+
     suspend fun endreRapporteringsperiode(
         rapporteringId: Long,
         ident: String,
