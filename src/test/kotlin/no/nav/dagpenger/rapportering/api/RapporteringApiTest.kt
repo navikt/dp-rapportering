@@ -150,7 +150,6 @@ class RapporteringApiTest : ApiTestSetup() {
 
             with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor())) {
                 status shouldBe HttpStatusCode.InternalServerError
-                println("Body: ${body<String>()}")
             }
         }
 
