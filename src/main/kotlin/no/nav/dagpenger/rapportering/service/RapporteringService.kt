@@ -8,14 +8,13 @@ import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
-import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import java.time.LocalDate
-import java.util.UUID
+import kotlin.random.Random
 
 private val logger = KotlinLogging.logger {}
 
@@ -85,6 +84,28 @@ class RapporteringService(
             ?.let { lagreEllerOppdaterPeriode(it, ident) }
             ?: throw RuntimeException("Fant ingen ikke periode med id $rapporteringId for ident $ident")
     }
+
+    suspend fun startEndring(
+        rapporteringId: Long,
+        ident: String,
+        token: String,
+    ): Rapporteringsperiode =
+        hentInnsendteRapporteringsperioder(ident, token)
+            ?.firstOrNull { it.id == rapporteringId }
+            .run { this ?: throw RuntimeException("Fant ingen innsendt periode med id $rapporteringId for ident $ident") }
+            .takeIf { it.kanEndres }
+            .run { this ?: throw IllegalArgumentException("Perioden med id $rapporteringId kan ikke endres") }
+            .let { originalPeriode ->
+                lagreEllerOppdaterPeriode(
+                    originalPeriode.copy(
+                        id = originalPeriode.id + Random.nextLong(),
+                        kanEndres = false,
+                        kanSendes = true,
+                        status = Endret,
+                    ),
+                    ident,
+                )
+            }
 
     suspend fun hentInnsendteRapporteringsperioder(
         ident: String,
@@ -157,45 +178,6 @@ class RapporteringService(
         begrunnelse: String,
     ) = rapporteringRepository.oppdaterBegrunnelse(rapporteringId, ident, begrunnelse)
 
-    suspend fun endreRapporteringsperiode(
-        rapporteringId: Long,
-        ident: String,
-        token: String,
-    ): Rapporteringsperiode {
-        val originalPeriode =
-            hentPeriode(rapporteringId, ident, token)
-                ?: throw RuntimeException("Finner ikke original rapporteringsperiode. Kan ikke endre.")
-
-        if (!originalPeriode.kanEndres) {
-            throw IllegalArgumentException("Rapporteringsperiode med id $rapporteringId kan ikke endres")
-        }
-
-        val endringId =
-            meldepliktConnector
-                .hentEndringId(rapporteringId, token)
-                .let { PeriodeId(it.toLong()) }
-
-        val endretRapporteringsperiode =
-            originalPeriode.copy(
-                id = endringId.id,
-                kanEndres = false,
-                kanSendes = true,
-                status = Endret,
-                dager =
-                    originalPeriode.dager.map { dag ->
-                        dag.copy(
-                            aktiviteter =
-                                dag.aktiviteter.map { aktivitet ->
-                                    aktivitet.copy(id = UUID.randomUUID())
-                                },
-                        )
-                    },
-            )
-
-        lagreEllerOppdaterPeriode(endretRapporteringsperiode, ident)
-
-        return endretRapporteringsperiode
-    }
 
     suspend fun sendRapporteringsperiode(
         rapporteringsperiode: Rapporteringsperiode,
@@ -206,24 +188,37 @@ class RapporteringService(
         rapporteringsperiode.takeIf { it.kanSendes }
             ?: throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
 
-        if (rapporteringsperiode.status == Endret && rapporteringsperiode.begrunnelseEndring.isNullOrBlank()) {
-            throw BadRequestException(
-                "Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes. Begrunnelse for endring må oppgis",
-            )
+        var periodeTilInnsending = rapporteringsperiode
+
+        if (rapporteringsperiode.status == Endret) {
+            if (rapporteringsperiode.begrunnelseEndring.isNullOrBlank()) {
+                throw BadRequestException(
+                    "Endret rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes. Begrunnelse for endring må oppgis",
+                )
+            } else {
+                val endringId =
+                    meldepliktConnector
+                        .hentEndringId(rapporteringsperiode.id, token)
+                        .toLong()
+
+                periodeTilInnsending = rapporteringsperiode.copy(id = endringId)
+                rapporteringRepository.slettRaporteringsperiode(rapporteringsperiode.id)
+                rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending, ident)
+            }
         }
 
         return meldepliktConnector
-            .sendinnRapporteringsperiode(rapporteringsperiode.toAdapterRapporteringsperiode(), token)
+            .sendinnRapporteringsperiode(periodeTilInnsending.toAdapterRapporteringsperiode(), token)
             .also { response ->
                 if (response.status == "OK") {
-                    logger.info("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
-                    journalfoeringService.journalfoer(ident, loginLevel, token, rapporteringsperiode)
+                    logger.info("Journalføring rapporteringsperiode ${periodeTilInnsending.id}")
+                    journalfoeringService.journalfoer(ident, loginLevel, token, periodeTilInnsending)
 
-                    rapporteringRepository.oppdaterRapporteringStatus(rapporteringsperiode.id, ident, Innsendt)
-                    logger.info { "Oppdaterte status for rapporteringsperiode ${rapporteringsperiode.id} til Innsendt" }
+                    rapporteringRepository.oppdaterRapporteringStatus(periodeTilInnsending.id, ident, Innsendt)
+                    logger.info { "Oppdaterte status for rapporteringsperiode ${periodeTilInnsending.id} til Innsendt" }
                 } else {
-                    logger.error { "Feil ved innsending av rapporteringsperiode ${rapporteringsperiode.id}: $response" }
-                    throw RuntimeException("Feil ved innsending av rapporteringsperiode ${rapporteringsperiode.id}")
+                    logger.error { "Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}: $response" }
+                    throw RuntimeException("Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}")
                 }
             }
     }

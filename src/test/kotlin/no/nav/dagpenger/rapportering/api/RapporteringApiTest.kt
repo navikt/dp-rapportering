@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.api
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.ktor.client.call.body
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
@@ -150,6 +151,52 @@ class RapporteringApiTest : ApiTestSetup() {
             with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor())) {
                 status shouldBe HttpStatusCode.InternalServerError
                 println("Body: ${body<String>()}")
+            }
+        }
+
+    @Test
+    fun `kan sende inn endring med begrunnelse`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
+                dokarkiv()
+            }
+
+            val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
+            endreResponse.status shouldBe HttpStatusCode.OK
+            val nyId = objectMapper.readValue(endreResponse.bodyAsText(), Rapporteringsperiode::class.java).id
+
+            with(
+                client.doPost(
+                    "/rapporteringsperiode",
+                    issueToken(fnr),
+                    rapporteringsperiodeFor(id = nyId, status = Endret, begrunnelseEndring = "Endring"),
+                ),
+            ) {
+                status shouldBe HttpStatusCode.OK
+            }
+        }
+
+    @Test
+    fun `kan ikke sende inn endring uten begrunnelse`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
+                dokarkiv()
+            }
+
+            val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
+            endreResponse.status shouldBe HttpStatusCode.OK
+            val nyId = objectMapper.readValue(endreResponse.bodyAsText(), Rapporteringsperiode::class.java).id
+
+            with(
+                client.doPost(
+                    "/rapporteringsperiode",
+                    issueToken(fnr),
+                    rapporteringsperiodeFor(id = nyId, status = Endret),
+                ),
+            ) {
+                status shouldBe HttpStatusCode.BadRequest
             }
         }
 
@@ -368,7 +415,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 client.doPostAndReceive<Rapporteringsperiode>("/rapporteringsperiode/125/endre", issueToken(fnr))
             response.httpResponse.status shouldBe HttpStatusCode.OK
             with(response.body) {
-                id shouldBe 321L
+                id shouldNotBe 125L
                 dager.forEach { dag ->
                     dag.aktiviteter.forEach { aktivitet ->
                         aktivitet.type shouldBe AktivitetsType.Arbeid
@@ -410,7 +457,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 client.doPostAndReceive<Rapporteringsperiode>("/rapporteringsperiode/125/endre", issueToken(fnr))
             response.httpResponse.status shouldBe HttpStatusCode.OK
             with(response.body) {
-                id shouldBe 321L
+                id shouldNotBe 125L
                 dager.forEach { dag ->
                     dag.aktiviteter.forEach { aktivitet ->
                         aktivitet.type shouldBe AktivitetsType.Arbeid
@@ -428,7 +475,7 @@ class RapporteringApiTest : ApiTestSetup() {
     fun `endring feiler hvis original rapporteringsperiode ikke finnes`() =
         setUpTestApplication {
             externalServices {
-                meldepliktAdapter(rapporteringsperioderResponse = emptyList())
+                meldepliktAdapter(sendteRapporteringsperioderResponse = emptyList())
             }
 
             val response = client.doPost("/rapporteringsperiode/123/endre", issueToken(fnr))
@@ -439,7 +486,7 @@ class RapporteringApiTest : ApiTestSetup() {
     fun `endring feiler hvis original rapporteringsperiode ikke kan endres`() =
         setUpTestApplication {
             externalServices {
-                meldepliktAdapter(rapporteringsperioderResponse = listOf(adapterRapporteringsperiode(kanEndres = false)))
+                meldepliktAdapter(sendteRapporteringsperioderResponse = listOf(adapterRapporteringsperiode(kanEndres = false)))
             }
 
             val response = client.doPost("/rapporteringsperiode/123/endre", issueToken(fnr))

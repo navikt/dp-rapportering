@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.service
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.ktor.server.plugins.BadRequestException
 import io.mockk.coEvery
 import io.mockk.coJustRun
@@ -252,39 +253,37 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan endre rapporteringsperiode`() {
-        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns
-            rapporteringsperiodeListe.first().copy(kanEndres = true)
-        coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns null
-        coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns emptyList()
-        coEvery { meldepliktConnector.hentEndringId(any(), any()) } returns "321"
-        coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
-        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
+        coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns
+            listOf(rapporteringsperiodeListe.first().copy(id = 123L, kanEndres = true).toAdapterRapporteringsperiode())
+        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(ident) } returns emptyList()
+        coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
 
-        val endretRapporteringsperiode = runBlocking { rapporteringService.endreRapporteringsperiode(123L, ident, token) }
+        val response = runBlocking { rapporteringService.startEndring(123L, ident, token) }
 
-        endretRapporteringsperiode.id shouldBe 321L
-        endretRapporteringsperiode.status shouldBe Endret
+        response.id shouldNotBe 123L
+        response.status shouldBe Endret
+        coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
     }
 
     @Test
     fun `kan ikke endre rapporteringsperiode som ikke kan endres`() {
-        coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns null
-        coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns emptyList()
-        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns
-            rapporteringsperiodeListe.first().copy(kanEndres = false)
+        coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns
+            listOf(rapporteringsperiodeListe.first().copy(id = 123L, kanEndres = false).toAdapterRapporteringsperiode())
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
         shouldThrow<IllegalArgumentException> {
-            runBlocking { rapporteringService.endreRapporteringsperiode(123L, ident, token) }
+            runBlocking { rapporteringService.startEndring(123L, ident, token) }
         }
     }
 
     @Test
     fun `kan ikke endre rapporteringsperiode hvis perioden ikke finnes`() {
+        coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns null
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
 
         shouldThrow<RuntimeException> {
-            runBlocking { rapporteringService.endreRapporteringsperiode(123L, ident, token) }
+            runBlocking { rapporteringService.startEndring(123L, ident, token) }
         }
     }
 
@@ -406,12 +405,16 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan sende inn endret rapporteringsperiode med begrunnelse`() {
+        val endringId = "4"
         val rapporteringsperiode = rapporteringsperiodeListe.first().copy(status = Endret, begrunnelseEndring = "Endring")
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
+        coEvery { meldepliktConnector.hentEndringId(any(), any()) } returns endringId
+        coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
+        coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
         coEvery { meldepliktConnector.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
-                id = rapporteringsperiode.id,
+                id = endringId.toLong(),
                 status = "OK",
                 feil = listOf(),
             )
@@ -421,7 +424,7 @@ class RapporteringServiceTest {
                 rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, 4)
             }
 
-        innsendingResponse.id shouldBe rapporteringsperiode.id
+        innsendingResponse.id shouldBe endringId.toLong()
         innsendingResponse.status shouldBe "OK"
 
         verify(exactly = 1) {
