@@ -193,10 +193,10 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                         post {
                             val ident = call.ident()
                             val jwtToken = call.request.jwt()
-                            val id = call.getParameter("id")
+                            val id = call.getParameter("id").toLong()
 
                             rapporteringService
-                                .endreRapporteringsperiode(id.toLong(), ident, jwtToken)
+                                .startEndring(id, ident, jwtToken)
                                 .also { call.respond(HttpStatusCode.OK, it) }
                         }
                     }

@@ -69,6 +69,7 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
+    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.5.2")
 
     // PDF
     implementation("io.github.openhtmltopdf:openhtmltopdf-pdfbox:1.1.21")
