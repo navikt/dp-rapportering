@@ -396,12 +396,16 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan sende inn endret rapporteringsperiode med begrunnelse`() {
+        val endringId = "4"
         val rapporteringsperiode = rapporteringsperiodeListe.first().copy(status = Endret, begrunnelseEndring = "Endring")
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
+        coEvery { meldepliktConnector.hentEndringId(any(), any()) } returns endringId
+        coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
+        coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
         coEvery { meldepliktConnector.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
-                id = rapporteringsperiode.id,
+                id = endringId.toLong(),
                 status = "OK",
                 feil = listOf(),
             )
@@ -411,7 +415,7 @@ class RapporteringServiceTest {
                 rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, 4)
             }
 
-        innsendingResponse.id shouldBe rapporteringsperiode.id
+        innsendingResponse.id shouldBe endringId.toLong()
         innsendingResponse.status shouldBe "OK"
 
         verify(exactly = 1) {

@@ -221,24 +221,37 @@ class RapporteringService(
         rapporteringsperiode.takeIf { it.kanSendes }
             ?: throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
 
-        if (rapporteringsperiode.status == Endret && rapporteringsperiode.begrunnelseEndring.isNullOrBlank()) {
-            throw BadRequestException(
-                "Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes. Begrunnelse for endring må oppgis",
-            )
+        var periodeTilInnsending = rapporteringsperiode
+
+        if (rapporteringsperiode.status == Endret) {
+            if (rapporteringsperiode.begrunnelseEndring.isNullOrBlank()) {
+                throw BadRequestException(
+                    "Endret rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes. Begrunnelse for endring må oppgis",
+                )
+            } else {
+                val endringId =
+                    meldepliktConnector
+                        .hentEndringId(rapporteringsperiode.id, token)
+                        .toLong()
+
+                periodeTilInnsending = rapporteringsperiode.copy(id = endringId)
+                rapporteringRepository.slettRaporteringsperiode(rapporteringsperiode.id)
+                rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending, ident)
+            }
         }
 
         return meldepliktConnector
-            .sendinnRapporteringsperiode(rapporteringsperiode.toAdapterRapporteringsperiode(), token)
+            .sendinnRapporteringsperiode(periodeTilInnsending.toAdapterRapporteringsperiode(), token)
             .also { response ->
                 if (response.status == "OK") {
-                    logger.info("Journalføring rapporteringsperiode ${rapporteringsperiode.id}")
-                    journalfoeringService.journalfoer(ident, loginLevel, token, rapporteringsperiode)
+                    logger.info("Journalføring rapporteringsperiode ${periodeTilInnsending.id}")
+                    journalfoeringService.journalfoer(ident, loginLevel, token, periodeTilInnsending)
 
-                    rapporteringRepository.oppdaterRapporteringStatus(rapporteringsperiode.id, ident, Innsendt)
-                    logger.info { "Oppdaterte status for rapporteringsperiode ${rapporteringsperiode.id} til Innsendt" }
+                    rapporteringRepository.oppdaterRapporteringStatus(periodeTilInnsending.id, ident, Innsendt)
+                    logger.info { "Oppdaterte status for rapporteringsperiode ${periodeTilInnsending.id} til Innsendt" }
                 } else {
-                    logger.error { "Feil ved innsending av rapporteringsperiode ${rapporteringsperiode.id}: $response" }
-                    throw RuntimeException("Feil ved innsending av rapporteringsperiode ${rapporteringsperiode.id}")
+                    logger.error { "Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}: $response" }
+                    throw RuntimeException("Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}")
                 }
             }
     }
