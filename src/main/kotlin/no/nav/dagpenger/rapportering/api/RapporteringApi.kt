@@ -189,6 +189,17 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                         }
                     }
 
+                    route("/begrunnelse") {
+                        post {
+                            val ident = call.ident()
+                            val rapporteringId = call.getParameter("id").toLong()
+                            val begrunnelse = call.receive(BegrunnelseRequest::class)
+
+                            rapporteringService.oppdaterBegrunnelse(rapporteringId, ident, begrunnelse.begrunnelseEndring)
+                            call.respond(HttpStatusCode.NoContent)
+                        }
+                    }
+
                     route("/endre") {
                         post {
                             val ident = call.ident()
@@ -245,6 +256,10 @@ data class HttpProblem(
 
 data class ArbeidssokerRequest(
     val registrertArbeidssoker: Boolean,
+)
+
+data class BegrunnelseRequest(
+    val begrunnelseEndring: String,
 )
 
 private fun ApplicationCall.getParameter(name: String): String =

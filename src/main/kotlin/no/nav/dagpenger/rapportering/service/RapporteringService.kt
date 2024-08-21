@@ -172,45 +172,11 @@ class RapporteringService(
         registrertArbeidssoker,
     )
 
-    /*suspend fun endreRapporteringsperiode(
+    suspend fun oppdaterBegrunnelse(
         rapporteringId: Long,
         ident: String,
-        token: String,
-    ): Rapporteringsperiode {
-        val originalPeriode =
-            hentPeriode(rapporteringId, ident, token)
-                ?: throw RuntimeException("Finner ikke original rapporteringsperiode. Kan ikke endre.")
-
-        if (!originalPeriode.kanEndres) {
-            throw IllegalArgumentException("Rapporteringsperiode med id $rapporteringId kan ikke endres")
-        }
-
-        val endringId =
-            meldepliktConnector
-                .hentEndringId(rapporteringId, token)
-                .let { PeriodeId(it.toLong()) }
-
-        val endretRapporteringsperiode =
-            originalPeriode.copy(
-                id = endringId.id,
-                kanEndres = false,
-                kanSendes = true,
-                status = Endret,
-                dager =
-                    originalPeriode.dager.map { dag ->
-                        dag.copy(
-                            aktiviteter =
-                                dag.aktiviteter.map { aktivitet ->
-                                    aktivitet.copy(id = UUID.randomUUID())
-                                },
-                        )
-                    },
-            )
-
-        lagreEllerOppdaterPeriode(endretRapporteringsperiode, ident)
-
-        return endretRapporteringsperiode
-    }*/
+        begrunnelse: String,
+    ) = rapporteringRepository.oppdaterBegrunnelse(rapporteringId, ident, begrunnelse)
 
     suspend fun sendRapporteringsperiode(
         rapporteringsperiode: Rapporteringsperiode,

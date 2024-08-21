@@ -297,6 +297,32 @@ class RapporteringRepositoryPostgres(
         }
     }
 
+    override suspend fun oppdaterBegrunnelse(
+        rapporteringId: Long,
+        ident: String,
+        begrunnelse: String,
+    ) = timedAction("db-oppdaterBegrunnelse") {
+        using(sessionOf(dataSource)) { session ->
+            session.transaction { tx ->
+                tx
+                    .run(
+                        queryOf(
+                            """
+                            UPDATE rapporteringsperiode
+                            SET begrunnelse_endring = :begrunnelse
+                            WHERE id = :id AND ident = :ident
+                            """.trimIndent(),
+                            mapOf(
+                                "begrunnelse" to begrunnelse,
+                                "id" to rapporteringId,
+                                "ident" to ident,
+                            ),
+                        ).asUpdate,
+                    ).validateRowsAffected()
+            }
+        }
+    }
+
     override suspend fun slettAktiviteter(aktivitetIdListe: List<UUID>) =
         timedAction("db-slettAktiviteter") {
             using(sessionOf(dataSource)) { session ->

@@ -176,6 +176,29 @@ paths:
         parameters:
             - $ref: '#/components/parameters/periodeId'
 
+    /rapporteringsperiode/{periodeId}/begrunnelse:
+        post:
+            responses:
+                204:
+                    description: OK - No Content
+                400:
+                    description: Bad Request
+            summary: Lagre begrunnelse for endring
+            description: Oppdaterer begrunnelse for endring i rapporteringsperioden
+            operationId: post-oppdater-begrunnelse
+            tags:
+                - Rapporteringsperiode
+            security:
+                - tokenX: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/BegrunnelseRequest'
+        parameters:
+            - $ref: '#/components/parameters/periodeId'
+
     /rapporteringsperiode/{periodeId}/endre:
         post:
             responses:
@@ -235,6 +258,13 @@ components:
                 id: 4a49e571-6384-4eab-9c2e-3f4d48d30b9a
                 type: Arbeid
                 timer: PT8H30M
+        BegrunnelseRequest:
+            required:
+                - begrunnelseEndring
+            type: object
+            properties:
+                begrunnelseEndring:
+                    type: string
         periode:
             type: object
             required:

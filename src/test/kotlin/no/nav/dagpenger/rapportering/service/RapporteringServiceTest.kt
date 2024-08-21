@@ -243,6 +243,15 @@ class RapporteringServiceTest {
     }
 
     @Test
+    fun `kan oppdatere begrunnelse`() {
+        coJustRun { rapporteringRepository.oppdaterBegrunnelse(any(), any(), any()) }
+
+        runBlocking { rapporteringService.oppdaterBegrunnelse(1L, "12345678910", "Begrunnelse") }
+
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterBegrunnelse(1L, "12345678910", "Begrunnelse") }
+    }
+
+    @Test
     fun `kan endre rapporteringsperiode`() {
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns
             listOf(rapporteringsperiodeListe.first().copy(id = 123L, kanEndres = true).toAdapterRapporteringsperiode())

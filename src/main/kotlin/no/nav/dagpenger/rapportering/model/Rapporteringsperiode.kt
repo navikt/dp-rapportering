@@ -56,6 +56,7 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
         kanSendesFra = this.kanSendesFra,
         kanSendes = this.kanSendes,
         kanEndres = this.kanEndres,
+        begrunnelseEndring = this.begrunnelseEndring,
         bruttoBelop = this.bruttoBelop?.toBigDecimal(),
         status =
             when (this.status) {
