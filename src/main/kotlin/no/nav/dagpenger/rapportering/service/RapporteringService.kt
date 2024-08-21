@@ -15,6 +15,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import java.time.LocalDate
 import kotlin.random.Random
+import kotlin.random.nextLong
 
 private val logger = KotlinLogging.logger {}
 
@@ -98,7 +99,7 @@ class RapporteringService(
             .let { originalPeriode ->
                 lagreEllerOppdaterPeriode(
                     originalPeriode.copy(
-                        id = originalPeriode.id + Random.nextLong(),
+                        id = Random.nextLong(0L..Long.MAX_VALUE),
                         kanEndres = false,
                         kanSendes = true,
                         status = Endret,
