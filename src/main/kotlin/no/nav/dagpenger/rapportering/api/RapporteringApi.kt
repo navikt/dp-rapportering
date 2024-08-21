@@ -208,7 +208,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                             rapporteringService
                                 .startEndring(id, ident, jwtToken)
-                                .also { call.respond(HttpStatusCode.OK, it) }
+                                .also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                         }
                     }
                 }
