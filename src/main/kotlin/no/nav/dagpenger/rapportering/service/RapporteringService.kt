@@ -14,6 +14,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import java.time.LocalDate
+import java.util.UUID
 import kotlin.random.Random
 import kotlin.random.nextLong
 
@@ -103,6 +104,15 @@ class RapporteringService(
                         kanEndres = false,
                         kanSendes = true,
                         status = Endret,
+                        dager =
+                            originalPeriode.dager.map { dag ->
+                                dag.copy(
+                                    aktiviteter =
+                                        dag.aktiviteter.map { aktivitet ->
+                                            aktivitet.copy(id = UUID.randomUUID())
+                                        },
+                                )
+                            },
                     ),
                     ident,
                 )
