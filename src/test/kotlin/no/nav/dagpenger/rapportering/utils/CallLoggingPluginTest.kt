@@ -42,7 +42,6 @@ class CallLoggingPluginTest : ApiTestSetup() {
         defaultObjectMapper.writeValueAsString(
             JournalpostResponse(
                 1L,
-                "OK",
                 "",
                 true,
                 listOf(
