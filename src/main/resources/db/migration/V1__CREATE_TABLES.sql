@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS rapporteringsperiode
     brutto_belop            DECIMAL         NULL,
     begrunnelse_endring     VARCHAR         NULL,
     registrert_arbeidssoker BOOLEAN         NULL,
-    status                  VARCHAR         NOT NULL
+    status                  VARCHAR         NOT NULL,
+    original_id             BIGINT          NULL
 );
 
 CREATE TABLE IF NOT EXISTS dag

@@ -411,6 +411,7 @@ private fun Row.toRapporteringsperiode() =
                 tilOgMed = localDate("tom"),
             ),
         begrunnelseEndring = stringOrNull("begrunnelse_endring"),
+        originalId = longOrNull("original_id"),
     )
 
 private fun Row.toDagPair(): Pair<UUID, Dag> =

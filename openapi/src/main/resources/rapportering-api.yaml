@@ -82,6 +82,10 @@ paths:
             responses:
                 200:
                     description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/periodeId'
                 400:
                     description: Bad Request
                 404:
@@ -332,6 +336,8 @@ components:
                     $ref: '#/components/schemas/RapporteringsperiodeStatus'
                 registrertArbeidssoker:
                     type: boolean
+                originalId:
+                    type: string
         RapporteringsperiodeStatus:
             type: string
             enum:

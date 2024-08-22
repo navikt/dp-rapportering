@@ -296,6 +296,7 @@ class JournalfoeringServiceTest {
             null,
             if (endring) RapporteringsperiodeStatus.Endret else TilUtfylling,
             true,
+            null,
         )
     }
 

@@ -19,6 +19,7 @@ data class Rapporteringsperiode(
     val begrunnelseEndring: String?,
     val status: RapporteringsperiodeStatus,
     val registrertArbeidssoker: Boolean?,
+    val originalId: Long?,
 )
 
 fun List<Rapporteringsperiode>.toResponse(): List<RapporteringsperiodeResponse> =
@@ -66,4 +67,5 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
                 RapporteringsperiodeStatus.Ferdig -> RapporteringsperiodeStatusResponse.Ferdig
             },
         registrertArbeidssoker = this.registrertArbeidssoker,
+        originalId = this.originalId?.toString(),
     )

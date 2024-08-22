@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.api
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.ktor.client.call.body
@@ -27,6 +28,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.DokumentInfo
 import no.nav.dagpenger.rapportering.model.InnsendingFeil
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
@@ -163,16 +165,24 @@ class RapporteringApiTest : ApiTestSetup() {
 
             val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
             endreResponse.status shouldBe HttpStatusCode.OK
-            val nyId = objectMapper.readValue(endreResponse.bodyAsText(), Rapporteringsperiode::class.java).id
+            val endretPeriode = objectMapper.readValue(endreResponse.bodyAsText(), Rapporteringsperiode::class.java)
 
             with(
                 client.doPost(
                     "/rapporteringsperiode",
                     issueToken(fnr),
-                    rapporteringsperiodeFor(id = nyId, status = Endret, begrunnelseEndring = "Endring"),
+                    rapporteringsperiodeFor(
+                        id = endretPeriode.id,
+                        status = Endret,
+                        begrunnelseEndring = "Endring",
+                        originalId = endretPeriode.originalId,
+                    ),
                 ),
             ) {
                 status shouldBe HttpStatusCode.OK
+                println(bodyAsText())
+                val periodeId = objectMapper.readValue<PeriodeId>(bodyAsText())
+                periodeId.id shouldBe "123"
             }
         }
 

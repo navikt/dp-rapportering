@@ -443,6 +443,7 @@ fun getRapporteringsperiode(
     status = status,
     registrertArbeidssoker = registrertArbeidssoker,
     begrunnelseEndring = begrunnelseEndring,
+    originalId = null,
 )
 
 private fun getDager(
