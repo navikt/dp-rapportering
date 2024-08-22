@@ -263,6 +263,7 @@ class RapporteringServiceTest {
 
         response.id shouldNotBe 123L
         response.status shouldBe Endret
+        response.originalId shouldBe 123L
         coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
     }
 
@@ -406,7 +407,8 @@ class RapporteringServiceTest {
     @Test
     fun `kan sende inn endret rapporteringsperiode med begrunnelse`() {
         val endringId = "4"
-        val rapporteringsperiode = rapporteringsperiodeListe.first().copy(status = Endret, begrunnelseEndring = "Endring")
+        val originalPeriode = rapporteringsperiodeListe.first()
+        val rapporteringsperiode = originalPeriode.copy(status = Endret, begrunnelseEndring = "Endring", originalId = originalPeriode.id)
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
         coEvery { meldepliktConnector.hentEndringId(any(), any()) } returns endringId
@@ -572,6 +574,7 @@ fun lagRapporteringsperiode(
     status = status,
     registrertArbeidssoker = null,
     begrunnelseEndring = null,
+    originalId = null,
 )
 
 private fun getDager(

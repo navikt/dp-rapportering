@@ -85,6 +85,7 @@ fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
             },
         begrunnelseEndring = this.begrunnelseEndring,
         registrertArbeidssoker = this.registrertArbeidssoker,
+        originalId = null,
     )
 
 fun AdapterDag.toDag(): Dag = Dag(dato = this.dato, aktiviteter = this.aktiviteter.map { it.toAktivitet() }, dagIndex = this.dagIndex)

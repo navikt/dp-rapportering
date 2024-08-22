@@ -25,6 +25,7 @@ import no.nav.dagpenger.rapportering.api.auth.loginLevel
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.service.RapporteringService
@@ -127,13 +128,14 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                     logger.info { "Rapporteringsperiode: $rapporteringsperiode" }
 
                     try {
-                        rapporteringService.sendRapporteringsperiode(
-                            rapporteringsperiode,
-                            jwtToken,
-                            ident,
-                            loginLevel,
-                        )
-                        call.respond(HttpStatusCode.OK)
+                        val response =
+                            rapporteringService.sendRapporteringsperiode(
+                                rapporteringsperiode,
+                                jwtToken,
+                                ident,
+                                loginLevel,
+                            )
+                        call.respond(HttpStatusCode.OK, PeriodeId(response.id.toString()))
                     } catch (e: Exception) {
                         logger.error("Feil ved innsending: $e")
                         throw e

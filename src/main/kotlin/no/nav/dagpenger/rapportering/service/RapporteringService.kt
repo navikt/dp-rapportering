@@ -100,6 +100,7 @@ class RapporteringService(
             .let { originalPeriode ->
                 lagreEllerOppdaterPeriode(
                     originalPeriode.copy(
+                        // TODO Sjekk at denne id-en ikke finnes i databasen - egen funksjon
                         id = Random.nextLong(0L..Long.MAX_VALUE),
                         kanEndres = false,
                         kanSendes = true,
@@ -113,6 +114,7 @@ class RapporteringService(
                                         },
                                 )
                             },
+                        originalId = rapporteringId,
                     ),
                     ident,
                 )
@@ -206,17 +208,15 @@ class RapporteringService(
                     "Endret rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes. Begrunnelse for endring må oppgis",
                 )
             } else {
-                val originalId =
-                    hentInnsendteRapporteringsperioder(ident, token)
-                        ?.firstOrNull {
-                            it.periode.fraOgMed == rapporteringsperiode.periode.fraOgMed &&
-                                it.periode.tilOgMed == rapporteringsperiode.periode.tilOgMed
-                        }?.id
-                        ?: throw BadRequestException("Fant ikke original periode for endret periode med id ${rapporteringsperiode.id}")
+                if (rapporteringsperiode.originalId == null) {
+                    throw BadRequestException(
+                        "Endret rapporteringsperiode med id ${rapporteringsperiode.id} mangler originalId",
+                    )
+                }
 
                 val endringId =
                     meldepliktConnector
-                        .hentEndringId(originalId, token)
+                        .hentEndringId(rapporteringsperiode.originalId, token)
                         .toLong()
 
                 periodeTilInnsending = rapporteringsperiode.copy(id = endringId)
