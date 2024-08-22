@@ -412,6 +412,9 @@ class RapporteringServiceTest {
         coEvery { meldepliktConnector.hentEndringId(any(), any()) } returns endringId
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
+        coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns
+            rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { meldepliktConnector.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
                 id = endringId.toLong(),

@@ -206,9 +206,17 @@ class RapporteringService(
                     "Endret rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes. Begrunnelse for endring må oppgis",
                 )
             } else {
+                val originalId =
+                    hentInnsendteRapporteringsperioder(ident, token)
+                        ?.firstOrNull {
+                            it.periode.fraOgMed == rapporteringsperiode.periode.fraOgMed &&
+                                it.periode.tilOgMed == rapporteringsperiode.periode.tilOgMed
+                        }?.id
+                        ?: throw BadRequestException("Fant ikke original periode for endret periode med id ${rapporteringsperiode.id}")
+
                 val endringId =
                     meldepliktConnector
-                        .hentEndringId(rapporteringsperiode.id, token)
+                        .hentEndringId(originalId, token)
                         .toLong()
 
                 periodeTilInnsending = rapporteringsperiode.copy(id = endringId)
