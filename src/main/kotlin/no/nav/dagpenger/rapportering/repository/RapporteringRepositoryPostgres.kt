@@ -153,8 +153,8 @@ class RapporteringRepositoryPostgres(
             queryOf(
                 """
                 INSERT INTO rapporteringsperiode 
-                (id, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom) 
-                VALUES (:id, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom)
+                (id, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id) 
+                VALUES (:id, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id)
                 """.trimIndent(),
                 mapOf(
                     "id" to rapporteringsperiode.id,
@@ -167,6 +167,7 @@ class RapporteringRepositoryPostgres(
                     "registrert_arbeidssoker" to rapporteringsperiode.registrertArbeidssoker,
                     "fom" to rapporteringsperiode.periode.fraOgMed,
                     "tom" to rapporteringsperiode.periode.tilOgMed,
+                    "original_id" to rapporteringsperiode.originalId,
                 ),
             ).asUpdate,
         )
