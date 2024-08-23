@@ -100,8 +100,7 @@ class RapporteringService(
             .let { originalPeriode ->
                 lagreEllerOppdaterPeriode(
                     originalPeriode.copy(
-                        // TODO Sjekk at denne id-en ikke finnes i databasen - egen funksjon
-                        id = Random.nextLong(0L..Long.MAX_VALUE),
+                        id = lagMidlertidigEndringId(),
                         kanEndres = false,
                         kanSendes = true,
                         status = Endret,
@@ -119,6 +118,15 @@ class RapporteringService(
                     ident,
                 )
             }
+
+    private suspend fun lagMidlertidigEndringId(): Long {
+        while (true) {
+            val midlertidigId = Random.nextLong(0L..Long.MAX_VALUE)
+            if (!rapporteringRepository.finnesRapporteringsperiode(midlertidigId)) {
+                return midlertidigId
+            }
+        }
+    }
 
     suspend fun hentInnsendteRapporteringsperioder(
         ident: String,

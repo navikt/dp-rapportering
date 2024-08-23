@@ -84,6 +84,26 @@ class RapporteringRepositoryPostgresTest {
     }
 
     @Test
+    fun `finnesRapporteringsperiode returnerer true hvis perioden finnes`() {
+        val rapporteringsperiode = getRapporteringsperiode()
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = rapporteringsperiode,
+                ident = ident,
+            )
+
+            rapporteringRepositoryPostgres.finnesRapporteringsperiode(rapporteringsperiode.id) shouldBe true
+        }
+    }
+
+    @Test
+    fun `finnesRapporteringsperiode returnerer false hvis perioden ikke finnes`() {
+        withMigratedDb {
+            rapporteringRepositoryPostgres.finnesRapporteringsperiode(123L) shouldBe false
+        }
+    }
+
+    @Test
     fun `kan lagre rapporteringsperiode med aktiviteter`() {
         val rapporteringsperiode =
             getRapporteringsperiode(dager = getDager(aktivitet = Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null)))

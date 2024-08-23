@@ -12,6 +12,8 @@ interface RapporteringRepository {
         ident: String,
     ): Rapporteringsperiode?
 
+    suspend fun finnesRapporteringsperiode(id: Long): Boolean
+
     suspend fun hentLagredeRapporteringsperioder(ident: String): List<Rapporteringsperiode>
 
     suspend fun hentAlleLagredeRapporteringsperioder(): List<Rapporteringsperiode>

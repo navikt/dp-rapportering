@@ -43,6 +43,17 @@ class RapporteringRepositoryPostgres(
             }
         }
 
+    override suspend fun finnesRapporteringsperiode(id: Long): Boolean =
+        timedAction("db-finnesRapporteringsperiode") {
+            using(sessionOf(dataSource)) { session ->
+                session.run(
+                    queryOf("SELECT * FROM rapporteringsperiode WHERE id = ?", id)
+                        .map { it.toRapporteringsperiode() }
+                        .asSingle,
+                )
+            }.let { it != null }
+        }
+
     override suspend fun hentLagredeRapporteringsperioder(ident: String): List<Rapporteringsperiode> =
         timedAction("db-hentRapporteringsperioder") {
             using(sessionOf(dataSource)) { session ->

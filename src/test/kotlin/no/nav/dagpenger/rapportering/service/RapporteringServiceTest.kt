@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.service
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.equals.shouldBeEqual
+import io.kotest.matchers.ints.exactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.ktor.server.plugins.BadRequestException
@@ -258,6 +259,7 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(ident) } returns emptyList()
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        coEvery { rapporteringRepository.finnesRapporteringsperiode(any()) } returns true andThen true andThen false
 
         val response = runBlocking { rapporteringService.startEndring(123L, ident, token) }
 
@@ -265,6 +267,7 @@ class RapporteringServiceTest {
         response.status shouldBe Endret
         response.originalId shouldBe 123L
         coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        coVerify(exactly = 3) { rapporteringRepository.finnesRapporteringsperiode(any()) }
     }
 
     @Test
