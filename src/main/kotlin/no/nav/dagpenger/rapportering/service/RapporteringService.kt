@@ -43,12 +43,11 @@ class RapporteringService(
             ?: rapporteringRepository
                 .hentRapporteringsperiode(rapporteringId, ident)
 
-    suspend fun hentAllePerioderSomKanSendes(
+    suspend fun hentOgOppdaterRapporteringsperioder(
         ident: String,
         token: String,
     ): List<Rapporteringsperiode>? =
         hentRapporteringsperioder(ident, token)
-            ?.filter { it.kanSendes }
             ?.map { periode ->
                 if (rapporteringRepository.hentRapporteringsperiode(periode.id, ident) != null) {
                     rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)

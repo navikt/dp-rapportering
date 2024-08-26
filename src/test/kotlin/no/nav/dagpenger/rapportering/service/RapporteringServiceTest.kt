@@ -2,7 +2,6 @@ package no.nav.dagpenger.rapportering.service
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.equals.shouldBeEqual
-import io.kotest.matchers.ints.exactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.ktor.server.plugins.BadRequestException
@@ -149,7 +148,7 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
 
-        val rapporteringsperioder = runBlocking { rapporteringService.hentAllePerioderSomKanSendes(ident, token)!! }
+        val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
         rapporteringsperioder[0].id shouldBe 1L
         rapporteringsperioder[1].id shouldBe 2L
@@ -170,7 +169,7 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentRapporteringsperiode(3L, ident) } returns null
         coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
 
-        val rapporteringsperioder = runBlocking { rapporteringService.hentAllePerioderSomKanSendes(ident, token)!! }
+        val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
         coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
 
