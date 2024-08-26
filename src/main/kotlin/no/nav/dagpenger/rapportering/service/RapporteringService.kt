@@ -240,8 +240,14 @@ class RapporteringService(
                     logger.info("Journalføring rapporteringsperiode ${periodeTilInnsending.id}")
                     journalfoeringService.journalfoer(ident, loginLevel, token, periodeTilInnsending)
 
-                    rapporteringRepository.oppdaterRapporteringStatus(periodeTilInnsending.id, ident, Innsendt)
-                    logger.info { "Oppdaterte status for rapporteringsperiode ${periodeTilInnsending.id} til Innsendt" }
+                    rapporteringRepository.oppdaterPeriodeEtterInnsending(
+                        rapporteringId = periodeTilInnsending.id,
+                        ident = ident,
+                        kanEndres = periodeTilInnsending.status != Endret,
+                        kanSendes = false,
+                        status = Innsendt,
+                    )
+                    logger.info { "Oppdaterte rapporteringsperiode ${periodeTilInnsending.id} med status Innsendt" }
                 } else {
                     logger.error { "Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}: $response" }
                     throw RuntimeException("Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}")

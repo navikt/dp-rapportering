@@ -313,20 +313,24 @@ class RapporteringRepositoryPostgresTest {
     }
 
     @Test
-    fun `kan oppdatere status for rapporteringsperiode`() {
+    fun `kan oppdatere rapporteringsperiode ved innsending`() {
         val rapporteringsperiode = getRapporteringsperiode()
 
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
-            rapporteringRepositoryPostgres.oppdaterRapporteringStatus(
+            rapporteringRepositoryPostgres.oppdaterPeriodeEtterInnsending(
                 rapporteringId = rapporteringsperiode.id,
                 ident = ident,
                 status = Innsendt,
+                kanSendes = false,
+                kanEndres = true,
             )
 
             with(rapporteringRepositoryPostgres.hentRapporteringsperiode(id = rapporteringsperiode.id, ident = ident)!!) {
                 id shouldBe rapporteringsperiode.id
                 status shouldBe Innsendt
+                kanSendes shouldBe false
+                kanEndres shouldBe true
             }
         }
     }

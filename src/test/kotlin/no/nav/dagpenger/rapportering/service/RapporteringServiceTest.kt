@@ -369,7 +369,7 @@ class RapporteringServiceTest {
     fun `kan sende inn rapporteringsperiode`() {
         val rapporteringsperiode = rapporteringsperiodeListe.first()
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
-        coJustRun { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
         coEvery { meldepliktConnector.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
                 id = rapporteringsperiode.id,
@@ -390,7 +390,7 @@ class RapporteringServiceTest {
                 journalfoeringService.journalfoer(any(), any(), any(), any())
             }
         }
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
     }
 
     @Test
@@ -413,7 +413,7 @@ class RapporteringServiceTest {
         val originalPeriode = rapporteringsperiodeListe.first()
         val rapporteringsperiode = originalPeriode.copy(status = Endret, begrunnelseEndring = "Endring", originalId = originalPeriode.id)
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
-        coJustRun { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
         coEvery { meldepliktConnector.hentEndringId(any(), any()) } returns endringId
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
@@ -440,7 +440,7 @@ class RapporteringServiceTest {
                 journalfoeringService.journalfoer(any(), any(), any(), any())
             }
         }
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringStatus(any(), any(), any()) }
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
     }
 
     @Test

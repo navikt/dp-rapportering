@@ -283,32 +283,6 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    override suspend fun oppdaterRapporteringStatus(
-        rapporteringId: Long,
-        ident: String,
-        status: RapporteringsperiodeStatus,
-    ) = timedAction("db-oppdaterRapporteringStatus") {
-        using(sessionOf(dataSource)) { session ->
-            session.transaction { tx ->
-                tx
-                    .run(
-                        queryOf(
-                            """
-                            UPDATE rapporteringsperiode
-                            SET status = :status
-                            WHERE id = :id AND ident = :ident
-                            """.trimIndent(),
-                            mapOf(
-                                "status" to status.name,
-                                "id" to rapporteringId,
-                                "ident" to ident,
-                            ),
-                        ).asUpdate,
-                    ).validateRowsAffected()
-            }
-        }
-    }
-
     override suspend fun oppdaterBegrunnelse(
         rapporteringId: Long,
         ident: String,
@@ -326,6 +300,38 @@ class RapporteringRepositoryPostgres(
                             """.trimIndent(),
                             mapOf(
                                 "begrunnelse" to begrunnelse,
+                                "id" to rapporteringId,
+                                "ident" to ident,
+                            ),
+                        ).asUpdate,
+                    ).validateRowsAffected()
+            }
+        }
+    }
+
+    override suspend fun oppdaterPeriodeEtterInnsending(
+        rapporteringId: Long,
+        ident: String,
+        kanEndres: Boolean,
+        kanSendes: Boolean,
+        status: RapporteringsperiodeStatus,
+    ) = timedAction("db-oppdaterPeriodeEtterInnsending") {
+        using(sessionOf(dataSource)) { session ->
+            session.transaction { tx ->
+                tx
+                    .run(
+                        queryOf(
+                            """
+                            UPDATE rapporteringsperiode
+                            SET kan_sendes = :kanSendes,
+                                kan_endres = :kanEndres,
+                                status = :status
+                            WHERE id = :id AND ident = :ident
+                            """.trimIndent(),
+                            mapOf(
+                                "kanSendes" to kanSendes,
+                                "kanEndres" to kanEndres,
+                                "status" to status.name,
                                 "id" to rapporteringId,
                                 "ident" to ident,
                             ),

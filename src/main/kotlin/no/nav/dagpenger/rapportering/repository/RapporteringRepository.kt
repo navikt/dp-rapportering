@@ -47,16 +47,18 @@ interface RapporteringRepository {
         ident: String,
     )
 
-    suspend fun oppdaterRapporteringStatus(
-        rapporteringId: Long,
-        ident: String,
-        status: RapporteringsperiodeStatus,
-    )
-
     suspend fun oppdaterBegrunnelse(
         rapporteringId: Long,
         ident: String,
         begrunnelse: String,
+    )
+
+    suspend fun oppdaterPeriodeEtterInnsending(
+        rapporteringId: Long,
+        ident: String,
+        kanEndres: Boolean,
+        kanSendes: Boolean,
+        status: RapporteringsperiodeStatus,
     )
 
     suspend fun slettAktiviteter(aktivitetIdListe: List<UUID>)
