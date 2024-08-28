@@ -32,6 +32,9 @@ import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.utils.desember
+import no.nav.dagpenger.rapportering.utils.februar
+import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.UUID
@@ -551,18 +554,79 @@ class RapporteringApiTest : ApiTestSetup() {
     fun `kan hente tidligere innsendte rapporteringsperioder`() =
         setUpTestApplication {
             externalServices {
-                meldepliktAdapter()
+                meldepliktAdapter(
+                    sendteRapporteringsperioderResponse =
+                        listOf(
+                            adapterRapporteringsperiode(
+                                id = 124L,
+                                fraOgMed = 18.desember(2023),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                status = AdapterRapporteringsperiodeStatus.Innsendt,
+                            ),
+                            adapterRapporteringsperiode(
+                                id = 125L,
+                                fraOgMed = 1.januar(2024),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                status = AdapterRapporteringsperiodeStatus.Innsendt,
+                            ),
+                            adapterRapporteringsperiode(
+                                id = 126L,
+                                fraOgMed = 1.januar(2024),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                status = AdapterRapporteringsperiodeStatus.Innsendt,
+                                begrunnelseEndring = "En god begrunnelse",
+                            ),
+                            adapterRapporteringsperiode(
+                                id = 127L,
+                                fraOgMed = LocalDate.now().plusDays(1),
+                                aktivitet = defaultAdapterAktivitet,
+                                status = AdapterRapporteringsperiodeStatus.Innsendt,
+                            ),
+                            adapterRapporteringsperiode(
+                                id = 128L,
+                                fraOgMed = 15.januar(2024),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                status = AdapterRapporteringsperiodeStatus.Innsendt,
+                            ),
+                            adapterRapporteringsperiode(
+                                id = 129L,
+                                fraOgMed = 29.januar(2024),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                status = AdapterRapporteringsperiodeStatus.Innsendt,
+                            ),
+                            adapterRapporteringsperiode(
+                                id = 130L,
+                                fraOgMed = 12.februar(2024),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                status = AdapterRapporteringsperiodeStatus.Innsendt,
+                            ),
+                            adapterRapporteringsperiode(
+                                id = 131L,
+                                fraOgMed = 12.februar(2024),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                status = AdapterRapporteringsperiodeStatus.Innsendt,
+                                begrunnelseEndring = "En god begrunnelse",
+                            ),
+                        ),
+                )
             }
 
             val response =
                 client
                     .doGetAndReceive<List<Rapporteringsperiode>>("/rapporteringsperioder/innsendte", issueToken(fnr))
 
+            println(response.body)
+
             response.httpResponse.status shouldBe HttpStatusCode.OK
             with(response.body) {
-                size shouldBe 2
-                first().id shouldBe 126L
-                last().id shouldBe 125L
+                size shouldBe 7
+                this[0].id shouldBe 127L
+                this[1].id shouldBe 131L
+                this[2].id shouldBe 130L
+                this[3].id shouldBe 129L
+                this[4].id shouldBe 128L
+                this[5].id shouldBe 126L
+                this[6].id shouldBe 125L
             }
         }
 

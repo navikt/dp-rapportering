@@ -135,10 +135,7 @@ class RapporteringService(
             .hentInnsendteRapporteringsperioder(ident, token)
             .toRapporteringsperioder()
             .populerMedPerioderFraDatabase(ident)
-            .sortedWith(
-                compareByDescending<Rapporteringsperiode> { it.periode.fraOgMed }
-                    .thenByDescending { it.begrunnelseEndring != null },
-            ).take(5)
+            .hentSisteFemPerioderPlussNåværende()
             .ifEmpty { null }
 
     private suspend fun List<Rapporteringsperiode>.populerMedPerioderFraDatabase(ident: String): List<Rapporteringsperiode> {
@@ -152,6 +149,25 @@ class RapporteringService(
                 }
             }
         return innsendteRapporteringsperioder
+    }
+
+    private fun List<Rapporteringsperiode>.hentSisteFemPerioderPlussNåværende(): List<Rapporteringsperiode> {
+        val nåværendePeriode = this.filter { it.periode.inneholder(LocalDate.now()) }
+        val sisteFemPerioderSortert =
+            this
+                .filterNot { it in nåværendePeriode }
+                .groupBy { it.periode.fraOgMed }
+                .toSortedMap(compareByDescending { it })
+                .entries
+                .take(5)
+                .associate { it.toPair() }
+                .values
+                .flatten()
+                .sortedWith(
+                    compareByDescending<Rapporteringsperiode> { it.periode.fraOgMed }
+                        .thenByDescending { it.begrunnelseEndring != null },
+                )
+        return nåværendePeriode + sisteFemPerioderSortert
     }
 
     suspend fun lagreEllerOppdaterPeriode(
