@@ -73,7 +73,7 @@ dependencies {
 
     // PDF
     implementation("io.github.openhtmltopdf:openhtmltopdf-pdfbox:1.1.22")
-    implementation("io.github.openhtmltopdf:openhtmltopdf-svg-support:1.1.21")
+    implementation("io.github.openhtmltopdf:openhtmltopdf-svg-support:1.1.22")
     implementation("org.verapdf:validation-model:1.26.1")
     implementation("org.jsoup:jsoup:1.18.1")
 
