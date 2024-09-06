@@ -108,20 +108,20 @@ class JournalfoeringServiceTest {
                 } else {
                     respond(
                         content =
-                            ByteReadChannel(
-                                """
-                            {
-                                "journalpostId": 2,
-                                "journalstatus": "OK",
-                                "journalpostferdigstilt": true,
-                                "dokumenter": [
-                                    {
-                                        "dokumentInfoId": 3
-                                    }
-                                ]
-                            }
-                                """.trimMargin(),
-                            ),
+                        ByteReadChannel(
+                            """
+                                {
+                                    "journalpostId": 2,
+                                    "journalstatus": "OK",
+                                    "journalpostferdigstilt": true,
+                                    "dokumenter": [
+                                        {
+                                            "dokumentInfoId": 3
+                                        }
+                                    ]
+                                }
+                            """.trimMargin(),
+                        ),
                         status = HttpStatusCode.OK,
                         headers = headersOf(HttpHeaders.ContentType, "application/json"),
                     )
@@ -198,7 +198,10 @@ class JournalfoeringServiceTest {
         System.setProperty("AZURE_APP_WELL_KNOWN_URL", "test.test.dokarkiv")
     }
 
-    private fun test(endring: Boolean = false, html: String? = null) {
+    private fun test(
+        endring: Boolean = false,
+        html: String? = null,
+    ) {
         setProperties()
 
         // Mock TokenProvider
@@ -220,8 +223,8 @@ class JournalfoeringServiceTest {
             MockEngine { _ ->
                 respond(
                     content =
-                        ByteReadChannel(
-                            """
+                    ByteReadChannel(
+                        """
                             {
                                 "journalpostId": 2,
                                 "journalstatus": "OK",
@@ -232,8 +235,8 @@ class JournalfoeringServiceTest {
                                     }
                                 ]
                             }
-                            """.trimMargin(),
-                        ),
+                        """.trimMargin(),
+                    ),
                     status = HttpStatusCode.OK,
                     headers = headersOf(HttpHeaders.ContentType, "application/json"),
                 )
@@ -264,7 +267,10 @@ class JournalfoeringServiceTest {
         }
     }
 
-    private fun createRapporteringsperiode(endring: Boolean, html: String? = null): Rapporteringsperiode {
+    private fun createRapporteringsperiode(
+        endring: Boolean,
+        html: String? = null,
+    ): Rapporteringsperiode {
         val fom = LocalDate.of(2024, 6, 24)
 
         return Rapporteringsperiode(
@@ -302,7 +308,7 @@ class JournalfoeringServiceTest {
             if (endring) RapporteringsperiodeStatus.Endret else TilUtfylling,
             true,
             null,
-            html
+            html,
         )
     }
 
