@@ -108,20 +108,20 @@ class JournalfoeringServiceTest {
                 } else {
                     respond(
                         content =
-                        ByteReadChannel(
-                            """
-                                {
-                                    "journalpostId": 2,
-                                    "journalstatus": "OK",
-                                    "journalpostferdigstilt": true,
-                                    "dokumenter": [
-                                        {
-                                            "dokumentInfoId": 3
-                                        }
-                                    ]
-                                }
-                            """.trimMargin(),
-                        ),
+                            ByteReadChannel(
+                                """
+                                    {
+                                        "journalpostId": 2,
+                                        "journalstatus": "OK",
+                                        "journalpostferdigstilt": true,
+                                        "dokumenter": [
+                                            {
+                                                "dokumentInfoId": 3
+                                            }
+                                        ]
+                                    }
+                                """.trimMargin(),
+                            ),
                         status = HttpStatusCode.OK,
                         headers = headersOf(HttpHeaders.ContentType, "application/json"),
                     )
@@ -223,20 +223,20 @@ class JournalfoeringServiceTest {
             MockEngine { _ ->
                 respond(
                     content =
-                    ByteReadChannel(
-                        """
-                            {
-                                "journalpostId": 2,
-                                "journalstatus": "OK",
-                                "journalpostferdigstilt": true,
-                                "dokumenter": [
-                                    {
-                                        "dokumentInfoId": 3
-                                    }
-                                ]
-                            }
-                        """.trimMargin(),
-                    ),
+                        ByteReadChannel(
+                            """
+                                {
+                                    "journalpostId": 2,
+                                    "journalstatus": "OK",
+                                    "journalpostferdigstilt": true,
+                                    "dokumenter": [
+                                        {
+                                            "dokumentInfoId": 3
+                                        }
+                                    ]
+                                }
+                            """.trimMargin(),
+                        ),
                     status = HttpStatusCode.OK,
                     headers = headersOf(HttpHeaders.ContentType, "application/json"),
                 )
