@@ -20,6 +20,7 @@ data class Rapporteringsperiode(
     val status: RapporteringsperiodeStatus,
     val registrertArbeidssoker: Boolean?,
     val originalId: Long?,
+    val html: String? = null,
 )
 
 fun List<Rapporteringsperiode>.toResponse(): List<RapporteringsperiodeResponse> =

@@ -314,7 +314,7 @@ class JournalfoeringService(
                 <div><b>Bruker:</b> $navn ($ident)</div>
                 <div><b>Neste meldekort kan sendes inn fra:</b> ${rapporteringsperiode.kanSendesFra.format(dateFormatter)}</div>
                 <br>
-                $aktiviteter
+                ${rapporteringsperiode.html ?: aktiviteter}
                 """
 
         val pdf = PDFGenerator().createPDFA(html)

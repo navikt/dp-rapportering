@@ -79,6 +79,11 @@ class JournalfoeringServiceTest {
     }
 
     @Test
+    fun `Kan opprette og sende journalpost med html`() {
+        test(false, "<div>Test</div>")
+    }
+
+    @Test
     fun `Kan lagre journalposter midlertidig ved feil og sende paa nytt`() {
         setProperties()
 
@@ -105,16 +110,16 @@ class JournalfoeringServiceTest {
                         content =
                             ByteReadChannel(
                                 """
-                            {
-                                "journalpostId": 2,
-                                "journalstatus": "OK",
-                                "journalpostferdigstilt": true,
-                                "dokumenter": [
                                     {
-                                        "dokumentInfoId": 3
+                                        "journalpostId": 2,
+                                        "journalstatus": "OK",
+                                        "journalpostferdigstilt": true,
+                                        "dokumenter": [
+                                            {
+                                                "dokumentInfoId": 3
+                                            }
+                                        ]
                                     }
-                                ]
-                            }
                                 """.trimMargin(),
                             ),
                         status = HttpStatusCode.OK,
@@ -193,7 +198,10 @@ class JournalfoeringServiceTest {
         System.setProperty("AZURE_APP_WELL_KNOWN_URL", "test.test.dokarkiv")
     }
 
-    private fun test(endring: Boolean = false) {
+    private fun test(
+        endring: Boolean = false,
+        html: String? = null,
+    ) {
         setProperties()
 
         // Mock TokenProvider
@@ -217,16 +225,16 @@ class JournalfoeringServiceTest {
                     content =
                         ByteReadChannel(
                             """
-                            {
-                                "journalpostId": 2,
-                                "journalstatus": "OK",
-                                "journalpostferdigstilt": true,
-                                "dokumenter": [
-                                    {
-                                        "dokumentInfoId": 3
-                                    }
-                                ]
-                            }
+                                {
+                                    "journalpostId": 2,
+                                    "journalstatus": "OK",
+                                    "journalpostferdigstilt": true,
+                                    "dokumenter": [
+                                        {
+                                            "dokumentInfoId": 3
+                                        }
+                                    ]
+                                }
                             """.trimMargin(),
                         ),
                     status = HttpStatusCode.OK,
@@ -243,7 +251,7 @@ class JournalfoeringServiceTest {
                 journalfoeringRepository,
             )
 
-        val rapporteringsperiode = createRapporteringsperiode(endring)
+        val rapporteringsperiode = createRapporteringsperiode(endring, html)
 
         // Kjører
         runBlocking {
@@ -255,11 +263,14 @@ class JournalfoeringServiceTest {
         mockEngine.responseHistory.size shouldBe 1
 
         runBlocking {
-            checkJournalpost(endring, mockEngine.requestHistory[0].body, rapporteringsperiode)
+            checkJournalpost(endring, mockEngine.requestHistory[0].body, rapporteringsperiode, html != null)
         }
     }
 
-    private fun createRapporteringsperiode(endring: Boolean): Rapporteringsperiode {
+    private fun createRapporteringsperiode(
+        endring: Boolean,
+        html: String? = null,
+    ): Rapporteringsperiode {
         val fom = LocalDate.of(2024, 6, 24)
 
         return Rapporteringsperiode(
@@ -297,6 +308,7 @@ class JournalfoeringServiceTest {
             if (endring) RapporteringsperiodeStatus.Endret else TilUtfylling,
             true,
             null,
+            html,
         )
     }
 
@@ -305,6 +317,7 @@ class JournalfoeringServiceTest {
         endring: Boolean,
         content: OutgoingContent,
         opprineligRapporteringsperiode: Rapporteringsperiode,
+        withHtml: Boolean = false,
     ) {
         // Henter Journalpost vi har sendt
         val bodyString =
@@ -361,7 +374,7 @@ class JournalfoeringServiceTest {
         dokument?.dokumentvarianter?.size shouldBe 2
 
         checkJson(journalpost, opprineligRapporteringsperiode)
-        checkPdf(endring, journalpost)
+        checkPdf(endring, journalpost, withHtml)
     }
 
     private fun checkJson(
@@ -383,6 +396,7 @@ class JournalfoeringServiceTest {
     private fun checkPdf(
         endring: Boolean,
         journalpost: Journalpost,
+        withHtml: Boolean = false,
     ) {
         journalpost.dokumenter!![0].dokumentvarianter[1].filtype shouldBe Filetype.PDFA
         journalpost.dokumenter!![0].dokumentvarianter[1].variantformat shouldBe Variantformat.ARKIV
@@ -390,6 +404,12 @@ class JournalfoeringServiceTest {
         var expectedFilePath = "src/test/resources/dokarkiv_expected.pdf"
         var actualFilePath = "actual.pdf"
         var diffFilePath = "diffOutput" // Uten .pdf
+
+        if (withHtml) {
+            expectedFilePath = "src/test/resources/dokarkiv_expected_with_html.pdf"
+            actualFilePath = "actual_with_html.pdf"
+            diffFilePath = "diffOutput_with_html" // Uten .pdf
+        }
 
         if (endring) {
             expectedFilePath = "src/test/resources/dokarkiv_korrigert_expected.pdf"
