@@ -338,6 +338,8 @@ components:
                     type: boolean
                 originalId:
                     type: string
+                html:
+                    type: string
         RapporteringsperiodeStatus:
             type: string
             enum:
