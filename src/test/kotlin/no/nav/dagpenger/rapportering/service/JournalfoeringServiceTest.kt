@@ -60,6 +60,7 @@ import java.util.UUID
 
 class JournalfoeringServiceTest {
     private val dokarkivUrl = "https://dokarkiv.nav.no"
+    private val naisAppImage = "europe-north1-docker.pkg.dev/teamdagpenger/dp-rapportering:2024.09.10-07.09-abcdwfg"
     private val token = "jwtToken"
 
     private val objectMapper =
@@ -196,6 +197,7 @@ class JournalfoeringServiceTest {
         System.setProperty("DOKARKIV_HOST", dokarkivUrl)
         System.setProperty("DOKARKIV_AUDIENCE", "test.test.dokarkiv")
         System.setProperty("AZURE_APP_WELL_KNOWN_URL", "test.test.dokarkiv")
+        System.setProperty("NAIS_APP_IMAGE", naisAppImage)
     }
 
     private fun test(
@@ -353,11 +355,13 @@ class JournalfoeringServiceTest {
             journalpost.tittel shouldBe "Meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av NAV"
         }
 
-        journalpost.tilleggsopplysninger?.size shouldBe 2
+        journalpost.tilleggsopplysninger?.size shouldBe 3
         journalpost.tilleggsopplysninger?.get(0)?.nokkel shouldBe "id"
         journalpost.tilleggsopplysninger?.get(0)?.verdi shouldBe "1"
         journalpost.tilleggsopplysninger?.get(1)?.nokkel shouldBe "kanSendesFra"
         journalpost.tilleggsopplysninger?.get(1)?.verdi shouldBe "2024-07-06"
+        journalpost.tilleggsopplysninger?.get(2)?.nokkel shouldBe "backendNaisAppImage"
+        journalpost.tilleggsopplysninger?.get(2)?.verdi shouldBe naisAppImage
 
         journalpost.sak?.sakstype shouldBe Sakstype.GENERELL_SAK
 

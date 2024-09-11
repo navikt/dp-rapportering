@@ -1,8 +1,11 @@
 package no.nav.dagpenger.rapportering.service
 
+import com.natpryce.konfig.Key
+import com.natpryce.konfig.stringType
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.config.Configuration.properties
 import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
@@ -229,6 +232,10 @@ class JournalfoeringService(
             Tilleggsopplysning(
                 "kanSendesFra",
                 rapporteringsperiode.kanSendesFra.format(DateTimeFormatter.ISO_DATE),
+            ),
+            Tilleggsopplysning(
+                "backendNaisAppImage",
+                properties[Key("NAIS_APP_IMAGE", stringType)],
             ),
         )
 
