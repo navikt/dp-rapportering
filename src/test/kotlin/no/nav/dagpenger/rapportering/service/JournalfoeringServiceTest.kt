@@ -11,6 +11,7 @@ import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
@@ -62,6 +63,11 @@ class JournalfoeringServiceTest {
     private val dokarkivUrl = "https://dokarkiv.nav.no"
     private val naisAppImage = "europe-north1-docker.pkg.dev/teamdagpenger/dp-rapportering:2024.09.10-07.09-abcdwfg"
     private val token = "jwtToken"
+    private val headers =
+        Headers.build {
+            append("useragent", "Some agent")
+            append("naisappimage", "Some image")
+        }
 
     private val objectMapper =
         ObjectMapper()
@@ -167,7 +173,7 @@ class JournalfoeringServiceTest {
 
         // Prøver å sende
         runBlocking {
-            journalfoeringService.journalfoer("01020312345", 0, token, rapporteringsperiode)
+            journalfoeringService.journalfoer("01020312345", 0, token, headers, rapporteringsperiode)
         }
 
         // Får feil og sjekker at JournalfoeringService lagrer journalpost midlertidig
@@ -257,7 +263,7 @@ class JournalfoeringServiceTest {
 
         // Kjører
         runBlocking {
-            journalfoeringService.journalfoer("01020312345", 0, token, rapporteringsperiode)
+            journalfoeringService.journalfoer("01020312345", 0, token, headers, rapporteringsperiode)
         }
 
         // Sjekker
@@ -355,13 +361,17 @@ class JournalfoeringServiceTest {
             journalpost.tittel shouldBe "Meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av NAV"
         }
 
-        journalpost.tilleggsopplysninger?.size shouldBe 3
+        journalpost.tilleggsopplysninger?.size shouldBe 5
         journalpost.tilleggsopplysninger?.get(0)?.nokkel shouldBe "id"
         journalpost.tilleggsopplysninger?.get(0)?.verdi shouldBe "1"
         journalpost.tilleggsopplysninger?.get(1)?.nokkel shouldBe "kanSendesFra"
         journalpost.tilleggsopplysninger?.get(1)?.verdi shouldBe "2024-07-06"
-        journalpost.tilleggsopplysninger?.get(2)?.nokkel shouldBe "backendNaisAppImage"
-        journalpost.tilleggsopplysninger?.get(2)?.verdi shouldBe naisAppImage
+        journalpost.tilleggsopplysninger?.get(2)?.nokkel shouldBe "userAgent"
+        journalpost.tilleggsopplysninger?.get(2)?.verdi shouldBe "Some agent"
+        journalpost.tilleggsopplysninger?.get(3)?.nokkel shouldBe "frontendNaisAppImage"
+        journalpost.tilleggsopplysninger?.get(3)?.verdi shouldBe "Some image"
+        journalpost.tilleggsopplysninger?.get(4)?.nokkel shouldBe "backendNaisAppImage"
+        journalpost.tilleggsopplysninger?.get(4)?.verdi shouldBe naisAppImage
 
         journalpost.sak?.sakstype shouldBe Sakstype.GENERELL_SAK
 

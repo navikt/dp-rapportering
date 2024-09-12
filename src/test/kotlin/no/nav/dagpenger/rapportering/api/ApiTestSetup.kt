@@ -123,6 +123,7 @@ open class ApiTestSetup {
         System.setProperty("AZURE_APP_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
         System.setProperty("AZURE_APP_CLIENT_ID", AZURE_ISSUER_ID)
         System.setProperty("AZURE_APP_CLIENT_SECRET", TEST_PRIVATE_JWK)
+        System.setProperty("NAIS_APP_IMAGE", "some_image")
     }
 
     private fun mapAppConfig(): MapApplicationConfig =

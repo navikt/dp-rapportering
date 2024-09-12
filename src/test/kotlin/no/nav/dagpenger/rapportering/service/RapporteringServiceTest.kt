@@ -4,6 +4,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.ktor.http.Headers
 import io.ktor.server.plugins.BadRequestException
 import io.mockk.coEvery
 import io.mockk.coJustRun
@@ -39,6 +40,7 @@ class RapporteringServiceTest {
 
     private val ident = "12345678910"
     private val token = "jwtToken"
+    private val headers = Headers.Empty
 
     @Test
     fun `harMeldeplikt returnerer det samme som meldepliktConnector returnerer`() {
@@ -367,7 +369,7 @@ class RapporteringServiceTest {
     @Test
     fun `kan sende inn rapporteringsperiode`() {
         val rapporteringsperiode = rapporteringsperiodeListe.first()
-        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
+        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
         coEvery { meldepliktConnector.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
@@ -378,7 +380,7 @@ class RapporteringServiceTest {
 
         val innsendingResponse =
             runBlocking {
-                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, 4)
+                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, 4, headers)
             }
 
         innsendingResponse.id shouldBe rapporteringsperiode.id
@@ -386,7 +388,7 @@ class RapporteringServiceTest {
 
         verify(exactly = 1) {
             runBlocking {
-                journalfoeringService.journalfoer(any(), any(), any(), any())
+                journalfoeringService.journalfoer(any(), any(), any(), any(), any())
             }
         }
         coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
@@ -401,6 +403,7 @@ class RapporteringServiceTest {
                     token,
                     ident,
                     4,
+                    headers,
                 )
             }
         }
@@ -411,7 +414,7 @@ class RapporteringServiceTest {
         val endringId = "4"
         val originalPeriode = rapporteringsperiodeListe.first()
         val rapporteringsperiode = originalPeriode.copy(status = Endret, begrunnelseEndring = "Endring", originalId = originalPeriode.id)
-        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
+        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
         coEvery { meldepliktConnector.hentEndringId(any(), any()) } returns endringId
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
@@ -428,7 +431,7 @@ class RapporteringServiceTest {
 
         val innsendingResponse =
             runBlocking {
-                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, 4)
+                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, 4, headers)
             }
 
         innsendingResponse.id shouldBe endringId.toLong()
@@ -436,7 +439,7 @@ class RapporteringServiceTest {
 
         verify(exactly = 1) {
             runBlocking {
-                journalfoeringService.journalfoer(any(), any(), any(), any())
+                journalfoeringService.journalfoer(any(), any(), any(), any(), any())
             }
         }
         coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
@@ -451,6 +454,7 @@ class RapporteringServiceTest {
                     token,
                     ident,
                     4,
+                    headers,
                 )
             }
         }

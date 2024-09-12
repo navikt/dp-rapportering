@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.service
 
 import com.natpryce.konfig.Key
 import com.natpryce.konfig.stringType
+import io.ktor.http.Headers
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
@@ -157,6 +158,7 @@ class JournalfoeringService(
         ident: String,
         loginLevel: Int,
         token: String,
+        headers: Headers,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
         val person = meldepliktConnector.hentPerson(ident, token)
@@ -183,7 +185,7 @@ class JournalfoeringService(
                 // Det er duplikatkontroll på eksternReferanseId for inngående dokumenter
                 eksternReferanseId = UUID.randomUUID().toString(),
                 datoMottatt = LocalDate.now().format(DateTimeFormatter.ISO_DATE),
-                tilleggsopplysninger = getTilleggsopplysninger(rapporteringsperiode),
+                tilleggsopplysninger = getTilleggsopplysninger(headers, rapporteringsperiode),
                 sak =
                     Sak(
                         sakstype = Sakstype.GENERELL_SAK,
@@ -222,7 +224,10 @@ class JournalfoeringService(
         return "$tittel for uke $uke1 - $uke2 ($fra - $til) elektronisk mottatt av NAV"
     }
 
-    private fun getTilleggsopplysninger(rapporteringsperiode: Rapporteringsperiode): List<Tilleggsopplysning> =
+    private fun getTilleggsopplysninger(
+        headers: Headers,
+        rapporteringsperiode: Rapporteringsperiode,
+    ): List<Tilleggsopplysning> =
         mutableListOf(
             // Nøkkel - maksimum 20 tegn
             Tilleggsopplysning(
@@ -232,6 +237,14 @@ class JournalfoeringService(
             Tilleggsopplysning(
                 "kanSendesFra",
                 rapporteringsperiode.kanSendesFra.format(DateTimeFormatter.ISO_DATE),
+            ),
+            Tilleggsopplysning(
+                "userAgent",
+                headers["useragent"] ?: "",
+            ),
+            Tilleggsopplysning(
+                "frontendNaisAppImage",
+                headers["naisappimage"] ?: "",
             ),
             Tilleggsopplysning(
                 "backendNaisAppImage",

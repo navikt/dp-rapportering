@@ -122,6 +122,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                     val ident = call.ident()
                     val loginLevel = call.loginLevel()
                     val jwtToken = call.request.jwt()
+                    val headers = call.request.headers
 
                     val rapporteringsperiode = call.receive(Rapporteringsperiode::class)
 
@@ -134,6 +135,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                                 jwtToken,
                                 ident,
                                 loginLevel,
+                                headers,
                             )
                         call.respond(HttpStatusCode.OK, PeriodeId(response.id.toString()))
                     } catch (e: Exception) {

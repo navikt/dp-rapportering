@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.service
 
+import io.ktor.http.Headers
 import io.ktor.server.plugins.BadRequestException
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
@@ -219,6 +220,7 @@ class RapporteringService(
         token: String,
         ident: String,
         loginLevel: Int,
+        headers: Headers,
     ): InnsendingResponse {
         rapporteringsperiode.takeIf { it.kanSendes }
             ?: throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
@@ -253,7 +255,7 @@ class RapporteringService(
             .also { response ->
                 if (response.status == "OK") {
                     logger.info("Journalføring rapporteringsperiode ${periodeTilInnsending.id}")
-                    journalfoeringService.journalfoer(ident, loginLevel, token, periodeTilInnsending)
+                    journalfoeringService.journalfoer(ident, loginLevel, token, headers, periodeTilInnsending)
 
                     rapporteringRepository.oppdaterPeriodeEtterInnsending(
                         rapporteringId = periodeTilInnsending.id,
