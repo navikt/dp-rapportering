@@ -35,14 +35,20 @@ class RapporteringService(
         rapporteringId: Long,
         ident: String,
         token: String,
+        hentOriginal: Boolean,
     ): Rapporteringsperiode? =
-        hentRapporteringsperioder(ident, token)
-            ?.firstOrNull { it.id == rapporteringId }
-            ?.let { lagreEllerOppdaterPeriode(it, ident) }
-            ?: hentInnsendteRapporteringsperioder(ident, token)
+        if (hentOriginal) {
+            hentRapporteringsperioder(ident, token)
                 ?.firstOrNull { it.id == rapporteringId }
-            ?: rapporteringRepository
+                ?.let { lagreEllerOppdaterPeriode(it, ident) }
+                ?: hentInnsendteRapporteringsperioder(ident, token)
+                    ?.firstOrNull { it.id == rapporteringId }
+                ?: rapporteringRepository
+                    .hentRapporteringsperiode(rapporteringId, ident)
+        } else {
+            rapporteringRepository
                 .hentRapporteringsperiode(rapporteringId, ident)
+        }
 
     suspend fun hentOgOppdaterRapporteringsperioder(
         ident: String,

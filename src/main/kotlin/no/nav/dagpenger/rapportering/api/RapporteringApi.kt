@@ -11,6 +11,7 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.request.header
 import io.ktor.server.request.receive
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
@@ -149,9 +150,10 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
                         val rapporteringId = call.getParameter("id").toLong()
+                        val hentOriginal = call.request.header("Hent-Original")?.toBoolean() ?: true
 
                         rapporteringService
-                            .hentPeriode(rapporteringId, ident, jwtToken)
+                            .hentPeriode(rapporteringId, ident, jwtToken, hentOriginal)
                             ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
                             ?: call.respond(HttpStatusCode.NotFound)
                     }

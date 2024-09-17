@@ -49,20 +49,25 @@ suspend inline fun <reified T> HttpClient.doPostAndReceive(
 suspend fun HttpClient.doGet(
     urlString: String,
     token: String? = null,
+    extraHeaders: List<Pair<String, String>> = emptyList(),
 ): HttpResponse =
     this.get(urlString) {
         header(HttpHeaders.Accept, ContentType.Application.Json)
         if (token != null) {
             header(HttpHeaders.Authorization, "Bearer $token")
         }
+        if (extraHeaders.isNotEmpty()) {
+            extraHeaders.forEach { (key, value) -> header(key, value) }
+        }
     }
 
 suspend inline fun <reified T> HttpClient.doGetAndReceive(
     urlString: String,
     token: String? = null,
+    extraHeaders: List<Pair<String, String>> = emptyList(),
 ): Response<T> =
     this
-        .doGet(urlString, token)
+        .doGet(urlString, token, extraHeaders)
         .let { Response(it, objectMapper.readValue(it.bodyAsText(), object : TypeReference<T>() {})) }
 
 data class Response<T>(

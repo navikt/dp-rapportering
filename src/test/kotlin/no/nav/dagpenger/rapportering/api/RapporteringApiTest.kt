@@ -241,7 +241,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    fun `hente rapporteringsperiode med id som ikke funnes gir 404`() =
+    fun `hente rapporteringsperiode med id som ikke finnes gir 404`() =
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter(
@@ -253,6 +253,28 @@ class RapporteringApiTest : ApiTestSetup() {
             val response = client.doGet("/rapporteringsperiode/123", issueToken(fnr))
 
             response.status shouldBe HttpStatusCode.NotFound
+        }
+
+    @Test
+    fun `hent rapporteringsperiode med id henter ikke original periode hvis flagg er satt til false`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
+            }
+
+            // Lagrer perioden i databasen
+            client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
+
+            with(
+                client.doGetAndReceive<Rapporteringsperiode>(
+                    "/rapporteringsperiode/123",
+                    issueToken(fnr),
+                    listOf(Pair("hentOriginal", "false")),
+                ),
+            ) {
+                httpResponse.status shouldBe HttpStatusCode.OK
+                body.id shouldBe 123
+            }
         }
 
     // Start ufylling av rapporteringsperiode (aka lagre perioden i databasen)

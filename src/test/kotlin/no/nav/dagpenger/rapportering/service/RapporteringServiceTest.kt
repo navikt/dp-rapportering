@@ -66,7 +66,7 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
 
-        val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token) }
+        val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token, hentOriginal = true) }
 
         with(gjeldendePeriode!!) {
             id shouldBe 2
@@ -90,7 +90,7 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe.map { it.copy(status = Innsendt) }.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
-        val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token) }
+        val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token, hentOriginal = true) }
 
         with(gjeldendePeriode!!) {
             id shouldBe 2
@@ -127,7 +127,42 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns rapporteringsperiodeFraDb
         coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
 
-        val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token) }
+        val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token, hentOriginal = true) }
+
+        with(gjeldendePeriode!!) {
+            id shouldBe 2
+            periode.fraOgMed shouldBe 15.januar
+            periode.tilOgMed shouldBe 28.januar
+            dager.size shouldBe 14
+            dager shouldBe rapporteringsperiodeFraDb.dager
+            kanSendesFra shouldBe 27.januar
+            kanSendes shouldBe true
+            kanEndres shouldBe false
+            bruttoBelop shouldBe null
+            status shouldBe TilUtfylling
+            registrertArbeidssoker shouldBe null
+        }
+    }
+
+    @Test
+    fun `hent periode henter spesifisert periode kun fra databasen hvis hentOriginal er false`() {
+        val rapporteringsperiodeFraDb =
+            rapporteringsperiodeListe.first { it.id == 2L }.copy(
+                dager =
+                    getDager(
+                        startDato = 14.januar,
+                        aktivitet =
+                            Aktivitet(
+                                id = UUID.randomUUID(),
+                                type = Utdanning,
+                                timer = null,
+                            ),
+                    ),
+            )
+
+        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns rapporteringsperiodeFraDb
+
+        val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token, hentOriginal = false) }
 
         with(gjeldendePeriode!!) {
             id shouldBe 2

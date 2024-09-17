@@ -118,6 +118,14 @@ paths:
                 - tokenX: [ ]
         parameters:
             - $ref: '#/components/parameters/periodeId'
+            - name: Hent-Original
+              in: header
+              required: false
+              schema:
+                type: boolean
+                default: true
+              description: Bestemmer om perioden skal oppdateres med data fra baksystem eller kun hentes direkte fra databasen
+
 
     /rapporteringsperiode/{periodeId}/start:
         post:
