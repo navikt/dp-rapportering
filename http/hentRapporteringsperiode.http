@@ -3,3 +3,4 @@
 GET {{url}}/rapporteringsperiode/{{periodeId}}
 Accept: application/json
 Authorization: Bearer {{token}}
+Hent-Original: false # Sett til true for å hente originalen fra baksystem (Arena)
