@@ -61,12 +61,12 @@ import java.util.UUID
 
 class JournalfoeringServiceTest {
     private val dokarkivUrl = "https://dokarkiv.nav.no"
-    private val naisAppImage = "europe-north1-docker.pkg.dev/teamdagpenger/dp-rapportering:2024.09.10-07.09-abcdwfg"
+    private val githubSha = "abcdwfg"
     private val token = "jwtToken"
     private val headers =
         Headers.build {
             append("useragent", "Some agent")
-            append("naisappimage", "Some image")
+            append("githubsha", "Some image")
         }
 
     private val objectMapper =
@@ -203,7 +203,7 @@ class JournalfoeringServiceTest {
         System.setProperty("DOKARKIV_HOST", dokarkivUrl)
         System.setProperty("DOKARKIV_AUDIENCE", "test.test.dokarkiv")
         System.setProperty("AZURE_APP_WELL_KNOWN_URL", "test.test.dokarkiv")
-        System.setProperty("NAIS_APP_IMAGE", naisAppImage)
+        System.setProperty("GITHUB_SHA", githubSha)
     }
 
     private fun test(
@@ -368,10 +368,10 @@ class JournalfoeringServiceTest {
         journalpost.tilleggsopplysninger?.get(1)?.verdi shouldBe "2024-07-06"
         journalpost.tilleggsopplysninger?.get(2)?.nokkel shouldBe "userAgent"
         journalpost.tilleggsopplysninger?.get(2)?.verdi shouldBe "Some agent"
-        journalpost.tilleggsopplysninger?.get(3)?.nokkel shouldBe "frontendNaisAppImage"
+        journalpost.tilleggsopplysninger?.get(3)?.nokkel shouldBe "frontendGithubSha"
         journalpost.tilleggsopplysninger?.get(3)?.verdi shouldBe "Some image"
-        journalpost.tilleggsopplysninger?.get(4)?.nokkel shouldBe "backendNaisAppImage"
-        journalpost.tilleggsopplysninger?.get(4)?.verdi shouldBe naisAppImage
+        journalpost.tilleggsopplysninger?.get(4)?.nokkel shouldBe "backendGithubSha"
+        journalpost.tilleggsopplysninger?.get(4)?.verdi shouldBe githubSha
 
         journalpost.sak?.sakstype shouldBe Sakstype.GENERELL_SAK
 

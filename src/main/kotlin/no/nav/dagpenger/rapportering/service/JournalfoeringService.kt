@@ -243,12 +243,12 @@ class JournalfoeringService(
                 headers["useragent"] ?: "",
             ),
             Tilleggsopplysning(
-                "frontendNaisAppImage",
-                headers["naisappimage"] ?: "",
+                "frontendGithubSha",
+                headers["githubsha"] ?: "",
             ),
             Tilleggsopplysning(
-                "backendNaisAppImage",
-                properties[Key("NAIS_APP_IMAGE", stringType)],
+                "backendGithubSha",
+                properties[Key("GITHUB_SHA", stringType)],
             ),
         )
 

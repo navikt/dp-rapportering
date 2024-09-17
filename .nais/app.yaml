@@ -39,6 +39,8 @@ spec:
       value: {{DOKARKIV_HOST}}
     - name: DOKARKIV_AUDIENCE
       value: {{DOKARKIV_AUDIENCE}}
+    - name: GITHUB_SHA
+      value: {{ githubSha }}
   gcp:
       sqlInstances:
           - type: POSTGRES_15
