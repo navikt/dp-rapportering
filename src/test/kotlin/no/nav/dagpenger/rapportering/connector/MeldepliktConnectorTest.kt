@@ -353,6 +353,7 @@ class MeldepliktConnectorTest {
                 TilUtfylling,
                 true,
                 originalId = null,
+                rapporteringstype = null,
             )
 
         val response =

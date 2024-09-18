@@ -221,6 +221,12 @@ class RapporteringService(
         begrunnelse: String,
     ) = rapporteringRepository.oppdaterBegrunnelse(rapporteringId, ident, begrunnelse)
 
+    suspend fun oppdaterRapporteringstype(
+        rapporteringId: Long,
+        ident: String,
+        rapporteringstype: String,
+    ) = rapporteringRepository.oppdaterRapporteringstype(rapporteringId, ident, rapporteringstype)
+
     suspend fun sendRapporteringsperiode(
         rapporteringsperiode: Rapporteringsperiode,
         token: String,

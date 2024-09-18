@@ -20,6 +20,7 @@ data class Rapporteringsperiode(
     val status: RapporteringsperiodeStatus,
     val registrertArbeidssoker: Boolean?,
     val originalId: Long?,
+    val rapporteringstype: String?,
     val html: String? = null,
 )
 
@@ -69,4 +70,5 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
             },
         registrertArbeidssoker = this.registrertArbeidssoker,
         originalId = this.originalId?.toString(),
+        rapporteringstype = this.rapporteringstype,
     )

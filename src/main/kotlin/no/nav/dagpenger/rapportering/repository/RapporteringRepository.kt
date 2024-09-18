@@ -53,6 +53,12 @@ interface RapporteringRepository {
         begrunnelse: String,
     )
 
+    suspend fun oppdaterRapporteringstype(
+        rapporteringId: Long,
+        ident: String,
+        rapporteringstype: String,
+    )
+
     suspend fun oppdaterPeriodeEtterInnsending(
         rapporteringId: Long,
         ident: String,

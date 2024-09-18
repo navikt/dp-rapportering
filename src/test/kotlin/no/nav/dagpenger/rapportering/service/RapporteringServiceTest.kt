@@ -289,6 +289,15 @@ class RapporteringServiceTest {
     }
 
     @Test
+    fun `kan oppdatere rapporteringstype`() {
+        coJustRun { rapporteringRepository.oppdaterRapporteringstype(any(), any(), any()) }
+
+        runBlocking { rapporteringService.oppdaterRapporteringstype(1L, "12345678910", "harIngenAktivitet") }
+
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringstype(1L, "12345678910", "harIngenAktivitet") }
+    }
+
+    @Test
     fun `kan endre rapporteringsperiode`() {
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns
             listOf(rapporteringsperiodeListe.first().copy(id = 123L, kanEndres = true).toAdapterRapporteringsperiode())
@@ -616,6 +625,7 @@ fun lagRapporteringsperiode(
     registrertArbeidssoker = null,
     begrunnelseEndring = null,
     originalId = null,
+    rapporteringstype = null,
 )
 
 private fun getDager(

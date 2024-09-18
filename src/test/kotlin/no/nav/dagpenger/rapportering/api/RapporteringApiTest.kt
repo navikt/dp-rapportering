@@ -436,6 +436,55 @@ class RapporteringApiTest : ApiTestSetup() {
         }
     }
 
+    // Oppdater rapporteringstype
+    @Test
+    fun `kan oppdatere rapporteringstype`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
+            }
+
+            client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
+
+            val response =
+                client.doPost("/rapporteringsperiode/123/rapporteringstype", issueToken(fnr), RapporteringstypeRequest("harAktivitet"))
+            response.status shouldBe HttpStatusCode.NoContent
+
+            val periodeResponse =
+                client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
+            periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
+            with(periodeResponse.body) {
+                id shouldBe 123L
+                rapporteringstype shouldBe "harAktivitet"
+            }
+        }
+
+    @Test
+    fun `oppdater rapporteringstype feiler hvis perioden ikke finnes`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter(rapporteringsperioderResponse = emptyList())
+            }
+
+            val response =
+                client.doPost("/rapporteringsperiode/123/rapporteringstype", issueToken(fnr), RapporteringstypeRequest("harIkkeAktivitet"))
+            response.status shouldBe HttpStatusCode.InternalServerError
+        }
+
+    @Test
+    fun `oppdater rapporteringstype feiler hvis rapporteringstypen er blank`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
+            }
+
+            client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
+
+            val response =
+                client.doPost("/rapporteringsperiode/123/rapporteringstype", issueToken(fnr), RapporteringstypeRequest(""))
+            response.status shouldBe HttpStatusCode.BadRequest
+        }
+
     // Endre rapporteringsperiode
 
     @Test

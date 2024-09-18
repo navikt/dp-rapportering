@@ -164,8 +164,8 @@ class RapporteringRepositoryPostgres(
             queryOf(
                 """
                 INSERT INTO rapporteringsperiode 
-                (id, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id) 
-                VALUES (:id, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id)
+                (id, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id, rapporteringstype) 
+                VALUES (:id, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id, :rapporteringstype)
                 """.trimIndent(),
                 mapOf(
                     "id" to rapporteringsperiode.id,
@@ -179,6 +179,7 @@ class RapporteringRepositoryPostgres(
                     "fom" to rapporteringsperiode.periode.fraOgMed,
                     "tom" to rapporteringsperiode.periode.tilOgMed,
                     "original_id" to rapporteringsperiode.originalId,
+                    "rapporteringstype" to rapporteringsperiode.rapporteringstype,
                 ),
             ).asUpdate,
         )
@@ -309,6 +310,32 @@ class RapporteringRepositoryPostgres(
         }
     }
 
+    override suspend fun oppdaterRapporteringstype(
+        rapporteringId: Long,
+        ident: String,
+        rapporteringstype: String,
+    ) = timedAction("db-oppdaterRapporteringstype") {
+        using(sessionOf(dataSource)) { session ->
+            session.transaction { tx ->
+                tx
+                    .run(
+                        queryOf(
+                            """
+                            UPDATE rapporteringsperiode
+                            SET rapporteringstype = :rapporteringstype
+                            WHERE id = :id AND ident = :ident
+                            """.trimIndent(),
+                            mapOf(
+                                "rapporteringstype" to rapporteringstype,
+                                "id" to rapporteringId,
+                                "ident" to ident,
+                            ),
+                        ).asUpdate,
+                    ).validateRowsAffected()
+            }
+        }
+    }
+
     override suspend fun oppdaterPeriodeEtterInnsending(
         rapporteringId: Long,
         ident: String,
@@ -430,6 +457,7 @@ private fun Row.toRapporteringsperiode() =
             ),
         begrunnelseEndring = stringOrNull("begrunnelse_endring"),
         originalId = longOrNull("original_id"),
+        rapporteringstype = stringOrNull("rapporteringstype"),
     )
 
 private fun Row.toDagPair(): Pair<UUID, Dag> =

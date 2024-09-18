@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS rapporteringsperiode
     begrunnelse_endring     VARCHAR         NULL,
     registrert_arbeidssoker BOOLEAN         NULL,
     status                  VARCHAR         NOT NULL,
-    original_id             BIGINT          NULL
+    original_id             BIGINT          NULL,
+    rapporteringstype       VARCHAR         NULL
 );
 
 CREATE TABLE IF NOT EXISTS dag

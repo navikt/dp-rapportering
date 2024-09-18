@@ -1,0 +1,9 @@
+# Sett token og periodeId i http-client filene. Velg miljø før kjøring.
+###
+POST {{url}}/rapporteringsperiode/{{periodeId}}/rapporteringstype
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "rapporteringstype": "harAktivitet"
+}
