@@ -1,10 +1,10 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    kotlin("jvm") version "2.0.20"
+    alias(libs.plugins.shadow.jar)
+    alias(libs.plugins.kotlin)
     id("io.ktor.plugin") version "2.3.12"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "no.nav.dagpenger.rapportering"
