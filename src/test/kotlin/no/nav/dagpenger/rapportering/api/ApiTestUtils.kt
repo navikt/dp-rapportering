@@ -87,6 +87,7 @@ fun rapporteringsperiodeFor(
     registrertArbeidssoker: Boolean? = null,
     begrunnelseEndring: String? = null,
     originalId: Long? = null,
+    rapporteringstype: String? = null,
 ) = Rapporteringsperiode(
     id = id,
     periode = Periode(fraOgMed = fraOgMed, tilOgMed = tilOgMed),
@@ -106,4 +107,5 @@ fun rapporteringsperiodeFor(
     registrertArbeidssoker = registrertArbeidssoker,
     begrunnelseEndring = begrunnelseEndring,
     originalId = originalId,
+    rapporteringstype = rapporteringstype,
 )

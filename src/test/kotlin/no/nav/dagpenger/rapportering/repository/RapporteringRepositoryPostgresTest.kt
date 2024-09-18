@@ -249,6 +249,23 @@ class RapporteringRepositoryPostgresTest {
     }
 
     @Test
+    fun `kan oppdatere rapporteringstype for periode`() {
+        val rapporteringsperiode = getRapporteringsperiode()
+
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
+            rapporteringRepositoryPostgres.oppdaterRapporteringstype(
+                rapporteringId = rapporteringsperiode.id,
+                ident = ident,
+                rapporteringstype = "harAktivitet",
+            )
+            val oppdatertPeriode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = rapporteringsperiode.id, ident = ident)!!
+
+            oppdatertPeriode.rapporteringstype shouldBe "harAktivitet"
+        }
+    }
+
+    @Test
     fun `kan oppdatere rapporteringsperiode fra adapter`() {
         val rapporteringsperiode = getRapporteringsperiode()
         val dag =
@@ -468,6 +485,7 @@ fun getRapporteringsperiode(
     registrertArbeidssoker = registrertArbeidssoker,
     begrunnelseEndring = begrunnelseEndring,
     originalId = null,
+    rapporteringstype = null,
 )
 
 private fun getDager(

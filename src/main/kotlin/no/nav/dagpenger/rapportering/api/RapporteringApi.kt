@@ -206,6 +206,21 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                         }
                     }
 
+                    route("/rapporteringstype") {
+                        post {
+                            val ident = call.ident()
+                            val rapporteringId = call.getParameter("id").toLong()
+                            val rapporteringstype = call.receive(RapporteringstypeRequest::class).rapporteringstype
+
+                            if (rapporteringstype.isBlank()) {
+                                call.respond(HttpStatusCode.BadRequest)
+                            }
+
+                            rapporteringService.oppdaterRapporteringstype(rapporteringId, ident, rapporteringstype)
+                            call.respond(HttpStatusCode.NoContent)
+                        }
+                    }
+
                     route("/endre") {
                         post {
                             val ident = call.ident()
@@ -266,6 +281,10 @@ data class ArbeidssokerRequest(
 
 data class BegrunnelseRequest(
     val begrunnelseEndring: String,
+)
+
+data class RapporteringstypeRequest(
+    val rapporteringstype: String,
 )
 
 private fun ApplicationCall.getParameter(name: String): String =
