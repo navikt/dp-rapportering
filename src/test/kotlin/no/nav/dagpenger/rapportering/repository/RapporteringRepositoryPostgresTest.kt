@@ -92,14 +92,14 @@ class RapporteringRepositoryPostgresTest {
                 ident = ident,
             )
 
-            rapporteringRepositoryPostgres.finnesRapporteringsperiode(rapporteringsperiode.id) shouldBe true
+            rapporteringRepositoryPostgres.finnesRapporteringsperiode(rapporteringsperiode.id, ident) shouldBe true
         }
     }
 
     @Test
     fun `finnesRapporteringsperiode returnerer false hvis perioden ikke finnes`() {
         withMigratedDb {
-            rapporteringRepositoryPostgres.finnesRapporteringsperiode(123L) shouldBe false
+            rapporteringRepositoryPostgres.finnesRapporteringsperiode(123L, "12345678910") shouldBe false
         }
     }
 

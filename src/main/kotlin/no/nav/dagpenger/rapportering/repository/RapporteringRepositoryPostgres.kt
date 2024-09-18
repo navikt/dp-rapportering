@@ -36,18 +36,21 @@ class RapporteringRepositoryPostgres(
             }?.let {
                 it.copy(
                     dager =
-                        hentDager(it.id).map { dagPair ->
+                        hentDagerUtenAktivitet(it.id).map { dagPair ->
                             dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
                         },
                 )
             }
         }
 
-    override suspend fun finnesRapporteringsperiode(id: Long): Boolean =
+    override suspend fun finnesRapporteringsperiode(
+        id: Long,
+        ident: String,
+    ): Boolean =
         timedAction("db-finnesRapporteringsperiode") {
             using(sessionOf(dataSource)) { session ->
                 session.run(
-                    queryOf("SELECT * FROM rapporteringsperiode WHERE id = ?", id)
+                    queryOf("SELECT * FROM rapporteringsperiode WHERE id = ? AND ident = ?", id, ident)
                         .map { it.toRapporteringsperiode() }
                         .asSingle,
                 )
@@ -63,7 +66,7 @@ class RapporteringRepositoryPostgres(
                         .asList,
                 )
             }.map { rapporteringsperiode ->
-                val dager = hentDager(rapporteringsperiode.id)
+                val dager = hentDagerUtenAktivitet(rapporteringsperiode.id)
                 rapporteringsperiode
                     .copy(
                         dager =
@@ -83,7 +86,7 @@ class RapporteringRepositoryPostgres(
                         .asList,
                 )
             }.map { rapporteringsperiode ->
-                val dager = hentDager(rapporteringsperiode.id)
+                val dager = hentDagerUtenAktivitet(rapporteringsperiode.id)
                 rapporteringsperiode
                     .copy(
                         dager =
@@ -94,7 +97,8 @@ class RapporteringRepositoryPostgres(
             }
         }
 
-    private fun hentDager(rapporteringId: Long): List<Pair<UUID, Dag>> =
+    // OBS! Denne funksjonen henter dager uten aktiviteter. Aktiviteter må hentes separat.
+    override suspend fun hentDagerUtenAktivitet(rapporteringId: Long): List<Pair<UUID, Dag>> =
         using(sessionOf(dataSource)) { session ->
             session.run(
                 queryOf(

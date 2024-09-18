@@ -15,6 +15,7 @@ import io.ktor.server.request.header
 import io.ktor.server.request.receive
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
@@ -191,6 +192,16 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                             val dag = call.receive(Dag::class)
 
                             rapporteringService.lagreEllerOppdaterAktiviteter(rapporteringId, dag)
+                            call.respond(HttpStatusCode.NoContent)
+                        }
+                    }
+
+                    route("/aktiviteter") {
+                        delete {
+                            val ident = call.ident()
+                            val rapporteringId = call.getParameter("id").toLong()
+
+                            rapporteringService.resettAktiviteter(rapporteringId, ident)
                             call.respond(HttpStatusCode.NoContent)
                         }
                     }

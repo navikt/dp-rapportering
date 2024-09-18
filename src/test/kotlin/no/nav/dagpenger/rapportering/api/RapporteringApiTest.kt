@@ -403,6 +403,41 @@ class RapporteringApiTest : ApiTestSetup() {
         }
     }
 
+    // Slette alle aktiviteter
+    @Test
+    fun `kan slette alle aktiviteter i en periode`() {
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
+            }
+
+            client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
+
+            val aktivitet = Aktivitet(UUID.randomUUID(), AktivitetsType.Arbeid, "PT7H30M")
+            val dagMedAktivitet = Dag(LocalDate.now(), listOf(aktivitet), 0)
+            val response = client.doPost("/rapporteringsperiode/123/aktivitet", issueToken(fnr), dagMedAktivitet)
+            response.status shouldBe HttpStatusCode.NoContent
+
+            val periodeResponse =
+                client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
+            periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
+            with(periodeResponse.body) {
+                id shouldBe 123L
+                dager.first().aktiviteter.first() shouldBe aktivitet
+            }
+
+            client.doDelete("/rapporteringsperiode/123/aktiviteter", issueToken(fnr)).status shouldBe HttpStatusCode.NoContent
+
+            val periodeResponseAfterDelete =
+                client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
+            periodeResponseAfterDelete.httpResponse.status shouldBe HttpStatusCode.OK
+            with(periodeResponseAfterDelete.body) {
+                id shouldBe 123L
+                dager.first().aktiviteter shouldBe emptyList()
+            }
+        }
+    }
+
     // Oppdater begrunnelse
     @Test
     fun `kan oppdatere begrunnelse`() {

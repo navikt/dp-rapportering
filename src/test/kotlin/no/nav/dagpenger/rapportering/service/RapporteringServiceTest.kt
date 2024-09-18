@@ -304,7 +304,7 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(ident) } returns emptyList()
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
-        coEvery { rapporteringRepository.finnesRapporteringsperiode(any()) } returns true andThen true andThen false
+        coEvery { rapporteringRepository.finnesRapporteringsperiode(any(), any()) } returns true andThen true andThen false
 
         val response = runBlocking { rapporteringService.startEndring(123L, ident, token) }
 
@@ -312,7 +312,7 @@ class RapporteringServiceTest {
         response.status shouldBe Endret
         response.originalId shouldBe 123L
         coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
-        coVerify(exactly = 3) { rapporteringRepository.finnesRapporteringsperiode(any()) }
+        coVerify(exactly = 3) { rapporteringRepository.finnesRapporteringsperiode(any(), any()) }
     }
 
     @Test
@@ -532,6 +532,31 @@ class RapporteringServiceTest {
         runBlocking { rapporteringService.lagreEllerOppdaterPeriode(rapporteringsperiodeListe.first(), ident) }
 
         coVerify(exactly = 0) { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+    }
+
+    @Test
+    fun `kan slette alle aktiviteter for en periode`() {
+        val dagPairList: List<Pair<UUID, Dag>> = getDager().map { UUID.randomUUID() to it }
+        coEvery { rapporteringRepository.finnesRapporteringsperiode(any(), any()) } returns true
+        coEvery { rapporteringRepository.hentDagerUtenAktivitet(any()) } returns dagPairList
+        coEvery { rapporteringRepository.hentAktiviteter(any()) } returns listOf(Aktivitet(UUID.randomUUID(), Utdanning, null))
+        coJustRun { rapporteringRepository.slettAktiviteter(any()) }
+
+        runBlocking { rapporteringService.resettAktiviteter(1L, ident) }
+
+        coVerify { rapporteringRepository.finnesRapporteringsperiode(1L, ident) }
+        coVerify { rapporteringRepository.hentDagerUtenAktivitet(1L) }
+        coVerify(exactly = 14) { rapporteringRepository.hentAktiviteter(any()) }
+        coVerify(exactly = 14) { rapporteringRepository.slettAktiviteter(any()) }
+    }
+
+    @Test
+    fun `sletter ikke aktiviteter hvis rapporteringsperioden ikke finnes`() {
+        coEvery { rapporteringRepository.finnesRapporteringsperiode(any(), any()) } returns false
+
+        shouldThrow<RuntimeException> {
+            runBlocking { rapporteringService.resettAktiviteter(1L, ident) }
+        }
     }
 
     @Test

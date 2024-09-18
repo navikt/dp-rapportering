@@ -188,6 +188,23 @@ paths:
         parameters:
             - $ref: '#/components/parameters/periodeId'
 
+    /rapporteringsperiode/{periodeId}/aktiviteter:
+        delete:
+            responses:
+                204:
+                    description: OK - No Content
+                400:
+                    description: Bad Request
+            summary: Slette alle aktiviteter
+            description: Slette alle aktiviteter i rapporteringsperioden
+            operationId: post-slett-aktivitet
+            tags:
+                - Rapporteringsperiode
+            security:
+                - tokenX: []
+        parameters:
+            - $ref: '#/components/parameters/periodeId'
+
     /rapporteringsperiode/{periodeId}/begrunnelse:
         post:
             responses:

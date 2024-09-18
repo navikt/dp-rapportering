@@ -106,7 +106,7 @@ class RapporteringService(
             .let { originalPeriode ->
                 lagreEllerOppdaterPeriode(
                     originalPeriode.copy(
-                        id = lagMidlertidigEndringId(),
+                        id = lagMidlertidigEndringId(ident),
                         kanEndres = false,
                         kanSendes = true,
                         status = Endret,
@@ -125,10 +125,10 @@ class RapporteringService(
                 )
             }
 
-    private suspend fun lagMidlertidigEndringId(): Long {
+    private suspend fun lagMidlertidigEndringId(ident: String): Long {
         while (true) {
             val midlertidigId = Random.nextLong(0L..Long.MAX_VALUE)
-            if (!rapporteringRepository.finnesRapporteringsperiode(midlertidigId)) {
+            if (!rapporteringRepository.finnesRapporteringsperiode(midlertidigId, ident)) {
                 return midlertidigId
             }
         }
@@ -203,6 +203,22 @@ class RapporteringService(
         val eksisterendeAktiviteter = rapporteringRepository.hentAktiviteter(dagId)
         rapporteringRepository.slettAktiviteter(eksisterendeAktiviteter.map { it.id })
         rapporteringRepository.lagreAktiviteter(rapporteringId, dagId, dag)
+    }
+
+    suspend fun resettAktiviteter(
+        rapporteringId: Long,
+        ident: String,
+    ) {
+        if (!rapporteringRepository.finnesRapporteringsperiode(rapporteringId, ident)) {
+            throw RuntimeException("Fant ingen rapporteringsperiode med id $rapporteringId for ident $ident")
+        }
+        val dager = rapporteringRepository.hentDagerUtenAktivitet(rapporteringId)
+        dager.forEach { (dagId, _) ->
+            val aktiviteter = rapporteringRepository.hentAktiviteter(dagId)
+            if (aktiviteter.isNotEmpty()) {
+                rapporteringRepository.slettAktiviteter(aktiviteter.map { it.id })
+            }
+        }
     }
 
     suspend fun oppdaterRegistrertArbeidssoker(
