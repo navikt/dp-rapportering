@@ -67,6 +67,7 @@ spec:
     outbound:
       rules:
         - application: dp-arena-meldeplikt-adapter
+        - application: dp-behov-pdf-generator
       external:
         - host: {{ DOKARKIV_HOST }}
     inbound:
