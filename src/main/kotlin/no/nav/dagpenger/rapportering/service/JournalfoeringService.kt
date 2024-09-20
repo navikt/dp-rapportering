@@ -2,9 +2,18 @@ package no.nav.dagpenger.rapportering.service
 
 import com.natpryce.konfig.Key
 import com.natpryce.konfig.stringType
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.accept
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
 import io.ktor.http.Headers
+import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
+import no.nav.dagpenger.oauth2.defaultHttpClient
+import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.properties
 import no.nav.dagpenger.rapportering.connector.DokarkivConnector
@@ -27,7 +36,6 @@ import no.nav.dagpenger.rapportering.model.Tema
 import no.nav.dagpenger.rapportering.model.Tilleggsopplysning
 import no.nav.dagpenger.rapportering.model.Variantformat
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
-import no.nav.dagpenger.rapportering.utils.PDFGenerator
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -37,13 +45,13 @@ import java.util.Locale
 import java.util.Timer
 import java.util.TimerTask
 import java.util.UUID
-import kotlin.time.Duration
 import kotlin.time.measureTime
 
 class JournalfoeringService(
     private val meldepliktConnector: MeldepliktConnector,
     private val dokarkivConnector: DokarkivConnector,
     private val journalfoeringRepository: JournalfoeringRepository,
+    private val httpClient: HttpClient = defaultHttpClient(),
     delay: Long = 10000,
     // 5 minutes by default
     resendInterval: Long = 300_000L,
@@ -156,13 +164,44 @@ class JournalfoeringService(
 
     suspend fun journalfoer(
         ident: String,
-        loginLevel: Int,
         token: String,
         headers: Headers,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
         val person = meldepliktConnector.hentPerson(ident, token)
         val navn = person?.fornavn + " " + person?.etternavn
+
+        // Opprett HTML
+        // Hent HTML fra frontend
+        val htmlFrafrontend = "<div>!!!</div>"
+
+        // Erstatt plassholdere med data
+        val htmlMal = this::class.java.getResource("/html_pdf_mal.html")!!.readText()
+        htmlMal.replace("%NAVN%", navn)
+        htmlMal.replace("%IDENT%", ident)
+        htmlMal.replace("%RAPPORTERINGSPERIODE_ID%", rapporteringsperiode.id.toString())
+        htmlMal.replace("%DATO%", LocalDate.now().format(dateFormatter))
+        htmlMal.replace("%TITTEL%", getTittle(rapporteringsperiode))
+        htmlMal.replace("%MOTTATT%", LocalDateTime.now().format(dateTimeFormatter))
+        htmlMal.replace(
+            "%NESTE_MELDEKORT_KAN_SENDES_FRA%",
+            rapporteringsperiode.kanSendesFra.plusDays(14).format(dateFormatter)
+        )
+        htmlMal.replace("%HTML%", htmlFrafrontend)
+
+        // Kall dp-behov-pdf-generator
+        val sak = "meldekort" // Vi bruker "meldekort" istedenfor saksnummer
+
+        val pdfGeneratorResponse =
+            httpClient.post(Configuration.pdfGeneratorUrl + "/convert-html-to-pdf/" + sak) {
+                accept(ContentType.Application.Pdf)
+                contentType(ContentType.Text.Plain)
+                setBody(htmlMal)
+            }
+
+        val pdf: ByteArray = pdfGeneratorResponse.body()
+
+        // Kall dp-behov-journalforing
 
         val journalpost =
             Journalpost(
@@ -190,7 +229,7 @@ class JournalfoeringService(
                     Sak(
                         sakstype = Sakstype.GENERELL_SAK,
                     ),
-                dokumenter = getDokumenter(rapporteringsperiode, ident, navn, loginLevel),
+                dokumenter = getDokumenter(rapporteringsperiode, pdf),
             )
 
         logger.info("Opprettet journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
@@ -254,9 +293,7 @@ class JournalfoeringService(
 
     private fun getDokumenter(
         rapporteringsperiode: Rapporteringsperiode,
-        ident: String,
-        navn: String,
-        loginLevel: Int,
+        pdf: ByteArray,
     ): List<Dokument> {
         var brevkode = brevkode
         if (rapporteringsperiode.status == RapporteringsperiodeStatus.Endret) {
@@ -270,7 +307,7 @@ class JournalfoeringService(
                 dokumentvarianter =
                     listOf(
                         getJSON(rapporteringsperiode),
-                        getPDF(rapporteringsperiode, ident, navn, loginLevel),
+                        getPDF(pdf),
                     ),
             )
 
@@ -287,58 +324,7 @@ class JournalfoeringService(
                     .encodeToString(defaultObjectMapper.writeValueAsBytes(rapporteringsperiode)),
         )
 
-    private fun getPDF(
-        rapporteringsperiode: Rapporteringsperiode,
-        ident: String,
-        navn: String,
-        loginLevel: Int,
-    ): DokumentVariant {
-        var tittel = "Elektronisk innsendt meldekort"
-        if (rapporteringsperiode.status == RapporteringsperiodeStatus.Endret) {
-            tittel = "Elektronisk korrigert meldekort"
-        }
-
-        val logo = this::class.java.getResource("/nav-logo.svg")!!.readText()
-
-        val aktiviteter =
-            rapporteringsperiode.dager.joinToString("\n") { dag ->
-                "<div>" +
-                    "<b>" + dag.dato.format(dateFormatter) + ":</b> " +
-                    dag.aktiviteter.joinToString(", ") { aktivitet ->
-                        var tid = ""
-
-                        if (aktivitet.timer != null) {
-                            val arbeidedeTimer = Duration.parseIsoString(aktivitet.timer)
-                            val timer = arbeidedeTimer.inWholeMinutes.toDouble() / 60
-                            tid = " $timer t"
-                        }
-
-                        "" + aktivitet.type + tid
-                    } +
-                    "</div>"
-            }
-
-        val html =
-            """
-                <div class="info">
-                   <b>ID:</b> ${rapporteringsperiode.id}<br/>
-                   <b>Tema:</b> ${Tema.DAG.tittel}<br/>
-                   <b>Tilgangsnivå:</b> $loginLevel
-                </div>
-                
-                $logo
-                
-                <h1>$tittel</h1>
-                <div><b>${getTittle(rapporteringsperiode)}</b></div>
-                <div><b>Meldekortet ble mottatt:</b> ${LocalDateTime.now().format(dateTimeFormatter)}</div>
-                <div><b>Bruker:</b> $navn ($ident)</div>
-                <div><b>Neste meldekort kan sendes inn fra:</b> ${rapporteringsperiode.kanSendesFra.format(dateFormatter)}</div>
-                <br>
-                ${rapporteringsperiode.html ?: aktiviteter}
-                """
-
-        val pdf = PDFGenerator().createPDFA(html)
-
+    private fun getPDF(pdf: ByteArray): DokumentVariant {
         return DokumentVariant(
             filtype = Filetype.PDFA,
             variantformat = Variantformat.ARKIV,

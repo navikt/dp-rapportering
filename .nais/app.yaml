@@ -39,6 +39,8 @@ spec:
       value: {{DOKARKIV_HOST}}
     - name: DOKARKIV_AUDIENCE
       value: {{DOKARKIV_AUDIENCE}}
+    - name: PDF_GENERATOR_URL
+      value: {{PDF_GENERATOR_URL}}
     - name: GITHUB_SHA
       value: {{ githubSha }}
   gcp:

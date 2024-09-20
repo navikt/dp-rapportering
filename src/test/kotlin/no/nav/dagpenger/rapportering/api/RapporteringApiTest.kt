@@ -3,7 +3,6 @@ package no.nav.dagpenger.rapportering.api
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.ktor.client.call.body
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -98,6 +97,7 @@ class RapporteringApiTest : ApiTestSetup() {
             externalServices {
                 meldepliktAdapter()
                 dokarkiv()
+                pdfGenerator()
             }
 
             // Lagrer perioden i databasen
@@ -164,6 +164,7 @@ class RapporteringApiTest : ApiTestSetup() {
             externalServices {
                 meldepliktAdapter()
                 dokarkiv()
+                pdfGenerator()
             }
 
             val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
@@ -674,14 +675,25 @@ class RapporteringApiTest : ApiTestSetup() {
         }
     }
 
-    val defaultAdapterAktivitet =
+    private fun ExternalServicesBuilder.pdfGenerator() {
+        hosts("https://pdf-generator") {
+            routing {
+                post("/convert-html-to-pdf/meldekort") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Pdf.toString())
+                    call.respond("PDF")
+                }
+            }
+        }
+    }
+
+    private val defaultAdapterAktivitet =
         AdapterAktivitet(
             uuid = UUID.randomUUID(),
             type = Arbeid,
             timer = 7.5,
         )
 
-    fun ExternalServicesBuilder.meldepliktAdapter(
+    private fun ExternalServicesBuilder.meldepliktAdapter(
         rapporteringsperioderResponse: List<AdapterRapporteringsperiode> =
             listOf(
                 adapterRapporteringsperiode(),

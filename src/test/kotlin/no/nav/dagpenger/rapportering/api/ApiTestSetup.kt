@@ -95,6 +95,7 @@ open class ApiTestSetup {
                         meldepliktConnector,
                         DokarkivConnector(httpClient = httpClient),
                         journalfoeringRepository,
+                        httpClient,
                     ),
                 )
 
@@ -113,6 +114,7 @@ open class ApiTestSetup {
         System.setProperty("MELDEPLIKT_ADAPTER_AUDIENCE", REQUIRED_AUDIENCE)
         System.setProperty("DOKARKIV_HOST", "dokarkiv")
         System.setProperty("DOKARKIV_AUDIENCE", REQUIRED_AUDIENCE)
+        System.setProperty("PDF_GENERATOR_URL", "https://pdf-generator")
         System.setProperty("DB_JDBC_URL", "${database.jdbcUrl}&user=${database.username}&password=${database.password}")
         System.setProperty("token-x.client-id", TOKENX_ISSUER_ID)
         System.setProperty("TOKEN_X_CLIENT_ID", TOKENX_ISSUER_ID)

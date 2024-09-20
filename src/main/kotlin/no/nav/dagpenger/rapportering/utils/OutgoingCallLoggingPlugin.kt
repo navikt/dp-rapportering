@@ -6,11 +6,13 @@ import io.ktor.client.plugins.observer.wrapWithContent
 import io.ktor.client.plugins.plugin
 import io.ktor.client.request.HttpRequest
 import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.fullPath
 import io.ktor.http.hostWithPort
+import io.ktor.util.toByteArray
 import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.readUTF8LineTo
@@ -26,6 +28,7 @@ import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import java.time.Instant
 import java.time.LocalDateTime
+import java.util.Base64
 import kotlin.coroutines.CoroutineContext
 
 class OutgoingCallLoggingPlugin(
@@ -51,7 +54,12 @@ class OutgoingCallLoggingPlugin(
 
             val ident = getIdent(request.headers)
 
-            val responseBody = response.bodyAsText(Charsets.UTF_8)
+            val responseBody = response.bodyAsChannel().toByteArray()
+            val responseBodyString = if (response.headers[HttpHeaders.ContentType] == ContentType.Application.Pdf.toString()) {
+                "PDF: " + Base64.getEncoder().encodeToString(responseBody)
+            } else {
+                responseBody.toString(Charsets.UTF_8)
+            }
 
             try {
                 kallLoggRepository.lagreKallLogg(
@@ -65,7 +73,7 @@ class OutgoingCallLoggingPlugin(
                         status = response.status.value,
                         kallTid = Instant.now().toEpochMilli() - kallTid,
                         request = buildRequest(requestBuilder.executionContext, request),
-                        response = buildResponse(response, responseBody),
+                        response = buildResponse(response, responseBodyString),
                         ident = ident,
                         logginfo = "",
                     ),
@@ -75,7 +83,7 @@ class OutgoingCallLoggingPlugin(
             }
 
             // Response content can be read only once. Wrap the call with the content we have read
-            originalCall.wrapWithContent(ByteReadChannel(responseBody.toByteArray()))
+            originalCall.wrapWithContent(ByteReadChannel(responseBody))
         }
     }
 

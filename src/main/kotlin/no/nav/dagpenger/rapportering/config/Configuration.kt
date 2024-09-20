@@ -62,6 +62,8 @@ internal object Configuration {
 
     val dokarkivAudience by lazy { properties[Key("DOKARKIV_AUDIENCE", stringType)] }
 
+    val pdfGeneratorUrl by lazy { properties[Key("PDF_GENERATOR_URL", stringType)] }
+
     private val tokenXClient by lazy {
         val tokenX = OAuth2Config.TokenX(properties)
         CachedOauth2Client(

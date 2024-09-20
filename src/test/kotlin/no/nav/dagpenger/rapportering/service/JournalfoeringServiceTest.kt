@@ -86,11 +86,6 @@ class JournalfoeringServiceTest {
     }
 
     @Test
-    fun `Kan opprette og sende journalpost med html`() {
-        test(false, "<div>Test</div>")
-    }
-
-    @Test
     fun `Kan lagre journalposter midlertidig ved feil og sende paa nytt`() {
         setProperties()
 
@@ -98,6 +93,17 @@ class JournalfoeringServiceTest {
         fun mockTokenProvider() =
             { _: String ->
                 "token"
+            }
+
+        // Mock svar fra PDFgenerator
+        val pdf = this::class.java.getResource("/dokarkiv_expected.pdf")!!.readBytes()
+        val mockPdfGeneratorEngine =
+            MockEngine { _ ->
+                respond(
+                    content = ByteReadChannel(pdf),
+                    status = HttpStatusCode.OK,
+                    headers = headersOf(HttpHeaders.ContentType, "application/pdf"),
+                )
             }
 
         // Mock svar fra Dokarkiv
@@ -164,6 +170,7 @@ class JournalfoeringServiceTest {
                 meldepliktConnector,
                 dokarkivConnector,
                 journalfoeringRepository,
+                createHttpClient(mockPdfGeneratorEngine),
                 200000,
                 200000,
             )
@@ -173,7 +180,7 @@ class JournalfoeringServiceTest {
 
         // Prøver å sende
         runBlocking {
-            journalfoeringService.journalfoer("01020312345", 0, token, headers, rapporteringsperiode)
+            journalfoeringService.journalfoer("01020312345", token, headers, rapporteringsperiode)
         }
 
         // Får feil og sjekker at JournalfoeringService lagrer journalpost midlertidig
@@ -202,14 +209,12 @@ class JournalfoeringServiceTest {
         )
         System.setProperty("DOKARKIV_HOST", dokarkivUrl)
         System.setProperty("DOKARKIV_AUDIENCE", "test.test.dokarkiv")
+        System.setProperty("PDF_GENERATOR_URL", "pdf-generator")
         System.setProperty("AZURE_APP_WELL_KNOWN_URL", "test.test.dokarkiv")
         System.setProperty("GITHUB_SHA", githubSha)
     }
 
-    private fun test(
-        endring: Boolean = false,
-        html: String? = null,
-    ) {
+    private fun test(endring: Boolean = false) {
         setProperties()
 
         // Mock TokenProvider
@@ -225,6 +230,22 @@ class JournalfoeringServiceTest {
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
         justRun { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) }
         every { journalfoeringRepository.hentMidlertidigLagredeJournalposter() } returns emptyList()
+
+        // Mock svar fra PDFgenerator
+        val pdf = if (endring) {
+            this::class.java.getResource("/dokarkiv_korrigert_expected.pdf")!!.readBytes()
+        } else {
+            this::class.java.getResource("/dokarkiv_expected.pdf")!!.readBytes()
+        }
+
+        val mockPdfGeneratorEngine =
+            MockEngine { _ ->
+                respond(
+                    content = ByteReadChannel(pdf),
+                    status = HttpStatusCode.OK,
+                    headers = headersOf(HttpHeaders.ContentType, "application/pdf"),
+                )
+            }
 
         // Mock svar fra Dokarkiv
         val mockEngine =
@@ -257,13 +278,14 @@ class JournalfoeringServiceTest {
                 meldepliktConnector,
                 dokarkivConnector,
                 journalfoeringRepository,
+                createHttpClient(mockPdfGeneratorEngine)
             )
 
-        val rapporteringsperiode = createRapporteringsperiode(endring, html)
+        val rapporteringsperiode = createRapporteringsperiode(endring)
 
         // Kjører
         runBlocking {
-            journalfoeringService.journalfoer("01020312345", 0, token, headers, rapporteringsperiode)
+            journalfoeringService.journalfoer("01020312345", token, headers, rapporteringsperiode)
         }
 
         // Sjekker
@@ -271,7 +293,7 @@ class JournalfoeringServiceTest {
         mockEngine.responseHistory.size shouldBe 1
 
         runBlocking {
-            checkJournalpost(endring, mockEngine.requestHistory[0].body, rapporteringsperiode, html != null)
+            checkJournalpost(endring, mockEngine.requestHistory[0].body, rapporteringsperiode)
         }
     }
 
@@ -325,7 +347,6 @@ class JournalfoeringServiceTest {
         endring: Boolean,
         content: OutgoingContent,
         opprineligRapporteringsperiode: Rapporteringsperiode,
-        withHtml: Boolean = false,
     ) {
         // Henter Journalpost vi har sendt
         val bodyString =
@@ -388,7 +409,7 @@ class JournalfoeringServiceTest {
         dokument?.dokumentvarianter?.size shouldBe 2
 
         checkJson(journalpost, opprineligRapporteringsperiode)
-        checkPdf(endring, journalpost, withHtml)
+        checkPdf(endring, journalpost)
     }
 
     private fun checkJson(
@@ -410,7 +431,6 @@ class JournalfoeringServiceTest {
     private fun checkPdf(
         endring: Boolean,
         journalpost: Journalpost,
-        withHtml: Boolean = false,
     ) {
         journalpost.dokumenter!![0].dokumentvarianter[1].filtype shouldBe Filetype.PDFA
         journalpost.dokumenter!![0].dokumentvarianter[1].variantformat shouldBe Variantformat.ARKIV
@@ -418,12 +438,6 @@ class JournalfoeringServiceTest {
         var expectedFilePath = "src/test/resources/dokarkiv_expected.pdf"
         var actualFilePath = "actual.pdf"
         var diffFilePath = "diffOutput" // Uten .pdf
-
-        if (withHtml) {
-            expectedFilePath = "src/test/resources/dokarkiv_expected_with_html.pdf"
-            actualFilePath = "actual_with_html.pdf"
-            diffFilePath = "diffOutput_with_html" // Uten .pdf
-        }
 
         if (endring) {
             expectedFilePath = "src/test/resources/dokarkiv_korrigert_expected.pdf"

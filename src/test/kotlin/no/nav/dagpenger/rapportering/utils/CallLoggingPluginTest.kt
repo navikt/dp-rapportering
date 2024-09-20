@@ -97,6 +97,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
             externalServices {
                 meldepliktAdapter()
                 dokarkiv()
+                pdfGenerator()
             }
 
             val adapterRapporteringsperiodeString =
@@ -112,7 +113,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
 
             val list = getLogList()
 
-            list.size shouldBe 6
+            list.size shouldBe 7
             list[2].type shouldBe "REST"
             list[2].kallRetning shouldBe "INN"
             list[2].method shouldBe "POST"
@@ -162,11 +163,29 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[5].type shouldBe "REST"
             list[5].kallRetning shouldBe "UT"
             list[5].method shouldBe "POST"
-            list[5].operation shouldBe "/rest/journalpostapi/v1/journalpost"
+            list[5].operation shouldBe "/convert-html-to-pdf/meldekort"
             list[5].status shouldBe 200
-            list[5].request shouldStartWith "POST https://dokarkiv:443/rest/journalpostapi/v1/journalpost"
-            list[5].request shouldContain "JOURNALPOST"
+            list[5].request shouldStartWith "POST https://pdf-generator:443/convert-html-to-pdf/meldekort"
+            list[5].request shouldContain "Meldekort %RAPPORTERINGSPERIODE_ID%"
             list[5].response.trimIndent() shouldBe
+                """
+                HTTP/1.1 200 OK
+                Content-Type: application/pdf
+                Content-Length: 3
+                
+                PDF: UERG
+                """.trimIndent()
+            list[6].ident shouldBe "" // Det finnes ikke token når vi genererer PDF
+            list[6].logginfo shouldBe ""
+
+            list[6].type shouldBe "REST"
+            list[6].kallRetning shouldBe "UT"
+            list[6].method shouldBe "POST"
+            list[6].operation shouldBe "/rest/journalpostapi/v1/journalpost"
+            list[6].status shouldBe 200
+            list[6].request shouldStartWith "POST https://dokarkiv:443/rest/journalpostapi/v1/journalpost"
+            list[6].request shouldContain "JOURNALPOST"
+            list[6].response.trimIndent() shouldBe
                 """
                 HTTP/1.1 200 OK
                 Content-Type: application/json
@@ -174,8 +193,8 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 
                 $journalpostresponse
                 """.trimIndent()
-            list[5].ident shouldBe "" // Det finnes ikke ident i token når vi sender data til Dokarkiv
-            list[5].logginfo shouldBe ""
+            list[6].ident shouldBe "" // Det finnes ikke ident i token når vi sender data til Dokarkiv
+            list[6].logginfo shouldBe ""
         }
 
     private fun getLogList() =
@@ -227,6 +246,17 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 post("/rest/journalpostapi/v1/journalpost") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond(journalpostresponse)
+                }
+            }
+        }
+    }
+
+    private fun ExternalServicesBuilder.pdfGenerator() {
+        hosts("https://pdf-generator") {
+            routing {
+                post("/convert-html-to-pdf/meldekort") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Pdf.toString())
+                    call.respond("PDF")
                 }
             }
         }

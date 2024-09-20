@@ -21,3 +21,4 @@ MELDEPLIKT_ADAPTER_HOST: dp-arena-meldeplikt-adapter.intern.dev.nav.no
 MELDEPLIKT_ADAPTER_AUDIENCE: dev-gcp:teamdagpenger:dp-arena-meldeplikt-adapter
 DOKARKIV_HOST: dokarkiv.dev-fss-pub.nais.io # Q1=dokarkiv.dev-fss-pub.nais.io, Q2=dokarkiv-q2.dev-fss-pub.nais.io
 DOKARKIV_AUDIENCE: dev-fss.teamdokumenthandtering.dokarkiv-q1 # Q1=dev-fss.teamdokumenthandtering.dokarkiv-q1, Q2=dev-fss.teamdokumenthandtering.dokarkiv
+PDF_GENERATOR_URL: https://dp-pdf-generator.intern.dev.nav.no

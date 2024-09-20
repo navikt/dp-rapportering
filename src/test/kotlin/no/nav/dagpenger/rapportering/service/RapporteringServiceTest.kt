@@ -404,7 +404,7 @@ class RapporteringServiceTest {
     @Test
     fun `kan sende inn rapporteringsperiode`() {
         val rapporteringsperiode = rapporteringsperiodeListe.first()
-        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
+        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
         coEvery { meldepliktConnector.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
@@ -423,7 +423,7 @@ class RapporteringServiceTest {
 
         verify(exactly = 1) {
             runBlocking {
-                journalfoeringService.journalfoer(any(), any(), any(), any(), any())
+                journalfoeringService.journalfoer(any(), any(), any(), any())
             }
         }
         coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
@@ -449,7 +449,7 @@ class RapporteringServiceTest {
         val endringId = "4"
         val originalPeriode = rapporteringsperiodeListe.first()
         val rapporteringsperiode = originalPeriode.copy(status = Endret, begrunnelseEndring = "Endring", originalId = originalPeriode.id)
-        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
+        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
         coEvery { meldepliktConnector.hentEndringId(any(), any()) } returns endringId
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
@@ -474,7 +474,7 @@ class RapporteringServiceTest {
 
         verify(exactly = 1) {
             runBlocking {
-                journalfoeringService.journalfoer(any(), any(), any(), any(), any())
+                journalfoeringService.journalfoer(any(), any(), any(), any())
             }
         }
         coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
