@@ -27,7 +27,6 @@ import no.nav.dagpenger.rapportering.api.auth.loginLevel
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
-import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.service.RapporteringService
@@ -142,7 +141,12 @@ internal fun Application.rapporteringApi(
                                 loginLevel,
                                 headers,
                             )
-                        call.respond(HttpStatusCode.OK, PeriodeId(response.id.toString()))
+                        if (response.status == "OK") {
+                            call.respond(HttpStatusCode.OK, response)
+                        } else {
+                            call.respond(HttpStatusCode.BadRequest, response)
+                            meldepliktMetrikker.rapporteringApiFeil.increment()
+                        }
                     } catch (e: Exception) {
                         logger.error("Feil ved innsending: $e")
                         throw e
