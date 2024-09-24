@@ -63,7 +63,7 @@ class ApplicationBuilder(
 
     private val rapidsConnection =
         RapidApplication
-            .create(configuration) { engine, rapidsConnection: RapidsConnection ->
+            .create(configuration) { engine, _: RapidsConnection ->
                 engine.application.konfigurasjon()
                 engine.application.internalApi()
                 engine.application.rapporteringApi(rapporteringService, meldepliktMetrikker)
