@@ -52,6 +52,8 @@ import no.nav.dagpenger.rapportering.model.Tilleggsopplysning
 import no.nav.dagpenger.rapportering.model.Variantformat
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.Postgres.database
+import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
+import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.LocalDate
@@ -145,7 +147,7 @@ class JournalfoeringServiceTest {
         val meldepliktConnector = mockk<MeldepliktConnector>()
         coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
 
-        val dokarkivConnector = DokarkivConnector(dokarkivUrl, mockTokenProvider(), createHttpClient(mockEngine))
+        val dokarkivConnector = DokarkivConnector(dokarkivUrl, mockTokenProvider(), createHttpClient(mockEngine), actionTimer)
 
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
         every { journalfoeringRepository.lagreJournalpostMidlertidig(any()) } just runs
@@ -170,6 +172,7 @@ class JournalfoeringServiceTest {
                 meldepliktConnector,
                 dokarkivConnector,
                 journalfoeringRepository,
+                meterRegistry,
                 createHttpClient(mockPdfGeneratorEngine),
                 200000,
                 200000,
@@ -271,13 +274,14 @@ class JournalfoeringServiceTest {
                 )
             }
 
-        val dokarkivConnector = DokarkivConnector(dokarkivUrl, mockTokenProvider(), createHttpClient(mockEngine))
+        val dokarkivConnector = DokarkivConnector(dokarkivUrl, mockTokenProvider(), createHttpClient(mockEngine), actionTimer)
 
         val journalfoeringService =
             JournalfoeringService(
                 meldepliktConnector,
                 dokarkivConnector,
                 journalfoeringRepository,
+                meterRegistry,
                 createHttpClient(mockPdfGeneratorEngine)
             )
 
@@ -337,6 +341,7 @@ class JournalfoeringServiceTest {
             null,
             if (endring) RapporteringsperiodeStatus.Endret else TilUtfylling,
             true,
+            null,
             null,
             html,
         )

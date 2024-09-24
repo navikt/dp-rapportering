@@ -17,6 +17,10 @@ import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.runMig
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.RapporteringService
+import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
+import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meldepliktMetrikker
+import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
+import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.rapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.utils.OutgoingCallLoggingPlugin
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
@@ -84,8 +88,9 @@ open class ApiTestSetup {
                         OutgoingCallLoggingPlugin().intercept(this)
                     }
                 }
-            val meldepliktConnector = MeldepliktConnector(httpClient = httpClient)
-            val rapporteringRepository = RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
+
+            val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
+            val rapporteringRepository = RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
             val rapporteringService =
                 RapporteringService(
@@ -93,16 +98,18 @@ open class ApiTestSetup {
                     rapporteringRepository,
                     JournalfoeringService(
                         meldepliktConnector,
-                        DokarkivConnector(httpClient = httpClient),
+                        DokarkivConnector(httpClient = httpClient, actionTimer = actionTimer),
                         journalfoeringRepository,
+                        meterRegistry,
                         httpClient,
                     ),
+                    rapporteringsperiodeMetrikker,
                 )
 
             application {
                 konfigurasjon()
                 internalApi()
-                rapporteringApi(rapporteringService)
+                rapporteringApi(rapporteringService, meldepliktMetrikker)
             }
 
             block()

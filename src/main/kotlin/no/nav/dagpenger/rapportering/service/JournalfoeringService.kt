@@ -10,6 +10,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.contentType
+import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import no.nav.dagpenger.oauth2.defaultHttpClient
@@ -51,6 +52,7 @@ class JournalfoeringService(
     private val meldepliktConnector: MeldepliktConnector,
     private val dokarkivConnector: DokarkivConnector,
     private val journalfoeringRepository: JournalfoeringRepository,
+    meterRegistry: MeterRegistry,
     private val httpClient: HttpClient = defaultHttpClient(),
     delay: Long = 10000,
     // 5 minutes by default
@@ -68,7 +70,7 @@ class JournalfoeringService(
     private var locale: Locale? = Locale.of("nb", "NO") // Vi skal regne ukenummer iht norske regler
     private val woy = WeekFields.of(locale).weekOfWeekBasedYear()
 
-    private val metrikker = JobbkjoringMetrikker(this::class.java.simpleName)
+    private val metrikker: JobbkjoringMetrikker = JobbkjoringMetrikker(meterRegistry, this::class.simpleName!!)
 
     init {
         val timer = Timer()

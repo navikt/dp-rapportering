@@ -13,6 +13,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.withMigratedDb
+import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
 import java.sql.BatchUpdateException
@@ -20,7 +21,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 class RapporteringRepositoryPostgresTest {
-    val rapporteringRepositoryPostgres = RapporteringRepositoryPostgres(dataSource)
+    val rapporteringRepositoryPostgres = RapporteringRepositoryPostgres(dataSource, actionTimer)
 
     val ident = "12345678910"
 
@@ -92,14 +93,14 @@ class RapporteringRepositoryPostgresTest {
                 ident = ident,
             )
 
-            rapporteringRepositoryPostgres.finnesRapporteringsperiode(rapporteringsperiode.id) shouldBe true
+            rapporteringRepositoryPostgres.finnesRapporteringsperiode(rapporteringsperiode.id, ident) shouldBe true
         }
     }
 
     @Test
     fun `finnesRapporteringsperiode returnerer false hvis perioden ikke finnes`() {
         withMigratedDb {
-            rapporteringRepositoryPostgres.finnesRapporteringsperiode(123L) shouldBe false
+            rapporteringRepositoryPostgres.finnesRapporteringsperiode(123L, "12345678910") shouldBe false
         }
     }
 
@@ -245,6 +246,23 @@ class RapporteringRepositoryPostgresTest {
             val oppdatertPeriode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = rapporteringsperiode.id, ident = ident)!!
 
             oppdatertPeriode.begrunnelseEndring shouldBe "Dette er en begrunnelse"
+        }
+    }
+
+    @Test
+    fun `kan oppdatere rapporteringstype for periode`() {
+        val rapporteringsperiode = getRapporteringsperiode()
+
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
+            rapporteringRepositoryPostgres.oppdaterRapporteringstype(
+                rapporteringId = rapporteringsperiode.id,
+                ident = ident,
+                rapporteringstype = "harAktivitet",
+            )
+            val oppdatertPeriode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = rapporteringsperiode.id, ident = ident)!!
+
+            oppdatertPeriode.rapporteringstype shouldBe "harAktivitet"
         }
     }
 
@@ -468,6 +486,7 @@ fun getRapporteringsperiode(
     registrertArbeidssoker = registrertArbeidssoker,
     begrunnelseEndring = begrunnelseEndring,
     originalId = null,
+    rapporteringstype = null,
 )
 
 private fun getDager(

@@ -188,6 +188,23 @@ paths:
         parameters:
             - $ref: '#/components/parameters/periodeId'
 
+    /rapporteringsperiode/{periodeId}/aktiviteter:
+        delete:
+            responses:
+                204:
+                    description: OK - No Content
+                400:
+                    description: Bad Request
+            summary: Slette alle aktiviteter
+            description: Slette alle aktiviteter i rapporteringsperioden
+            operationId: post-slett-aktivitet
+            tags:
+                - Rapporteringsperiode
+            security:
+                - tokenX: []
+        parameters:
+            - $ref: '#/components/parameters/periodeId'
+
     /rapporteringsperiode/{periodeId}/begrunnelse:
         post:
             responses:
@@ -208,6 +225,29 @@ paths:
                     application/json:
                         schema:
                             $ref: '#/components/schemas/BegrunnelseRequest'
+        parameters:
+            - $ref: '#/components/parameters/periodeId'
+
+    /rapporteringsperiode/{periodeId}/rapporteringstype:
+        post:
+            responses:
+                204:
+                    description: OK - No Content
+                400:
+                    description: Bad Request
+            summary: Lagre rapporteringstype for perioden
+            description: Oppdaterer rapporteringstype i rapporteringsperioden
+            operationId: post-oppdater-rapporteringstype
+            tags:
+                - Rapporteringsperiode
+            security:
+                - tokenX: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/RapporteringstypeRequest'
         parameters:
             - $ref: '#/components/parameters/periodeId'
 
@@ -276,6 +316,13 @@ components:
             type: object
             properties:
                 begrunnelseEndring:
+                    type: string
+        RapporteringstypeRequest:
+            required:
+                - rapporteringstype
+            type: object
+            properties:
+                rapporteringstype:
                     type: string
         periode:
             type: object
@@ -347,6 +394,8 @@ components:
                 originalId:
                     type: string
                 html:
+                    type: string
+                rapporteringstype:
                     type: string
         RapporteringsperiodeStatus:
             type: string

@@ -26,6 +26,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
+import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.rapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.utils.februar
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
@@ -36,7 +37,8 @@ class RapporteringServiceTest {
     private val meldepliktConnector = mockk<MeldepliktConnector>()
     private val rapporteringRepository = mockk<RapporteringRepository>()
     private val journalfoeringService = mockk<JournalfoeringService>()
-    private val rapporteringService = RapporteringService(meldepliktConnector, rapporteringRepository, journalfoeringService)
+    private val rapporteringService =
+        RapporteringService(meldepliktConnector, rapporteringRepository, journalfoeringService, rapporteringsperiodeMetrikker)
 
     private val ident = "12345678910"
     private val token = "jwtToken"
@@ -289,13 +291,22 @@ class RapporteringServiceTest {
     }
 
     @Test
+    fun `kan oppdatere rapporteringstype`() {
+        coJustRun { rapporteringRepository.oppdaterRapporteringstype(any(), any(), any()) }
+
+        runBlocking { rapporteringService.oppdaterRapporteringstype(1L, "12345678910", "harIngenAktivitet") }
+
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringstype(1L, "12345678910", "harIngenAktivitet") }
+    }
+
+    @Test
     fun `kan endre rapporteringsperiode`() {
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns
             listOf(rapporteringsperiodeListe.first().copy(id = 123L, kanEndres = true).toAdapterRapporteringsperiode())
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(ident) } returns emptyList()
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
-        coEvery { rapporteringRepository.finnesRapporteringsperiode(any()) } returns true andThen true andThen false
+        coEvery { rapporteringRepository.finnesRapporteringsperiode(any(), any()) } returns true andThen true andThen false
 
         val response = runBlocking { rapporteringService.startEndring(123L, ident, token) }
 
@@ -303,7 +314,7 @@ class RapporteringServiceTest {
         response.status shouldBe Endret
         response.originalId shouldBe 123L
         coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
-        coVerify(exactly = 3) { rapporteringRepository.finnesRapporteringsperiode(any()) }
+        coVerify(exactly = 3) { rapporteringRepository.finnesRapporteringsperiode(any(), any()) }
     }
 
     @Test
@@ -526,6 +537,31 @@ class RapporteringServiceTest {
     }
 
     @Test
+    fun `kan slette alle aktiviteter for en periode`() {
+        val dagPairList: List<Pair<UUID, Dag>> = getDager().map { UUID.randomUUID() to it }
+        coEvery { rapporteringRepository.finnesRapporteringsperiode(any(), any()) } returns true
+        coEvery { rapporteringRepository.hentDagerUtenAktivitet(any()) } returns dagPairList
+        coEvery { rapporteringRepository.hentAktiviteter(any()) } returns listOf(Aktivitet(UUID.randomUUID(), Utdanning, null))
+        coJustRun { rapporteringRepository.slettAktiviteter(any()) }
+
+        runBlocking { rapporteringService.resettAktiviteter(1L, ident) }
+
+        coVerify { rapporteringRepository.finnesRapporteringsperiode(1L, ident) }
+        coVerify { rapporteringRepository.hentDagerUtenAktivitet(1L) }
+        coVerify(exactly = 14) { rapporteringRepository.hentAktiviteter(any()) }
+        coVerify(exactly = 14) { rapporteringRepository.slettAktiviteter(any()) }
+    }
+
+    @Test
+    fun `sletter ikke aktiviteter hvis rapporteringsperioden ikke finnes`() {
+        coEvery { rapporteringRepository.finnesRapporteringsperiode(any(), any()) } returns false
+
+        shouldThrow<RuntimeException> {
+            runBlocking { rapporteringService.resettAktiviteter(1L, ident) }
+        }
+    }
+
+    @Test
     fun `kan slette mellomlagrede rapporteringsperioder som er sendt inn`() {
         coEvery { rapporteringRepository.hentAlleLagredeRapporteringsperioder() } returns
             listOf(rapporteringsperiodeListe.first().copy(status = Innsendt))
@@ -616,6 +652,7 @@ fun lagRapporteringsperiode(
     registrertArbeidssoker = null,
     begrunnelseEndring = null,
     originalId = null,
+    rapporteringstype = null,
 )
 
 private fun getDager(

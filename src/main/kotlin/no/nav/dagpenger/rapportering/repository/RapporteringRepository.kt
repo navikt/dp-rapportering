@@ -12,11 +12,16 @@ interface RapporteringRepository {
         ident: String,
     ): Rapporteringsperiode?
 
-    suspend fun finnesRapporteringsperiode(id: Long): Boolean
+    suspend fun finnesRapporteringsperiode(
+        id: Long,
+        ident: String,
+    ): Boolean
 
     suspend fun hentLagredeRapporteringsperioder(ident: String): List<Rapporteringsperiode>
 
     suspend fun hentAlleLagredeRapporteringsperioder(): List<Rapporteringsperiode>
+
+    suspend fun hentDagerUtenAktivitet(rapporteringId: Long): List<Pair<UUID, Dag>>
 
     suspend fun hentDagId(
         rapporteringId: Long,
@@ -51,6 +56,12 @@ interface RapporteringRepository {
         rapporteringId: Long,
         ident: String,
         begrunnelse: String,
+    )
+
+    suspend fun oppdaterRapporteringstype(
+        rapporteringId: Long,
+        ident: String,
+        rapporteringstype: String,
     )
 
     suspend fun oppdaterPeriodeEtterInnsending(

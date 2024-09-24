@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.api
 
 import com.fasterxml.jackson.core.type.TypeReference
 import io.ktor.client.HttpClient
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -70,6 +71,22 @@ suspend inline fun <reified T> HttpClient.doGetAndReceive(
         .doGet(urlString, token, extraHeaders)
         .let { Response(it, objectMapper.readValue(it.bodyAsText(), object : TypeReference<T>() {})) }
 
+suspend fun HttpClient.doDelete(
+    urlString: String,
+    token: String? = null,
+    body: Any? = null,
+): HttpResponse =
+    this.delete(urlString) {
+        header(HttpHeaders.Accept, ContentType.Application.Json)
+        header(HttpHeaders.ContentType, ContentType.Application.Json)
+        if (token != null) {
+            header(HttpHeaders.Authorization, "Bearer $token")
+        }
+        if (body != null) {
+            setBody(objectMapper.writeValueAsString(body))
+        }
+    }
+
 data class Response<T>(
     val httpResponse: HttpResponse,
     val body: T,
@@ -87,6 +104,7 @@ fun rapporteringsperiodeFor(
     registrertArbeidssoker: Boolean? = null,
     begrunnelseEndring: String? = null,
     originalId: Long? = null,
+    rapporteringstype: String? = null,
 ) = Rapporteringsperiode(
     id = id,
     periode = Periode(fraOgMed = fraOgMed, tilOgMed = tilOgMed),
@@ -106,4 +124,5 @@ fun rapporteringsperiodeFor(
     registrertArbeidssoker = registrertArbeidssoker,
     begrunnelseEndring = begrunnelseEndring,
     originalId = originalId,
+    rapporteringstype = rapporteringstype,
 )

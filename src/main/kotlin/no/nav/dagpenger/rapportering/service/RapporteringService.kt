@@ -25,6 +25,7 @@ class RapporteringService(
     private val meldepliktConnector: MeldepliktConnector,
     private val rapporteringRepository: RapporteringRepository,
     private val journalfoeringService: JournalfoeringService,
+    private val rapporteringsperiodeMetrikker: RapporteringsperiodeMetrikker,
 ) {
     suspend fun harMeldeplikt(
         ident: String,
@@ -64,7 +65,7 @@ class RapporteringService(
                     periode
                 }
             }?.sortedBy { it.periode.fraOgMed }
-            .also { RapporteringsperiodeMetrikker.hentet.inc() }
+            .also { rapporteringsperiodeMetrikker.hentet.increment() }
 
     private suspend fun hentRapporteringsperioder(
         ident: String,
@@ -106,7 +107,7 @@ class RapporteringService(
             .let { originalPeriode ->
                 lagreEllerOppdaterPeriode(
                     originalPeriode.copy(
-                        id = lagMidlertidigEndringId(),
+                        id = lagMidlertidigEndringId(ident),
                         kanEndres = false,
                         kanSendes = true,
                         status = Endret,
@@ -125,10 +126,10 @@ class RapporteringService(
                 )
             }
 
-    private suspend fun lagMidlertidigEndringId(): Long {
+    private suspend fun lagMidlertidigEndringId(ident: String): Long {
         while (true) {
             val midlertidigId = Random.nextLong(0L..Long.MAX_VALUE)
-            if (!rapporteringRepository.finnesRapporteringsperiode(midlertidigId)) {
+            if (!rapporteringRepository.finnesRapporteringsperiode(midlertidigId, ident)) {
                 return midlertidigId
             }
         }
@@ -205,6 +206,22 @@ class RapporteringService(
         rapporteringRepository.lagreAktiviteter(rapporteringId, dagId, dag)
     }
 
+    suspend fun resettAktiviteter(
+        rapporteringId: Long,
+        ident: String,
+    ) {
+        if (!rapporteringRepository.finnesRapporteringsperiode(rapporteringId, ident)) {
+            throw RuntimeException("Fant ingen rapporteringsperiode med id $rapporteringId for ident $ident")
+        }
+        val dager = rapporteringRepository.hentDagerUtenAktivitet(rapporteringId)
+        dager.forEach { (dagId, _) ->
+            val aktiviteter = rapporteringRepository.hentAktiviteter(dagId)
+            if (aktiviteter.isNotEmpty()) {
+                rapporteringRepository.slettAktiviteter(aktiviteter.map { it.id })
+            }
+        }
+    }
+
     suspend fun oppdaterRegistrertArbeidssoker(
         rapporteringId: Long,
         ident: String,
@@ -220,6 +237,12 @@ class RapporteringService(
         ident: String,
         begrunnelse: String,
     ) = rapporteringRepository.oppdaterBegrunnelse(rapporteringId, ident, begrunnelse)
+
+    suspend fun oppdaterRapporteringstype(
+        rapporteringId: Long,
+        ident: String,
+        rapporteringstype: String,
+    ) = rapporteringRepository.oppdaterRapporteringstype(rapporteringId, ident, rapporteringstype)
 
     suspend fun sendRapporteringsperiode(
         rapporteringsperiode: Rapporteringsperiode,

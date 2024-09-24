@@ -15,6 +15,7 @@ import io.ktor.server.request.header
 import io.ktor.server.request.receive
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
@@ -34,13 +35,16 @@ import java.net.URI
 
 private val logger = KotlinLogging.logger {}
 
-internal fun Application.rapporteringApi(rapporteringService: RapporteringService) {
+internal fun Application.rapporteringApi(
+    rapporteringService: RapporteringService,
+    meldepliktMetrikker: MeldepliktMetrikker,
+) {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
             when (cause) {
                 is ResponseException -> {
                     logger.error(cause) { "Feil ved uthenting av rapporteringsperiode" }
-                    MeldepliktMetrikker.rapporteringApiFeil.inc()
+                    meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
                         cause.response.status,
@@ -56,7 +60,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 is JsonConvertException -> {
                     logger.error(cause) { "Feil ved mapping av rapporteringsperiode" }
-                    MeldepliktMetrikker.rapporteringApiFeil.inc()
+                    meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
                         HttpStatusCode.InternalServerError,
@@ -66,7 +70,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 is IllegalArgumentException -> {
                     logger.info(cause) { "Kunne ikke håndtere API kall - Bad request" }
-                    MeldepliktMetrikker.rapporteringApiFeil.inc()
+                    meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
                         HttpStatusCode.BadRequest,
@@ -76,7 +80,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 is NotFoundException -> {
                     logger.info(cause) { "Kunne ikke håndtere API kall - Ikke funnet" }
-                    MeldepliktMetrikker.rapporteringApiFeil.inc()
+                    meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
                         HttpStatusCode.NotFound,
@@ -86,7 +90,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 is BadRequestException -> {
                     logger.error(cause) { "Kunne ikke håndtere API kall - feil i request" }
-                    MeldepliktMetrikker.rapporteringApiFeil.inc()
+                    meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
                         HttpStatusCode.BadRequest,
@@ -96,7 +100,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 else -> {
                     logger.error(cause) { "Kunne ikke håndtere API kall" }
-                    MeldepliktMetrikker.rapporteringApiFeil.inc()
+                    meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
                         HttpStatusCode.InternalServerError,
@@ -195,6 +199,16 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                         }
                     }
 
+                    route("/aktiviteter") {
+                        delete {
+                            val ident = call.ident()
+                            val rapporteringId = call.getParameter("id").toLong()
+
+                            rapporteringService.resettAktiviteter(rapporteringId, ident)
+                            call.respond(HttpStatusCode.NoContent)
+                        }
+                    }
+
                     route("/begrunnelse") {
                         post {
                             val ident = call.ident()
@@ -202,6 +216,21 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
                             val begrunnelse = call.receive(BegrunnelseRequest::class)
 
                             rapporteringService.oppdaterBegrunnelse(rapporteringId, ident, begrunnelse.begrunnelseEndring)
+                            call.respond(HttpStatusCode.NoContent)
+                        }
+                    }
+
+                    route("/rapporteringstype") {
+                        post {
+                            val ident = call.ident()
+                            val rapporteringId = call.getParameter("id").toLong()
+                            val rapporteringstype = call.receive(RapporteringstypeRequest::class).rapporteringstype
+
+                            if (rapporteringstype.isBlank()) {
+                                call.respond(HttpStatusCode.BadRequest)
+                            }
+
+                            rapporteringService.oppdaterRapporteringstype(rapporteringId, ident, rapporteringstype)
                             call.respond(HttpStatusCode.NoContent)
                         }
                     }
@@ -266,6 +295,10 @@ data class ArbeidssokerRequest(
 
 data class BegrunnelseRequest(
     val begrunnelseEndring: String,
+)
+
+data class RapporteringstypeRequest(
+    val rapporteringstype: String,
 )
 
 private fun ApplicationCall.getParameter(name: String): String =

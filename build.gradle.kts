@@ -1,10 +1,10 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    kotlin("jvm") version "2.0.20"
+    alias(libs.plugins.shadow.jar)
+    alias(libs.plugins.kotlin)
     id("io.ktor.plugin") version "2.3.12"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "no.nav.dagpenger.rapportering"
@@ -69,7 +69,7 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
-    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.5.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.5.4")
 
     // PDF
     implementation("io.github.openhtmltopdf:openhtmltopdf-pdfbox:1.1.22")
