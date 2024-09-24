@@ -3,7 +3,6 @@ package no.nav.dagpenger.rapportering.model
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Fravaer
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
-import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import java.time.LocalDate
 import kotlin.time.Duration
 
@@ -37,11 +36,12 @@ data class Dag(
         this
             .map { it.type }
             .let { typer ->
-                when (typer.size) {
-                    1 -> typer.contains(Arbeid) || typer.contains(Utdanning) || typer.contains(Syk) || typer.contains(Fravaer)
-                    2 -> typer.contains(Utdanning) && (typer.contains(Arbeid) || typer.contains(Fravaer) || typer.contains(Syk))
-                    in 3..Int.MAX_VALUE -> false
-                    else -> true
+                if (typer.contains(Syk) && typer.contains(Arbeid)) {
+                    false
+                } else if (typer.contains(Fravaer) && typer.contains(Arbeid)) {
+                    false
+                } else {
+                    true
                 }
             }
 
