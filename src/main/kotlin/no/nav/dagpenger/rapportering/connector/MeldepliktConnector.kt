@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
-import no.nav.dagpenger.rapportering.metrics.TimedMetrikk.httpTimer
+import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Person
 import java.net.URI
@@ -27,8 +27,9 @@ import kotlin.time.measureTime
 
 class MeldepliktConnector(
     private val meldepliktUrl: String = Configuration.meldepliktAdapterUrl,
-    val tokenProvider: (String) -> String? = Configuration.tokenXClient(Configuration.meldepliktAdapterAudience),
-    val httpClient: HttpClient,
+    private val tokenProvider: (String) -> String? = Configuration.tokenXClient(Configuration.meldepliktAdapterAudience),
+    private val httpClient: HttpClient,
+    private val actionTimer: ActionTimer,
 ) {
     suspend fun harMeldeplikt(
         ident: String,
@@ -189,7 +190,7 @@ class MeldepliktConnector(
                         contentType(ContentType.Application.Json)
                     }
             }
-        httpTimer(metrikkNavn, response.status, HttpMethod.Get, tidBrukt.inWholeSeconds)
+        actionTimer.httpTimer(metrikkNavn, response.status, HttpMethod.Get, tidBrukt.inWholeSeconds)
         return response
     }
 
@@ -210,7 +211,7 @@ class MeldepliktConnector(
                         setBody(defaultObjectMapper.writeValueAsString(body))
                     }
             }
-        httpTimer(metrikkNavn, response.status, HttpMethod.Post, tidBrukt.inWholeSeconds)
+        actionTimer.httpTimer(metrikkNavn, response.status, HttpMethod.Post, tidBrukt.inWholeSeconds)
         return response
     }
 

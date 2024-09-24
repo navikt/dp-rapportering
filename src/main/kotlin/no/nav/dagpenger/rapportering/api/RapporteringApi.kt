@@ -35,13 +35,16 @@ import java.net.URI
 
 private val logger = KotlinLogging.logger {}
 
-internal fun Application.rapporteringApi(rapporteringService: RapporteringService) {
+internal fun Application.rapporteringApi(
+    rapporteringService: RapporteringService,
+    meldepliktMetrikker: MeldepliktMetrikker,
+) {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
             when (cause) {
                 is ResponseException -> {
                     logger.error(cause) { "Feil ved uthenting av rapporteringsperiode" }
-                    MeldepliktMetrikker.rapporteringApiFeil.inc()
+                    meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
                         cause.response.status,
@@ -57,7 +60,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 is JsonConvertException -> {
                     logger.error(cause) { "Feil ved mapping av rapporteringsperiode" }
-                    MeldepliktMetrikker.rapporteringApiFeil.inc()
+                    meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
                         HttpStatusCode.InternalServerError,
@@ -67,7 +70,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 is IllegalArgumentException -> {
                     logger.info(cause) { "Kunne ikke håndtere API kall - Bad request" }
-                    MeldepliktMetrikker.rapporteringApiFeil.inc()
+                    meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
                         HttpStatusCode.BadRequest,
@@ -77,7 +80,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 is NotFoundException -> {
                     logger.info(cause) { "Kunne ikke håndtere API kall - Ikke funnet" }
-                    MeldepliktMetrikker.rapporteringApiFeil.inc()
+                    meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
                         HttpStatusCode.NotFound,
@@ -87,7 +90,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 is BadRequestException -> {
                     logger.error(cause) { "Kunne ikke håndtere API kall - feil i request" }
-                    MeldepliktMetrikker.rapporteringApiFeil.inc()
+                    meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
                         HttpStatusCode.BadRequest,
@@ -97,7 +100,7 @@ internal fun Application.rapporteringApi(rapporteringService: RapporteringServic
 
                 else -> {
                     logger.error(cause) { "Kunne ikke håndtere API kall" }
-                    MeldepliktMetrikker.rapporteringApiFeil.inc()
+                    meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
                         HttpStatusCode.InternalServerError,

@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.jobs
 
+import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
@@ -10,12 +11,14 @@ import kotlin.concurrent.fixedRateTimer
 import kotlin.time.Duration.Companion.days
 import kotlin.time.measureTime
 
-internal object SlettRapporteringsperioderJob {
+internal class SlettRapporteringsperioderJob(
+    meterRegistry: MeterRegistry,
+) {
     private val logger = KotlinLogging.logger { }
-    private val metrics = JobbkjoringMetrikker(this::class.java.simpleName)
-    private val TIDSPUNKT_FOR_KJORING = LocalTime.of(0, 1)
+    private val metrikker: JobbkjoringMetrikker = JobbkjoringMetrikker(meterRegistry, this::class.simpleName!!)
+    private val tidspunktForKjoring = LocalTime.of(0, 1)
     private val naa = ZonedDateTime.now()
-    private val tidspunktForNesteKjoring = naa.with(TIDSPUNKT_FOR_KJORING).plusDays(1)
+    private val tidspunktForNesteKjoring = naa.with(tidspunktForKjoring).plusDays(1)
     private val millisekunderTilNesteKjoring =
         tidspunktForNesteKjoring.toInstant().toEpochMilli() -
             naa.toInstant().toEpochMilli() // differansen i millisekunder mellom de to tidspunktene
@@ -39,10 +42,10 @@ internal object SlettRapporteringsperioderJob {
                     logger.info {
                         "Jobb for å slette mellomlagrede rapporteringsperioder ferdig. Brukte ${tidBrukt.inWholeSeconds} sekund(er)."
                     }
-                    metrics.jobbFullfort(tidBrukt, rowsAffected)
+                    metrikker.jobbFullfort(tidBrukt, rowsAffected)
                 } catch (e: Exception) {
                     logger.warn(e) { "Slettejobb feilet" }
-                    metrics.jobbFeilet()
+                    metrikker.jobbFeilet()
                 }
             },
         )

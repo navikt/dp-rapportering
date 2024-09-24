@@ -25,6 +25,7 @@ class RapporteringService(
     private val meldepliktConnector: MeldepliktConnector,
     private val rapporteringRepository: RapporteringRepository,
     private val journalfoeringService: JournalfoeringService,
+    private val rapporteringsperiodeMetrikker: RapporteringsperiodeMetrikker,
 ) {
     suspend fun harMeldeplikt(
         ident: String,
@@ -64,7 +65,7 @@ class RapporteringService(
                     periode
                 }
             }?.sortedBy { it.periode.fraOgMed }
-            .also { RapporteringsperiodeMetrikker.hentet.inc() }
+            .also { rapporteringsperiodeMetrikker.hentet.increment() }
 
     private suspend fun hentRapporteringsperioder(
         ident: String,
