@@ -83,8 +83,8 @@ class DagTest {
     }
 
     @Test
-    fun `kan ikke opprette dag med utdanning og syk-aktiviteter`() {
-        shouldThrow<IllegalArgumentException> {
+    fun `kan opprette dag med utdanning og syk-aktiviteter`() {
+        val dag =
             Dag(
                 dato = 1.januar,
                 aktiviteter =
@@ -94,6 +94,31 @@ class DagTest {
                     ),
                 dagIndex = 0,
             )
+
+        with(dag) {
+            aktiviteter.size shouldBe 2
+            aktiviteter.first().type shouldBe no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
+            aktiviteter.last().type shouldBe no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
+        }
+    }
+
+    @Test
+    fun `kan opprette dag med utdanning og Fravaer-aktiviteter`() {
+        val dag =
+            Dag(
+                dato = 1.januar,
+                aktiviteter =
+                    listOf(
+                        Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
+                        Aktivitet(id = UUID.randomUUID(), type = Fravaer, timer = null),
+                    ),
+                dagIndex = 0,
+            )
+
+        with(dag) {
+            aktiviteter.size shouldBe 2
+            aktiviteter.first().type shouldBe no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
+            aktiviteter.last().type shouldBe no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Fravaer
         }
     }
 
@@ -107,6 +132,34 @@ class DagTest {
                         Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
                         Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = "PT5H30M"),
                         Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
+                    ),
+                dagIndex = 0,
+            )
+        }
+
+        shouldThrow<IllegalArgumentException> {
+            Dag(
+                dato = 1.januar,
+                aktiviteter =
+                    listOf(
+                        Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
+                        Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
+                    ),
+                dagIndex = 0,
+            )
+        }
+    }
+
+    @Test
+    fun `kan ikke opprette dag med flere enn 2 aktivitetstyper`() {
+        shouldThrow<IllegalArgumentException> {
+            Dag(
+                dato = 1.januar,
+                aktiviteter =
+                    listOf(
+                        Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
+                        Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = "PT5H30M"),
+                        Aktivitet(id = UUID.randomUUID(), type = Syk, timer = null),
                     ),
                 dagIndex = 0,
             )
