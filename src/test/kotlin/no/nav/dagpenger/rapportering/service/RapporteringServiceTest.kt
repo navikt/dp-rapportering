@@ -26,6 +26,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
+import no.nav.dagpenger.rapportering.utils.MetricsUtil.rapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.utils.februar
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
@@ -36,7 +37,8 @@ class RapporteringServiceTest {
     private val meldepliktConnector = mockk<MeldepliktConnector>()
     private val rapporteringRepository = mockk<RapporteringRepository>()
     private val journalfoeringService = mockk<JournalfoeringService>()
-    private val rapporteringService = RapporteringService(meldepliktConnector, rapporteringRepository, journalfoeringService)
+    private val rapporteringService =
+        RapporteringService(meldepliktConnector, rapporteringRepository, journalfoeringService, rapporteringsperiodeMetrikker)
 
     private val ident = "12345678910"
     private val token = "jwtToken"

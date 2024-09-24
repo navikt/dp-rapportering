@@ -1,108 +1,97 @@
 package no.nav.dagpenger.rapportering.metrics
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.prometheus.client.Counter
-import io.prometheus.client.Gauge
-import io.prometheus.client.Histogram
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Timer
+import java.util.concurrent.TimeUnit.SECONDS
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.measureTime
 
 private const val NAMESPACE = "dp_rapportering"
 
-object RapporteringsperiodeMetrikker {
+class RapporteringsperiodeMetrikker(
+    meterRegistry: MeterRegistry,
+) {
     val hentet: Counter =
         Counter
-            .build()
-            .namespace(NAMESPACE)
-            .name("antall_personer_hentet")
-            .help("Indikerer antall uthentede personer med rapporteringsperioder")
-            .register()
+            .builder("${NAMESPACE}_antall_personer_hentet")
+            .description("Indikerer antall uthentede personer med rapporteringsperioder")
+            .register(meterRegistry)
 }
 
-object MeldepliktMetrikker {
+class MeldepliktMetrikker(
+    meterRegistry: MeterRegistry,
+) {
     val rapporteringApiFeil: Counter =
         Counter
-            .build()
-            .namespace(NAMESPACE)
-            .name("antall_meldeplikt_exception")
-            .help("Indikerer antall feil i kall eller mapping av respons mot meldeplikt")
-            .register()
+            .builder("${NAMESPACE}_antall_meldeplikt_exception")
+            .description("Indikerer antall feil i kall eller mapping av respons mot meldeplikt")
+            .register(meterRegistry)
 }
 
-object DatabaseMetrikker {
-    val lagredeRapporteringsperioder: Gauge =
-        Gauge
-            .build()
-            .namespace(NAMESPACE)
-            .name("lagrede_rapporteringsperioder_total")
-            .help("Antall lagrede rapporteringsperioder i databasen")
-            .register()
+class DatabaseMetrikker(
+    meterRegistry: MeterRegistry,
+) {
+    val lagredeRapporteringsperioder: AtomicInteger? =
+        meterRegistry.gauge(
+            "${NAMESPACE}_lagrede_rapporteringsperioder_total",
+            AtomicInteger(0),
+        )
 
-    val lagredeJournalposter: Gauge =
-        Gauge
-            .build()
-            .namespace(NAMESPACE)
-            .name("lagrede_journalposter_total")
-            .help("Antall lagrede journalposter i databasen")
-            .register()
+    val lagredeJournalposter: AtomicInteger? =
+        meterRegistry.gauge(
+            "${NAMESPACE}_lagrede_journalposter_total",
+            AtomicInteger(0),
+        )
 
-    val midlertidigLagredeJournalposter: Gauge =
-        Gauge
-            .build()
-            .namespace(NAMESPACE)
-            .name("midlertidig_lagrede_journalposter_total")
-            .help("Antall midlertidig lagrede journalposter i databasen")
-            .register()
+    val midlertidigLagredeJournalposter: AtomicInteger? =
+        meterRegistry.gauge(
+            "${NAMESPACE}_midlertidig_lagrede_journalposter_total",
+            AtomicInteger(0),
+        )
 }
 
 internal class JobbkjoringMetrikker(
-    private val navn: String,
+    meterRegistry: MeterRegistry,
+    navn: String,
 ) {
-    companion object {
-        private val jobStatus: Counter =
-            Counter
-                .build()
-                .namespace(NAMESPACE)
-                .name("job_execution_status")
-                .help("Indikerer status for kjøring av jobb")
-                .labelNames("navn")
-                .register()
+    private val jobStatus: Counter =
+        Counter
+            .builder("${NAMESPACE}_job_execution_status")
+            .description("Indikerer status for kjøring av jobb")
+            .tag("navn", navn)
+            .register(meterRegistry)
 
-        private val jobDuration: Histogram =
-            Histogram
-                .build()
-                .namespace(NAMESPACE)
-                .name("job_execution_duration_seconds")
-                .help("Varighet for kjøring av jobb i sekunder")
-                .labelNames("navn")
-                .register()
+    private val jobDuration: Timer =
+        Timer
+            .builder("${NAMESPACE}_job_execution_duration_seconds")
+            .description("Varighet for kjøring av jobb i sekunder")
+            .tag("navn", navn)
+            .register(meterRegistry)
 
-        private val affectedRowsCount: Counter =
-            Counter
-                .build()
-                .namespace(NAMESPACE)
-                .name("affected_rows_count")
-                .help("Antall rader påvirket av jobb")
-                .labelNames("navn")
-                .register()
+    private val affectedRowsCount: Counter =
+        Counter
+            .builder("${NAMESPACE}_affected_rows_count")
+            .description("Antall rader påvirket av jobb")
+            .tag("navn", navn)
+            .register(meterRegistry)
 
-        private val jobErrors: Counter =
-            Counter
-                .build()
-                .namespace(NAMESPACE)
-                .name("job_errors_total")
-                .help("Antall feil under kjøring av jobb")
-                .labelNames("navn")
-                .register()
-    }
+    private val jobErrors: Counter =
+        Counter
+            .builder("${NAMESPACE}_job_errors_total")
+            .description("Antall feil under kjøring av jobb")
+            .tag("navn", navn)
+            .register(meterRegistry)
 
-    private fun incrementJobStatus(success: Boolean) = jobStatus.labels(navn).inc(if (success) 1.0 else 0.0)
+    private fun incrementJobStatus(success: Boolean) = jobStatus.increment(if (success) 1.0 else 0.0)
 
-    private fun observeJobDuration(durationSeconds: Number) = jobDuration.labels(navn).observe(durationSeconds.toDouble())
+    private fun observeJobDuration(durationSeconds: Number) = jobDuration.record(durationSeconds.toLong(), SECONDS)
 
-    private fun incrementAffectedRowsCount(count: Number) = affectedRowsCount.labels(navn).inc(count.toDouble())
+    private fun incrementAffectedRowsCount(count: Number) = affectedRowsCount.increment(count.toDouble())
 
-    private fun incrementJobErrors() = jobErrors.labels(navn).inc()
+    private fun incrementJobErrors() = jobErrors.increment()
 
     fun jobbFeilet() {
         incrementJobStatus(false)
@@ -119,16 +108,9 @@ internal class JobbkjoringMetrikker(
     }
 }
 
-object TimedMetrikk {
-    val timer: Histogram =
-        Histogram
-            .build()
-            .namespace(NAMESPACE)
-            .name("timer")
-            .help("Indikerer hvor lang tid en funksjon brukte")
-            .labelNames("navn")
-            .register()
-
+class ActionTimer(
+    private val meterRegistry: MeterRegistry,
+) {
     suspend fun <T> timedAction(
         navn: String,
         block: suspend () -> T,
@@ -138,23 +120,27 @@ object TimedMetrikk {
             measureTime {
                 blockResult = block()
             }
-        timer.labels(navn).observe(tidBrukt.inWholeSeconds.toDouble())
+        Timer
+            .builder("${NAMESPACE}_timer")
+            .tag("navn", navn)
+            .description("Indikerer hvor lang tid en funksjon brukte")
+            .register(meterRegistry)
+            .record(tidBrukt.inWholeSeconds, SECONDS)
+
         return blockResult
     }
-
-    val httpTimer: Histogram =
-        Histogram
-            .build()
-            .namespace(NAMESPACE)
-            .name("http_timer")
-            .help("Indikerer hvor lang tid et http-brukte")
-            .labelNames("navn", "status", "method")
-            .register()
 
     fun httpTimer(
         navn: String,
         statusCode: HttpStatusCode,
         method: HttpMethod,
         durationSeconds: Number,
-    ) = httpTimer.labels(navn, "$statusCode", method.value).observe(durationSeconds.toDouble())
+    ) = Timer
+        .builder("${NAMESPACE}_timer")
+        .tag("navn", navn)
+        .tag("status", statusCode.value.toString())
+        .tag("method", method.value)
+        .description("Indikerer hvor lang tid en funksjon brukte")
+        .register(meterRegistry)
+        .record(durationSeconds.toLong(), SECONDS)
 }

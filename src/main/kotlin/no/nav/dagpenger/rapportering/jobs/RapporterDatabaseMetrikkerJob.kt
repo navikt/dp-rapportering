@@ -9,9 +9,10 @@ import kotlin.concurrent.fixedRateTimer
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.minutes
 
-internal object RapporterDatabaseMetrikkerJob {
+internal class RapporterDatabaseMetrikkerJob(
+    private val metrikker: DatabaseMetrikker,
+) {
     private val logger = KotlinLogging.logger {}
-    private val metrics = DatabaseMetrikker
 
     internal fun start(
         rapporteringRepository: RapporteringRepository,
@@ -25,19 +26,19 @@ internal object RapporterDatabaseMetrikkerJob {
             action = {
                 try {
                     runBlocking {
-                        metrics.lagredeRapporteringsperioder.set(
-                            rapporteringRepository.hentAntallRapporteringsperioder().toDouble(),
+                        metrikker.lagredeRapporteringsperioder?.set(
+                            rapporteringRepository.hentAntallRapporteringsperioder(),
                         )
-                        metrics.lagredeJournalposter.set(journalfoeringRepository.hentAntallJournalposter().toDouble())
-                        metrics.midlertidigLagredeJournalposter.set(
-                            journalfoeringRepository.hentAntallMidlertidligeJournalposter().toDouble(),
+                        metrikker.lagredeJournalposter?.set(journalfoeringRepository.hentAntallJournalposter())
+                        metrikker.midlertidigLagredeJournalposter?.set(
+                            journalfoeringRepository.hentAntallMidlertidligeJournalposter(),
                         )
                     }
                 } catch (e: Exception) {
                     logger.warn(e) { "Uthenting av metrikker for lagrede elementer i databasen feilet" }
-                    metrics.lagredeRapporteringsperioder.set(-1.0)
-                    metrics.lagredeJournalposter.set(-1.0)
-                    metrics.midlertidigLagredeJournalposter.set(-1.0)
+                    metrikker.lagredeRapporteringsperioder?.set(-1)
+                    metrikker.lagredeJournalposter?.set(-1)
+                    metrikker.midlertidigLagredeJournalposter?.set(-1)
                 }
             },
         )

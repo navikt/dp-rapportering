@@ -13,7 +13,7 @@ import io.ktor.http.contentType
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
-import no.nav.dagpenger.rapportering.metrics.TimedMetrikk.httpTimer
+import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.Journalpost
 import no.nav.dagpenger.rapportering.model.JournalpostResponse
 import java.net.URI
@@ -22,7 +22,8 @@ import kotlin.time.measureTime
 class DokarkivConnector(
     private val dokarkivUrl: String = Configuration.dokarkivUrl,
     private val tokenProvider: (String) -> String? = Configuration.azureADClient(),
-    val httpClient: HttpClient,
+    private val httpClient: HttpClient,
+    private val actionTimer: ActionTimer,
 ) {
     private val path = "/rest/journalpostapi/v1/journalpost"
 
@@ -44,7 +45,7 @@ class DokarkivConnector(
                             setBody(defaultObjectMapper.writeValueAsString(journalpost))
                         }
             }
-        httpTimer("dokarkiv-sendJournalpost", response.status, HttpMethod.Post, tidBrukt.inWholeSeconds)
+        actionTimer.httpTimer("dokarkiv-sendJournalpost", response.status, HttpMethod.Post, tidBrukt.inWholeSeconds)
         logger.info("Journalpost sendt. Svar " + response.status)
         return response
             .bodyAsText()
