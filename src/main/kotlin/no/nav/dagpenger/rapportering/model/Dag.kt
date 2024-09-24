@@ -37,12 +37,11 @@ data class Dag(
         this
             .map { it.type }
             .let { typer ->
-                if (typer.isEmpty()) {
-                    true
-                } else if (typer.contains(Arbeid) || typer.contains(Utdanning)) {
-                    (!typer.contains(Syk) && !typer.contains(Fravaer))
-                } else {
-                    typer.contains(Syk) || typer.contains(Fravaer) && typer.size == 1
+                when (typer.size) {
+                    1 -> typer.contains(Arbeid) || typer.contains(Utdanning) || typer.contains(Syk) || typer.contains(Fravaer)
+                    2 -> typer.contains(Utdanning) && (typer.contains(Arbeid) || typer.contains(Fravaer) || typer.contains(Syk))
+                    in 3..Int.MAX_VALUE -> false
+                    else -> true
                 }
             }
 
