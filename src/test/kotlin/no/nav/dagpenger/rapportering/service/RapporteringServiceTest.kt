@@ -313,7 +313,7 @@ class RapporteringServiceTest {
         response.id shouldNotBe 123L
         response.status shouldBe Endret
         response.originalId shouldBe 123L
-        coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        coVerify(exactly = 2) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
         coVerify(exactly = 3) { rapporteringRepository.finnesRapporteringsperiode(any(), any()) }
     }
 
@@ -488,7 +488,8 @@ class RapporteringServiceTest {
                 journalfoeringService.journalfoer(any(), any(), any(), any(), any())
             }
         }
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(endringId.toLong(), ident, false, false, any()) }
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(originalPeriode.id, ident, false, false, any()) }
     }
 
     @Test
