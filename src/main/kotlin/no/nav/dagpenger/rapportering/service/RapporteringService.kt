@@ -105,6 +105,9 @@ class RapporteringService(
             .takeIf { it.kanEndres }
             .run { this ?: throw IllegalArgumentException("Perioden med id $rapporteringId kan ikke endres") }
             .let { originalPeriode ->
+                // Passer på at original periode ligger i databasen
+                lagreEllerOppdaterPeriode(originalPeriode, ident)
+                // Lagrer ny endring med midlertidig id
                 lagreEllerOppdaterPeriode(
                     originalPeriode.copy(
                         id = lagMidlertidigEndringId(ident),
@@ -294,6 +297,19 @@ class RapporteringService(
                         status = Innsendt,
                     )
                     logger.info { "Oppdaterte rapporteringsperiode ${periodeTilInnsending.id} med status Innsendt" }
+                    if (periodeTilInnsending.status == Endret && periodeTilInnsending.originalId != null) {
+                        rapporteringRepository.oppdaterPeriodeEtterInnsending(
+                            rapporteringId = periodeTilInnsending.originalId!!,
+                            ident = ident,
+                            kanEndres = false,
+                            kanSendes = false,
+                            status = Innsendt,
+                        )
+                        logger.info {
+                            "Oppdaterte original rapporteringsperiode ${periodeTilInnsending.originalId} " +
+                                "med kanEndres og kanSendes til false"
+                        }
+                    }
                 } else {
                     logger.error { "Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}: $response" }
                     throw RuntimeException("Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}")

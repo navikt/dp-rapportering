@@ -85,9 +85,13 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/periodeId'
+                                $ref: '#/components/schemas/InnsendingResponse'
                 400:
                     description: Bad Request
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/InnsendingResponse'
                 404:
                     description: Not Found
             summary: Innsending av rapporteringsperiode
@@ -317,6 +321,34 @@ components:
             properties:
                 begrunnelseEndring:
                     type: string
+        InnsendingFeil:
+            type: object
+            required:
+                - kode
+            properties:
+                kode:
+                    type: string
+                params:
+                    type: array
+                    items:
+                        type: string
+        InnsendingResponse:
+            type: object
+            required:
+                - id
+                - status
+            properties:
+                id:
+                    type: number
+                status:
+                    type: string
+                    enum:
+                        - OK
+                        - FEIL
+                feil:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/InnsendingFeil'
         RapporteringstypeRequest:
             required:
                 - rapporteringstype
@@ -404,7 +436,6 @@ components:
                 - Endret
                 - Innsendt
                 - Ferdig
-                -
         Problem:
             type: object
             description: Implementasjon av Problem Details for HTTP APIs [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807)
