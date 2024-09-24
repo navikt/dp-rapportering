@@ -52,8 +52,8 @@ import no.nav.dagpenger.rapportering.model.Tilleggsopplysning
 import no.nav.dagpenger.rapportering.model.Variantformat
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.Postgres.database
-import no.nav.dagpenger.rapportering.utils.MetricsUtil.actionTimer
-import no.nav.dagpenger.rapportering.utils.MetricsUtil.meterRegistry
+import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
+import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.LocalDate

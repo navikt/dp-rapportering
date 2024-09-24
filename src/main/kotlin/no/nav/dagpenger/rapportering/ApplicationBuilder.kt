@@ -36,7 +36,7 @@ class ApplicationBuilder(
         private val logger = KotlinLogging.logger {}
     }
 
-    val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry, Clock.SYSTEM)
+    private val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry, Clock.SYSTEM)
     private val rapporteringsperiodeMetrikker = RapporteringsperiodeMetrikker(meterRegistry)
     private val meldepliktMetrikker = MeldepliktMetrikker(meterRegistry)
     private val databaseMetrikker = DatabaseMetrikker(meterRegistry)

@@ -17,10 +17,10 @@ import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.runMig
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.RapporteringService
-import no.nav.dagpenger.rapportering.utils.MetricsUtil.actionTimer
-import no.nav.dagpenger.rapportering.utils.MetricsUtil.meldepliktMetrikker
-import no.nav.dagpenger.rapportering.utils.MetricsUtil.meterRegistry
-import no.nav.dagpenger.rapportering.utils.MetricsUtil.rapporteringsperiodeMetrikker
+import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
+import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meldepliktMetrikker
+import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
+import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.rapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.utils.OutgoingCallLoggingPlugin
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
