@@ -16,7 +16,7 @@ data class Dag(
             "Duplikate Aktivitetstyper er ikke tillatt i aktivitetslisten"
         }
         require(aktiviteter.validerAktivitetsTypeKombinasjoner()) {
-            "Aktiviteter som kan kombineres er Arbeid og Utdanning. Syk og FerieEllerFravaer kan ikke kombineres med andre aktiviteter"
+            "Aktivitetene Syk og Arbeid, samt Fravær og Arbeid kan ikke kombineres."
         }
         require(aktiviteter.validerArbeidedeTimer()) {
             "Arbeidede timer kan ikke være null, 0 eller over 24 timer. Kun hele og halve timer er gyldig input"
