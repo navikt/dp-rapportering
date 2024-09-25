@@ -3,7 +3,6 @@ package no.nav.dagpenger.rapportering.model
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Fravaer
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
-import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import java.time.LocalDate
 import kotlin.time.Duration
 
@@ -17,7 +16,7 @@ data class Dag(
             "Duplikate Aktivitetstyper er ikke tillatt i aktivitetslisten"
         }
         require(aktiviteter.validerAktivitetsTypeKombinasjoner()) {
-            "Aktiviteter som kan kombineres er Arbeid og Utdanning. Syk og FerieEllerFravaer kan ikke kombineres med andre aktiviteter"
+            "Aktivitetene Syk og Arbeid, samt Fravær og Arbeid kan ikke kombineres."
         }
         require(aktiviteter.validerArbeidedeTimer()) {
             "Arbeidede timer kan ikke være null, 0 eller over 24 timer. Kun hele og halve timer er gyldig input"
@@ -37,11 +36,12 @@ data class Dag(
         this
             .map { it.type }
             .let { typer ->
-                when (typer.size) {
-                    1 -> typer.contains(Arbeid) || typer.contains(Utdanning) || typer.contains(Syk) || typer.contains(Fravaer)
-                    2 -> typer.contains(Utdanning) && (typer.contains(Arbeid) || typer.contains(Fravaer) || typer.contains(Syk))
-                    in 3..Int.MAX_VALUE -> false
-                    else -> true
+                if (typer.contains(Syk) && typer.contains(Arbeid)) {
+                    false
+                } else if (typer.contains(Fravaer) && typer.contains(Arbeid)) {
+                    false
+                } else {
+                    true
                 }
             }
 

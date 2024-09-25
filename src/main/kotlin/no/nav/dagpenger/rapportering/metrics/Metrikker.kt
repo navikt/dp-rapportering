@@ -136,7 +136,7 @@ class ActionTimer(
         method: HttpMethod,
         durationSeconds: Number,
     ) = Timer
-        .builder("${NAMESPACE}_timer")
+        .builder("${NAMESPACE}_http_timer")
         .tag("navn", navn)
         .tag("status", statusCode.value.toString())
         .tag("method", method.value)
