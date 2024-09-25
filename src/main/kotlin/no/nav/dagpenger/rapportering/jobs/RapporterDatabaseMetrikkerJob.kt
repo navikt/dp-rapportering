@@ -24,6 +24,7 @@ internal class RapporterDatabaseMetrikkerJob {
             period = 10.minutes.inWholeMilliseconds,
             action = {
                 try {
+                    logger.info { "Henter metrikker for lagrede elementer i databasen" }
                     runBlocking {
                         metrikker.oppdater(
                             lagredeRapporteringsperioder = rapporteringRepository.hentAntallRapporteringsperioder(),
