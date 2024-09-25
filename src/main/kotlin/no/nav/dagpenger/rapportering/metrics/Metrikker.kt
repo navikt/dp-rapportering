@@ -17,8 +17,14 @@ class RapporteringsperiodeMetrikker(
 ) {
     val hentet: Counter =
         Counter
-            .builder("${NAMESPACE}_antall_personer_hentet")
+            .builder("${NAMESPACE}_antall_personer_hentet_total")
             .description("Indikerer antall uthentede personer med rapporteringsperioder")
+            .register(meterRegistry)
+
+    val kontrollFeilet: Counter =
+        Counter
+            .builder("${NAMESPACE}_antall_kontroll_feilet_total")
+            .description("Indikerer antall feil ved kontroll av innsendt rapporteringsperiode")
             .register(meterRegistry)
 }
 
@@ -27,7 +33,7 @@ class MeldepliktMetrikker(
 ) {
     val rapporteringApiFeil: Counter =
         Counter
-            .builder("${NAMESPACE}_antall_meldeplikt_exception")
+            .builder("${NAMESPACE}_antall_meldeplikt_exception_total")
             .description("Indikerer antall feil i kall eller mapping av respons mot meldeplikt")
             .register(meterRegistry)
 }
@@ -60,7 +66,7 @@ internal class JobbkjoringMetrikker(
 ) {
     private val jobStatus: Counter =
         Counter
-            .builder("${NAMESPACE}_job_execution_status")
+            .builder("${NAMESPACE}_job_execution_status_total")
             .description("Indikerer status for kjøring av jobb")
             .tag("navn", navn)
             .register(meterRegistry)
@@ -74,7 +80,7 @@ internal class JobbkjoringMetrikker(
 
     private val affectedRowsCount: Counter =
         Counter
-            .builder("${NAMESPACE}_affected_rows_count")
+            .builder("${NAMESPACE}_affected_rows_count_total")
             .description("Antall rader påvirket av jobb")
             .tag("navn", navn)
             .register(meterRegistry)
