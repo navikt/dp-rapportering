@@ -4,6 +4,7 @@ import io.ktor.http.HttpStatusCode
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
@@ -125,7 +126,7 @@ class ActionTimer(
             .tag("navn", navn)
             .description("Indikerer hvor lang tid en funksjon brukte")
             .register(meterRegistry)
-            .record(tidBrukt.inWholeSeconds, SECONDS)
+            .record(tidBrukt.inWholeMilliseconds, MILLISECONDS)
 
         return blockResult
     }
