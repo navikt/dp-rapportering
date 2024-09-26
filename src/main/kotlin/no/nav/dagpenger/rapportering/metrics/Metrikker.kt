@@ -5,7 +5,6 @@ import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
-import io.micrometer.core.instrument.binder.MeterBinder
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicInteger
@@ -40,24 +39,26 @@ class MeldepliktMetrikker(
             .register(meterRegistry)
 }
 
-class DatabaseMetrikker : MeterBinder {
+class DatabaseMetrikker(
+    meterRegistry: MeterRegistry,
+) {
     private val lagredeRapporteringsperioder: AtomicInteger = AtomicInteger(0)
     private val lagredeJournalposter: AtomicInteger = AtomicInteger(0)
     private val midlertidigLagredeJournalposter: AtomicInteger = AtomicInteger(0)
 
-    override fun bindTo(registry: MeterRegistry) {
+    init {
         Gauge
             .builder("${NAMESPACE}_lagrede_rapporteringsperioder_total", lagredeRapporteringsperioder) { it.get().toDouble() }
             .description("Antall lagrede rapporteringsperioder i databasen")
-            .register(registry)
+            .register(meterRegistry)
         Gauge
             .builder("${NAMESPACE}_lagrede_journalposter_total", lagredeJournalposter) { it.get().toDouble() }
             .description("Antall lagrede journalposter i databasen")
-            .register(registry)
+            .register(meterRegistry)
         Gauge
             .builder("${NAMESPACE}_midlertidig_lagrede_journalposter_total", midlertidigLagredeJournalposter) { it.get().toDouble() }
             .description("Antall midlertidig lagrede journalposter i databasen")
-            .register(registry)
+            .register(meterRegistry)
     }
 
     fun oppdater(

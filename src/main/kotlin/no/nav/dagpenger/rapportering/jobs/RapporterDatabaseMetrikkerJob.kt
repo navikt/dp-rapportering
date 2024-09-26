@@ -9,9 +9,10 @@ import kotlin.concurrent.fixedRateTimer
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.minutes
 
-internal class RapporterDatabaseMetrikkerJob {
+internal class RapporterDatabaseMetrikkerJob(
+    private val metrikker: DatabaseMetrikker,
+) {
     private val logger = KotlinLogging.logger {}
-    private val metrikker = DatabaseMetrikker()
 
     internal fun start(
         rapporteringRepository: RapporteringRepository,
