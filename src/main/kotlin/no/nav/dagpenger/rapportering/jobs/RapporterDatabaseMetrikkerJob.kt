@@ -27,11 +27,20 @@ internal class RapporterDatabaseMetrikkerJob(
                 try {
                     logger.info { "Henter metrikker for lagrede elementer i databasen" }
                     runBlocking {
+                        val lagredeRapporteringsperioder = rapporteringRepository.hentAntallRapporteringsperioder()
+                        val lagredeJournalposter = journalfoeringRepository.hentAntallJournalposter()
+                        val midlertidigLagredeJournalposter = journalfoeringRepository.hentAntallMidlertidligeJournalposter()
                         metrikker.oppdater(
-                            lagredeRapporteringsperioder = rapporteringRepository.hentAntallRapporteringsperioder(),
-                            lagredeJournalposter = journalfoeringRepository.hentAntallJournalposter(),
-                            midlertidigLagredeJournalposter = journalfoeringRepository.hentAntallMidlertidligeJournalposter(),
+                            lagredeRapporteringsperioder = lagredeRapporteringsperioder,
+                            lagredeJournalposter = lagredeJournalposter,
+                            midlertidigLagredeJournalposter = midlertidigLagredeJournalposter,
                         )
+                        logger.info {
+                            "Metrikker for lagrede elementer i databasen: " +
+                                "lagredeRapporteringsperioder=$lagredeRapporteringsperioder, " +
+                                "lagredeJournalposter=$lagredeJournalposter, " +
+                                "midlertidigLagredeJournalposter=$midlertidigLagredeJournalposter"
+                        }
                     }
                 } catch (e: Exception) {
                     logger.warn(e) { "Uthenting av metrikker for lagrede elementer i databasen feilet" }
