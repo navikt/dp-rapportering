@@ -26,13 +26,10 @@ internal class RapporterDatabaseMetrikkerJob(
             action = {
                 try {
                     runBlocking {
-                        val lagredeRapporteringsperioder = rapporteringRepository.hentAntallRapporteringsperioder()
-                        val lagredeJournalposter = journalfoeringRepository.hentAntallJournalposter()
-                        val midlertidigLagredeJournalposter = journalfoeringRepository.hentAntallMidlertidligeJournalposter()
                         metrikker.oppdater(
-                            lagredeRapporteringsperioder = lagredeRapporteringsperioder,
-                            lagredeJournalposter = lagredeJournalposter,
-                            midlertidigLagredeJournalposter = midlertidigLagredeJournalposter,
+                            lagredeRapporteringsperioder = rapporteringRepository.hentAntallRapporteringsperioder(),
+                            lagredeJournalposter = journalfoeringRepository.hentAntallJournalposter(),
+                            midlertidigLagredeJournalposter = journalfoeringRepository.hentAntallMidlertidligeJournalposter(),
                         )
                     }
                 } catch (e: Exception) {
