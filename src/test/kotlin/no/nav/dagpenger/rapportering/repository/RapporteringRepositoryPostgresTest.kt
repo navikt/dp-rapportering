@@ -474,6 +474,7 @@ fun getRapporteringsperiode(
     status: RapporteringsperiodeStatus = TilUtfylling,
     registrertArbeidssoker: Boolean? = null,
     begrunnelseEndring: String? = null,
+    mottattDato: LocalDate? = null,
 ) = Rapporteringsperiode(
     id = id,
     periode = periode,
@@ -487,6 +488,7 @@ fun getRapporteringsperiode(
     begrunnelseEndring = begrunnelseEndring,
     originalId = null,
     rapporteringstype = null,
+    mottattDato = mottattDato,
 )
 
 private fun getDager(
