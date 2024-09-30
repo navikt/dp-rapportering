@@ -256,24 +256,26 @@ class JournalfoeringServiceTest {
 
     private fun checkMessage(
         endring: Boolean,
-        content: String,
+        message: String,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
-        val jsonNode = objectMapper.readTree(content)
+        val jsonNode = objectMapper.readTree(message)
 
         jsonNode.get("@event_name").asText() shouldBe "behov"
         jsonNode.get("@behov").asIterable().iterator().next().asText() shouldBe "JournalføreRapportering"
-        jsonNode.get("periodeId").asInt() shouldBe 1
+
+        val behov = jsonNode.get("JournalføreRapportering")
+        behov.get("periodeId").asInt() shouldBe 1
         if (endring) {
-            jsonNode.get("brevkode").asText() shouldBe "NAV 00-10.03"
+            behov.get("brevkode").asText() shouldBe "NAV 00-10.03"
         } else {
-            jsonNode.get("brevkode").asText() shouldBe "NAV 00-10.02"
+            behov.get("brevkode").asText() shouldBe "NAV 00-10.02"
         }
 
-        checkJson(jsonNode.get("json").asText(), rapporteringsperiode)
-        checkPdf(endring, jsonNode.get("pdf").asText())
+        checkJson(behov.get("json").asText(), rapporteringsperiode)
+        checkPdf(endring, behov.get("pdf").asText())
 
-        val to = jsonNode.get("tilleggsopplysninger")
+        val to = behov.get("tilleggsopplysninger")
 
         to.get(0).get("first").asText() shouldBe "periodeId"
         to.get(0).get("second").asLong() shouldBe rapporteringsperiode.id

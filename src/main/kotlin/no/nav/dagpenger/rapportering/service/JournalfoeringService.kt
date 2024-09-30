@@ -199,12 +199,15 @@ class JournalfoeringService(
             val behov =  JsonMessage.newNeed(
                 listOf(MineBehov.JournalføreRapportering.name),
                 mapOf(
-                    "periodeId" to rapporteringsperiode.id,
-                    "brevkode" to brevkode,
-                    "json" to json,
-                    "pdf" to pdf,
-                    "tilleggsopplysninger" to tilleggsopplysninger
-                )
+                    "ident" to ident,
+                    MineBehov.JournalføreRapportering.name to mapOf(
+                        "periodeId" to rapporteringsperiode.id,
+                        "brevkode" to brevkode,
+                        "json" to json,
+                        "pdf" to pdf,
+                        "tilleggsopplysninger" to tilleggsopplysninger
+                    )
+                ),
             )
             rapidsConnection.publish(ident, behov.toJson())
 
