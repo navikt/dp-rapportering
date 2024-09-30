@@ -145,7 +145,6 @@ internal fun Application.rapporteringApi(
                             call.respond(HttpStatusCode.OK, response)
                         } else {
                             call.respond(HttpStatusCode.BadRequest, response)
-                            meldepliktMetrikker.rapporteringApiFeil.increment()
                         }
                     } catch (e: Exception) {
                         logger.error("Feil ved innsending: $e")

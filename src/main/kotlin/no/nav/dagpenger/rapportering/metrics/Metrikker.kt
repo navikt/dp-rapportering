@@ -2,8 +2,10 @@ package no.nav.dagpenger.rapportering.metrics
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
@@ -16,8 +18,14 @@ class RapporteringsperiodeMetrikker(
 ) {
     val hentet: Counter =
         Counter
-            .builder("${NAMESPACE}_antall_personer_hentet")
+            .builder("${NAMESPACE}_antall_personer_hentet_total")
             .description("Indikerer antall uthentede personer med rapporteringsperioder")
+            .register(meterRegistry)
+
+    val kontrollFeilet: Counter =
+        Counter
+            .builder("${NAMESPACE}_antall_kontroll_feilet_total")
+            .description("Indikerer antall feil ved kontroll av innsendt rapporteringsperiode")
             .register(meterRegistry)
 }
 
@@ -26,7 +34,7 @@ class MeldepliktMetrikker(
 ) {
     val rapporteringApiFeil: Counter =
         Counter
-            .builder("${NAMESPACE}_antall_meldeplikt_exception")
+            .builder("${NAMESPACE}_antall_meldeplikt_exception_total")
             .description("Indikerer antall feil i kall eller mapping av respons mot meldeplikt")
             .register(meterRegistry)
 }
@@ -34,23 +42,34 @@ class MeldepliktMetrikker(
 class DatabaseMetrikker(
     meterRegistry: MeterRegistry,
 ) {
-    val lagredeRapporteringsperioder: AtomicInteger? =
-        meterRegistry.gauge(
-            "${NAMESPACE}_lagrede_rapporteringsperioder_total",
-            AtomicInteger(0),
-        )
+    private val lagredeRapporteringsperioder: AtomicInteger = AtomicInteger(0)
+    private val lagredeJournalposter: AtomicInteger = AtomicInteger(0)
+    private val midlertidigLagredeJournalposter: AtomicInteger = AtomicInteger(0)
 
-    val lagredeJournalposter: AtomicInteger? =
-        meterRegistry.gauge(
-            "${NAMESPACE}_lagrede_journalposter_total",
-            AtomicInteger(0),
-        )
+    init {
+        Gauge
+            .builder("${NAMESPACE}_lagrede_rapporteringsperioder_total", lagredeRapporteringsperioder) { it.get().toDouble() }
+            .description("Antall lagrede rapporteringsperioder i databasen")
+            .register(meterRegistry)
+        Gauge
+            .builder("${NAMESPACE}_lagrede_journalposter_total", lagredeJournalposter) { it.get().toDouble() }
+            .description("Antall lagrede journalposter i databasen")
+            .register(meterRegistry)
+        Gauge
+            .builder("${NAMESPACE}_midlertidig_lagrede_journalposter_total", midlertidigLagredeJournalposter) { it.get().toDouble() }
+            .description("Antall midlertidig lagrede journalposter i databasen")
+            .register(meterRegistry)
+    }
 
-    val midlertidigLagredeJournalposter: AtomicInteger? =
-        meterRegistry.gauge(
-            "${NAMESPACE}_midlertidig_lagrede_journalposter_total",
-            AtomicInteger(0),
-        )
+    fun oppdater(
+        lagredeRapporteringsperioder: Int,
+        lagredeJournalposter: Int,
+        midlertidigLagredeJournalposter: Int,
+    ) {
+        this.lagredeRapporteringsperioder.set(lagredeRapporteringsperioder)
+        this.lagredeJournalposter.set(lagredeJournalposter)
+        this.midlertidigLagredeJournalposter.set(midlertidigLagredeJournalposter)
+    }
 }
 
 internal class JobbkjoringMetrikker(
@@ -59,7 +78,7 @@ internal class JobbkjoringMetrikker(
 ) {
     private val jobStatus: Counter =
         Counter
-            .builder("${NAMESPACE}_job_execution_status")
+            .builder("${NAMESPACE}_job_execution_status_total")
             .description("Indikerer status for kjøring av jobb")
             .tag("navn", navn)
             .register(meterRegistry)
@@ -73,7 +92,7 @@ internal class JobbkjoringMetrikker(
 
     private val affectedRowsCount: Counter =
         Counter
-            .builder("${NAMESPACE}_affected_rows_count")
+            .builder("${NAMESPACE}_affected_rows_count_total")
             .description("Antall rader påvirket av jobb")
             .tag("navn", navn)
             .register(meterRegistry)
@@ -125,7 +144,7 @@ class ActionTimer(
             .tag("navn", navn)
             .description("Indikerer hvor lang tid en funksjon brukte")
             .register(meterRegistry)
-            .record(tidBrukt.inWholeSeconds, SECONDS)
+            .record(tidBrukt.inWholeMilliseconds, MILLISECONDS)
 
         return blockResult
     }

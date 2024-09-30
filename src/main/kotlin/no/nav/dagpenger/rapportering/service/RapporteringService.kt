@@ -311,8 +311,8 @@ class RapporteringService(
                         }
                     }
                 } else {
-                    logger.error { "Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}: $response" }
-                    throw RuntimeException("Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}")
+                    logger.warn { "Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}: $response" }
+                    rapporteringsperiodeMetrikker.kontrollFeilet.increment()
                 }
             }
     }

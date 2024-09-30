@@ -124,7 +124,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    fun `returnerer feil hvis innsending feilet med http status OK`() =
+    fun `returnerer Bad Request og InnsendingResponse når innsending feilet med http status OK`() =
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter(
@@ -138,7 +138,10 @@ class RapporteringApiTest : ApiTestSetup() {
             }
 
             with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor())) {
-                status shouldBe HttpStatusCode.InternalServerError
+                status shouldBe HttpStatusCode.BadRequest
+                val innsendingResponse = defaultObjectMapper.readValue<InnsendingResponse>(bodyAsText())
+                innsendingResponse.id shouldBe 123L
+                innsendingResponse.status shouldBe "FEIL"
             }
         }
 
