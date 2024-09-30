@@ -35,10 +35,6 @@ spec:
       value: {{MELDEPLIKT_ADAPTER_HOST}}
     - name: MELDEPLIKT_ADAPTER_AUDIENCE
       value: {{MELDEPLIKT_ADAPTER_AUDIENCE}}
-    - name: DOKARKIV_HOST
-      value: {{DOKARKIV_HOST}}
-    - name: DOKARKIV_AUDIENCE
-      value: {{DOKARKIV_AUDIENCE}}
     - name: PDF_GENERATOR_URL
       value: {{PDF_GENERATOR_URL}}
     - name: GITHUB_SHA
@@ -68,8 +64,6 @@ spec:
       rules:
         - application: dp-arena-meldeplikt-adapter
         - application: dp-behov-pdf-generator
-      external:
-        - host: {{ DOKARKIV_HOST }}
     inbound:
       rules:
         - application: dp-saksbehandling-frontend

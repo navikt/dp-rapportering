@@ -54,14 +54,6 @@ internal object Configuration {
 
     val meldepliktAdapterAudience by lazy { properties[Key("MELDEPLIKT_ADAPTER_AUDIENCE", stringType)] }
 
-    val dokarkivUrl by lazy {
-        properties[Key("DOKARKIV_HOST", stringType)].let {
-            "https://$it"
-        }
-    }
-
-    val dokarkivAudience by lazy { properties[Key("DOKARKIV_AUDIENCE", stringType)] }
-
     val pdfGeneratorUrl by lazy { properties[Key("PDF_GENERATOR_URL", stringType)] }
 
     private val tokenXClient by lazy {

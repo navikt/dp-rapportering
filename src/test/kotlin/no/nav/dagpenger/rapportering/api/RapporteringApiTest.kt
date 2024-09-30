@@ -96,7 +96,6 @@ class RapporteringApiTest : ApiTestSetup() {
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
-                dokarkiv()
                 pdfGenerator()
             }
 
@@ -163,7 +162,6 @@ class RapporteringApiTest : ApiTestSetup() {
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
-                dokarkiv()
                 pdfGenerator()
             }
 
@@ -195,7 +193,6 @@ class RapporteringApiTest : ApiTestSetup() {
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
-                dokarkiv()
             }
 
             val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
@@ -747,17 +744,6 @@ class RapporteringApiTest : ApiTestSetup() {
             val response = client.doGet("/rapporteringsperioder/innsendte", issueToken(fnr))
             response.status shouldBe HttpStatusCode.NoContent
         }
-
-    private fun ExternalServicesBuilder.dokarkiv() {
-        hosts("https://dokarkiv") {
-            routing {
-                post("/rest/journalpostapi/v1/journalpost") {
-                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    call.respond(journalpostResponse())
-                }
-            }
-        }
-    }
 
     private fun ExternalServicesBuilder.pdfGenerator() {
         hosts("https://pdf-generator") {

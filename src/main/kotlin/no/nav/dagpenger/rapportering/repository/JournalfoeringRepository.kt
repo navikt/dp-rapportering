@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.repository
 
 import no.nav.dagpenger.rapportering.model.Journalpost
+import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 
 interface JournalfoeringRepository {
     fun lagreJournalpostData(
@@ -9,7 +10,7 @@ interface JournalfoeringRepository {
         rapporteringsperiodeId: Long,
     )
 
-    fun lagreJournalpostMidlertidig(journalpost: Journalpost)
+    fun lagreJournalpostMidlertidig(rapporteringsperiode: Rapporteringsperiode)
 
     fun hentMidlertidigLagredeJournalposter(): List<Triple<String, Journalpost, Int>>
 

@@ -5,6 +5,7 @@ import kotliquery.sessionOf
 import kotliquery.using
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.model.Journalpost
+import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import javax.sql.DataSource
 
 class JournalfoeringRepositoryPostgres(
@@ -29,15 +30,15 @@ class JournalfoeringRepositoryPostgres(
         }
     }
 
-    override fun lagreJournalpostMidlertidig(journalpost: Journalpost) {
+    override fun lagreJournalpostMidlertidig(rapporteringsperiode: Rapporteringsperiode) {
         using(sessionOf(dataSource)) { session ->
             session
                 .run(
                     queryOf(
                         "INSERT INTO midlertidig_lagrede_journalposter (id, journalpost, retries) " +
                             "VALUES (?, ?, ?)",
-                        journalpost.eksternReferanseId,
-                        defaultObjectMapper.writeValueAsString(journalpost),
+                        rapporteringsperiode.id,
+                        defaultObjectMapper.writeValueAsString(rapporteringsperiode),
                         0,
                     ).asUpdate,
                 ).validateRowsAffected()

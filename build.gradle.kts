@@ -71,12 +71,8 @@ dependencies {
     implementation(libs.bundles.postgres)
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.5.4")
 
-    // PDF
-    implementation("io.github.openhtmltopdf:openhtmltopdf-pdfbox:1.1.22")
-    implementation("io.github.openhtmltopdf:openhtmltopdf-svg-support:1.1.22")
-    implementation("org.verapdf:validation-model:1.26.1")
-    implementation("org.jsoup:jsoup:1.18.1")
 
+    testImplementation(libs.rapids.and.rivers.test)
     testImplementation(libs.bundles.postgres.test)
     testImplementation("io.kotest:kotest-assertions-core-jvm:${libs.versions.kotest.get()}")
     testImplementation("io.mockk:mockk:${libs.versions.mockk.get()}")

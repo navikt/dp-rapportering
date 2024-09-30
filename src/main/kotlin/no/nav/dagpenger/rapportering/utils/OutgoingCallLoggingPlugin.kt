@@ -103,42 +103,38 @@ class OutgoingCallLoggingPlugin(
                 // Empty line before body as in HTTP request
                 appendLine()
 
-                // It's too much to store journalpost (metadata, JSON, PDF). We will just mark that it was a journalpost
-                if ("${request.url.protocol.name}://${request.url.host}" == Configuration.dokarkivUrl) {
-                    appendLine("JOURNALPOST")
-                } else {
-                    when (request.content) {
-                        is OutgoingContent.ByteArrayContent -> {
-                            append(
-                                String(
-                                    (request.content as OutgoingContent.ByteArrayContent).bytes(),
-                                    Charsets.UTF_8,
-                                ),
-                            )
-                        }
+                when (request.content) {
+                    is OutgoingContent.ByteArrayContent -> {
+                        append(
+                            String(
+                                (request.content as OutgoingContent.ByteArrayContent).bytes(),
+                                Charsets.UTF_8,
+                            ),
+                        )
+                    }
 
-                        is OutgoingContent.WriteChannelContent -> {
-                            val buffer = StringBuilder()
-                            val channel = ByteChannel(true)
+                    is OutgoingContent.WriteChannelContent -> {
+                        val buffer = StringBuilder()
+                        val channel = ByteChannel(true)
 
-                            runBlocking {
-                                GlobalScope.writer(coroutineContext, autoFlush = true) {
-                                    (request.content as OutgoingContent.WriteChannelContent).writeTo(channel)
-                                }
-
-                                while (!channel.isClosedForRead) {
-                                    channel.readUTF8LineTo(buffer)
-                                }
+                        runBlocking {
+                            GlobalScope.writer(coroutineContext, autoFlush = true) {
+                                (request.content as OutgoingContent.WriteChannelContent).writeTo(channel)
                             }
 
-                            appendLine(buffer.toString())
+                            while (!channel.isClosedForRead) {
+                                channel.readUTF8LineTo(buffer)
+                            }
                         }
 
-                        else -> {
-                            appendLine(request.content)
-                        }
+                        appendLine(buffer.toString())
+                    }
+
+                    else -> {
+                        appendLine(request.content)
                     }
                 }
+
             }.toString()
 
     private fun buildResponse(
@@ -156,6 +152,7 @@ class OutgoingCallLoggingPlugin(
                 // empty line before body as in HTTP response
                 appendLine()
 
+                // TODO: Skal vi lagre PDF-filer her eller vi kan bare markere at det var en PDF-fil?
                 appendLine(responseBody)
             }.toString()
 }

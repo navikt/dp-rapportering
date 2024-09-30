@@ -96,7 +96,6 @@ class CallLoggingPluginTest : ApiTestSetup() {
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
-                dokarkiv()
                 pdfGenerator()
             }
 
@@ -113,7 +112,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
 
             val list = getLogList()
 
-            list.size shouldBe 7
+            list.size shouldBe 6
             list[2].type shouldBe "REST"
             list[2].kallRetning shouldBe "INN"
             list[2].method shouldBe "POST"
@@ -175,26 +174,8 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 
                 PDF: UERG
                 """.trimIndent()
-            list[6].ident shouldBe "" // Det finnes ikke token når vi genererer PDF
-            list[6].logginfo shouldBe ""
-
-            list[6].type shouldBe "REST"
-            list[6].kallRetning shouldBe "UT"
-            list[6].method shouldBe "POST"
-            list[6].operation shouldBe "/rest/journalpostapi/v1/journalpost"
-            list[6].status shouldBe 200
-            list[6].request shouldStartWith "POST https://dokarkiv:443/rest/journalpostapi/v1/journalpost"
-            list[6].request shouldContain "JOURNALPOST"
-            list[6].response.trimIndent() shouldBe
-                """
-                HTTP/1.1 200 OK
-                Content-Type: application/json
-                Content-Length: ${journalpostresponse.length}
-                
-                $journalpostresponse
-                """.trimIndent()
-            list[6].ident shouldBe "" // Det finnes ikke ident i token når vi sender data til Dokarkiv
-            list[6].logginfo shouldBe ""
+            list[5].ident shouldBe "" // Det finnes ikke token når vi genererer PDF
+            list[5].logginfo shouldBe ""
         }
 
     private fun getLogList() =
@@ -235,17 +216,6 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 post("/sendinn") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond(sendinnResponse)
-                }
-            }
-        }
-    }
-
-    private fun ExternalServicesBuilder.dokarkiv() {
-        hosts("https://dokarkiv") {
-            routing {
-                post("/rest/journalpostapi/v1/journalpost") {
-                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    call.respond(journalpostresponse)
                 }
             }
         }

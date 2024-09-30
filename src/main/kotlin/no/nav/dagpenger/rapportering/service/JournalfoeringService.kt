@@ -1,5 +1,7 @@
 package no.nav.dagpenger.rapportering.service
 
+import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import com.natpryce.konfig.Key
 import com.natpryce.konfig.stringType
 import io.ktor.client.HttpClient
@@ -11,59 +13,31 @@ import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.contentType
 import io.micrometer.core.instrument.MeterRegistry
-import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import no.nav.dagpenger.oauth2.defaultHttpClient
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.properties
-import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
-import no.nav.dagpenger.rapportering.model.AvsenderIdType
-import no.nav.dagpenger.rapportering.model.AvsenderMottaker
-import no.nav.dagpenger.rapportering.model.Bruker
-import no.nav.dagpenger.rapportering.model.BrukerIdType
-import no.nav.dagpenger.rapportering.model.Dokument
-import no.nav.dagpenger.rapportering.model.DokumentVariant
-import no.nav.dagpenger.rapportering.model.Filetype
-import no.nav.dagpenger.rapportering.model.Journalpost
-import no.nav.dagpenger.rapportering.model.Journalposttype
+import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
-import no.nav.dagpenger.rapportering.model.Sak
-import no.nav.dagpenger.rapportering.model.Sakstype
-import no.nav.dagpenger.rapportering.model.Tema
-import no.nav.dagpenger.rapportering.model.Tilleggsopplysning
-import no.nav.dagpenger.rapportering.model.Variantformat
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
-import java.util.Base64
 import java.util.Locale
-import java.util.Timer
-import java.util.TimerTask
-import java.util.UUID
-import kotlin.time.measureTime
 
 class JournalfoeringService(
     private val meldepliktConnector: MeldepliktConnector,
-    private val dokarkivConnector: DokarkivConnector,
+    private val rapidsConnection: RapidsConnection,
     private val journalfoeringRepository: JournalfoeringRepository,
     meterRegistry: MeterRegistry,
     private val httpClient: HttpClient = defaultHttpClient(),
-    delay: Long = 10000,
-    // 5 minutes by default
-    resendInterval: Long = 300_000L,
 ) {
     companion object : KLogging()
-
-    private val kanal = "NAV_NO"
-    private val journalfoerendeEnhet = "9999"
-    private val brevkode = "NAV 00-10.02"
-    private val brevkodeKorrigert = "NAV 00-10.03"
 
     private val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.YYYY")
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.YYYY HH:mm")
@@ -72,6 +46,7 @@ class JournalfoeringService(
 
     private val metrikker: JobbkjoringMetrikker = JobbkjoringMetrikker(meterRegistry, this::class.simpleName!!)
 
+    /*
     init {
         val timer = Timer()
         val timerTask: TimerTask =
@@ -95,8 +70,10 @@ class JournalfoeringService(
 
         timer.schedule(timerTask, delay, resendInterval)
     }
+    */
 
     suspend fun sendJournalposterPaaNytt(): Int {
+        /*
         // Les data fra DB
         // Triple: data id, journalpost, retries
         val journalpostData: List<Triple<String, Journalpost, Int>> =
@@ -162,6 +139,8 @@ class JournalfoeringService(
         }
 
         return journalpostData.size
+        */
+        return 0
     }
 
     suspend fun journalfoer(
@@ -170,85 +149,79 @@ class JournalfoeringService(
         headers: Headers,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
-        val person = meldepliktConnector.hentPerson(ident, token)
-        val navn = person?.fornavn + " " + person?.etternavn
+        try {
+            val person = meldepliktConnector.hentPerson(ident, token)
+            val navn = person?.fornavn + " " + person?.etternavn
 
-        // Opprett HTML
-        // Hent HTML fra frontend
-        val htmlFrafrontend = "<div>!!!</div>"
+            // Opprett HTML
+            // Hent HTML fra frontend
+            // TODO: Hent
+            val htmlFrafrontend = "<div>!!!</div>"
 
-        // Erstatt plassholdere med data
-        val htmlMal = this::class.java.getResource("/html_pdf_mal.html")!!.readText()
-        htmlMal.replace("%NAVN%", navn)
-        htmlMal.replace("%IDENT%", ident)
-        htmlMal.replace("%RAPPORTERINGSPERIODE_ID%", rapporteringsperiode.id.toString())
-        htmlMal.replace("%DATO%", LocalDate.now().format(dateFormatter))
-        htmlMal.replace("%TITTEL%", getTittle(rapporteringsperiode))
-        htmlMal.replace("%MOTTATT%", LocalDateTime.now().format(dateTimeFormatter))
-        htmlMal.replace(
-            "%NESTE_MELDEKORT_KAN_SENDES_FRA%",
-            rapporteringsperiode.kanSendesFra.plusDays(14).format(dateFormatter)
-        )
-        htmlMal.replace("%HTML%", htmlFrafrontend)
+            // Erstatt plassholdere med data
+            val htmlMal = this::class.java.getResource("/html_pdf_mal.html")!!.readText()
+            htmlMal.replace("%NAVN%", navn)
+            htmlMal.replace("%IDENT%", ident)
+            htmlMal.replace("%RAPPORTERINGSPERIODE_ID%", rapporteringsperiode.id.toString())
+            htmlMal.replace("%DATO%", LocalDate.now().format(dateFormatter))
+            htmlMal.replace("%TITTEL%", getTittle(rapporteringsperiode))
+            htmlMal.replace("%MOTTATT%", LocalDateTime.now().format(dateTimeFormatter))
+            htmlMal.replace(
+                "%NESTE_MELDEKORT_KAN_SENDES_FRA%",
+                rapporteringsperiode.kanSendesFra.plusDays(14).format(dateFormatter)
+            )
+            htmlMal.replace("%HTML%", htmlFrafrontend)
 
-        // Kall dp-behov-pdf-generator
-        val sak = "meldekort" // Vi bruker "meldekort" istedenfor saksnummer
+            // TODO: Vi har HTML med alle tekster, vi oppretter PDF fra HTML, må vi også ha alle tekstene i JSON?
+            val json = defaultObjectMapper.writeValueAsString(rapporteringsperiode)
 
-        val pdfGeneratorResponse =
-            httpClient.post(Configuration.pdfGeneratorUrl + "/convert-html-to-pdf/" + sak) {
-                accept(ContentType.Application.Pdf)
-                contentType(ContentType.Text.Plain)
-                setBody(htmlMal)
+            // Kall dp-behov-pdf-generator
+            val sak = "meldekort" // Vi bruker "meldekort" istedenfor saksnummer
+
+            logger.info("Oppretter PDF for rapporteringsperiode ${rapporteringsperiode.id}")
+            val pdfGeneratorResponse =
+                httpClient.post(Configuration.pdfGeneratorUrl + "/convert-html-to-pdf/" + sak) {
+                    accept(ContentType.Application.Pdf)
+                    contentType(ContentType.Text.Plain)
+                    setBody(htmlMal)
+                }
+
+            val pdf: ByteArray = pdfGeneratorResponse.body()
+            val tilleggsopplysninger = getTilleggsopplysninger(headers, rapporteringsperiode)
+
+            logger.info("Oppretter journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
+
+            var brevkode = "NAV 00-10.02"
+            if (rapporteringsperiode.status == RapporteringsperiodeStatus.Endret) {
+                brevkode = "NAV 00-10.03"
             }
 
-        val pdf: ByteArray = pdfGeneratorResponse.body()
-
-        // Kall dp-behov-journalforing
-
-        val journalpost =
-            Journalpost(
-                journalposttype = Journalposttype.INNGAAENDE,
-                avsenderMottaker =
-                    AvsenderMottaker(
-                        id = ident,
-                        idType = AvsenderIdType.FNR,
-                        navn = navn,
-                    ),
-                bruker =
-                    Bruker(
-                        id = ident,
-                        idType = BrukerIdType.FNR,
-                    ),
-                tema = Tema.DAG,
-                tittel = getTittle(rapporteringsperiode),
-                kanal = kanal,
-                journalfoerendeEnhet = journalfoerendeEnhet,
-                // Det er duplikatkontroll på eksternReferanseId for inngående dokumenter
-                eksternReferanseId = UUID.randomUUID().toString(),
-                datoMottatt = LocalDate.now().format(DateTimeFormatter.ISO_DATE),
-                tilleggsopplysninger = getTilleggsopplysninger(headers, rapporteringsperiode),
-                sak =
-                    Sak(
-                        sakstype = Sakstype.GENERELL_SAK,
-                    ),
-                dokumenter = getDokumenter(rapporteringsperiode, pdf),
+            val behov =  JsonMessage.newNeed(
+                listOf(MineBehov.JournalføreRapportering.name),
+                mapOf(
+                    "periodeId" to rapporteringsperiode.id,
+                    "brevkode" to brevkode,
+                    "json" to json,
+                    "pdf" to pdf,
+                    "tilleggsopplysninger" to tilleggsopplysninger
+                )
             )
+            rapidsConnection.publish(ident, behov.toJson())
 
-        logger.info("Opprettet journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
-
-        try {
-            val journalpostResponse = dokarkivConnector.sendJournalpost(journalpost)
-
-            lagreJournalpostData(
-                journalpostResponse.journalpostId,
-                journalpostResponse.dokumenter[0].dokumentInfoId,
-                rapporteringsperiode.id,
-            )
         } catch (e: Exception) {
             logger.warn("Kan ikke sende journalpost", e)
 
-            lagreJournalpostMidlertidig(rapporteringsperiode.id, journalpost)
+            lagreJournalpostMidlertidig(rapporteringsperiode)
         }
+
+        /*
+                    AvsenderMottaker(
+                        id = ident,
+                        idType = AvsenderIdType.FNR,
+                        navn = navn, // Finnes ikke dp-behov-journalføring
+                    ),
+                tittel = getTittle(rapporteringsperiode), // Finnes ikke dp-behov-journalføring
+        */
     }
 
     private fun getTittle(rapporteringsperiode: Rapporteringsperiode): String {
@@ -268,86 +241,34 @@ class JournalfoeringService(
     private fun getTilleggsopplysninger(
         headers: Headers,
         rapporteringsperiode: Rapporteringsperiode,
-    ): List<Tilleggsopplysning> =
+    ): List<Pair<String, String>> =
         mutableListOf(
             // Nøkkel - maksimum 20 tegn
-            Tilleggsopplysning(
-                "id",
-                rapporteringsperiode.id.toString(),
+            // Verdi - maksimum 100 tegn
+            Pair(
+                "periodeId",
+                rapporteringsperiode.id.toString()
             ),
-            Tilleggsopplysning(
+            Pair(
                 "kanSendesFra",
-                rapporteringsperiode.kanSendesFra.format(DateTimeFormatter.ISO_DATE),
+                rapporteringsperiode.kanSendesFra.format(DateTimeFormatter.ISO_DATE)
             ),
-            Tilleggsopplysning(
+            Pair(
                 "userAgent",
-                headers["useragent"] ?: "",
+                headers["useragent"] ?: ""
             ),
-            Tilleggsopplysning(
+            Pair(
                 "frontendGithubSha",
-                headers["githubsha"] ?: "",
+                headers["githubsha"] ?: ""
             ),
-            Tilleggsopplysning(
+            Pair(
                 "backendGithubSha",
-                properties[Key("GITHUB_SHA", stringType)],
+                properties[Key("GITHUB_SHA", stringType)]
             ),
         )
 
-    private fun getDokumenter(
-        rapporteringsperiode: Rapporteringsperiode,
-        pdf: ByteArray,
-    ): List<Dokument> {
-        var brevkode = brevkode
-        if (rapporteringsperiode.status == RapporteringsperiodeStatus.Endret) {
-            brevkode = brevkodeKorrigert
-        }
-
-        val dokument =
-            Dokument(
-                tittel = getTittle(rapporteringsperiode),
-                brevkode = brevkode,
-                dokumentvarianter =
-                    listOf(
-                        getJSON(rapporteringsperiode),
-                        getPDF(pdf),
-                    ),
-            )
-
-        return listOf(dokument)
-    }
-
-    private fun getJSON(rapporteringsperiode: Rapporteringsperiode): DokumentVariant =
-        DokumentVariant(
-            filtype = Filetype.JSON,
-            variantformat = Variantformat.ORIGINAL,
-            fysiskDokument =
-                Base64
-                    .getEncoder()
-                    .encodeToString(defaultObjectMapper.writeValueAsBytes(rapporteringsperiode)),
-        )
-
-    private fun getPDF(pdf: ByteArray): DokumentVariant {
-        return DokumentVariant(
-            filtype = Filetype.PDFA,
-            variantformat = Variantformat.ARKIV,
-            fysiskDokument = Base64.getEncoder().encodeToString(pdf),
-        )
-    }
-
-    private fun lagreJournalpostData(
-        journalpostId: Long,
-        dokumentInfoId: Long,
-        rapporteringsperiodeId: Long,
-    ) {
-        logger.info("Lagrer JournalpostData for rapporteringsperiode $rapporteringsperiodeId")
-        journalfoeringRepository.lagreJournalpostData(journalpostId, dokumentInfoId, rapporteringsperiodeId)
-    }
-
-    private fun lagreJournalpostMidlertidig(
-        rapporteringsperiodeId: Long,
-        journalpost: Journalpost,
-    ) {
-        logger.info("Mellomlagrer journalpost for rapporteringsperiode $rapporteringsperiodeId")
-        journalfoeringRepository.lagreJournalpostMidlertidig(journalpost)
+    private fun lagreJournalpostMidlertidig(rapporteringsperiode: Rapporteringsperiode) {
+        logger.info("Mellomlagrer journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
+        journalfoeringRepository.lagreJournalpostMidlertidig(rapporteringsperiode)
     }
 }

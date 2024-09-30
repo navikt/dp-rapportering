@@ -1,13 +1,14 @@
 package no.nav.dagpenger.rapportering.api
 
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
+import io.mockk.mockk
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
 import no.nav.dagpenger.rapportering.config.konfigurasjon
-import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
@@ -91,6 +92,7 @@ open class ApiTestSetup {
 
             val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
             val rapporteringRepository = RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
+            val rapidsConnection = mockk<RapidsConnection>()
             val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
             val rapporteringService =
                 RapporteringService(
@@ -98,7 +100,7 @@ open class ApiTestSetup {
                     rapporteringRepository,
                     JournalfoeringService(
                         meldepliktConnector,
-                        DokarkivConnector(httpClient = httpClient, actionTimer = actionTimer),
+                        rapidsConnection,
                         journalfoeringRepository,
                         meterRegistry,
                         httpClient,
@@ -119,8 +121,6 @@ open class ApiTestSetup {
     private fun setEnvConfig() {
         System.setProperty("MELDEPLIKT_ADAPTER_HOST", "meldeplikt-adapter")
         System.setProperty("MELDEPLIKT_ADAPTER_AUDIENCE", REQUIRED_AUDIENCE)
-        System.setProperty("DOKARKIV_HOST", "dokarkiv")
-        System.setProperty("DOKARKIV_AUDIENCE", REQUIRED_AUDIENCE)
         System.setProperty("PDF_GENERATOR_URL", "https://pdf-generator")
         System.setProperty("DB_JDBC_URL", "${database.jdbcUrl}&user=${database.username}&password=${database.password}")
         System.setProperty("token-x.client-id", TOKENX_ISSUER_ID)
@@ -129,7 +129,6 @@ open class ApiTestSetup {
         System.setProperty("token-x.well-known-url", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
         System.setProperty("TOKEN_X_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
         System.setProperty("azure-app.well-known-url", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
-        System.setProperty("AZURE_APP_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
         System.setProperty("AZURE_APP_CLIENT_ID", AZURE_ISSUER_ID)
         System.setProperty("AZURE_APP_CLIENT_SECRET", TEST_PRIVATE_JWK)
         System.setProperty("GITHUB_SHA", "some_sha")

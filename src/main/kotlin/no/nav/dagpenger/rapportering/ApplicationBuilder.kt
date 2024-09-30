@@ -11,7 +11,6 @@ import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.api.internalApi
 import no.nav.dagpenger.rapportering.api.rapporteringApi
 import no.nav.dagpenger.rapportering.config.konfigurasjon
-import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.jobs.RapporterDatabaseMetrikkerJob
@@ -26,6 +25,7 @@ import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.prepar
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.RapporteringService
+import no.nav.dagpenger.rapportering.tjenester.RapporteringJournalførtMottak
 import no.nav.helse.rapids_rivers.RapidApplication
 
 class ApplicationBuilder(
@@ -35,6 +35,8 @@ class ApplicationBuilder(
     private companion object {
         private val logger = KotlinLogging.logger {}
     }
+
+    private lateinit var rapidsConnection: RapidsConnection
 
     private val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry, Clock.SYSTEM)
     private val rapporteringsperiodeMetrikker = RapporteringsperiodeMetrikker(meterRegistry)
@@ -54,23 +56,23 @@ class ApplicationBuilder(
             rapporteringRepository,
             JournalfoeringService(
                 meldepliktConnector,
-                DokarkivConnector(httpClient = httpClient, actionTimer = actionTimer),
+                rapidsConnection,
                 journalfoeringRepository,
                 meterRegistry,
             ),
             rapporteringsperiodeMetrikker,
         )
 
-    private val rapidsConnection =
-        RapidApplication
-            .create(configuration) { engine, _: RapidsConnection ->
-                engine.application.konfigurasjon()
-                engine.application.internalApi()
-                engine.application.rapporteringApi(rapporteringService, meldepliktMetrikker)
-            }
-
     init {
+        rapidsConnection =
+            RapidApplication
+                .create(configuration) { engine, _: RapidsConnection ->
+                    engine.application.konfigurasjon()
+                    engine.application.internalApi()
+                    engine.application.rapporteringApi(rapporteringService, meldepliktMetrikker)
+                }
         rapidsConnection.register(this)
+        RapporteringJournalførtMottak(rapidsConnection, journalfoeringRepository)
     }
 
     internal fun start() {
