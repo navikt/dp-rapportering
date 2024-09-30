@@ -21,9 +21,7 @@ import no.nav.dagpenger.rapportering.api.doPost
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
-import no.nav.dagpenger.rapportering.model.DokumentInfo
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
-import no.nav.dagpenger.rapportering.model.JournalpostResponse
 import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
@@ -38,17 +36,6 @@ class CallLoggingPluginTest : ApiTestSetup() {
             InnsendingResponse(id = 123L, status = "OK", feil = emptyList()),
         )
     private val personResponse = defaultObjectMapper.writeValueAsString(Person(1L, "TESTESSEN", "TEST", "NO", "EMELD"))
-    private val journalpostresponse =
-        defaultObjectMapper.writeValueAsString(
-            JournalpostResponse(
-                1L,
-                "",
-                true,
-                listOf(
-                    DokumentInfo(2L),
-                ),
-            ),
-        )
 
     @Test
     fun `Kan lagre get request og response`() =

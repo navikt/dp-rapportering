@@ -24,7 +24,6 @@ import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
-import no.nav.dagpenger.rapportering.model.DokumentInfo
 import no.nav.dagpenger.rapportering.model.InnsendingFeil
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.PeriodeId
@@ -888,21 +887,6 @@ class RapporteringApiTest : ApiTestSetup() {
           "fornavn": "$fornavn",
           "maalformkode": "$maalformkode",
           "meldeform": "$meldeform"
-        }
-        """.trimIndent()
-
-    private fun journalpostResponse(
-        journalpostId: Long = 123L,
-        journalstatus: String = "MOTTATT",
-        journalpostferdigstilt: Boolean = true,
-        dokumenter: List<DokumentInfo> = listOf(DokumentInfo(dokumentInfoId = 1L)),
-    ) = // language=JSON
-        """
-        {
-          "journalpostId": $journalpostId,
-          "journalstatus": "$journalstatus",
-          "journalpostferdigstilt": $journalpostferdigstilt,
-          "dokumenter": ${defaultObjectMapper.writeValueAsString(dokumenter)}
         }
         """.trimIndent()
 }

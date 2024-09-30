@@ -4,7 +4,6 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
-import no.nav.dagpenger.rapportering.model.Journalpost
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import javax.sql.DataSource
 
@@ -45,7 +44,7 @@ class JournalfoeringRepositoryPostgres(
         }
     }
 
-    override fun hentMidlertidigLagredeJournalposter(): List<Triple<String, Journalpost, Int>> =
+    override fun hentMidlertidigLagredeJournalposter(): List<Triple<String, Rapporteringsperiode, Int>> =
         using(sessionOf(dataSource)) { session ->
             session.run(
                 queryOf(
@@ -53,7 +52,7 @@ class JournalfoeringRepositoryPostgres(
                 ).map {
                     Triple(
                         it.string("id"),
-                        defaultObjectMapper.readValue(it.string("journalpost"), Journalpost::class.java),
+                        defaultObjectMapper.readValue(it.string("journalpost"), Rapporteringsperiode::class.java),
                         it.int("retries"),
                     )
                 }.asList,

@@ -30,14 +30,11 @@ import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
-import no.nav.dagpenger.rapportering.model.Journalpost
-import no.nav.dagpenger.rapportering.model.Journalposttype
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
-import no.nav.dagpenger.rapportering.model.Tilleggsopplysning
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
@@ -109,10 +106,7 @@ class JournalfoeringServiceTest {
             listOf(
                 Triple(
                     "1",
-                    Journalpost(
-                        Journalposttype.INNGAAENDE,
-                        tilleggsopplysninger = listOf(Tilleggsopplysning("id", "2")),
-                    ),
+                    createRapporteringsperiode(false),
                     0,
                 ),
             )
