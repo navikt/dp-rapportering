@@ -99,7 +99,6 @@ open class ApiTestSetup {
                     meldepliktConnector,
                     rapporteringRepository,
                     JournalfoeringService(
-                        meldepliktConnector,
                         rapidsConnection,
                         journalfoeringRepository,
                         meterRegistry,

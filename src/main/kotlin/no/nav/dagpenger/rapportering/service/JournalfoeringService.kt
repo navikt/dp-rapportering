@@ -13,13 +13,14 @@ import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.contentType
 import io.micrometer.core.instrument.MeterRegistry
+import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import no.nav.dagpenger.oauth2.defaultHttpClient
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.properties
-import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
+import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -29,13 +30,18 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
 import java.util.Locale
+import java.util.Timer
+import java.util.TimerTask
+import kotlin.time.measureTime
 
 class JournalfoeringService(
-    private val meldepliktConnector: MeldepliktConnector,
     private val rapidsConnection: RapidsConnection,
     private val journalfoeringRepository: JournalfoeringRepository,
     meterRegistry: MeterRegistry,
     private val httpClient: HttpClient = defaultHttpClient(),
+    delay: Long = 10000,
+    // 5 minutes by default
+    resendInterval: Long = 300_000L,
 ) {
     companion object : KLogging()
 
@@ -46,7 +52,6 @@ class JournalfoeringService(
 
     private val metrikker: JobbkjoringMetrikker = JobbkjoringMetrikker(meterRegistry, this::class.simpleName!!)
 
-    /*
     init {
         val timer = Timer()
         val timerTask: TimerTask =
@@ -57,7 +62,7 @@ class JournalfoeringService(
                             var rowsAffected: Int
                             val tidBrukt =
                                 measureTime {
-                                    rowsAffected = sendJournalposterPaaNytt()
+                                    rowsAffected = journalfoerPaaNytt()
                                 }
                             metrikker.jobbFullfort(tidBrukt, rowsAffected)
                         } catch (e: Exception) {
@@ -70,151 +75,53 @@ class JournalfoeringService(
 
         timer.schedule(timerTask, delay, resendInterval)
     }
-    */
 
-    suspend fun sendJournalposterPaaNytt(): Int {
-        /*
+    suspend fun journalfoerPaaNytt(): Int {
         // Les data fra DB
-        // Triple: data id, journalpost, retries
-        val journalpostData: List<Triple<String, Journalpost, Int>> =
-            journalfoeringRepository.hentMidlertidigLagredeJournalposter()
+        // Triple: periodeId, MidlertidigLagretData, retries
+        val journalpostData: List<Triple<String, MidlertidigLagretData, Int>> =
+            journalfoeringRepository.hentMidlertidigLagretData()
 
         journalpostData.forEach { triple ->
-            val lagretJournalpostId = triple.first
-            val journalpost = triple.second
+            val periodeId = triple.first
+            val midlertidigLagretData = triple.second
             val retries = triple.third
 
             try {
-                // Det er mulig at vi får feil et sted her, dvs. f.eks. når vi lagrer informasjon om at en journalpost har blitt opprettet
-                // (noe med DB eller connection timeout før vi får JournalpostRepspose tilbake)
-                // Da prøver på nytt. Men journalposten eksisterer allerede, vi bare vet ikke om dette
-                // Hva skjer hvis vi prøver å opprette journalpost som allerede eksisterer? No stress.
-                // Hvis journalpost med denne eksternReferanseId allerede eksisterer, returnerer createJournalpost 409 Conflict
-                // Men! Sammen men 409 Conflict returneres vanlig JournalpostReponse
-                // Dvs. vi kan lagre journalpostId og dokumentInfoId og slette midlertidig lagret journalpost fra DB
+                // Journalfør
+                opprettOgSendBehov(
+                    midlertidigLagretData.ident,
+                    midlertidigLagretData.navn,
+                    midlertidigLagretData.headers,
+                    midlertidigLagretData.rapporteringsperiode,
+                )
 
-                // Send
-                val journalpostResponse = dokarkivConnector.sendJournalpost(journalpost)
-                val journalpostId = journalpostResponse.journalpostId
-                val dokumentInfoId = journalpostResponse.dokumenter[0].dokumentInfoId
-                val rapporteringsperiodeId =
-                    journalpost.tilleggsopplysninger!!
-                        .first { it.nokkel == "id" }
-                        .verdi
-                        .toLong()
-
-                val lagretJournalpostData = journalfoeringRepository.hentJournalpostData(journalpostId)
-
-                if (lagretJournalpostData.isEmpty()) {
-                    // Lagre journalpostId-meldekortId
-                    journalfoeringRepository.lagreJournalpostData(
-                        journalpostId,
-                        dokumentInfoId,
-                        rapporteringsperiodeId,
-                    )
-
-                    // Slette midlertidig lagret journalpost
-                    journalfoeringRepository.sletteMidlertidigLagretJournalpost(lagretJournalpostId)
-                } else {
-                    val lagretJournalpost = lagretJournalpostData[0]
-
-                    if (lagretJournalpost.second == dokumentInfoId && lagretJournalpost.third == rapporteringsperiodeId) {
-                        // Slette midlertidig lagret journalpost
-                        journalfoeringRepository.sletteMidlertidigLagretJournalpost(lagretJournalpostId)
-                    } else {
-                        logger.error(
-                            "Journalpost med ID $journalpostId eksisterer allerede, " +
-                                "men har uforventet dokumentInfoId og rapporteringsperiodeId",
-                        )
-                    }
-                }
+                // Slette midlertidig lagret data
+                journalfoeringRepository.sletteMidlertidigLagretData(periodeId)
             } catch (e: Exception) {
-                // Kan ikke sende journalpost igjen. Oppdater teller
-                journalfoeringRepository.oppdaterMidlertidigLagretJournalpost(lagretJournalpostId, retries + 1)
+                // Kan ikke journalføre igjen. Oppdater teller
+                journalfoeringRepository.oppdaterMidlertidigLagretData(periodeId, retries + 1)
                 logger.warn(
-                    "Kan ikke opprette journalpost igjen. Data ID = $lagretJournalpostId, retries = $retries",
+                    "Kan ikke journalføre periode $periodeId, retries $retries",
                     e,
                 )
             }
         }
 
         return journalpostData.size
-        */
-        return 0
     }
 
     suspend fun journalfoer(
         ident: String,
-        token: String,
+        navn: String,
         headers: Headers,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
         try {
-            val person = meldepliktConnector.hentPerson(ident, token)
-            val navn = person?.fornavn + " " + person?.etternavn
-
-            // Opprett HTML
-            // Hent HTML fra frontend
-            // TODO: Hent
-            val htmlFrafrontend = "<div>!!!</div>"
-
-            // Erstatt plassholdere med data
-            val htmlMal = this::class.java.getResource("/html_pdf_mal.html")!!.readText()
-            htmlMal.replace("%NAVN%", navn)
-            htmlMal.replace("%IDENT%", ident)
-            htmlMal.replace("%RAPPORTERINGSPERIODE_ID%", rapporteringsperiode.id.toString())
-            htmlMal.replace("%DATO%", LocalDate.now().format(dateFormatter))
-            htmlMal.replace("%TITTEL%", getTittle(rapporteringsperiode))
-            htmlMal.replace("%MOTTATT%", LocalDateTime.now().format(dateTimeFormatter))
-            htmlMal.replace(
-                "%NESTE_MELDEKORT_KAN_SENDES_FRA%",
-                rapporteringsperiode.kanSendesFra.plusDays(14).format(dateFormatter)
-            )
-            htmlMal.replace("%HTML%", htmlFrafrontend)
-
-            // TODO: Vi har HTML med alle tekster, vi oppretter PDF fra HTML, må vi også ha alle tekstene i JSON?
-            val json = defaultObjectMapper.writeValueAsString(rapporteringsperiode)
-
-            // Kall dp-behov-pdf-generator
-            val sak = "meldekort" // Vi bruker "meldekort" istedenfor saksnummer
-
-            logger.info("Oppretter PDF for rapporteringsperiode ${rapporteringsperiode.id}")
-            val pdfGeneratorResponse =
-                httpClient.post(Configuration.pdfGeneratorUrl + "/convert-html-to-pdf/" + sak) {
-                    accept(ContentType.Application.Pdf)
-                    contentType(ContentType.Text.Plain)
-                    setBody(htmlMal)
-                }
-
-            val pdf: ByteArray = pdfGeneratorResponse.body()
-            val tilleggsopplysninger = getTilleggsopplysninger(headers, rapporteringsperiode)
-
-            logger.info("Oppretter journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
-
-            var brevkode = "NAV 00-10.02"
-            if (rapporteringsperiode.status == RapporteringsperiodeStatus.Endret) {
-                brevkode = "NAV 00-10.03"
-            }
-
-            val behov =  JsonMessage.newNeed(
-                listOf(MineBehov.JournalføreRapportering.name),
-                mapOf(
-                    "ident" to ident,
-                    MineBehov.JournalføreRapportering.name to mapOf(
-                        "periodeId" to rapporteringsperiode.id,
-                        "brevkode" to brevkode,
-                        "json" to json,
-                        "pdf" to pdf,
-                        "tilleggsopplysninger" to tilleggsopplysninger
-                    )
-                ),
-            )
-            rapidsConnection.publish(ident, behov.toJson())
-
+            opprettOgSendBehov(ident, navn, headers, rapporteringsperiode)
         } catch (e: Exception) {
-            logger.warn("Kan ikke sende journalpost", e)
-
-            lagreJournalpostMidlertidig(rapporteringsperiode)
+            logger.warn("Feil ved journalføring", e)
+            lagreDataMidlertidig(MidlertidigLagretData(ident, navn, headers, rapporteringsperiode))
         }
 
         /*
@@ -225,6 +132,71 @@ class JournalfoeringService(
                     ),
                 tittel = getTittle(rapporteringsperiode), // Finnes ikke dp-behov-journalføring
         */
+    }
+
+    private suspend fun opprettOgSendBehov(
+        ident: String,
+        navn: String,
+        headers: Headers,
+        rapporteringsperiode: Rapporteringsperiode,
+    ) {
+        // Opprett HTML
+        // Hent HTML fra frontend
+        // TODO: Hent
+        val htmlFrafrontend = "<div>!!!</div>"
+
+        // Erstatt plassholdere med data
+        val htmlMal = this::class.java.getResource("/html_pdf_mal.html")!!.readText()
+        htmlMal.replace("%NAVN%", navn)
+        htmlMal.replace("%IDENT%", ident)
+        htmlMal.replace("%RAPPORTERINGSPERIODE_ID%", rapporteringsperiode.id.toString())
+        htmlMal.replace("%DATO%", LocalDate.now().format(dateFormatter))
+        htmlMal.replace("%TITTEL%", getTittle(rapporteringsperiode))
+        htmlMal.replace("%MOTTATT%", LocalDateTime.now().format(dateTimeFormatter))
+        htmlMal.replace(
+            "%NESTE_MELDEKORT_KAN_SENDES_FRA%",
+            rapporteringsperiode.kanSendesFra.plusDays(14).format(dateFormatter)
+        )
+        htmlMal.replace("%HTML%", htmlFrafrontend)
+
+        // TODO: Vi har HTML med alle tekster, vi oppretter PDF fra HTML, må vi også ha alle tekstene i JSON?
+        val json = defaultObjectMapper.writeValueAsString(rapporteringsperiode)
+
+        // Kall dp-behov-pdf-generator
+        val sak = "meldekort" // Vi bruker "meldekort" istedenfor saksnummer
+
+        logger.info("Oppretter PDF for rapporteringsperiode ${rapporteringsperiode.id}")
+        val pdfGeneratorResponse =
+            httpClient.post(Configuration.pdfGeneratorUrl + "/convert-html-to-pdf/" + sak) {
+                accept(ContentType.Application.Pdf)
+                contentType(ContentType.Text.Plain)
+                setBody(htmlMal)
+            }
+
+        val pdf: ByteArray = pdfGeneratorResponse.body()
+        val tilleggsopplysninger = getTilleggsopplysninger(headers, rapporteringsperiode)
+
+        logger.info("Oppretter journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
+
+        var brevkode = "NAV 00-10.02"
+        if (rapporteringsperiode.status == RapporteringsperiodeStatus.Endret) {
+            brevkode = "NAV 00-10.03"
+        }
+
+        val behov = JsonMessage.newNeed(
+            listOf(MineBehov.JournalføreRapportering.name),
+            mapOf(
+                "ident" to ident,
+                MineBehov.JournalføreRapportering.name to mapOf(
+                    "periodeId" to rapporteringsperiode.id,
+                    "brevkode" to brevkode,
+                    "json" to json,
+                    "pdf" to pdf,
+                    "tilleggsopplysninger" to tilleggsopplysninger
+                )
+            ),
+        )
+        rapidsConnection.publish(ident, behov.toJson())
     }
 
     private fun getTittle(rapporteringsperiode: Rapporteringsperiode): String {
@@ -270,8 +242,8 @@ class JournalfoeringService(
             ),
         )
 
-    private fun lagreJournalpostMidlertidig(rapporteringsperiode: Rapporteringsperiode) {
-        logger.info("Mellomlagrer journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
-        journalfoeringRepository.lagreJournalpostMidlertidig(rapporteringsperiode)
+    private fun lagreDataMidlertidig(midlertidigLagretData: MidlertidigLagretData) {
+        logger.info("Mellomlagrer data for rapporteringsperiode ${midlertidigLagretData.rapporteringsperiode.id}")
+        journalfoeringRepository.lagreDataMidlertidig(midlertidigLagretData)
     }
 }

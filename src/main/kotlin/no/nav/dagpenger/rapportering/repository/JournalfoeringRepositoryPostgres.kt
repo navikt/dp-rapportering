@@ -4,7 +4,7 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
-import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 import javax.sql.DataSource
 
 class JournalfoeringRepositoryPostgres(
@@ -29,22 +29,22 @@ class JournalfoeringRepositoryPostgres(
         }
     }
 
-    override fun lagreJournalpostMidlertidig(rapporteringsperiode: Rapporteringsperiode) {
+    override fun lagreDataMidlertidig(midlertidigLagretData: MidlertidigLagretData) {
         using(sessionOf(dataSource)) { session ->
             session
                 .run(
                     queryOf(
                         "INSERT INTO midlertidig_lagrede_journalposter (id, journalpost, retries) " +
                             "VALUES (?, ?, ?)",
-                        rapporteringsperiode.id,
-                        defaultObjectMapper.writeValueAsString(rapporteringsperiode),
+                        midlertidigLagretData.rapporteringsperiode.id,
+                        defaultObjectMapper.writeValueAsString(midlertidigLagretData),
                         0,
                     ).asUpdate,
                 ).validateRowsAffected()
         }
     }
 
-    override fun hentMidlertidigLagredeJournalposter(): List<Triple<String, Rapporteringsperiode, Int>> =
+    override fun hentMidlertidigLagretData(): List<Triple<String, MidlertidigLagretData, Int>> =
         using(sessionOf(dataSource)) { session ->
             session.run(
                 queryOf(
@@ -52,32 +52,14 @@ class JournalfoeringRepositoryPostgres(
                 ).map {
                     Triple(
                         it.string("id"),
-                        defaultObjectMapper.readValue(it.string("journalpost"), Rapporteringsperiode::class.java),
+                        defaultObjectMapper.readValue(it.string("journalpost"), MidlertidigLagretData::class.java),
                         it.int("retries"),
                     )
                 }.asList,
             )
         }
 
-    override fun hentJournalpostData(journalpostId: Long): List<Triple<Long, Long, Long>> =
-        using(sessionOf(dataSource)) { session ->
-            session.run(
-                queryOf(
-                    "SELECT journalpost_id, dokumentinfo_id, rapportering_id " +
-                        "FROM opprettede_journalposter " +
-                        "WHERE journalpost_id = ?",
-                    journalpostId,
-                ).map {
-                    Triple(
-                        it.long("journalpost_id"),
-                        it.long("dokumentinfo_id"),
-                        it.long("rapportering_id"),
-                    )
-                }.asList,
-            )
-        }
-
-    override fun sletteMidlertidigLagretJournalpost(id: String) {
+    override fun sletteMidlertidigLagretData(id: String) {
         using(sessionOf(dataSource)) { session ->
             session
                 .run(
@@ -89,7 +71,7 @@ class JournalfoeringRepositoryPostgres(
         }
     }
 
-    override fun oppdaterMidlertidigLagretJournalpost(
+    override fun oppdaterMidlertidigLagretData(
         id: String,
         retries: Int,
     ) {
@@ -116,7 +98,7 @@ class JournalfoeringRepositoryPostgres(
             ) ?: 0
         }
 
-    override fun hentAntallMidlertidligeJournalposter(): Int =
+    override fun hentAntallMidlertidigLagretData(): Int =
         using(sessionOf(dataSource)) { session ->
             session.run(
                 queryOf(

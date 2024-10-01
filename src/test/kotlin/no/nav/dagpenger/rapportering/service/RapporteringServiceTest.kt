@@ -20,6 +20,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Periode
+import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
@@ -417,6 +418,7 @@ class RapporteringServiceTest {
         val rapporteringsperiode = rapporteringsperiodeListe.first()
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
+        coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
         coEvery { meldepliktConnector.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
                 id = rapporteringsperiode.id,
@@ -463,6 +465,7 @@ class RapporteringServiceTest {
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
         coEvery { meldepliktConnector.hentEndringId(any(), any()) } returns endringId
+        coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()

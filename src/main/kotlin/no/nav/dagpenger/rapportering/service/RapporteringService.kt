@@ -287,7 +287,11 @@ class RapporteringService(
             .also { response ->
                 if (response.status == "OK") {
                     logger.info("Journalføring rapporteringsperiode ${periodeTilInnsending.id}")
-                    journalfoeringService.journalfoer(ident, token, headers, periodeTilInnsending)
+
+                    val person = meldepliktConnector.hentPerson(ident, token)
+                    val navn = person?.fornavn + " " + person?.etternavn
+
+                    journalfoeringService.journalfoer(ident, navn, headers, periodeTilInnsending)
 
                     rapporteringRepository.oppdaterPeriodeEtterInnsending(
                         rapporteringId = periodeTilInnsending.id,

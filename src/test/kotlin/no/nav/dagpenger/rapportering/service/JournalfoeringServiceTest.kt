@@ -17,7 +17,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.just
 import io.mockk.justRun
@@ -26,19 +25,17 @@ import io.mockk.runs
 import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
-import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 import no.nav.dagpenger.rapportering.model.Periode
-import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.LocalDate
@@ -48,10 +45,10 @@ import java.util.UUID
 
 class JournalfoeringServiceTest {
     private val ident = "01020312345"
+    private val navn = "Test Testesen"
     private val userAgent = "Some agent"
     private val frontendGithubSha = "frontendabcdwfg"
     private val backendGithubSha = "backendabcdwfg"
-    private val token = "jwtToken"
     private val headers =
         Headers.build {
             append("useragent", userAgent)
@@ -74,9 +71,8 @@ class JournalfoeringServiceTest {
         test(true)
     }
 
-    @Disabled
     @Test
-    fun `Kan lagre journalposter midlertidig ved feil og sende paa nytt`() {
+    fun `Kan lagre data midlertidig ved feil og sende paa nytt`() {
         setProperties()
 
         // Mock svar fra PDFgenerator
@@ -91,29 +87,29 @@ class JournalfoeringServiceTest {
             }
 
         // Mock
-        val meldepliktConnector = mockk<MeldepliktConnector>()
-        coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
-
         val rapidsConnection = mockk<RapidsConnection>()
 
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
-        every { journalfoeringRepository.lagreJournalpostMidlertidig(any()) } just runs
-        every { journalfoeringRepository.hentJournalpostData(any()) } returns emptyList()
+        every { journalfoeringRepository.lagreDataMidlertidig(any()) } just runs
         every { journalfoeringRepository.lagreJournalpostData(any(), any(), any()) } just runs
-        every { journalfoeringRepository.oppdaterMidlertidigLagretJournalpost(any(), any()) } just runs
-        every { journalfoeringRepository.sletteMidlertidigLagretJournalpost(any()) } just runs
-        every { journalfoeringRepository.hentMidlertidigLagredeJournalposter() } returns
+        every { journalfoeringRepository.oppdaterMidlertidigLagretData(any(), any()) } just runs
+        every { journalfoeringRepository.sletteMidlertidigLagretData(any()) } just runs
+        every { journalfoeringRepository.hentMidlertidigLagretData() } returns
             listOf(
                 Triple(
                     "1",
-                    createRapporteringsperiode(false),
+                    MidlertidigLagretData(
+                        ident,
+                        navn,
+                        headers,
+                        createRapporteringsperiode(false),
+                    ),
                     0,
                 ),
             )
 
         val journalfoeringService =
             JournalfoeringService(
-                meldepliktConnector,
                 rapidsConnection,
                 journalfoeringRepository,
                 meterRegistry,
@@ -123,28 +119,29 @@ class JournalfoeringServiceTest {
         // Oppretter rapporteringsperiode
         val rapporteringsperiode = createRapporteringsperiode(false)
 
-        // Prøver å sende
+        // Prøver å journalføre
         runBlocking {
-            journalfoeringService.journalfoer(ident, token, headers, rapporteringsperiode)
+            journalfoeringService.journalfoer(ident, navn, headers, rapporteringsperiode)
         }
 
-        // Får feil og sjekker at JournalfoeringService lagrer journalpost midlertidig
-        verify { journalfoeringRepository.lagreJournalpostMidlertidig(any()) }
+        // Får feil og sjekker at JournalfoeringService lagrer data midlertidig
+        verify { journalfoeringRepository.lagreDataMidlertidig(any()) }
 
         runBlocking {
-            journalfoeringService.sendJournalposterPaaNytt()
+            journalfoeringService.journalfoerPaaNytt()
         }
 
         // Sjekker at JournalfoeringService prøvde å sende journalpost på nytt, fikk feil og oppdaterte retries
-        verify { journalfoeringRepository.hentMidlertidigLagredeJournalposter() }
-        verify { journalfoeringRepository.oppdaterMidlertidigLagretJournalpost("1", 1) }
+        verify { journalfoeringRepository.hentMidlertidigLagretData() }
+        verify { journalfoeringRepository.oppdaterMidlertidigLagretData("1", 1) }
+
+        every { rapidsConnection.publish(any(), any()) } just runs
 
         runBlocking {
-            journalfoeringService.sendJournalposterPaaNytt()
+            journalfoeringService.journalfoerPaaNytt()
         }
 
-        verify { journalfoeringRepository.hentJournalpostData(2) }
-        verify { journalfoeringRepository.sletteMidlertidigLagretJournalpost("1") }
+        verify { journalfoeringRepository.sletteMidlertidigLagretData("1") }
     }
 
     private fun setProperties() {
@@ -160,16 +157,13 @@ class JournalfoeringServiceTest {
         setProperties()
 
         // Mock
-        val meldepliktConnector = mockk<MeldepliktConnector>()
-        coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
-
         val message = slot<String>()
         val rapidsConnection = mockk<RapidsConnection>()
         justRun { rapidsConnection.publish(eq(ident), capture(message)) }
 
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
         justRun { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) }
-        every { journalfoeringRepository.hentMidlertidigLagredeJournalposter() } returns emptyList()
+        every { journalfoeringRepository.hentMidlertidigLagretData() } returns emptyList()
 
         // Mock svar fra PDFgenerator
         val pdf = if (endring) {
@@ -189,7 +183,6 @@ class JournalfoeringServiceTest {
 
         val journalfoeringService =
             JournalfoeringService(
-                meldepliktConnector,
                 rapidsConnection,
                 journalfoeringRepository,
                 meterRegistry,
@@ -200,7 +193,7 @@ class JournalfoeringServiceTest {
 
         // Kjører
         runBlocking {
-            journalfoeringService.journalfoer(ident, token, headers, rapporteringsperiode)
+            journalfoeringService.journalfoer(ident, navn, headers, rapporteringsperiode)
         }
 
         runBlocking {
