@@ -421,6 +421,9 @@ components:
                     type: string
                 status:
                     $ref: '#/components/schemas/RapporteringsperiodeStatus'
+                mottattDato:
+                    type: string
+                    format: date
                 registrertArbeidssoker:
                     type: boolean
                 originalId:
@@ -436,6 +439,7 @@ components:
                 - Endret
                 - Innsendt
                 - Ferdig
+                - Feilet
         Problem:
             type: object
             description: Implementasjon av Problem Details for HTTP APIs [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807)

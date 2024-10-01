@@ -353,6 +353,7 @@ class MeldepliktConnectorTest {
                 0.0,
                 null,
                 TilUtfylling,
+                mottattDato = null,
                 true,
                 originalId = null,
                 rapporteringstype = null,

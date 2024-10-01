@@ -105,6 +105,7 @@ fun rapporteringsperiodeFor(
     begrunnelseEndring: String? = null,
     originalId: Long? = null,
     rapporteringstype: String? = null,
+    mottattDato: LocalDate? = null,
 ) = Rapporteringsperiode(
     id = id,
     periode = Periode(fraOgMed = fraOgMed, tilOgMed = tilOgMed),
@@ -125,4 +126,5 @@ fun rapporteringsperiodeFor(
     begrunnelseEndring = begrunnelseEndring,
     originalId = originalId,
     rapporteringstype = rapporteringstype,
+    mottattDato = mottattDato,
 )

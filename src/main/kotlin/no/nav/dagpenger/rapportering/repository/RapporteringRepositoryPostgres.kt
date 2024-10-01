@@ -463,6 +463,7 @@ private fun Row.toRapporteringsperiode() =
         begrunnelseEndring = stringOrNull("begrunnelse_endring"),
         originalId = longOrNull("original_id"),
         rapporteringstype = stringOrNull("rapporteringstype"),
+        mottattDato = localDateOrNull("mottatt_dato"),
     )
 
 private fun Row.toDagPair(): Pair<UUID, Dag> =
