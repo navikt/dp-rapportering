@@ -21,7 +21,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
@@ -55,11 +54,12 @@ class OutgoingCallLoggingPlugin(
             val ident = getIdent(request.headers)
 
             val responseBody = response.bodyAsChannel().toByteArray()
-            val responseBodyString = if (response.headers[HttpHeaders.ContentType] == ContentType.Application.Pdf.toString()) {
-                "PDF: " + Base64.getEncoder().encodeToString(responseBody)
-            } else {
-                responseBody.toString(Charsets.UTF_8)
-            }
+            val responseBodyString =
+                if (response.headers[HttpHeaders.ContentType] == ContentType.Application.Pdf.toString()) {
+                    "PDF: " + Base64.getEncoder().encodeToString(responseBody)
+                } else {
+                    responseBody.toString(Charsets.UTF_8)
+                }
 
             try {
                 kallLoggRepository.lagreKallLogg(
@@ -134,7 +134,6 @@ class OutgoingCallLoggingPlugin(
                         appendLine(request.content)
                     }
                 }
-
             }.toString()
 
     private fun buildResponse(

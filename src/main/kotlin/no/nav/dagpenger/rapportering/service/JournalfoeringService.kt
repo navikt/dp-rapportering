@@ -123,15 +123,6 @@ class JournalfoeringService(
             logger.warn("Feil ved journalføring", e)
             lagreDataMidlertidig(MidlertidigLagretData(ident, navn, headers, rapporteringsperiode))
         }
-
-        /*
-                    AvsenderMottaker(
-                        id = ident,
-                        idType = AvsenderIdType.FNR,
-                        navn = navn, // Finnes ikke dp-behov-journalføring
-                    ),
-                tittel = getTittle(rapporteringsperiode), // Finnes ikke dp-behov-journalføring
-        */
     }
 
     private suspend fun opprettOgSendBehov(
@@ -155,7 +146,7 @@ class JournalfoeringService(
         htmlMal.replace("%MOTTATT%", LocalDateTime.now().format(dateTimeFormatter))
         htmlMal.replace(
             "%NESTE_MELDEKORT_KAN_SENDES_FRA%",
-            rapporteringsperiode.kanSendesFra.plusDays(14).format(dateFormatter)
+            rapporteringsperiode.kanSendesFra.plusDays(14).format(dateFormatter),
         )
         htmlMal.replace("%HTML%", htmlFrafrontend)
 
@@ -183,19 +174,24 @@ class JournalfoeringService(
             brevkode = "NAV 00-10.03"
         }
 
-        val behov = JsonMessage.newNeed(
-            listOf(MineBehov.JournalføreRapportering.name),
+        val behovNavn = MineBehov.JournalføreRapportering.name
+        val behovParams =
             mapOf(
-                "ident" to ident,
-                MineBehov.JournalføreRapportering.name to mapOf(
-                    "periodeId" to rapporteringsperiode.id,
-                    "brevkode" to brevkode,
-                    "json" to json,
-                    "pdf" to pdf,
-                    "tilleggsopplysninger" to tilleggsopplysninger
-                )
-            ),
-        )
+                "periodeId" to rapporteringsperiode.id,
+                "brevkode" to brevkode,
+                "json" to json,
+                "pdf" to pdf,
+                "tilleggsopplysninger" to tilleggsopplysninger,
+            )
+
+        val behov =
+            JsonMessage.newNeed(
+                listOf(behovNavn),
+                mapOf(
+                    "ident" to ident,
+                    behovNavn to behovParams,
+                ),
+            )
         rapidsConnection.publish(ident, behov.toJson())
     }
 
@@ -222,23 +218,23 @@ class JournalfoeringService(
             // Verdi - maksimum 100 tegn
             Pair(
                 "periodeId",
-                rapporteringsperiode.id.toString()
+                rapporteringsperiode.id.toString(),
             ),
             Pair(
                 "kanSendesFra",
-                rapporteringsperiode.kanSendesFra.format(DateTimeFormatter.ISO_DATE)
+                rapporteringsperiode.kanSendesFra.format(DateTimeFormatter.ISO_DATE),
             ),
             Pair(
                 "userAgent",
-                headers["useragent"] ?: ""
+                headers["useragent"] ?: "",
             ),
             Pair(
                 "frontendGithubSha",
-                headers["githubsha"] ?: ""
+                headers["githubsha"] ?: "",
             ),
             Pair(
                 "backendGithubSha",
-                properties[Key("GITHUB_SHA", stringType)]
+                properties[Key("GITHUB_SHA", stringType)],
             ),
         )
 

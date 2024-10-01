@@ -166,11 +166,12 @@ class JournalfoeringServiceTest {
         every { journalfoeringRepository.hentMidlertidigLagretData() } returns emptyList()
 
         // Mock svar fra PDFgenerator
-        val pdf = if (endring) {
-            this::class.java.getResource("/korrigert_expected.pdf")!!.readBytes()
-        } else {
-            this::class.java.getResource("/expected.pdf")!!.readBytes()
-        }
+        val pdf =
+            if (endring) {
+                this::class.java.getResource("/korrigert_expected.pdf")!!.readBytes()
+            } else {
+                this::class.java.getResource("/expected.pdf")!!.readBytes()
+            }
 
         val mockPdfGeneratorEngine =
             MockEngine { _ ->
@@ -186,7 +187,7 @@ class JournalfoeringServiceTest {
                 rapidsConnection,
                 journalfoeringRepository,
                 meterRegistry,
-                createHttpClient(mockPdfGeneratorEngine)
+                createHttpClient(mockPdfGeneratorEngine),
             )
 
         val rapporteringsperiode = createRapporteringsperiode(endring)
