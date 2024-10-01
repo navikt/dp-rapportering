@@ -11,6 +11,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Feilet
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
@@ -145,15 +146,39 @@ class RapporteringService(
         meldepliktConnector
             .hentInnsendteRapporteringsperioder(ident, token)
             .toRapporteringsperioder()
+            .kobleRapporteringsperioder()
             .populerMedPerioderFraDatabase(ident)
             .hentSisteFemPerioderPlussNåværende()
             .ifEmpty { null }
+
+    private fun List<Rapporteringsperiode>.kobleRapporteringsperioder(): List<Rapporteringsperiode> =
+        this
+            .groupBy { it.periode.fraOgMed }
+            .let { gruppertePerioder ->
+                gruppertePerioder.map { (_, perioder) ->
+                    if (perioder.size > 1) {
+                        val originalPeriode =
+                            perioder
+                                .filter { it.status == Endret }
+                                .minByOrNull {
+                                    it.mottattDato ?: throw RuntimeException("Innsendt periode har ikke mottatt dato")
+                                } ?: throw RuntimeException("Fant ingen original periode")
+                        val endredePerioder =
+                            perioder
+                                .filterNot { it == originalPeriode }
+                                .map { it.copy(originalId = originalPeriode.id) }
+                        endredePerioder + originalPeriode
+                    } else {
+                        perioder
+                    }
+                }
+            }.flatten()
 
     private suspend fun List<Rapporteringsperiode>.populerMedPerioderFraDatabase(ident: String): List<Rapporteringsperiode> {
         val innsendteRapporteringsperioder = this.toMutableList()
         rapporteringRepository
             .hentLagredeRapporteringsperioder(ident)
-            .filter { it.status == Innsendt || it.status == Ferdig }
+            .filter { it.status == Innsendt || it.status == Ferdig || it.status == Endret || it.status == Feilet }
             .forEach { periodeFraDb ->
                 if (innsendteRapporteringsperioder.none { it.id == periodeFraDb.id }) {
                     innsendteRapporteringsperioder.add(periodeFraDb)

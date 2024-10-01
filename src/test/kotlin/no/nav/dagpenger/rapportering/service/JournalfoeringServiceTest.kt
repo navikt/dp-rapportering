@@ -240,6 +240,7 @@ class JournalfoeringServiceTest {
             0.0,
             null,
             if (endring) RapporteringsperiodeStatus.Endret else TilUtfylling,
+            LocalDate.now(),
             true,
             null,
             null,

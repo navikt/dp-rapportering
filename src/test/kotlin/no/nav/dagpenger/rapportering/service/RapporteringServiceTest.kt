@@ -383,8 +383,21 @@ class RapporteringServiceTest {
     fun `liste med innsendte rapporteringsperioder blir sortert riktig med endret meldekort før originalt meldekort`() {
         val perioderFraArena =
             rapporteringsperiodeListe
-                .map { it.copy(status = Innsendt, kanSendes = false, kanEndres = true) }
-                .toAdapterRapporteringsperioder() +
+                .map {
+                    it.copy(
+                        status =
+                            if (it.id ==
+                                3L
+                            ) {
+                                Endret
+                            } else {
+                                Innsendt
+                            },
+                        kanSendes = false,
+                        kanEndres = true,
+                        mottattDato = it.kanSendesFra,
+                    )
+                }.toAdapterRapporteringsperioder() +
                 rapporteringsperiodeListe
                     .first()
                     .copy(
@@ -392,6 +405,7 @@ class RapporteringServiceTest {
                         status = Innsendt,
                         kanSendes = false,
                         begrunnelseEndring = "Korrigert",
+                        mottattDato = LocalDate.now(),
                     ).toAdapterRapporteringsperiode()
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns perioderFraArena
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns
@@ -657,6 +671,7 @@ fun lagRapporteringsperiode(
     begrunnelseEndring = null,
     originalId = null,
     rapporteringstype = null,
+    mottattDato = null,
 )
 
 private fun getDager(

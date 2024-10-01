@@ -18,6 +18,7 @@ data class Rapporteringsperiode(
     val bruttoBelop: Double?,
     val begrunnelseEndring: String?,
     val status: RapporteringsperiodeStatus,
+    val mottattDato: LocalDate?,
     val registrertArbeidssoker: Boolean?,
     val originalId: Long?,
     val rapporteringstype: String?,
@@ -67,7 +68,9 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
                 RapporteringsperiodeStatus.Endret -> RapporteringsperiodeStatusResponse.Endret
                 RapporteringsperiodeStatus.Innsendt -> RapporteringsperiodeStatusResponse.Innsendt
                 RapporteringsperiodeStatus.Ferdig -> RapporteringsperiodeStatusResponse.Ferdig
+                RapporteringsperiodeStatus.Feilet -> RapporteringsperiodeStatusResponse.Feilet
             },
+        mottattDato = this.mottattDato,
         registrertArbeidssoker = this.registrertArbeidssoker,
         originalId = this.originalId?.toString(),
         rapporteringstype = this.rapporteringstype,

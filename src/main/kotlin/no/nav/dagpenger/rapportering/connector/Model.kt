@@ -5,6 +5,7 @@ import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitet
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Syk
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.Endret
+import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.Feilet
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.TilUtfylling
@@ -30,6 +31,7 @@ data class AdapterRapporteringsperiode(
     val bruttoBelop: Double?,
     val begrunnelseEndring: String?,
     val status: AdapterRapporteringsperiodeStatus,
+    val mottattDato: LocalDate?,
     val registrertArbeidssoker: Boolean?,
 )
 
@@ -38,6 +40,7 @@ enum class AdapterRapporteringsperiodeStatus {
     Endret,
     Innsendt,
     Ferdig,
+    Feilet,
 }
 
 data class AdapterPeriode(
@@ -82,7 +85,9 @@ fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
                 Endret -> RapporteringsperiodeStatus.Endret
                 Innsendt -> RapporteringsperiodeStatus.Innsendt
                 Ferdig -> RapporteringsperiodeStatus.Ferdig
+                Feilet -> RapporteringsperiodeStatus.Feilet
             },
+        mottattDato = this.mottattDato,
         begrunnelseEndring = this.begrunnelseEndring,
         registrertArbeidssoker = this.registrertArbeidssoker,
         originalId = null,
@@ -123,7 +128,9 @@ fun Rapporteringsperiode.toAdapterRapporteringsperiode(): AdapterRapporteringspe
                 RapporteringsperiodeStatus.Endret -> Endret
                 RapporteringsperiodeStatus.Innsendt -> Innsendt
                 RapporteringsperiodeStatus.Ferdig -> Ferdig
+                RapporteringsperiodeStatus.Feilet -> Feilet
             },
+        mottattDato = this.mottattDato,
         registrertArbeidssoker = this.registrertArbeidssoker,
     )
 

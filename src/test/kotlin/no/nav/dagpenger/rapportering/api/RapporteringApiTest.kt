@@ -673,7 +673,8 @@ class RapporteringApiTest : ApiTestSetup() {
                                 id = 125L,
                                 fraOgMed = 1.januar(2024),
                                 aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
-                                status = AdapterRapporteringsperiodeStatus.Innsendt,
+                                status = AdapterRapporteringsperiodeStatus.Endret,
+                                mottattDato = 14.januar(2024),
                             ),
                             adapterRapporteringsperiode(
                                 id = 126L,
@@ -681,6 +682,7 @@ class RapporteringApiTest : ApiTestSetup() {
                                 aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
                                 status = AdapterRapporteringsperiodeStatus.Innsendt,
                                 begrunnelseEndring = "En god begrunnelse",
+                                mottattDato = 15.januar(2024),
                             ),
                             adapterRapporteringsperiode(
                                 id = 127L,
@@ -693,18 +695,21 @@ class RapporteringApiTest : ApiTestSetup() {
                                 fraOgMed = 15.januar(2024),
                                 aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
                                 status = AdapterRapporteringsperiodeStatus.Innsendt,
+                                mottattDato = 20.januar(2024),
                             ),
                             adapterRapporteringsperiode(
                                 id = 129L,
                                 fraOgMed = 29.januar(2024),
                                 aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
                                 status = AdapterRapporteringsperiodeStatus.Innsendt,
+                                mottattDato = 10.februar(2024),
                             ),
                             adapterRapporteringsperiode(
                                 id = 130L,
                                 fraOgMed = 12.februar(2024),
                                 aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
-                                status = AdapterRapporteringsperiodeStatus.Innsendt,
+                                status = AdapterRapporteringsperiodeStatus.Endret,
+                                mottattDato = 24.februar(2024),
                             ),
                             adapterRapporteringsperiode(
                                 id = 131L,
@@ -712,6 +717,7 @@ class RapporteringApiTest : ApiTestSetup() {
                                 aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
                                 status = AdapterRapporteringsperiodeStatus.Innsendt,
                                 begrunnelseEndring = "En god begrunnelse",
+                                mottattDato = 25.februar(2024),
                             ),
                         ),
                 )
@@ -849,6 +855,7 @@ class RapporteringApiTest : ApiTestSetup() {
         bruttoBelop: Double? = null,
         registrertArbeidssoker: Boolean? = null,
         begrunnelseEndring: String? = null,
+        mottattDato: LocalDate? = null,
     ) = AdapterRapporteringsperiode(
         id = id,
         periode =
@@ -871,6 +878,7 @@ class RapporteringApiTest : ApiTestSetup() {
         bruttoBelop = bruttoBelop,
         registrertArbeidssoker = registrertArbeidssoker,
         begrunnelseEndring = begrunnelseEndring,
+        mottattDato = mottattDato,
     )
 
     private fun person(
