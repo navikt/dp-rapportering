@@ -77,6 +77,7 @@ class RapporteringServiceTest {
             dager.size shouldBe 14
             dager.first().aktiviteter shouldBe emptyList()
             kanSendesFra shouldBe 27.januar
+            sisteFristForTrekk shouldBe 5.februar
             kanSendes shouldBe true
             kanEndres shouldBe false
             bruttoBelop shouldBe null
@@ -101,6 +102,7 @@ class RapporteringServiceTest {
             dager.size shouldBe 14
             dager.first().aktiviteter shouldBe emptyList()
             kanSendesFra shouldBe 27.januar
+            sisteFristForTrekk shouldBe 5.februar
             kanSendes shouldBe true
             kanEndres shouldBe false
             bruttoBelop shouldBe null
@@ -138,6 +140,7 @@ class RapporteringServiceTest {
             dager.size shouldBe 14
             dager shouldBe rapporteringsperiodeFraDb.dager
             kanSendesFra shouldBe 27.januar
+            sisteFristForTrekk shouldBe 5.februar
             kanSendes shouldBe true
             kanEndres shouldBe false
             bruttoBelop shouldBe null
@@ -173,6 +176,7 @@ class RapporteringServiceTest {
             dager.size shouldBe 14
             dager shouldBe rapporteringsperiodeFraDb.dager
             kanSendesFra shouldBe 27.januar
+            sisteFristForTrekk shouldBe 5.februar
             kanSendes shouldBe true
             kanEndres shouldBe false
             bruttoBelop shouldBe null

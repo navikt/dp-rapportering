@@ -408,6 +408,9 @@ components:
                     $ref: '#/components/schemas/periode'
                 dager:
                     $ref: '#/components/schemas/dag'
+                sisteFristForTrekk:
+                    type: string
+                    format: date
                 kanSendesFra:
                     type: string
                     format: date

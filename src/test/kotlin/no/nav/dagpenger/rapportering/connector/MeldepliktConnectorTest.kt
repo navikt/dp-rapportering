@@ -344,17 +344,18 @@ class MeldepliktConnectorTest {
 
         val rapporteringsperiode =
             Rapporteringsperiode(
-                1L,
-                Periode(LocalDate.now().minusDays(13), LocalDate.now()),
-                emptyList(),
-                LocalDate.now(),
-                true,
-                true,
-                0.0,
-                null,
-                TilUtfylling,
+                id = 1L,
+                periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()),
+                dager = emptyList(),
+                kanSendesFra = LocalDate.now(),
+                sisteFristForTrekk = LocalDate.now().plusDays(7),
+                kanSendes = true,
+                kanEndres = true,
+                bruttoBelop = 0.0,
+                begrunnelseEndring = null,
+                status = TilUtfylling,
                 mottattDato = null,
-                true,
+                registrertArbeidssoker = true,
                 originalId = null,
                 rapporteringstype = null,
             )
