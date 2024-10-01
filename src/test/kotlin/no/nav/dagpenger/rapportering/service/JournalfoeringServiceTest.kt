@@ -209,43 +209,45 @@ class JournalfoeringServiceTest {
         val fom = LocalDate.of(2024, 6, 24)
 
         return Rapporteringsperiode(
-            1L,
-            Periode(fom, fom.plusDays(13)),
-            listOf(
-                Dag(
-                    fom,
-                    listOf(
-                        Aktivitet(
-                            UUID.randomUUID(),
-                            Aktivitet.AktivitetsType.Arbeid,
-                            "PT07H30M",
+            id = 1L,
+            periode = Periode(fom, fom.plusDays(13)),
+            dager =
+                listOf(
+                    Dag(
+                        fom,
+                        listOf(
+                            Aktivitet(
+                                UUID.randomUUID(),
+                                Aktivitet.AktivitetsType.Arbeid,
+                                "PT07H30M",
+                            ),
                         ),
+                        1,
                     ),
-                    1,
-                ),
-                Dag(
-                    fom.plusDays(1),
-                    listOf(
-                        Aktivitet(
-                            UUID.randomUUID(),
-                            Aktivitet.AktivitetsType.Syk,
-                            null,
+                    Dag(
+                        fom.plusDays(1),
+                        listOf(
+                            Aktivitet(
+                                UUID.randomUUID(),
+                                Aktivitet.AktivitetsType.Syk,
+                                null,
+                            ),
                         ),
+                        2,
                     ),
-                    2,
                 ),
-            ),
-            fom.plusDays(12),
-            true,
-            true,
-            0.0,
-            null,
-            if (endring) RapporteringsperiodeStatus.Endret else TilUtfylling,
-            LocalDate.now(),
-            true,
-            null,
-            null,
-            html,
+            kanSendesFra = fom.plusDays(12),
+            sisteFristForTrekk = fom.plusDays(20),
+            kanSendes = true,
+            kanEndres = true,
+            bruttoBelop = 0.0,
+            begrunnelseEndring = null,
+            status = if (endring) RapporteringsperiodeStatus.Endret else TilUtfylling,
+            mottattDato = LocalDate.now(),
+            registrertArbeidssoker = true,
+            originalId = null,
+            rapporteringstype = null,
+            html = html,
         )
     }
 

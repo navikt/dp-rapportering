@@ -13,6 +13,7 @@ data class Rapporteringsperiode(
     val periode: Periode,
     val dager: List<Dag>,
     val kanSendesFra: LocalDate,
+    val sisteFristForTrekk: LocalDate = periode.tilOgMed.plusDays(8),
     val kanSendes: Boolean,
     val kanEndres: Boolean,
     val bruttoBelop: Double?,
@@ -57,6 +58,7 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
                     dagIndex = dag.dagIndex.toBigDecimal(),
                 )
             },
+        sisteFristForTrekk = this.sisteFristForTrekk,
         kanSendesFra = this.kanSendesFra,
         kanSendes = this.kanSendes,
         kanEndres = this.kanEndres,
