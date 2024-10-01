@@ -48,7 +48,6 @@ fun Application.konfigurasjon(
         clean()
     }
 
-    clean()
     runMigration()
 
     install(DoubleReceive) {
