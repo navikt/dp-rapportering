@@ -41,20 +41,3 @@ internal fun ApplicationCall.optionalIdent(): String? =
     requireNotNull(this.authentication.principal<JWTPrincipal>()).payload.claims["pid"]?.asString()
 
 internal fun ApplicationCall.issuer() = issuerFromString(this.authentication.principal<JWTPrincipal>()?.payload?.issuer)
-
-internal fun ApplicationCall.loginLevel(): Int {
-    val jwt = requireNotNull(this.authentication.principal<JWTPrincipal>()) { "Ikke autentisert" }
-    val acrClaim = requireNotNull(jwt.payload.claims["acr"]?.asString()) { "Kan ikke finne påloggingsnivå" }
-
-    return when (acrClaim) {
-        "idporten-loa-substantial", "Level3" -> {
-            3
-        }
-
-        "idporten-loa-high", "Level4" -> {
-            4
-        }
-
-        else -> 0
-    }
-}

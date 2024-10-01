@@ -276,7 +276,6 @@ class RapporteringService(
         rapporteringsperiode: Rapporteringsperiode,
         token: String,
         ident: String,
-        loginLevel: Int,
         headers: Headers,
     ): InnsendingResponse {
         rapporteringsperiode.takeIf { it.kanSendes }

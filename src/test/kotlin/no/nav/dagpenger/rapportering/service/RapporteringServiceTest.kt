@@ -442,7 +442,7 @@ class RapporteringServiceTest {
 
         val innsendingResponse =
             runBlocking {
-                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, 4, headers)
+                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, headers)
             }
 
         innsendingResponse.id shouldBe rapporteringsperiode.id
@@ -464,7 +464,6 @@ class RapporteringServiceTest {
                     rapporteringsperiodeListe.first().copy(kanSendes = false),
                     token,
                     ident,
-                    4,
                     headers,
                 )
             }
@@ -494,7 +493,7 @@ class RapporteringServiceTest {
 
         val innsendingResponse =
             runBlocking {
-                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, 4, headers)
+                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, headers)
             }
 
         innsendingResponse.id shouldBe endringId.toLong()
@@ -517,7 +516,6 @@ class RapporteringServiceTest {
                     rapporteringsperiodeListe.first().copy(status = Endret, begrunnelseEndring = null),
                     token,
                     ident,
-                    4,
                     headers,
                 )
             }

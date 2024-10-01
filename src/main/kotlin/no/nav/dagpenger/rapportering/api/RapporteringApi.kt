@@ -23,7 +23,6 @@ import io.ktor.server.routing.routing
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.auth.jwt
-import no.nav.dagpenger.rapportering.api.auth.loginLevel
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
@@ -124,7 +123,6 @@ internal fun Application.rapporteringApi(
             route("/rapporteringsperiode") {
                 post {
                     val ident = call.ident()
-                    val loginLevel = call.loginLevel()
                     val jwtToken = call.request.jwt()
                     val headers = call.request.headers
 
@@ -138,7 +136,6 @@ internal fun Application.rapporteringApi(
                                 rapporteringsperiode,
                                 jwtToken,
                                 ident,
-                                loginLevel,
                                 headers,
                             )
                         if (response.status == "OK") {
