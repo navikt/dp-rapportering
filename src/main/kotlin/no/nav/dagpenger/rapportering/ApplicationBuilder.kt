@@ -36,8 +36,6 @@ class ApplicationBuilder(
         private val logger = KotlinLogging.logger {}
     }
 
-    private lateinit var rapidsConnection: RapidsConnection
-
     private val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry, Clock.SYSTEM)
     private val rapporteringsperiodeMetrikker = RapporteringsperiodeMetrikker(meterRegistry)
     private val meldepliktMetrikker = MeldepliktMetrikker(meterRegistry)
@@ -50,6 +48,14 @@ class ApplicationBuilder(
     private val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
     private val rapporteringRepository = RapporteringRepositoryPostgres(dataSource, actionTimer)
     private val journalfoeringRepository = JournalfoeringRepositoryPostgres(dataSource, actionTimer)
+
+    private val rapidsConnection: RapidsConnection =
+        RapidApplication
+            .create(configuration) { engine, _: RapidsConnection ->
+                engine.application.konfigurasjon()
+                engine.application.internalApi()
+                engine.application.rapporteringApi(rapporteringService, meldepliktMetrikker)
+            }
     private val rapporteringService =
         RapporteringService(
             meldepliktConnector,
@@ -63,13 +69,6 @@ class ApplicationBuilder(
         )
 
     init {
-        rapidsConnection =
-            RapidApplication
-                .create(configuration) { engine, _: RapidsConnection ->
-                    engine.application.konfigurasjon()
-                    engine.application.internalApi()
-                    engine.application.rapporteringApi(rapporteringService, meldepliktMetrikker)
-                }
         rapidsConnection.register(this)
         RapporteringJournalførtMottak(rapidsConnection, journalfoeringRepository)
     }
