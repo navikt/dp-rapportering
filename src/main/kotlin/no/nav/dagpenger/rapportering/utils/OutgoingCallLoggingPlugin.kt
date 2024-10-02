@@ -27,7 +27,6 @@ import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import java.time.Instant
 import java.time.LocalDateTime
-import java.util.Base64
 import kotlin.coroutines.CoroutineContext
 
 class OutgoingCallLoggingPlugin(
@@ -56,7 +55,7 @@ class OutgoingCallLoggingPlugin(
             val responseBody = response.bodyAsChannel().toByteArray()
             val responseBodyString =
                 if (response.headers[HttpHeaders.ContentType] == ContentType.Application.Pdf.toString()) {
-                    "PDF: " + Base64.getEncoder().encodeToString(responseBody)
+                    "PDF" // Don't save the content, just show that it was a PDF-file
                 } else {
                     responseBody.toString(Charsets.UTF_8)
                 }
@@ -151,7 +150,6 @@ class OutgoingCallLoggingPlugin(
                 // empty line before body as in HTTP response
                 appendLine()
 
-                // TODO: Skal vi lagre PDF-filer her eller vi kan bare markere at det var en PDF-fil?
                 appendLine(responseBody)
             }.toString()
 }

@@ -25,7 +25,6 @@ import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.slot
-import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.Aktivitet

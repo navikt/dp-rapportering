@@ -16,21 +16,20 @@ class JournalfoeringRepositoryPostgres(
         journalpostId: Long,
         dokumentInfoId: Long,
         rapporteringsperiodeId: Long,
-    ) =
-        actionTimer.timedAction("db-lagreJournalpostData") {
-            using(sessionOf(dataSource)) { session ->
-                session
-                    .run(
-                        queryOf(
-                            "INSERT INTO opprettede_journalposter (journalpost_id, dokumentinfo_id, rapportering_id) " +
-                                "VALUES (?, ?, ?)",
-                            journalpostId,
-                            dokumentInfoId,
-                            rapporteringsperiodeId,
-                        ).asUpdate,
-                    ).validateRowsAffected()
-            }
+    ) = actionTimer.timedAction("db-lagreJournalpostData") {
+        using(sessionOf(dataSource)) { session ->
+            session
+                .run(
+                    queryOf(
+                        "INSERT INTO opprettede_journalposter (journalpost_id, dokumentinfo_id, rapportering_id) " +
+                            "VALUES (?, ?, ?)",
+                        journalpostId,
+                        dokumentInfoId,
+                        rapporteringsperiodeId,
+                    ).asUpdate,
+                ).validateRowsAffected()
         }
+    }
 
     override suspend fun lagreDataMidlertidig(midlertidigLagretData: MidlertidigLagretData) =
         actionTimer.timedAction("db-lagreDataMidlertidig") {
@@ -81,19 +80,18 @@ class JournalfoeringRepositoryPostgres(
     override suspend fun oppdaterMidlertidigLagretData(
         id: String,
         retries: Int,
-    ) =
-        actionTimer.timedAction("db-oppdaterMidlertidigLagretData") {
-            using(sessionOf(dataSource)) { session ->
-                session
-                    .run(
-                        queryOf(
-                            "UPDATE midlertidig_lagrede_journalposter SET retries = ? WHERE id = ?",
-                            retries,
-                            id,
-                        ).asUpdate,
-                    ).validateRowsAffected()
-            }
+    ) = actionTimer.timedAction("db-oppdaterMidlertidigLagretData") {
+        using(sessionOf(dataSource)) { session ->
+            session
+                .run(
+                    queryOf(
+                        "UPDATE midlertidig_lagrede_journalposter SET retries = ? WHERE id = ?",
+                        retries,
+                        id,
+                    ).asUpdate,
+                ).validateRowsAffected()
         }
+    }
 
     override suspend fun hentAntallJournalposter(): Int =
         actionTimer.timedAction("db-hentAntallJournalposter") {

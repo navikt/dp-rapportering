@@ -159,7 +159,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 Content-Type: application/pdf
                 Content-Length: 3
                 
-                PDF: UERG
+                PDF
                 """.trimIndent()
             list[5].ident shouldBe "" // Det finnes ikke token når vi genererer PDF
             list[5].logginfo shouldBe ""
