@@ -3,24 +3,24 @@ package no.nav.dagpenger.rapportering.repository
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 
 interface JournalfoeringRepository {
-    fun lagreJournalpostData(
+    suspend fun lagreJournalpostData(
         journalpostId: Long,
         dokumentInfoId: Long,
         rapporteringsperiodeId: Long,
     )
 
-    fun lagreDataMidlertidig(midlertidigLagretData: MidlertidigLagretData)
+    suspend fun lagreDataMidlertidig(midlertidigLagretData: MidlertidigLagretData)
 
-    fun hentMidlertidigLagretData(): List<Triple<String, MidlertidigLagretData, Int>>
+    suspend fun hentMidlertidigLagretData(): List<Triple<String, MidlertidigLagretData, Int>>
 
-    fun sletteMidlertidigLagretData(id: String)
+    suspend fun sletteMidlertidigLagretData(id: String)
 
-    fun oppdaterMidlertidigLagretData(
+    suspend fun oppdaterMidlertidigLagretData(
         id: String,
         retries: Int,
     )
 
-    fun hentAntallJournalposter(): Int
+    suspend fun hentAntallJournalposter(): Int
 
-    fun hentAntallMidlertidigLagretData(): Int
+    suspend fun hentAntallMidlertidigLagretData(): Int
 }

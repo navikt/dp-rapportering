@@ -1,11 +1,11 @@
 package no.nav.dagpenger.rapportering.tjenester
 
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
-import io.mockk.every
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
-import io.mockk.verify
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.BeforeEach
@@ -23,11 +23,11 @@ class RapporteringJournalførtMottakTest {
 
     @Test
     fun `vi tar imot og håndterer rapportering journalført hendelser`() {
-        every { mockJournalfoeringRepository.lagreJournalpostData(any(), any(), any()) } just runs
+        coEvery { mockJournalfoeringRepository.lagreJournalpostData(any(), any(), any()) } just runs
 
         testRapid.sendTestMessage(løstBehovJSON)
 
-        verify {
+        coVerify(exactly = 1) {
             mockJournalfoeringRepository.lagreJournalpostData(eq(123456), eq(0), eq(1234567890))
         }
     }

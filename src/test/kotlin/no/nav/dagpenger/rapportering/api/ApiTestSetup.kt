@@ -93,7 +93,7 @@ open class ApiTestSetup {
             val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
             val rapporteringRepository = RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val rapidsConnection = mockk<RapidsConnection>()
-            val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
+            val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val rapporteringService =
                 RapporteringService(
                     meldepliktConnector,

@@ -17,6 +17,8 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.justRun
@@ -90,11 +92,11 @@ class JournalfoeringServiceTest {
         val rapidsConnection = mockk<RapidsConnection>()
 
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
-        every { journalfoeringRepository.lagreDataMidlertidig(any()) } just runs
-        every { journalfoeringRepository.lagreJournalpostData(any(), any(), any()) } just runs
-        every { journalfoeringRepository.oppdaterMidlertidigLagretData(any(), any()) } just runs
-        every { journalfoeringRepository.sletteMidlertidigLagretData(any()) } just runs
-        every { journalfoeringRepository.hentMidlertidigLagretData() } returns
+        coEvery { journalfoeringRepository.lagreDataMidlertidig(any()) } just runs
+        coEvery { journalfoeringRepository.lagreJournalpostData(any(), any(), any()) } just runs
+        coEvery { journalfoeringRepository.oppdaterMidlertidigLagretData(any(), any()) } just runs
+        coEvery { journalfoeringRepository.sletteMidlertidigLagretData(any()) } just runs
+        coEvery { journalfoeringRepository.hentMidlertidigLagretData() } returns
             listOf(
                 Triple(
                     "1",
@@ -125,15 +127,15 @@ class JournalfoeringServiceTest {
         }
 
         // Får feil og sjekker at JournalfoeringService lagrer data midlertidig
-        verify { journalfoeringRepository.lagreDataMidlertidig(any()) }
+        coVerify(exactly = 1) { journalfoeringRepository.lagreDataMidlertidig(any()) }
 
         runBlocking {
             journalfoeringService.journalfoerPaaNytt()
         }
 
         // Sjekker at JournalfoeringService prøvde å sende journalpost på nytt, fikk feil og oppdaterte retries
-        verify { journalfoeringRepository.hentMidlertidigLagretData() }
-        verify { journalfoeringRepository.oppdaterMidlertidigLagretData("1", 1) }
+        coVerify(exactly = 1) { journalfoeringRepository.hentMidlertidigLagretData() }
+        coVerify(exactly = 1) { journalfoeringRepository.oppdaterMidlertidigLagretData("1", 1) }
 
         every { rapidsConnection.publish(any(), any()) } just runs
 
@@ -141,7 +143,7 @@ class JournalfoeringServiceTest {
             journalfoeringService.journalfoerPaaNytt()
         }
 
-        verify { journalfoeringRepository.sletteMidlertidigLagretData("1") }
+        coVerify(exactly = 1) { journalfoeringRepository.sletteMidlertidigLagretData("1") }
     }
 
     private fun setProperties() {
@@ -162,8 +164,8 @@ class JournalfoeringServiceTest {
         justRun { rapidsConnection.publish(eq(ident), capture(message)) }
 
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
-        justRun { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) }
-        every { journalfoeringRepository.hentMidlertidigLagretData() } returns emptyList()
+        coEvery { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) } just runs
+        coEvery { journalfoeringRepository.hentMidlertidigLagretData() } returns emptyList()
 
         // Mock svar fra PDFgenerator
         val pdf =

@@ -4,6 +4,7 @@ import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import com.github.navikt.tbd_libs.rapids_and_rivers.River
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import mu.withLoggingContext
 import no.nav.dagpenger.rapportering.model.MineBehov
@@ -53,7 +54,9 @@ internal class RapporteringJournalførtMottak(
             logger.info { "Fått løsning for JournalføreRapportering for $periodeId" }
             sikkerlogg.info { "Fått løsning for JournalføreRapportering for $periodeId. Packet: ${packet.toJson()}" }
 
-            journalfoeringRepository.lagreJournalpostData(journalpostId, 0L, periodeId.toLong())
+            runBlocking {
+                journalfoeringRepository.lagreJournalpostData(journalpostId, 0L, periodeId.toLong())
+            }
         }
     }
 }

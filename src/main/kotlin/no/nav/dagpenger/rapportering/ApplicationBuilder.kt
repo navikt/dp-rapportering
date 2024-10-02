@@ -49,7 +49,7 @@ class ApplicationBuilder(
 
     private val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
     private val rapporteringRepository = RapporteringRepositoryPostgres(dataSource, actionTimer)
-    private val journalfoeringRepository = JournalfoeringRepositoryPostgres(dataSource)
+    private val journalfoeringRepository = JournalfoeringRepositoryPostgres(dataSource, actionTimer)
     private val rapporteringService =
         RapporteringService(
             meldepliktConnector,

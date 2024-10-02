@@ -238,7 +238,7 @@ class JournalfoeringService(
             ),
         )
 
-    private fun lagreDataMidlertidig(midlertidigLagretData: MidlertidigLagretData) {
+    private suspend fun lagreDataMidlertidig(midlertidigLagretData: MidlertidigLagretData) {
         logger.info("Mellomlagrer data for rapporteringsperiode ${midlertidigLagretData.rapporteringsperiode.id}")
         journalfoeringRepository.lagreDataMidlertidig(midlertidigLagretData)
     }
