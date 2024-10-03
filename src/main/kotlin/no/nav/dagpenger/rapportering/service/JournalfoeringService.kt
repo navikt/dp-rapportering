@@ -1,7 +1,6 @@
 package no.nav.dagpenger.rapportering.service
 
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
-import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import com.natpryce.konfig.Key
 import com.natpryce.konfig.stringType
 import io.ktor.client.HttpClient
@@ -16,6 +15,7 @@ import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import no.nav.dagpenger.oauth2.defaultHttpClient
+import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.properties
@@ -35,7 +35,6 @@ import java.util.TimerTask
 import kotlin.time.measureTime
 
 class JournalfoeringService(
-    private val rapidsConnection: RapidsConnection,
     private val journalfoeringRepository: JournalfoeringRepository,
     meterRegistry: MeterRegistry,
     private val httpClient: HttpClient = defaultHttpClient(),
@@ -192,7 +191,7 @@ class JournalfoeringService(
                     behovNavn to behovParams,
                 ),
             )
-        rapidsConnection.publish(ident, behov.toJson())
+        getRapidsConnection().publish(ident, behov.toJson())
     }
 
     private fun getTittle(rapporteringsperiode: Rapporteringsperiode): String {

@@ -32,8 +32,13 @@ class ApplicationBuilder(
     configuration: Map<String, String>,
     httpClient: HttpClient = createHttpClient(CIO.create {}),
 ) : RapidsConnection.StatusListener {
-    private companion object {
+    companion object {
         private val logger = KotlinLogging.logger {}
+        private lateinit var rapidsConnection: RapidsConnection
+
+        fun getRapidsConnection(): RapidsConnection {
+            return rapidsConnection
+        }
     }
 
     private val meterRegistry =
@@ -50,16 +55,8 @@ class ApplicationBuilder(
     private val rapporteringRepository = RapporteringRepositoryPostgres(dataSource, actionTimer)
     private val journalfoeringRepository = JournalfoeringRepositoryPostgres(dataSource, actionTimer)
 
-    private val rapidsConnection: RapidsConnection =
-        RapidApplication
-            .create(configuration) { engine, _: RapidsConnection ->
-                engine.application.konfigurasjon()
-                engine.application.internalApi()
-                engine.application.rapporteringApi(rapporteringService, meldepliktMetrikker)
-            }
     private val journalfoeringService =
         JournalfoeringService(
-            rapidsConnection,
             journalfoeringRepository,
             meterRegistry,
         )
@@ -72,6 +69,13 @@ class ApplicationBuilder(
         )
 
     init {
+        rapidsConnection =
+            RapidApplication
+                .create(configuration) { engine, _: RapidsConnection ->
+                    engine.application.konfigurasjon()
+                    engine.application.internalApi()
+                    engine.application.rapporteringApi(rapporteringService, meldepliktMetrikker)
+                }
         rapidsConnection.register(this)
         RapporteringJournalførtMottak(rapidsConnection, journalfoeringRepository)
     }
