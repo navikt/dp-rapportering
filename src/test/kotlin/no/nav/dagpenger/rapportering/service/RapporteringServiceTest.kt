@@ -480,6 +480,7 @@ class RapporteringServiceTest {
         val rapporteringsperiode = originalPeriode.copy(status = Endret, begrunnelseEndring = "Endring", originalId = originalPeriode.id)
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any(), false) }
         coEvery { meldepliktConnector.hentEndringId(any(), any()) } returns endringId
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
@@ -507,7 +508,12 @@ class RapporteringServiceTest {
             }
         }
         coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(endringId.toLong(), ident, false, false, any()) }
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(originalPeriode.id, ident, false, false, any()) }
+        coVerify(
+            exactly = 1,
+        ) {
+            rapporteringRepository
+                .oppdaterPeriodeEtterInnsending(originalPeriode.id, ident, false, false, any(), false)
+        }
     }
 
     @Test
