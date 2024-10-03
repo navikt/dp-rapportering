@@ -3,7 +3,6 @@ package no.nav.dagpenger.rapportering.service
 import io.ktor.http.Headers
 import io.ktor.server.plugins.BadRequestException
 import mu.KotlinLogging
-import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
@@ -56,6 +55,7 @@ class RapporteringService(
         } else {
             rapporteringRepository
                 .hentRapporteringsperiode(rapporteringId, ident)
+                ?.justerInnsendingstidspunkt()
         }
 
     suspend fun hentOgOppdaterRapporteringsperioder(
@@ -80,8 +80,8 @@ class RapporteringService(
     ): List<Rapporteringsperiode>? =
         meldepliktConnector
             .hentRapporteringsperioder(ident, token)
-            .justerInnsendingstidspunkt()
             ?.toRapporteringsperioder()
+            .justerInnsendingstidspunkt()
             ?.filter { periode ->
                 // Filtrerer ut perioder som har en høyere status i databasen enn det vi får fra arena
                 rapporteringRepository
@@ -91,8 +91,11 @@ class RapporteringService(
                     } ?: true
             }
 
-    private suspend fun List<AdapterRapporteringsperiode>?.justerInnsendingstidspunkt(): List<AdapterRapporteringsperiode>? =
-        this?.map {
+    private suspend fun List<Rapporteringsperiode>?.justerInnsendingstidspunkt(): List<Rapporteringsperiode>? =
+        this?.map { it.justerInnsendingstidspunkt() }
+
+    private suspend fun Rapporteringsperiode.justerInnsendingstidspunkt(): Rapporteringsperiode =
+        this.let {
             val kanSendesFra =
                 finnKanSendesFra(
                     tilOgMed = it.periode.tilOgMed,

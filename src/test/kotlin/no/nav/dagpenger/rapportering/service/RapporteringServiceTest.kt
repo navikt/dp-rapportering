@@ -203,6 +203,7 @@ class RapporteringServiceTest {
             )
 
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns rapporteringsperiodeFraDb
+        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
 
         val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token, hentOriginal = false) }
 

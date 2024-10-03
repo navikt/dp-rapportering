@@ -1,7 +1,7 @@
 package no.nav.dagpenger.rapportering.utils
 
 import io.kotest.matchers.shouldBe
-import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
@@ -32,20 +32,20 @@ class PeriodeUtilsTest {
 
     @Test
     fun `kanSendesInn returnerer true hvis status er TilUtfylling og kanSendesFra er nå eller passert`() {
-        PeriodeUtils.kanSendesInn(17.mai(2020), AdapterRapporteringsperiodeStatus.TilUtfylling) shouldBe true
-        PeriodeUtils.kanSendesInn(LocalDate.now(), AdapterRapporteringsperiodeStatus.TilUtfylling) shouldBe true
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.TilUtfylling) shouldBe true
+        PeriodeUtils.kanSendesInn(LocalDate.now(), RapporteringsperiodeStatus.TilUtfylling) shouldBe true
     }
 
     @Test
     fun `kanSendesInn returnerer false hvis status ikke er TilUtfylling`() {
-        PeriodeUtils.kanSendesInn(17.mai(2020), AdapterRapporteringsperiodeStatus.Endret) shouldBe false
-        PeriodeUtils.kanSendesInn(17.mai(2020), AdapterRapporteringsperiodeStatus.Innsendt) shouldBe false
-        PeriodeUtils.kanSendesInn(17.mai(2020), AdapterRapporteringsperiodeStatus.Ferdig) shouldBe false
-        PeriodeUtils.kanSendesInn(17.mai(2020), AdapterRapporteringsperiodeStatus.Feilet) shouldBe false
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Endret) shouldBe false
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Innsendt) shouldBe false
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Ferdig) shouldBe false
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Feilet) shouldBe false
     }
 
     @Test
     fun `kanSendesInn returnerer false hvis kanSendesFra er i fremtiden`() {
-        PeriodeUtils.kanSendesInn(LocalDate.now().plusDays(1), AdapterRapporteringsperiodeStatus.TilUtfylling) shouldBe false
+        PeriodeUtils.kanSendesInn(LocalDate.now().plusDays(1), RapporteringsperiodeStatus.TilUtfylling) shouldBe false
     }
 }

@@ -1,7 +1,7 @@
 package no.nav.dagpenger.rapportering.utils
 
-import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus
-import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import java.time.LocalDate
 import java.time.temporal.WeekFields
 
@@ -16,7 +16,7 @@ object PeriodeUtils {
 
     fun kanSendesInn(
         kanSendesFra: LocalDate,
-        status: AdapterRapporteringsperiodeStatus,
+        status: RapporteringsperiodeStatus,
     ): Boolean =
         if (status == TilUtfylling) {
             val naa = LocalDate.now()
