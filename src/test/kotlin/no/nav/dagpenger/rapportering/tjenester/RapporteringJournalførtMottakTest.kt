@@ -49,7 +49,7 @@ private val løstBehovJSON =
         "brevkode": "NAV 00-10.02",
         "json": "{\"key1\": \"value1\"}",
         "pdf": "UERG",
-        "tilleggsopplysninger": ""
+        "tilleggsopplysninger": []
       },
       "@final": true,
       "@løsning": {

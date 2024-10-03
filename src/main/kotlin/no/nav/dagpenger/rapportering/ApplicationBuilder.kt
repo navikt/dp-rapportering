@@ -58,6 +58,7 @@ class ApplicationBuilder(
     private val journalfoeringService =
         JournalfoeringService(
             journalfoeringRepository,
+            httpClient,
             meterRegistry,
         )
     private val rapporteringService =

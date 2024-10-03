@@ -14,7 +14,6 @@ import io.ktor.http.contentType
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
-import no.nav.dagpenger.oauth2.defaultHttpClient
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
@@ -36,8 +35,8 @@ import kotlin.time.measureTime
 
 class JournalfoeringService(
     private val journalfoeringRepository: JournalfoeringRepository,
+    private val httpClient: HttpClient,
     meterRegistry: MeterRegistry,
-    private val httpClient: HttpClient = defaultHttpClient(),
     delay: Long = 10000,
     // 5 minutes by default
     resendInterval: Long = 300_000L,

@@ -100,8 +100,8 @@ open class ApiTestSetup {
                     rapporteringRepository,
                     JournalfoeringService(
                         journalfoeringRepository,
-                        meterRegistry,
                         httpClient,
+                        meterRegistry,
                     ),
                     rapporteringsperiodeMetrikker,
                 )

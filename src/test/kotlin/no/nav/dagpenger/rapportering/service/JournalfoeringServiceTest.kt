@@ -127,8 +127,8 @@ class JournalfoeringServiceTest {
         val journalfoeringService =
             JournalfoeringService(
                 journalfoeringRepository,
-                meterRegistry,
                 createHttpClient(mockPdfGeneratorEngine),
+                meterRegistry,
             )
 
         // Oppretter rapporteringsperiode
@@ -199,8 +199,8 @@ class JournalfoeringServiceTest {
         val journalfoeringService =
             JournalfoeringService(
                 journalfoeringRepository,
-                meterRegistry,
                 createHttpClient(mockPdfGeneratorEngine),
+                meterRegistry,
             )
 
         val rapporteringsperiode = createRapporteringsperiode(endring)
