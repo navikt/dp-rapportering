@@ -25,6 +25,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.rapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.utils.februar
@@ -37,8 +38,15 @@ class RapporteringServiceTest {
     private val meldepliktConnector = mockk<MeldepliktConnector>()
     private val rapporteringRepository = mockk<RapporteringRepository>()
     private val journalfoeringService = mockk<JournalfoeringService>()
+    private val innsendingtidspunktRepository = mockk<InnsendingtidspunktRepository>()
     private val rapporteringService =
-        RapporteringService(meldepliktConnector, rapporteringRepository, journalfoeringService, rapporteringsperiodeMetrikker)
+        RapporteringService(
+            meldepliktConnector,
+            rapporteringRepository,
+            innsendingtidspunktRepository,
+            journalfoeringService,
+            rapporteringsperiodeMetrikker,
+        )
 
     private val ident = "12345678910"
     private val token = "jwtToken"
@@ -67,6 +75,7 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
 
         val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token, hentOriginal = true) }
 
@@ -130,6 +139,7 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns rapporteringsperiodeFraDb
         coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
 
         val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token, hentOriginal = true) }
 
@@ -140,6 +150,33 @@ class RapporteringServiceTest {
             dager.size shouldBe 14
             dager shouldBe rapporteringsperiodeFraDb.dager
             kanSendesFra shouldBe 27.januar
+            sisteFristForTrekk shouldBe 5.februar
+            kanSendes shouldBe true
+            kanEndres shouldBe false
+            bruttoBelop shouldBe null
+            status shouldBe TilUtfylling
+            registrertArbeidssoker shouldBe null
+        }
+    }
+
+    @Test
+    fun `hent periode justerer når perioden kan sendes inn hvis innsendingstidspunktet skal justeres`() {
+        coEvery { meldepliktConnector.hentRapporteringsperioder(ident, token) } returns
+            rapporteringsperiodeListe.toAdapterRapporteringsperioder()
+        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
+        coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt("201803") } returns -2
+
+        val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode(2L, ident, token, hentOriginal = true) }
+
+        with(gjeldendePeriode!!) {
+            id shouldBe 2
+            periode.fraOgMed shouldBe 15.januar
+            periode.tilOgMed shouldBe 28.januar
+            dager.size shouldBe 14
+            dager.first().aktiviteter shouldBe emptyList()
+            kanSendesFra shouldBe 26.januar
             sisteFristForTrekk shouldBe 5.februar
             kanSendes shouldBe true
             kanEndres shouldBe false
@@ -190,6 +227,7 @@ class RapporteringServiceTest {
         coEvery { meldepliktConnector.hentRapporteringsperioder(any(), any()) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
+        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
@@ -211,6 +249,7 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentRapporteringsperiode(2L, ident) } returns null
         coEvery { rapporteringRepository.hentRapporteringsperiode(3L, ident) } returns null
         coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
@@ -244,6 +283,7 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
 
         runBlocking { rapporteringService.startUtfylling(1L, ident, token) }
 

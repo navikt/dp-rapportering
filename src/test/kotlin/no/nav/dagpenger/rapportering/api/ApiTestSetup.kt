@@ -9,6 +9,7 @@ import kotliquery.using
 import no.nav.dagpenger.rapportering.config.konfigurasjon
 import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.database
@@ -91,11 +92,13 @@ open class ApiTestSetup {
 
             val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
             val rapporteringRepository = RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
+            val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
             val rapporteringService =
                 RapporteringService(
                     meldepliktConnector,
                     rapporteringRepository,
+                    innsendingtidspunktRepository,
                     JournalfoeringService(
                         meldepliktConnector,
                         DokarkivConnector(httpClient = httpClient, actionTimer = actionTimer),
