@@ -396,6 +396,7 @@ components:
                 - id
                 - periode
                 - dager
+                - sisteFristForTrekk
                 - kanSendesFra
                 - kanSendes
                 - kanEndres

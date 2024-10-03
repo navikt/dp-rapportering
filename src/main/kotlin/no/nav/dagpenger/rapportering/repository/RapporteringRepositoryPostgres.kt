@@ -13,6 +13,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import java.time.LocalDate
 import java.util.UUID
 import javax.sql.DataSource
 
@@ -270,13 +271,15 @@ class RapporteringRepositoryPostgres(
                         queryOf(
                             """
                             UPDATE rapporteringsperiode
-                            SET kan_sendes = :kan_sendes,
+                            SET kan_sendes_fra = :kan_sendes_fra,
+                                kan_sendes = :kan_sendes,
                                 kan_endres = :kan_endres,
                                 brutto_belop = :brutto_belop,
                                 status = :status
                             WHERE id = :id
                             """.trimIndent(),
                             mapOf(
+                                "kan_sendes_fra" to rapporteringsperiode.kanSendesFra,
                                 "kan_sendes" to rapporteringsperiode.kanSendes,
                                 "kan_endres" to rapporteringsperiode.kanEndres,
                                 "brutto_belop" to rapporteringsperiode.bruttoBelop,
@@ -347,6 +350,7 @@ class RapporteringRepositoryPostgres(
         kanEndres: Boolean,
         kanSendes: Boolean,
         status: RapporteringsperiodeStatus,
+        oppdaterMottattDato: Boolean,
     ) = actionTimer.timedAction("db-oppdaterPeriodeEtterInnsending") {
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
@@ -358,6 +362,7 @@ class RapporteringRepositoryPostgres(
                             SET kan_sendes = :kanSendes,
                                 kan_endres = :kanEndres,
                                 status = :status
+                                ${if (oppdaterMottattDato) ",mottatt_dato = :mottattDato" else ""}
                             WHERE id = :id AND ident = :ident
                             """.trimIndent(),
                             mapOf(
@@ -366,7 +371,13 @@ class RapporteringRepositoryPostgres(
                                 "status" to status.name,
                                 "id" to rapporteringId,
                                 "ident" to ident,
-                            ),
+                            ).let {
+                                if (oppdaterMottattDato) {
+                                    it.plus("mottattDato" to LocalDate.now())
+                                } else {
+                                    it
+                                }
+                            },
                         ).asUpdate,
                     ).validateRowsAffected()
             }

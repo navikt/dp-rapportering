@@ -70,6 +70,7 @@ interface RapporteringRepository {
         kanEndres: Boolean,
         kanSendes: Boolean,
         status: RapporteringsperiodeStatus,
+        oppdaterMottattDato: Boolean = true,
     )
 
     suspend fun slettAktiviteter(aktivitetIdListe: List<UUID>)
