@@ -270,7 +270,7 @@ class RapporteringRepositoryPostgres(
                         queryOf(
                             """
                             UPDATE rapporteringsperiode
-                            SET kanSendesFra = :kan_sendes_fra,
+                            SET kan_sendes_fra = :kan_sendes_fra,
                                 kan_sendes = :kan_sendes,
                                 kan_endres = :kan_endres,
                                 brutto_belop = :brutto_belop,
