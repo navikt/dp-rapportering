@@ -13,6 +13,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import java.time.LocalDate
 import java.util.UUID
 import javax.sql.DataSource
 
@@ -347,6 +348,7 @@ class RapporteringRepositoryPostgres(
         kanEndres: Boolean,
         kanSendes: Boolean,
         status: RapporteringsperiodeStatus,
+        oppdaterMottattDato: Boolean,
     ) = actionTimer.timedAction("db-oppdaterPeriodeEtterInnsending") {
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
@@ -358,6 +360,7 @@ class RapporteringRepositoryPostgres(
                             SET kan_sendes = :kanSendes,
                                 kan_endres = :kanEndres,
                                 status = :status
+                                ${if (oppdaterMottattDato) ",mottatt_dato = :mottattDato" else ""}
                             WHERE id = :id AND ident = :ident
                             """.trimIndent(),
                             mapOf(
@@ -366,7 +369,13 @@ class RapporteringRepositoryPostgres(
                                 "status" to status.name,
                                 "id" to rapporteringId,
                                 "ident" to ident,
-                            ),
+                            ).let {
+                                if (oppdaterMottattDato) {
+                                    it.plus("mottattDato" to LocalDate.now())
+                                } else {
+                                    it
+                                }
+                            },
                         ).asUpdate,
                     ).validateRowsAffected()
             }

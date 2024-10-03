@@ -349,6 +349,32 @@ class RapporteringRepositoryPostgresTest {
                 status shouldBe Innsendt
                 kanSendes shouldBe false
                 kanEndres shouldBe true
+                mottattDato shouldBe LocalDate.now()
+            }
+        }
+    }
+
+    @Test
+    fun `kan oppdatere rapporteringsperiode ved innsending uten å oppdatere mottattDato`() {
+        val rapporteringsperiode = getRapporteringsperiode()
+
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
+            rapporteringRepositoryPostgres.oppdaterPeriodeEtterInnsending(
+                rapporteringId = rapporteringsperiode.id,
+                ident = ident,
+                status = Innsendt,
+                kanSendes = false,
+                kanEndres = true,
+                oppdaterMottattDato = false,
+            )
+
+            with(rapporteringRepositoryPostgres.hentRapporteringsperiode(id = rapporteringsperiode.id, ident = ident)!!) {
+                id shouldBe rapporteringsperiode.id
+                status shouldBe Innsendt
+                kanSendes shouldBe false
+                kanEndres shouldBe true
+                mottattDato shouldBe null
             }
         }
     }

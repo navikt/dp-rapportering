@@ -329,6 +329,7 @@ class RapporteringService(
                             kanEndres = false,
                             kanSendes = false,
                             status = Innsendt,
+                            oppdaterMottattDato = false,
                         )
                         logger.info {
                             "Oppdaterte original rapporteringsperiode ${periodeTilInnsending.originalId} " +
