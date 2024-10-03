@@ -20,6 +20,7 @@ import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.metrics.DatabaseMetrikker
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
+import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.preparePartitions
@@ -47,11 +48,13 @@ class ApplicationBuilder(
 
     private val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
     private val rapporteringRepository = RapporteringRepositoryPostgres(dataSource, actionTimer)
+    private val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(dataSource, actionTimer)
     private val journalfoeringRepository = JournalfoeringRepositoryPostgres(dataSource)
     private val rapporteringService =
         RapporteringService(
             meldepliktConnector,
             rapporteringRepository,
+            innsendingtidspunktRepository,
             JournalfoeringService(
                 meldepliktConnector,
                 DokarkivConnector(httpClient = httpClient, actionTimer = actionTimer),

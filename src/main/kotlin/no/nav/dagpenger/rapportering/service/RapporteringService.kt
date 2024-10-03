@@ -14,7 +14,11 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Feilet
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
+import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
+import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnKanSendesFra
+import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
+import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.random.Random
@@ -25,6 +29,7 @@ private val logger = KotlinLogging.logger {}
 class RapporteringService(
     private val meldepliktConnector: MeldepliktConnector,
     private val rapporteringRepository: RapporteringRepository,
+    private val innsendingtidspunktRepository: InnsendingtidspunktRepository,
     private val journalfoeringService: JournalfoeringService,
     private val rapporteringsperiodeMetrikker: RapporteringsperiodeMetrikker,
 ) {
@@ -50,6 +55,7 @@ class RapporteringService(
         } else {
             rapporteringRepository
                 .hentRapporteringsperiode(rapporteringId, ident)
+                ?.justerInnsendingstidspunkt()
         }
 
     suspend fun hentOgOppdaterRapporteringsperioder(
@@ -75,6 +81,7 @@ class RapporteringService(
         meldepliktConnector
             .hentRapporteringsperioder(ident, token)
             ?.toRapporteringsperioder()
+            .justerInnsendingstidspunkt()
             ?.filter { periode ->
                 // Filtrerer ut perioder som har en høyere status i databasen enn det vi får fra arena
                 rapporteringRepository
@@ -83,6 +90,24 @@ class RapporteringService(
                         periodeFraDb.status.ordinal <= periode.status.ordinal
                     } ?: true
             }
+
+    private suspend fun List<Rapporteringsperiode>?.justerInnsendingstidspunkt(): List<Rapporteringsperiode>? =
+        this?.map { it.justerInnsendingstidspunkt() }
+
+    private suspend fun Rapporteringsperiode.justerInnsendingstidspunkt(): Rapporteringsperiode =
+        this.let {
+            val kanSendesFra =
+                finnKanSendesFra(
+                    tilOgMed = it.periode.tilOgMed,
+                    innsendingtidspunktRepository.hentInnsendingtidspunkt(
+                        periodeKode = finnPeriodeKode(fraOgMed = it.periode.fraOgMed),
+                    ),
+                )
+            it.copy(
+                kanSendesFra = kanSendesFra,
+                kanSendes = kanSendesInn(kanSendesFra, it.status),
+            )
+        }
 
     suspend fun startUtfylling(
         rapporteringId: Long,
