@@ -56,6 +56,7 @@ class JournalfoeringServiceTest {
     private val userAgent = "Some agent"
     private val frontendGithubSha = "frontendabcdwfg"
     private val backendGithubSha = "backendabcdwfg"
+    private val loginLevel = 4
     private val headers =
         Headers.build {
             append("useragent", userAgent)
@@ -117,6 +118,7 @@ class JournalfoeringServiceTest {
                     MidlertidigLagretData(
                         ident,
                         navn,
+                        loginLevel,
                         headers,
                         createRapporteringsperiode(false),
                     ),
@@ -136,7 +138,7 @@ class JournalfoeringServiceTest {
 
         // Prøver å journalføre
         runBlocking {
-            journalfoeringService.journalfoer(ident, navn, headers, rapporteringsperiode)
+            journalfoeringService.journalfoer(ident, navn, loginLevel, headers, rapporteringsperiode)
         }
 
         // Får feil og sjekker at JournalfoeringService lagrer data midlertidig
@@ -207,7 +209,7 @@ class JournalfoeringServiceTest {
 
         // Kjører
         runBlocking {
-            journalfoeringService.journalfoer(ident, navn, headers, rapporteringsperiode)
+            journalfoeringService.journalfoer(ident, navn, loginLevel, headers, rapporteringsperiode)
         }
 
         runBlocking {
@@ -297,6 +299,8 @@ class JournalfoeringServiceTest {
         to.get(3).get("second").asText() shouldBe frontendGithubSha
         to.get(4).get("first").asText() shouldBe "backendGithubSha"
         to.get(4).get("second").asText() shouldBe backendGithubSha
+        to.get(5).get("first").asText() shouldBe "loginLevel"
+        to.get(5).get("second").asText() shouldBe loginLevel
     }
 
     private fun checkJson(

@@ -90,6 +90,7 @@ class JournalfoeringService(
                 opprettOgSendBehov(
                     midlertidigLagretData.ident,
                     midlertidigLagretData.navn,
+                    midlertidigLagretData.loginLevel,
                     midlertidigLagretData.headers,
                     midlertidigLagretData.rapporteringsperiode,
                 )
@@ -112,20 +113,22 @@ class JournalfoeringService(
     suspend fun journalfoer(
         ident: String,
         navn: String,
+        loginLevel: Int,
         headers: Headers,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
         try {
-            opprettOgSendBehov(ident, navn, headers, rapporteringsperiode)
+            opprettOgSendBehov(ident, navn, loginLevel, headers, rapporteringsperiode)
         } catch (e: Exception) {
             logger.warn("Feil ved journalføring", e)
-            lagreDataMidlertidig(MidlertidigLagretData(ident, navn, headers, rapporteringsperiode))
+            lagreDataMidlertidig(MidlertidigLagretData(ident, navn, loginLevel, headers, rapporteringsperiode))
         }
     }
 
     private suspend fun opprettOgSendBehov(
         ident: String,
         navn: String,
+        loginLevel: Int,
         headers: Headers,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
@@ -163,7 +166,7 @@ class JournalfoeringService(
             }
 
         val pdf: ByteArray = pdfGeneratorResponse.body()
-        val tilleggsopplysninger = getTilleggsopplysninger(headers, rapporteringsperiode)
+        val tilleggsopplysninger = getTilleggsopplysninger(loginLevel, headers, rapporteringsperiode)
 
         logger.info("Oppretter journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
 
@@ -190,6 +193,8 @@ class JournalfoeringService(
                     behovNavn to behovParams,
                 ),
             )
+
+        // TODO: Kall logg
         getRapidsConnection().publish(ident, behov.toJson())
     }
 
@@ -208,6 +213,7 @@ class JournalfoeringService(
     }
 
     private fun getTilleggsopplysninger(
+        loginLevel: Int,
         headers: Headers,
         rapporteringsperiode: Rapporteringsperiode,
     ): List<Pair<String, String>> =
@@ -233,6 +239,10 @@ class JournalfoeringService(
             Pair(
                 "backendGithubSha",
                 properties[Key("GITHUB_SHA", stringType)],
+            ),
+            Pair(
+                "loginLevel",
+                loginLevel.toString(),
             ),
         )
 

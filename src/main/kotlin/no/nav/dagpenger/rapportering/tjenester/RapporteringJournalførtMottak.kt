@@ -45,6 +45,7 @@ internal class RapporteringJournalførtMottak(
         packet: JsonMessage,
         context: MessageContext,
     ) {
+        // TODO: Kall logg
         val periodeId = packet[behov]["periodeId"].asText()
         val journalpostId = packet["@løsning"]["journalpostId"].asLong()
 

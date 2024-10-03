@@ -301,6 +301,7 @@ class RapporteringService(
         rapporteringsperiode: Rapporteringsperiode,
         token: String,
         ident: String,
+        loginLevel: Int,
         headers: Headers,
     ): InnsendingResponse {
         rapporteringsperiode.takeIf { it.kanSendes }
@@ -340,7 +341,7 @@ class RapporteringService(
                     val person = meldepliktConnector.hentPerson(ident, token)
                     val navn = person?.fornavn + " " + person?.etternavn
 
-                    journalfoeringService.journalfoer(ident, navn, headers, periodeTilInnsending)
+                    journalfoeringService.journalfoer(ident, navn, loginLevel, headers, periodeTilInnsending)
 
                     rapporteringRepository.oppdaterPeriodeEtterInnsending(
                         rapporteringId = periodeTilInnsending.id,
