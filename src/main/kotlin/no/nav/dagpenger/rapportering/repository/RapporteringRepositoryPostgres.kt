@@ -270,13 +270,15 @@ class RapporteringRepositoryPostgres(
                         queryOf(
                             """
                             UPDATE rapporteringsperiode
-                            SET kan_sendes = :kan_sendes,
+                            SET kanSendesFra = :kan_sendes_fra,
+                                kan_sendes = :kan_sendes,
                                 kan_endres = :kan_endres,
                                 brutto_belop = :brutto_belop,
                                 status = :status
                             WHERE id = :id
                             """.trimIndent(),
                             mapOf(
+                                "kan_sendes_fra" to rapporteringsperiode.kanSendesFra,
                                 "kan_sendes" to rapporteringsperiode.kanSendes,
                                 "kan_endres" to rapporteringsperiode.kanEndres,
                                 "brutto_belop" to rapporteringsperiode.bruttoBelop,
