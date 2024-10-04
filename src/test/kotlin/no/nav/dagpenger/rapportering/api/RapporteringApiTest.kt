@@ -205,7 +205,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 client.doPost(
                     "/rapporteringsperiode",
                     issueToken(fnr),
-                    rapporteringsperiodeFor(id = nyId, status = Endret),
+                    rapporteringsperiodeFor(id = nyId, status = TilUtfylling, begrunnelseEndring = null, originalId = 125),
                 ),
             ) {
                 status shouldBe HttpStatusCode.BadRequest
@@ -463,10 +463,11 @@ class RapporteringApiTest : ApiTestSetup() {
             periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
             with(periodeResponse.body) {
                 id shouldBe endretPeriode.id
-                status shouldBe Endret
+                status shouldBe TilUtfylling
                 bruttoBelop shouldBe null
                 registrertArbeidssoker shouldBe null
                 begrunnelseEndring shouldBe "Dette er en begrunnelse"
+                originalId shouldBe endretPeriode.originalId
             }
         }
     }
@@ -540,9 +541,10 @@ class RapporteringApiTest : ApiTestSetup() {
                         aktivitet.timer shouldBe "PT7H30M"
                     }
                 }
-                status shouldBe Endret
+                status shouldBe TilUtfylling
                 kanEndres shouldBe false
                 kanSendes shouldBe true
+                originalId shouldBe 125L
             }
         }
     }
@@ -582,9 +584,10 @@ class RapporteringApiTest : ApiTestSetup() {
                         aktivitet.timer shouldBe "PT7H30M"
                     }
                 }
-                status shouldBe Endret
+                status shouldBe TilUtfylling
                 kanEndres shouldBe false
                 kanSendes shouldBe true
+                originalId shouldBe 125L
             }
         }
     }

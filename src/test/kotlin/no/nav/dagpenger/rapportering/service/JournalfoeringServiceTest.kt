@@ -35,7 +35,6 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
-import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.Postgres.database
@@ -256,11 +255,11 @@ class JournalfoeringServiceTest {
             kanSendes = true,
             kanEndres = true,
             bruttoBelop = 0.0,
-            begrunnelseEndring = null,
-            status = if (endring) RapporteringsperiodeStatus.Endret else TilUtfylling,
+            begrunnelseEndring = if (endring) "Begrunnelse" else null,
+            status = TilUtfylling,
             mottattDato = LocalDate.now(),
             registrertArbeidssoker = true,
-            originalId = null,
+            originalId = if (endring) 123L else null,
             rapporteringstype = null,
             html = html,
         )

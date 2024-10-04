@@ -358,7 +358,7 @@ class RapporteringServiceTest {
         val response = runBlocking { rapporteringService.startEndring(123L, ident, token) }
 
         response.id shouldNotBe 123L
-        response.status shouldBe Endret
+        response.status shouldBe TilUtfylling
         response.originalId shouldBe 123L
         coVerify(exactly = 2) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
         coVerify(exactly = 3) { rapporteringRepository.finnesRapporteringsperiode(any(), any()) }
@@ -432,9 +432,7 @@ class RapporteringServiceTest {
                 .map {
                     it.copy(
                         status =
-                            if (it.id ==
-                                3L
-                            ) {
+                            if (it.id == 3L) {
                                 Endret
                             } else {
                                 Innsendt
@@ -521,7 +519,12 @@ class RapporteringServiceTest {
     fun `kan sende inn endret rapporteringsperiode med begrunnelse`() {
         val endringId = "4"
         val originalPeriode = rapporteringsperiodeListe.first()
-        val rapporteringsperiode = originalPeriode.copy(status = Endret, begrunnelseEndring = "Endring", originalId = originalPeriode.id)
+        val rapporteringsperiode =
+            originalPeriode.copy(
+                status = TilUtfylling,
+                begrunnelseEndring = "Endring",
+                originalId = originalPeriode.id,
+            )
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any(), false) }
@@ -566,7 +569,7 @@ class RapporteringServiceTest {
         shouldThrow<BadRequestException> {
             runBlocking {
                 rapporteringService.sendRapporteringsperiode(
-                    rapporteringsperiodeListe.first().copy(status = Endret, begrunnelseEndring = null),
+                    rapporteringsperiodeListe.first().copy(status = TilUtfylling, begrunnelseEndring = null, originalId = 125L),
                     token,
                     ident,
                     loginLevel,
