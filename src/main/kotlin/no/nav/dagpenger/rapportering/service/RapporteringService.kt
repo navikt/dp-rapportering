@@ -185,7 +185,7 @@ class RapporteringService(
                     if (perioder.size > 1) {
                         val originalPeriode =
                             perioder
-                                .filter { it.status == Endret }
+                                .filter { it.begrunnelseEndring == null }
                                 .minByOrNull {
                                     it.mottattDato ?: throw RuntimeException("Innsendt periode har ikke mottatt dato")
                                 } ?: throw RuntimeException("Fant ingen original periode")
