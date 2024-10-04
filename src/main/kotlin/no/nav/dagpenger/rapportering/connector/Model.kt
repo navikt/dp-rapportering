@@ -88,7 +88,7 @@ fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
                 Feilet -> RapporteringsperiodeStatus.Feilet
             },
         mottattDato = this.mottattDato,
-        begrunnelseEndring = this.begrunnelseEndring,
+        begrunnelseEndring = if (this.begrunnelseEndring.isNullOrBlank()) null else this.begrunnelseEndring,
         registrertArbeidssoker = this.registrertArbeidssoker,
         originalId = null,
         rapporteringstype = null,
