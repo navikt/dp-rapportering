@@ -186,12 +186,10 @@ class RapporteringService(
                         val originalPeriode =
                             perioder
                                 .filter { it.begrunnelseEndring.isNullOrBlank() }
-                                .minByOrNull {
-                                    it.mottattDato ?: throw RuntimeException("Innsendt periode har ikke mottatt dato")
+                                .minByOrNull { it.mottattDato ?: throw RuntimeException("Innsendt periode har ikke mottatt dato") }
+                                ?: return@map perioder.also {
+                                    logger.warn { "Fant ingen original for perioden: ${perioder.first().periode}" }
                                 }
-                                ?: throw RuntimeException(
-                                    "Fant ingen original periode",
-                                ).also { logger.info { "Perioder som feilet: $perioder" } }
                         val endredePerioder =
                             perioder
                                 .filterNot { it == originalPeriode }
