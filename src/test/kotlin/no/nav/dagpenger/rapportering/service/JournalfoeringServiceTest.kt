@@ -44,7 +44,6 @@ import no.nav.dagpenger.rapportering.model.Journalposttype
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
-import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.model.Sakstype
 import no.nav.dagpenger.rapportering.model.Tema
@@ -318,11 +317,11 @@ class JournalfoeringServiceTest {
             kanSendes = true,
             kanEndres = true,
             bruttoBelop = 0.0,
-            begrunnelseEndring = null,
-            status = if (endring) RapporteringsperiodeStatus.Endret else TilUtfylling,
+            begrunnelseEndring = if (endring) "Begrunnelse" else null,
+            status = TilUtfylling,
             mottattDato = LocalDate.now(),
             registrertArbeidssoker = true,
-            originalId = null,
+            originalId = if (endring) 123L else null,
             rapporteringstype = null,
             html = html,
         )

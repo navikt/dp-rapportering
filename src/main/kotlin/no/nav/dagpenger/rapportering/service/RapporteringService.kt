@@ -14,6 +14,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Feilet
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnKanSendesFra
@@ -139,7 +140,7 @@ class RapporteringService(
                         id = lagMidlertidigEndringId(ident),
                         kanEndres = false,
                         kanSendes = true,
-                        status = Endret,
+                        status = TilUtfylling,
                         dager =
                             originalPeriode.dager.map { dag ->
                                 dag.copy(
@@ -226,7 +227,7 @@ class RapporteringService(
                 .flatten()
                 .sortedWith(
                     compareByDescending<Rapporteringsperiode> { it.periode.fraOgMed }
-                        .thenByDescending { it.begrunnelseEndring != null },
+                        .thenByDescending { it.mottattDato },
                 )
         return nåværendePeriode + sisteFemPerioderSortert
     }
@@ -309,18 +310,12 @@ class RapporteringService(
 
         var periodeTilInnsending = rapporteringsperiode
 
-        if (rapporteringsperiode.status == Endret) {
+        if (rapporteringsperiode.status == TilUtfylling && rapporteringsperiode.originalId != null) {
             if (rapporteringsperiode.begrunnelseEndring.isNullOrBlank()) {
                 throw BadRequestException(
                     "Endret rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes. Begrunnelse for endring må oppgis",
                 )
             } else {
-                if (rapporteringsperiode.originalId == null) {
-                    throw BadRequestException(
-                        "Endret rapporteringsperiode med id ${rapporteringsperiode.id} mangler originalId",
-                    )
-                }
-
                 val endringId =
                     meldepliktConnector
                         .hentEndringId(rapporteringsperiode.originalId, token)
@@ -342,12 +337,12 @@ class RapporteringService(
                     rapporteringRepository.oppdaterPeriodeEtterInnsending(
                         rapporteringId = periodeTilInnsending.id,
                         ident = ident,
-                        kanEndres = periodeTilInnsending.status != Endret,
+                        kanEndres = periodeTilInnsending.begrunnelseEndring == null && periodeTilInnsending.originalId == null,
                         kanSendes = false,
                         status = Innsendt,
                     )
                     logger.info { "Oppdaterte rapporteringsperiode ${periodeTilInnsending.id} med status Innsendt" }
-                    if (periodeTilInnsending.status == Endret && periodeTilInnsending.originalId != null) {
+                    if (periodeTilInnsending.originalId != null) {
                         rapporteringRepository.oppdaterPeriodeEtterInnsending(
                             rapporteringId = periodeTilInnsending.originalId!!,
                             ident = ident,
