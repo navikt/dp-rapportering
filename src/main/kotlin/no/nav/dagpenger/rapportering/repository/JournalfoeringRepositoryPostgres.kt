@@ -6,6 +6,7 @@ import kotliquery.using
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
+import java.util.UUID
 import javax.sql.DataSource
 
 class JournalfoeringRepositoryPostgres(
@@ -39,7 +40,7 @@ class JournalfoeringRepositoryPostgres(
                         queryOf(
                             "INSERT INTO midlertidig_lagrede_journalposter (id, journalpost, retries) " +
                                 "VALUES (?, ?, ?)",
-                            midlertidigLagretData.rapporteringsperiode.id,
+                            UUID.randomUUID().toString(),
                             defaultObjectMapper.writeValueAsString(midlertidigLagretData),
                             0,
                         ).asUpdate,

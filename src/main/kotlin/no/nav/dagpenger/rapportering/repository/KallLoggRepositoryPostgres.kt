@@ -35,6 +35,25 @@ class KallLoggRepositoryPostgres(
                 ) ?: 0L
         }
 
+    override fun lagreRequest(
+        kallLoggId: Long,
+        request: String,
+    ) {
+        using(sessionOf(dataSource)) { session ->
+            session
+                .run(
+                    queryOf(
+                        "UPDATE kall_logg " +
+                            "SET request = ?, kalltid = ? " +
+                            "WHERE kall_logg_id = ?",
+                        request,
+                        Instant.now().toEpochMilli(),
+                        kallLoggId,
+                    ).asUpdate,
+                )
+        }
+    }
+
     override fun lagreResponse(
         kallLoggId: Long,
         status: Int,

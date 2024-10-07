@@ -21,6 +21,7 @@ import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
+import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.preparePartitions
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
@@ -56,10 +57,12 @@ class ApplicationBuilder(
     private val rapporteringRepository = RapporteringRepositoryPostgres(dataSource, actionTimer)
     private val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(dataSource, actionTimer)
     private val journalfoeringRepository = JournalfoeringRepositoryPostgres(dataSource, actionTimer)
+    private val kallLoggRepository = KallLoggRepositoryPostgres(dataSource)
 
     private val journalfoeringService =
         JournalfoeringService(
             journalfoeringRepository,
+            kallLoggRepository,
             httpClient,
             meterRegistry,
         )
@@ -82,7 +85,7 @@ class ApplicationBuilder(
                     engine.application.rapporteringApi(rapporteringService, meldepliktMetrikker)
                 }
         rapidsConnection.register(this)
-        RapporteringJournalførtMottak(rapidsConnection, journalfoeringRepository)
+        RapporteringJournalførtMottak(rapidsConnection, journalfoeringRepository, kallLoggRepository)
     }
 
     internal fun start() {

@@ -19,11 +19,14 @@ import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.properties
 import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
+import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
+import no.nav.dagpenger.rapportering.repository.KallLoggRepository
+import no.nav.dagpenger.rapportering.utils.getCallId
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -35,6 +38,7 @@ import kotlin.time.measureTime
 
 class JournalfoeringService(
     private val journalfoeringRepository: JournalfoeringRepository,
+    private val kallLoggRepository: KallLoggRepository,
     private val httpClient: HttpClient,
     meterRegistry: MeterRegistry,
     delay: Long = 10000,
@@ -81,7 +85,7 @@ class JournalfoeringService(
             journalfoeringRepository.hentMidlertidigLagretData()
 
         journalpostData.forEach { triple ->
-            val periodeId = triple.first
+            val id = triple.first
             val midlertidigLagretData = triple.second
             val retries = triple.third
 
@@ -96,12 +100,12 @@ class JournalfoeringService(
                 )
 
                 // Slette midlertidig lagret data
-                journalfoeringRepository.sletteMidlertidigLagretData(periodeId)
+                journalfoeringRepository.sletteMidlertidigLagretData(id)
             } catch (e: Exception) {
                 // Kan ikke journalføre igjen. Oppdater teller
-                journalfoeringRepository.oppdaterMidlertidigLagretData(periodeId, retries + 1)
+                journalfoeringRepository.oppdaterMidlertidigLagretData(id, retries + 1)
                 logger.warn(
-                    "Kan ikke journalføre periode $periodeId, retries $retries",
+                    "Kan ikke journalføre periode ${midlertidigLagretData.rapporteringsperiode.id}, retries $retries",
                     e,
                 )
             }
@@ -170,6 +174,9 @@ class JournalfoeringService(
 
         logger.info("Oppretter journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
 
+        // Oppretter kallLogg for å få kallLoggId slik at vi kan sende den med Behov
+        val kallLoggId = lagreKallLogg(ident)
+
         var brevkode = "NAV 00-10.02"
         if (rapporteringsperiode.status == RapporteringsperiodeStatus.Endret) {
             brevkode = "NAV 00-10.03"
@@ -183,6 +190,7 @@ class JournalfoeringService(
                 "json" to json,
                 "pdf" to pdf,
                 "tilleggsopplysninger" to tilleggsopplysninger,
+                "kallLoggId" to kallLoggId,
             )
 
         val behov =
@@ -194,8 +202,19 @@ class JournalfoeringService(
                 ),
             )
 
-        // TODO: Kall logg
-        getRapidsConnection().publish(ident, behov.toJson())
+        try {
+            getRapidsConnection().publish(ident, behov.toJson())
+
+            // Oppdaterer lagrer request (Behov)
+            kallLoggRepository.lagreRequest(kallLoggId, behov.toJson())
+        } catch (e: Exception) {
+            logger.error("Kunne ikke sende melding til Kafka", e)
+
+            kallLoggRepository.lagreResponse(kallLoggId, 500, "")
+
+            throw Exception(e)
+        }
+
     }
 
     private fun getTittle(rapporteringsperiode: Rapporteringsperiode): String {
@@ -249,5 +268,24 @@ class JournalfoeringService(
     private suspend fun lagreDataMidlertidig(midlertidigLagretData: MidlertidigLagretData) {
         logger.info("Mellomlagrer data for rapporteringsperiode ${midlertidigLagretData.rapporteringsperiode.id}")
         journalfoeringRepository.lagreDataMidlertidig(midlertidigLagretData)
+    }
+
+    private fun lagreKallLogg(ident: String): Long {
+        return kallLoggRepository.lagreKallLogg(
+            KallLogg(
+                korrelasjonId = getCallId(),
+                tidspunkt = LocalDateTime.now(),
+                type = "KAFKA",
+                kallRetning = "UT",
+                method = "PUBLISH",
+                operation = properties[Key("KAFKA_RAPID_TOPIC", stringType)],
+                status = 200,
+                kallTid = 0,
+                request = "",
+                response = "",
+                ident = ident,
+                logginfo = "",
+            ),
+        )
     }
 }

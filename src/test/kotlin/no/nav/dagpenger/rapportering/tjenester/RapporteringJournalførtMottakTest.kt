@@ -7,6 +7,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
+import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -15,10 +16,11 @@ import java.util.UUID
 class RapporteringJournalførtMottakTest {
     private val testRapid = TestRapid()
     private val mockJournalfoeringRepository = mockk<JournalfoeringRepository>()
+    private val mockKallLoggRepository = mockk<KallLoggRepository>()
 
     @BeforeEach
     fun setup() {
-        RapporteringJournalførtMottak(testRapid, mockJournalfoeringRepository)
+        RapporteringJournalførtMottak(testRapid, mockJournalfoeringRepository, mockKallLoggRepository)
     }
 
     @Test

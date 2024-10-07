@@ -38,10 +38,9 @@ import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
+import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.LocalDate
@@ -49,7 +48,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Base64
 import java.util.UUID
 
-@Disabled
 class JournalfoeringServiceTest {
     private val ident = "01020312345"
     private val navn = "Test Testesen"
@@ -69,18 +67,6 @@ class JournalfoeringServiceTest {
             .registerModule(JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 
-    companion object {
-        val rapidsConnection = mockk<RapidsConnection>()
-
-        @BeforeAll
-        @JvmStatic
-        fun setup() {
-            mockkObject(ApplicationBuilder) {
-                every { getRapidsConnection() } returns rapidsConnection
-            }
-        }
-    }
-
     @Test
     fun `Kan opprette og sende journalpost`() {
         test()
@@ -95,6 +81,9 @@ class JournalfoeringServiceTest {
     fun `Kan lagre data midlertidig ved feil og sende paa nytt`() {
         setProperties()
 
+        // Oppretter rapporteringsperiode
+        val rapporteringsperiode = createRapporteringsperiode(false)
+
         // Mock svar fra PDFgenerator
         val pdf = this::class.java.getResource("/expected.pdf")!!.readBytes()
         val mockPdfGeneratorEngine =
@@ -106,9 +95,9 @@ class JournalfoeringServiceTest {
                 )
             }
 
+        // Mock
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
         coEvery { journalfoeringRepository.lagreDataMidlertidig(any()) } just runs
-        coEvery { journalfoeringRepository.lagreJournalpostData(any(), any(), any()) } just runs
         coEvery { journalfoeringRepository.oppdaterMidlertidigLagretData(any(), any()) } just runs
         coEvery { journalfoeringRepository.sletteMidlertidigLagretData(any()) } just runs
         coEvery { journalfoeringRepository.hentMidlertidigLagretData() } returns
@@ -120,21 +109,24 @@ class JournalfoeringServiceTest {
                         navn,
                         loginLevel,
                         headers,
-                        createRapporteringsperiode(false),
+                        rapporteringsperiode,
                     ),
                     0,
                 ),
             )
 
+        val kallLoggRepository = mockk<KallLoggRepository>()
+        every { kallLoggRepository.lagreKallLogg(any()) } returns 1
+        every { kallLoggRepository.lagreResponse(any(), any(), any()) } just runs
+        every { kallLoggRepository.lagreRequest(any(), any()) } just runs
+
         val journalfoeringService =
             JournalfoeringService(
                 journalfoeringRepository,
+                kallLoggRepository,
                 createHttpClient(mockPdfGeneratorEngine),
                 meterRegistry,
             )
-
-        // Oppretter rapporteringsperiode
-        val rapporteringsperiode = createRapporteringsperiode(false)
 
         // Prøver å journalføre
         runBlocking {
@@ -152,13 +144,24 @@ class JournalfoeringServiceTest {
         coVerify(exactly = 1) { journalfoeringRepository.hentMidlertidigLagretData() }
         coVerify(exactly = 1) { journalfoeringRepository.oppdaterMidlertidigLagretData("1", 1) }
 
-        every { rapidsConnection.publish(any(), any()) } just runs
+        // Oppretter mock for rapidsConnection slik at vi kan "sende" melding
+        val message = slot<String>()
+        val rapidsConnection = mockk<RapidsConnection>()
+        justRun { rapidsConnection.publish(eq(ident), capture(message)) }
 
         runBlocking {
-            journalfoeringService.journalfoerPaaNytt()
+            mockkObject(ApplicationBuilder) {
+                every { getRapidsConnection() } returns rapidsConnection
+
+                // Kjør
+                journalfoeringService.journalfoerPaaNytt()
+            }
+
         }
 
+        // Sjekk
         coVerify(exactly = 1) { journalfoeringRepository.sletteMidlertidigLagretData("1") }
+        checkMessage(false, message.captured, rapporteringsperiode)
     }
 
     private fun setProperties() {
@@ -175,11 +178,16 @@ class JournalfoeringServiceTest {
 
         // Mock
         val message = slot<String>()
+        val rapidsConnection = mockk<RapidsConnection>()
         justRun { rapidsConnection.publish(eq(ident), capture(message)) }
 
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
         coEvery { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) } just runs
         coEvery { journalfoeringRepository.hentMidlertidigLagretData() } returns emptyList()
+
+        val kallLoggRepository = mockk<KallLoggRepository>()
+        every { kallLoggRepository.lagreKallLogg(any()) } returns 1
+        every { kallLoggRepository.lagreRequest(eq(1), any()) } just runs
 
         // Mock svar fra PDFgenerator
         val pdf =
@@ -198,21 +206,26 @@ class JournalfoeringServiceTest {
                 )
             }
 
+        // Opprett
         val journalfoeringService =
             JournalfoeringService(
                 journalfoeringRepository,
+                kallLoggRepository,
                 createHttpClient(mockPdfGeneratorEngine),
                 meterRegistry,
             )
 
         val rapporteringsperiode = createRapporteringsperiode(endring)
 
-        // Kjører
         runBlocking {
-            journalfoeringService.journalfoer(ident, navn, loginLevel, headers, rapporteringsperiode)
-        }
+            mockkObject(ApplicationBuilder) {
+                every { getRapidsConnection() } returns rapidsConnection
 
-        runBlocking {
+                // Kjør
+                journalfoeringService.journalfoer(ident, navn, loginLevel, headers, rapporteringsperiode)
+            }
+
+            // Sjekk
             checkMessage(endring, message.captured, rapporteringsperiode)
         }
     }
@@ -300,7 +313,7 @@ class JournalfoeringServiceTest {
         to.get(4).get("first").asText() shouldBe "backendGithubSha"
         to.get(4).get("second").asText() shouldBe backendGithubSha
         to.get(5).get("first").asText() shouldBe "loginLevel"
-        to.get(5).get("second").asText() shouldBe loginLevel
+        to.get(5).get("second").asInt() shouldBe loginLevel
     }
 
     private fun checkJson(

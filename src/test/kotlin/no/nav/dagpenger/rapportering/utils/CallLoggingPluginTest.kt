@@ -99,7 +99,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
 
             val list = getLogList()
 
-            list.size shouldBe 6
+            list.size shouldBe 7
             list[2].type shouldBe "REST"
             list[2].kallRetning shouldBe "INN"
             list[2].method shouldBe "POST"
@@ -163,6 +163,16 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 """.trimIndent()
             list[5].ident shouldBe "" // Det finnes ikke token når vi genererer PDF
             list[5].logginfo shouldBe ""
+
+            list[6].type shouldBe "KAFKA"
+            list[6].kallRetning shouldBe "UT"
+            list[6].method shouldBe "PUBLISH"
+            list[6].operation shouldBe "teamdagpenger.rapid.v1"
+            list[6].status shouldBe 500
+            list[6].request shouldContain ""
+            list[6].response shouldBe ""
+            list[6].ident shouldBe ident
+            list[6].logginfo shouldBe ""
         }
 
     private fun getLogList() =

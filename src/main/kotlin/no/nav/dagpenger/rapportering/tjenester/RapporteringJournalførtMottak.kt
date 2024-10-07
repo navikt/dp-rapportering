@@ -9,10 +9,12 @@ import mu.KotlinLogging
 import mu.withLoggingContext
 import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
+import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 
 internal class RapporteringJournalførtMottak(
     rapidsConnection: RapidsConnection,
     private val journalfoeringRepository: JournalfoeringRepository,
+    private val kallLoggRepository: KallLoggRepository,
 ) : River.PacketListener {
     private companion object {
         private val logger = KotlinLogging.logger {}
