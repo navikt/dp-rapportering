@@ -26,11 +26,13 @@ class RapporteringJournalførtMottakTest {
     @Test
     fun `vi tar imot og håndterer rapportering journalført hendelser`() {
         coEvery { mockJournalfoeringRepository.lagreJournalpostData(any(), any(), any()) } just runs
+        coEvery { mockKallLoggRepository.lagreResponse(any(), any(), any()) } just runs
 
         testRapid.sendTestMessage(løstBehovJSON)
 
         coVerify(exactly = 1) {
             mockJournalfoeringRepository.lagreJournalpostData(eq(123456), eq(0), eq(1234567890))
+            mockKallLoggRepository.lagreResponse(eq(12345), eq(200), any())
         }
     }
 }
@@ -51,7 +53,8 @@ private val løstBehovJSON =
         "brevkode": "NAV 00-10.02",
         "json": "{\"key1\": \"value1\"}",
         "pdf": "UERG",
-        "tilleggsopplysninger": []
+        "tilleggsopplysninger": [],
+        "kallLoggId": "12345" 
       },
       "@final": true,
       "@løsning": {

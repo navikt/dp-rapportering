@@ -47,8 +47,8 @@ internal class RapporteringJournalførtMottak(
         packet: JsonMessage,
         context: MessageContext,
     ) {
-        // TODO: Kall logg
         val periodeId = packet[behov]["periodeId"].asText()
+        val kallLoggId = packet[behov]["kallLoggId"].asLong()
         val journalpostId = packet["@løsning"]["journalpostId"].asLong()
 
         withLoggingContext(
@@ -59,6 +59,7 @@ internal class RapporteringJournalførtMottak(
 
             runBlocking {
                 journalfoeringRepository.lagreJournalpostData(journalpostId, 0L, periodeId.toLong())
+                kallLoggRepository.lagreResponse(kallLoggId, 200, packet.toJson())
             }
         }
     }

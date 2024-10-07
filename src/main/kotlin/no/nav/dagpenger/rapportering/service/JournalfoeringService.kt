@@ -214,7 +214,6 @@ class JournalfoeringService(
 
             throw Exception(e)
         }
-
     }
 
     private fun getTittle(rapporteringsperiode: Rapporteringsperiode): String {
