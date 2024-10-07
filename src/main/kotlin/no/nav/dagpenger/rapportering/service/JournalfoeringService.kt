@@ -224,7 +224,7 @@ class JournalfoeringService(
         val til = rapporteringsperiode.periode.tilOgMed.format(dateFormatter)
 
         var tittel = "Meldekort"
-        if (rapporteringsperiode.status == RapporteringsperiodeStatus.Endret) {
+        if (rapporteringsperiode.status == RapporteringsperiodeStatus.TilUtfylling && rapporteringsperiode.originalId != null) {
             tittel = "Korrigert meldekort"
         }
 
