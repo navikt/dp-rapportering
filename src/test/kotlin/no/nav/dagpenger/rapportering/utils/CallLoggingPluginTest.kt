@@ -156,8 +156,8 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[5].response.trimIndent() shouldBe
                 """
                 HTTP/1.1 200 OK
-                Content-Type: application/pdf
-                Content-Length: 3
+                Content-Length: 4
+                Content-Type: text/plain; charset=UTF-8
                 
                 PDF
                 """.trimIndent()
@@ -222,8 +222,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
         hosts("https://pdf-generator") {
             routing {
                 post("/convert-html-to-pdf/meldekort") {
-                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Pdf.toString())
-                    call.respond("PDF")
+                    call.respond("%PDF")
                 }
             }
         }

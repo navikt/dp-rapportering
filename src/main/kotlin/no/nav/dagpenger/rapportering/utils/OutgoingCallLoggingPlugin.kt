@@ -7,7 +7,6 @@ import io.ktor.client.plugins.plugin
 import io.ktor.client.request.HttpRequest
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
-import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.fullPath
@@ -54,7 +53,7 @@ class OutgoingCallLoggingPlugin(
 
             val responseBody = response.bodyAsChannel().toByteArray()
             val responseBodyString =
-                if (response.headers[HttpHeaders.ContentType] == ContentType.Application.Pdf.toString()) {
+                if (responseBody.toString(Charsets.UTF_8).startsWith("%PDF")) {
                     "PDF" // Don't save the content, just show that it was a PDF-file
                 } else {
                     responseBody.toString(Charsets.UTF_8)
