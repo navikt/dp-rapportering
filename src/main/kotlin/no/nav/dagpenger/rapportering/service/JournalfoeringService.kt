@@ -142,18 +142,20 @@ class JournalfoeringService(
         val htmlFrafrontend = "<div>!!!</div>"
 
         // Erstatt plassholdere med data
-        val htmlMal = this::class.java.getResource("/html_pdf_mal.html")!!.readText()
-        htmlMal.replace("%NAVN%", navn)
-        htmlMal.replace("%IDENT%", ident)
-        htmlMal.replace("%RAPPORTERINGSPERIODE_ID%", rapporteringsperiode.id.toString())
-        htmlMal.replace("%DATO%", LocalDate.now().format(dateFormatter))
-        htmlMal.replace("%TITTEL%", getTittle(rapporteringsperiode))
-        htmlMal.replace("%MOTTATT%", LocalDateTime.now().format(dateTimeFormatter))
-        htmlMal.replace(
-            "%NESTE_MELDEKORT_KAN_SENDES_FRA%",
-            rapporteringsperiode.kanSendesFra.plusDays(14).format(dateFormatter),
-        )
-        htmlMal.replace("%HTML%", htmlFrafrontend)
+        val htmlMal =
+            this::class.java.getResource("/html_pdf_mal.html")!!
+                .readText()
+                .replace("%NAVN%", navn)
+                .replace("%IDENT%", ident)
+                .replace("%RAPPORTERINGSPERIODE_ID%", rapporteringsperiode.id.toString())
+                .replace("%DATO%", LocalDate.now().format(dateFormatter))
+                .replace("%TITTEL%", getTittle(rapporteringsperiode))
+                .replace("%MOTTATT%", LocalDateTime.now().format(dateTimeFormatter))
+                .replace(
+                    "%NESTE_MELDEKORT_KAN_SENDES_FRA%",
+                    rapporteringsperiode.kanSendesFra.plusDays(14).format(dateFormatter),
+                )
+                .replace("%HTML%", htmlFrafrontend)
 
         // TODO: Vi har HTML med alle tekster, vi oppretter PDF fra HTML, må vi også ha alle tekstene i JSON?
         val json = defaultObjectMapper.writeValueAsString(rapporteringsperiode)
