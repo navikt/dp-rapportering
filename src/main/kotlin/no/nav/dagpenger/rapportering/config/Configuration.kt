@@ -31,6 +31,7 @@ internal object Configuration {
                 "RAPID_APP_NAME" to APP_NAME,
                 "KAFKA_CONSUMER_GROUP_ID" to "dp-rapportering-v1",
                 "KAFKA_RAPID_TOPIC" to "teamdagpenger.rapid.v1",
+                "KAFKA_EXTRA_TOPIC" to "teamdagpenger.journalforing.v1",
                 "KAFKA_RESET_POLICY" to "LATEST",
             ),
         )
