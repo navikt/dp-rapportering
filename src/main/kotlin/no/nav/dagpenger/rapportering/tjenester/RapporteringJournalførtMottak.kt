@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.tjenester
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import com.github.navikt.tbd_libs.rapids_and_rivers.River
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -62,5 +63,19 @@ internal class RapporteringJournalførtMottak(
                 kallLoggRepository.lagreResponse(kallLoggId, 200, packet.toJson())
             }
         }
+    }
+
+    override fun onError(
+        problems: MessageProblems,
+        context: MessageContext,
+    ) {
+        logger.info { problems.toExtendedReport() }
+    }
+
+    override fun onSevere(
+        error: MessageProblems.MessageException,
+        context: MessageContext,
+    ) {
+        logger.info { error.problems.toExtendedReport() }
     }
 }
