@@ -71,11 +71,4 @@ internal class RapporteringJournalførtMottak(
     ) {
         logger.info { problems.toExtendedReport() }
     }
-
-    override fun onSevere(
-        error: MessageProblems.MessageException,
-        context: MessageContext,
-    ) {
-        logger.info { error.problems.toExtendedReport() }
-    }
 }
