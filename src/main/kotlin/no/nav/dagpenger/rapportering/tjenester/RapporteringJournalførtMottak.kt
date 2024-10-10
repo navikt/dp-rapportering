@@ -29,6 +29,7 @@ internal class RapporteringJournalførtMottak(
             validate { it.demandValue("@event_name", "behov") }
             validate { it.demandAll("@behov", listOf(behov)) }
             validate { it.requireKey("@løsning") }
+            validate { it.requireValue("@final", true) }
             validate {
                 it.require(behov) { behov ->
                     behov.required("periodeId")
@@ -51,6 +52,8 @@ internal class RapporteringJournalførtMottak(
         val periodeId = packet[behov]["periodeId"].asText()
         val kallLoggId = packet[behov]["kallLoggId"].asLong()
         val journalpostId = packet["@løsning"][behov].asLong()
+
+        packet[behov] = "SE TILSVARENDE REQUEST" // Bare for å spare litt plass i vår DB
 
         withLoggingContext(
             "periodeId" to periodeId,

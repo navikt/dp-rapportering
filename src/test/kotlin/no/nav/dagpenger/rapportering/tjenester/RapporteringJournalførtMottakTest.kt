@@ -1,11 +1,14 @@
 package no.nav.dagpenger.rapportering.tjenester
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
+import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
+import io.mockk.slot
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import org.intellij.lang.annotations.Language
@@ -23,9 +26,11 @@ class RapporteringJournalførtMottakTest {
     }
 
     @Test
-    fun `vi tar imot og håndterer rapportering journalført hendelser`() {
+    fun `Vi tar imot og håndterer rapportering journalført hendelser`() {
         coEvery { mockJournalfoeringRepository.lagreJournalpostData(any(), any(), any()) } just runs
-        coEvery { mockKallLoggRepository.lagreResponse(any(), any(), any()) } just runs
+
+        val response = slot<String>()
+        coEvery { mockKallLoggRepository.lagreResponse(any(), any(), capture(response)) } just runs
 
         testRapid.sendTestMessage(løstBehovJSON)
 
@@ -33,6 +38,10 @@ class RapporteringJournalførtMottakTest {
             mockJournalfoeringRepository.lagreJournalpostData(eq(123456), eq(0), eq(1234567890))
             mockKallLoggRepository.lagreResponse(eq(12345), eq(200), any())
         }
+
+        val jsonNode = ObjectMapper().readTree(response.captured)
+
+        jsonNode["JournalføreRapportering"].asText() shouldBe "SE TILSVARENDE REQUEST"
     }
 }
 
@@ -55,6 +64,7 @@ private val løstBehovJSON =
         "tilleggsopplysninger": [],
         "kallLoggId": "12345"
       },
+      "@final": true,
       "@løsning": {
         "JournalføreRapportering": "123456"
       },
