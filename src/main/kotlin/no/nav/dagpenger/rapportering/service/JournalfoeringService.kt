@@ -27,7 +27,6 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import no.nav.dagpenger.rapportering.utils.getCallId
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
@@ -137,10 +136,6 @@ class JournalfoeringService(
         rapporteringsperiode: Rapporteringsperiode,
     ) {
         // Opprett HTML
-        // Hent HTML fra frontend
-        // TODO: Hent
-        val htmlFrafrontend = "<div>!!!</div>"
-
         // Erstatt plassholdere med data
         val htmlMal =
             this::class.java.getResource("/html_pdf_mal.html")!!
@@ -148,16 +143,14 @@ class JournalfoeringService(
                 .replace("%NAVN%", navn)
                 .replace("%IDENT%", ident)
                 .replace("%RAPPORTERINGSPERIODE_ID%", rapporteringsperiode.id.toString())
-                .replace("%DATO%", LocalDate.now().format(dateFormatter))
                 .replace("%TITTEL%", getTittle(rapporteringsperiode))
                 .replace("%MOTTATT%", LocalDateTime.now().format(dateTimeFormatter))
                 .replace(
                     "%NESTE_MELDEKORT_KAN_SENDES_FRA%",
-                    rapporteringsperiode.kanSendesFra.plusDays(14).format(dateFormatter),
+                    rapporteringsperiode.periode.tilOgMed.plusDays(13).format(dateFormatter),
                 )
-                .replace("%HTML%", htmlFrafrontend)
+                .replace("%HTML%", rapporteringsperiode.html ?: "")
 
-        // TODO: Vi har HTML med alle tekster, vi oppretter PDF fra HTML, må vi også ha alle tekstene i JSON?
         val json = defaultObjectMapper.writeValueAsString(rapporteringsperiode)
 
         // Kall dp-behov-pdf-generator
@@ -172,17 +165,18 @@ class JournalfoeringService(
             }
 
         val pdf: ByteArray = pdfGeneratorResponse.body()
-        val tilleggsopplysninger = getTilleggsopplysninger(loginLevel, headers, rapporteringsperiode)
 
         logger.info("Oppretter journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
-
-        // Oppretter kallLogg for å få kallLoggId slik at vi kan sende den med Behov
-        val kallLoggId = lagreKallLogg(ident)
 
         var brevkode = "NAV 00-10.02"
         if (rapporteringsperiode.status == RapporteringsperiodeStatus.Endret) {
             brevkode = "NAV 00-10.03"
         }
+
+        val tilleggsopplysninger = getTilleggsopplysninger(loginLevel, headers, rapporteringsperiode)
+
+        // Oppretter kallLogg for å få kallLoggId slik at vi kan sende den med Behov
+        val kallLoggId = lagreKallLogg(ident)
 
         val behovNavn = MineBehov.JournalføreRapportering.name
         val behovParams =
@@ -207,7 +201,7 @@ class JournalfoeringService(
         try {
             getRapidsConnection().publish(ident, behov.toJson())
 
-            // Oppdaterer lagrer request (Behov)
+            // Lagrer request (Behov)
             kallLoggRepository.lagreRequest(kallLoggId, behov.toJson())
         } catch (e: Exception) {
             logger.error("Kunne ikke sende melding til Kafka", e)

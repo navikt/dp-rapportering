@@ -154,7 +154,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[5].request shouldStartWith "POST https://pdf-generator:443/convert-html-to-pdf/meldekort"
             list[5].request shouldContain "Navn: TEST TESTESSEN"
             list[5].request shouldContain "Fødselsnummer: $ident"
-            list[5].request shouldContain "Meldekort ${rapporteringsperiode.id}"
+            list[5].request shouldContain "Meldekort: ${rapporteringsperiode.id}"
             list[5].response.trimIndent() shouldBe
                 """
                 HTTP/1.1 200 OK
