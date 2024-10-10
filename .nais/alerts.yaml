@@ -1,0 +1,28 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+    name: dp-rapportering-alerts
+    namespace: teamdagpenger
+    labels:
+        team: teamdagpenger
+spec:
+    groups:
+        - name: dp-rapportering-minne
+          rules:
+              - alert: Minneforbruk
+                expr: |
+                    sum (container_memory_working_set_bytes{container=~"dp-rapportering"}) 
+                    > (
+                    sum(kube_pod_container_resource_limits{resource="memory", container=~"dp-rapportering"}) / 
+                    count(kube_pod_container_resource_limits{resource="memory", container=~"dp-rapportering"}) 
+                    * 0.90
+                    )
+                for: 5m
+                annotations:
+                    description: 'Minneforbruket til applikasjonen dp-rapportering nærmer seg limit'
+                    consequence: 'Applikasjonen kan bli terminert'
+                    action: 'Sjekk grafana for detaljer'
+                labels:
+                    namespace: teamdagpenger
+                    severity: warning
