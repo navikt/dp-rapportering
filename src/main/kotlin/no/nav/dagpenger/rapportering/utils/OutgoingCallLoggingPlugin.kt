@@ -6,11 +6,12 @@ import io.ktor.client.plugins.observer.wrapWithContent
 import io.ktor.client.plugins.plugin
 import io.ktor.client.request.HttpRequest
 import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.HttpHeaders
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.fullPath
 import io.ktor.http.hostWithPort
+import io.ktor.util.toByteArray
 import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.readUTF8LineTo
@@ -19,7 +20,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
@@ -51,7 +51,13 @@ class OutgoingCallLoggingPlugin(
 
             val ident = getIdent(request.headers)
 
-            val responseBody = response.bodyAsText(Charsets.UTF_8)
+            val responseBody = response.bodyAsChannel().toByteArray()
+            val responseBodyString =
+                if (responseBody.toString(Charsets.UTF_8).startsWith("%PDF")) {
+                    "PDF" // Don't save the content, just show that it was a PDF-file
+                } else {
+                    responseBody.toString(Charsets.UTF_8)
+                }
 
             try {
                 kallLoggRepository.lagreKallLogg(
@@ -65,7 +71,7 @@ class OutgoingCallLoggingPlugin(
                         status = response.status.value,
                         kallTid = Instant.now().toEpochMilli() - kallTid,
                         request = buildRequest(requestBuilder.executionContext, request),
-                        response = buildResponse(response, responseBody),
+                        response = buildResponse(response, responseBodyString),
                         ident = ident,
                         logginfo = "",
                     ),
@@ -75,7 +81,7 @@ class OutgoingCallLoggingPlugin(
             }
 
             // Response content can be read only once. Wrap the call with the content we have read
-            originalCall.wrapWithContent(ByteReadChannel(responseBody.toByteArray()))
+            originalCall.wrapWithContent(ByteReadChannel(responseBody))
         }
     }
 
@@ -95,40 +101,35 @@ class OutgoingCallLoggingPlugin(
                 // Empty line before body as in HTTP request
                 appendLine()
 
-                // It's too much to store journalpost (metadata, JSON, PDF). We will just mark that it was a journalpost
-                if ("${request.url.protocol.name}://${request.url.host}" == Configuration.dokarkivUrl) {
-                    appendLine("JOURNALPOST")
-                } else {
-                    when (request.content) {
-                        is OutgoingContent.ByteArrayContent -> {
-                            append(
-                                String(
-                                    (request.content as OutgoingContent.ByteArrayContent).bytes(),
-                                    Charsets.UTF_8,
-                                ),
-                            )
-                        }
+                when (request.content) {
+                    is OutgoingContent.ByteArrayContent -> {
+                        append(
+                            String(
+                                (request.content as OutgoingContent.ByteArrayContent).bytes(),
+                                Charsets.UTF_8,
+                            ),
+                        )
+                    }
 
-                        is OutgoingContent.WriteChannelContent -> {
-                            val buffer = StringBuilder()
-                            val channel = ByteChannel(true)
+                    is OutgoingContent.WriteChannelContent -> {
+                        val buffer = StringBuilder()
+                        val channel = ByteChannel(true)
 
-                            runBlocking {
-                                GlobalScope.writer(coroutineContext, autoFlush = true) {
-                                    (request.content as OutgoingContent.WriteChannelContent).writeTo(channel)
-                                }
-
-                                while (!channel.isClosedForRead) {
-                                    channel.readUTF8LineTo(buffer)
-                                }
+                        runBlocking {
+                            GlobalScope.writer(coroutineContext, autoFlush = true) {
+                                (request.content as OutgoingContent.WriteChannelContent).writeTo(channel)
                             }
 
-                            appendLine(buffer.toString())
+                            while (!channel.isClosedForRead) {
+                                channel.readUTF8LineTo(buffer)
+                            }
                         }
 
-                        else -> {
-                            appendLine(request.content)
-                        }
+                        appendLine(buffer.toString())
+                    }
+
+                    else -> {
+                        appendLine(request.content)
                     }
                 }
             }.toString()

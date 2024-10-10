@@ -24,7 +24,6 @@ import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
-import no.nav.dagpenger.rapportering.model.DokumentInfo
 import no.nav.dagpenger.rapportering.model.InnsendingFeil
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.PeriodeId
@@ -96,7 +95,7 @@ class RapporteringApiTest : ApiTestSetup() {
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
-                dokarkiv()
+                pdfGenerator()
             }
 
             // Lagrer perioden i databasen
@@ -165,7 +164,7 @@ class RapporteringApiTest : ApiTestSetup() {
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
-                dokarkiv()
+                pdfGenerator()
             }
 
             val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
@@ -196,7 +195,6 @@ class RapporteringApiTest : ApiTestSetup() {
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
-                dokarkiv()
             }
 
             val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
@@ -758,25 +756,25 @@ class RapporteringApiTest : ApiTestSetup() {
             response.status shouldBe HttpStatusCode.NoContent
         }
 
-    private fun ExternalServicesBuilder.dokarkiv() {
-        hosts("https://dokarkiv") {
+    private fun ExternalServicesBuilder.pdfGenerator() {
+        hosts("https://pdf-generator") {
             routing {
-                post("/rest/journalpostapi/v1/journalpost") {
-                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    call.respond(journalpostResponse())
+                post("/convert-html-to-pdf/meldekort") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Pdf.toString())
+                    call.respond("PDF")
                 }
             }
         }
     }
 
-    val defaultAdapterAktivitet =
+    private val defaultAdapterAktivitet =
         AdapterAktivitet(
             uuid = UUID.randomUUID(),
             type = Arbeid,
             timer = 7.5,
         )
 
-    fun ExternalServicesBuilder.meldepliktAdapter(
+    private fun ExternalServicesBuilder.meldepliktAdapter(
         rapporteringsperioderResponse: List<AdapterRapporteringsperiode> =
             listOf(
                 adapterRapporteringsperiode(),
@@ -900,21 +898,6 @@ class RapporteringApiTest : ApiTestSetup() {
           "fornavn": "$fornavn",
           "maalformkode": "$maalformkode",
           "meldeform": "$meldeform"
-        }
-        """.trimIndent()
-
-    private fun journalpostResponse(
-        journalpostId: Long = 123L,
-        journalstatus: String = "MOTTATT",
-        journalpostferdigstilt: Boolean = true,
-        dokumenter: List<DokumentInfo> = listOf(DokumentInfo(dokumentInfoId = 1L)),
-    ) = // language=JSON
-        """
-        {
-          "journalpostId": $journalpostId,
-          "journalstatus": "$journalstatus",
-          "journalpostferdigstilt": $journalpostferdigstilt,
-          "dokumenter": ${defaultObjectMapper.writeValueAsString(dokumenter)}
         }
         """.trimIndent()
 }

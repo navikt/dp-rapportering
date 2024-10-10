@@ -21,9 +21,7 @@ import no.nav.dagpenger.rapportering.api.doPost
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
-import no.nav.dagpenger.rapportering.model.DokumentInfo
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
-import no.nav.dagpenger.rapportering.model.JournalpostResponse
 import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
@@ -38,17 +36,6 @@ class CallLoggingPluginTest : ApiTestSetup() {
             InnsendingResponse(id = 123L, status = "OK", feil = emptyList()),
         )
     private val personResponse = defaultObjectMapper.writeValueAsString(Person(1L, "TESTESSEN", "TEST", "NO", "EMELD"))
-    private val journalpostresponse =
-        defaultObjectMapper.writeValueAsString(
-            JournalpostResponse(
-                1L,
-                "",
-                true,
-                listOf(
-                    DokumentInfo(2L),
-                ),
-            ),
-        )
 
     @Test
     fun `Kan lagre get request og response`() =
@@ -96,7 +83,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter()
-                dokarkiv()
+                pdfGenerator()
             }
 
             val adapterRapporteringsperiodeString =
@@ -112,7 +99,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
 
             val list = getLogList()
 
-            list.size shouldBe 6
+            list.size shouldBe 7
             list[2].type shouldBe "REST"
             list[2].kallRetning shouldBe "INN"
             list[2].method shouldBe "POST"
@@ -162,20 +149,32 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[5].type shouldBe "REST"
             list[5].kallRetning shouldBe "UT"
             list[5].method shouldBe "POST"
-            list[5].operation shouldBe "/rest/journalpostapi/v1/journalpost"
+            list[5].operation shouldBe "/convert-html-to-pdf/meldekort"
             list[5].status shouldBe 200
-            list[5].request shouldStartWith "POST https://dokarkiv:443/rest/journalpostapi/v1/journalpost"
-            list[5].request shouldContain "JOURNALPOST"
+            list[5].request shouldStartWith "POST https://pdf-generator:443/convert-html-to-pdf/meldekort"
+            list[5].request shouldContain "Navn: TEST TESTESSEN"
+            list[5].request shouldContain "Fødselsnummer: $ident"
+            list[5].request shouldContain "Meldekort: ${rapporteringsperiode.id}"
             list[5].response.trimIndent() shouldBe
                 """
                 HTTP/1.1 200 OK
-                Content-Type: application/json
-                Content-Length: ${journalpostresponse.length}
+                Content-Length: 4
+                Content-Type: text/plain; charset=UTF-8
                 
-                $journalpostresponse
+                PDF
                 """.trimIndent()
-            list[5].ident shouldBe "" // Det finnes ikke ident i token når vi sender data til Dokarkiv
+            list[5].ident shouldBe "" // Det finnes ikke token når vi genererer PDF
             list[5].logginfo shouldBe ""
+
+            list[6].type shouldBe "KAFKA"
+            list[6].kallRetning shouldBe "UT"
+            list[6].method shouldBe "PUBLISH"
+            list[6].operation shouldBe "teamdagpenger.rapid.v1"
+            list[6].status shouldBe 500
+            list[6].request shouldContain ""
+            list[6].response shouldBe ""
+            list[6].ident shouldBe ident
+            list[6].logginfo shouldBe ""
         }
 
     private fun getLogList() =
@@ -221,12 +220,11 @@ class CallLoggingPluginTest : ApiTestSetup() {
         }
     }
 
-    private fun ExternalServicesBuilder.dokarkiv() {
-        hosts("https://dokarkiv") {
+    private fun ExternalServicesBuilder.pdfGenerator() {
+        hosts("https://pdf-generator") {
             routing {
-                post("/rest/journalpostapi/v1/journalpost") {
-                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    call.respond(journalpostresponse)
+                post("/convert-html-to-pdf/meldekort") {
+                    call.respond("%PDF")
                 }
             }
         }

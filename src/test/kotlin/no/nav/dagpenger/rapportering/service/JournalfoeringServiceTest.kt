@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import de.redsix.pdfcompare.CompareResultImpl
 import de.redsix.pdfcompare.PageArea
 import de.redsix.pdfcompare.PdfComparator
@@ -14,44 +15,31 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.content.OutgoingContent
-import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
-import io.ktor.util.toByteArray
 import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.writer
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.justRun
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.runs
-import io.mockk.verify
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import io.mockk.slot
 import kotlinx.coroutines.runBlocking
-import no.nav.dagpenger.rapportering.connector.DokarkivConnector
-import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.ApplicationBuilder
+import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
-import no.nav.dagpenger.rapportering.model.AvsenderIdType
-import no.nav.dagpenger.rapportering.model.BrukerIdType
 import no.nav.dagpenger.rapportering.model.Dag
-import no.nav.dagpenger.rapportering.model.Filetype
-import no.nav.dagpenger.rapportering.model.Journalpost
-import no.nav.dagpenger.rapportering.model.Journalposttype
+import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 import no.nav.dagpenger.rapportering.model.Periode
-import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
-import no.nav.dagpenger.rapportering.model.Sakstype
-import no.nav.dagpenger.rapportering.model.Tema
-import no.nav.dagpenger.rapportering.model.Tilleggsopplysning
-import no.nav.dagpenger.rapportering.model.Variantformat
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
+import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import no.nav.dagpenger.rapportering.repository.Postgres.database
-import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -61,13 +49,16 @@ import java.util.Base64
 import java.util.UUID
 
 class JournalfoeringServiceTest {
-    private val dokarkivUrl = "https://dokarkiv.nav.no"
-    private val githubSha = "abcdwfg"
-    private val token = "jwtToken"
+    private val ident = "01020312345"
+    private val navn = "Test Testesen"
+    private val userAgent = "Some agent"
+    private val frontendGithubSha = "frontendabcdwfg"
+    private val backendGithubSha = "backendabcdwfg"
+    private val loginLevel = 4
     private val headers =
         Headers.build {
-            append("useragent", "Some agent")
-            append("githubsha", "Some image")
+            append("useragent", userAgent)
+            append("githubsha", frontendGithubSha)
         }
 
     private val objectMapper =
@@ -87,114 +78,89 @@ class JournalfoeringServiceTest {
     }
 
     @Test
-    fun `Kan opprette og sende journalpost med html`() {
-        test(false, "<div>Test</div>")
-    }
-
-    @Test
-    fun `Kan lagre journalposter midlertidig ved feil og sende paa nytt`() {
+    fun `Kan lagre data midlertidig ved feil og sende paa nytt`() {
         setProperties()
 
-        // Mock TokenProvider
-        fun mockTokenProvider() =
-            { _: String ->
-                "token"
-            }
+        // Oppretter rapporteringsperiode
+        val rapporteringsperiode = createRapporteringsperiode(false)
 
-        // Mock svar fra Dokarkiv
-        var count = 0
-        val mockEngine =
+        // Mock svar fra PDFgenerator
+        val pdf = this::class.java.getResource("/expected.pdf")!!.readBytes()
+        val mockPdfGeneratorEngine =
             MockEngine { _ ->
-                if (count < 2) {
-                    count++
-
-                    respond(
-                        content = "",
-                        status = HttpStatusCode.BadRequest,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json"),
-                    )
-                } else {
-                    respond(
-                        content =
-                            ByteReadChannel(
-                                """
-                                    {
-                                        "journalpostId": 2,
-                                        "journalstatus": "OK",
-                                        "journalpostferdigstilt": true,
-                                        "dokumenter": [
-                                            {
-                                                "dokumentInfoId": 3
-                                            }
-                                        ]
-                                    }
-                                """.trimMargin(),
-                            ),
-                        status = HttpStatusCode.OK,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json"),
-                    )
-                }
+                respond(
+                    content = ByteReadChannel(pdf),
+                    status = HttpStatusCode.OK,
+                    headers = headersOf(HttpHeaders.ContentType, "application/pdf"),
+                )
             }
 
         // Mock
-        val meldepliktConnector = mockk<MeldepliktConnector>()
-        coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
-
-        val dokarkivConnector = DokarkivConnector(dokarkivUrl, mockTokenProvider(), createHttpClient(mockEngine), actionTimer)
-
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
-        every { journalfoeringRepository.lagreJournalpostMidlertidig(any()) } just runs
-        every { journalfoeringRepository.hentJournalpostData(any()) } returns emptyList()
-        every { journalfoeringRepository.lagreJournalpostData(any(), any(), any()) } just runs
-        every { journalfoeringRepository.oppdaterMidlertidigLagretJournalpost(any(), any()) } just runs
-        every { journalfoeringRepository.sletteMidlertidigLagretJournalpost(any()) } just runs
-        every { journalfoeringRepository.hentMidlertidigLagredeJournalposter() } returns
+        coEvery { journalfoeringRepository.lagreDataMidlertidig(any()) } just runs
+        coEvery { journalfoeringRepository.oppdaterMidlertidigLagretData(any(), any()) } just runs
+        coEvery { journalfoeringRepository.sletteMidlertidigLagretData(any()) } just runs
+        coEvery { journalfoeringRepository.hentMidlertidigLagretData() } returns
             listOf(
                 Triple(
                     "1",
-                    Journalpost(
-                        Journalposttype.INNGAAENDE,
-                        tilleggsopplysninger = listOf(Tilleggsopplysning("id", "2")),
+                    MidlertidigLagretData(
+                        ident,
+                        navn,
+                        loginLevel,
+                        headers,
+                        rapporteringsperiode,
                     ),
                     0,
                 ),
             )
 
+        val kallLoggRepository = mockk<KallLoggRepository>()
+        every { kallLoggRepository.lagreKallLogg(any()) } returns 1
+        every { kallLoggRepository.lagreResponse(any(), any(), any()) } just runs
+        every { kallLoggRepository.lagreRequest(any(), any()) } just runs
+
         val journalfoeringService =
             JournalfoeringService(
-                meldepliktConnector,
-                dokarkivConnector,
                 journalfoeringRepository,
+                kallLoggRepository,
+                createHttpClient(mockPdfGeneratorEngine),
                 meterRegistry,
-                200000,
-                200000,
             )
 
-        // Oppretter rapporteringsperiode
-        val rapporteringsperiode = createRapporteringsperiode(false)
-
-        // Prøver å sende
+        // Prøver å journalføre
         runBlocking {
-            journalfoeringService.journalfoer("01020312345", 0, token, headers, rapporteringsperiode)
+            journalfoeringService.journalfoer(ident, navn, loginLevel, headers, rapporteringsperiode)
         }
 
-        // Får feil og sjekker at JournalfoeringService lagrer journalpost midlertidig
-        verify { journalfoeringRepository.lagreJournalpostMidlertidig(any()) }
+        // Får feil og sjekker at JournalfoeringService lagrer data midlertidig
+        coVerify(exactly = 1) { journalfoeringRepository.lagreDataMidlertidig(any()) }
 
         runBlocking {
-            journalfoeringService.sendJournalposterPaaNytt()
+            journalfoeringService.journalfoerPaaNytt()
         }
 
         // Sjekker at JournalfoeringService prøvde å sende journalpost på nytt, fikk feil og oppdaterte retries
-        verify { journalfoeringRepository.hentMidlertidigLagredeJournalposter() }
-        verify { journalfoeringRepository.oppdaterMidlertidigLagretJournalpost("1", 1) }
+        coVerify(exactly = 1) { journalfoeringRepository.hentMidlertidigLagretData() }
+        coVerify(exactly = 1) { journalfoeringRepository.oppdaterMidlertidigLagretData("1", 1) }
+
+        // Oppretter mock for rapidsConnection slik at vi kan "sende" melding
+        val message = slot<String>()
+        val rapidsConnection = mockk<RapidsConnection>()
+        justRun { rapidsConnection.publish(eq(ident), capture(message)) }
 
         runBlocking {
-            journalfoeringService.sendJournalposterPaaNytt()
+            mockkObject(ApplicationBuilder) {
+                every { getRapidsConnection() } returns rapidsConnection
+
+                // Kjør
+                journalfoeringService.journalfoerPaaNytt()
+            }
         }
 
-        verify { journalfoeringRepository.hentJournalpostData(2) }
-        verify { journalfoeringRepository.sletteMidlertidigLagretJournalpost("1") }
+        // Sjekk
+        coVerify(exactly = 1) { journalfoeringRepository.sletteMidlertidigLagretData("1") }
+        checkMessage(false, message.captured, rapporteringsperiode)
     }
 
     private fun setProperties() {
@@ -202,79 +168,64 @@ class JournalfoeringServiceTest {
             "DB_JDBC_URL",
             "${database.jdbcUrl}&user=${database.username}&password=${database.password}",
         )
-        System.setProperty("DOKARKIV_HOST", dokarkivUrl)
-        System.setProperty("DOKARKIV_AUDIENCE", "test.test.dokarkiv")
-        System.setProperty("AZURE_APP_WELL_KNOWN_URL", "test.test.dokarkiv")
-        System.setProperty("GITHUB_SHA", githubSha)
+        System.setProperty("PDF_GENERATOR_URL", "pdf-generator")
+        System.setProperty("GITHUB_SHA", backendGithubSha)
     }
 
-    private fun test(
-        endring: Boolean = false,
-        html: String? = null,
-    ) {
+    private fun test(endring: Boolean = false) {
         setProperties()
 
-        // Mock TokenProvider
-        fun mockTokenProvider() =
-            { _: String ->
-                "token"
-            }
-
         // Mock
-        val meldepliktConnector = mockk<MeldepliktConnector>()
-        coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
+        val message = slot<String>()
+        val rapidsConnection = mockk<RapidsConnection>()
+        justRun { rapidsConnection.publish(eq(ident), capture(message)) }
 
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
-        justRun { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) }
-        every { journalfoeringRepository.hentMidlertidigLagredeJournalposter() } returns emptyList()
+        coEvery { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) } just runs
+        coEvery { journalfoeringRepository.hentMidlertidigLagretData() } returns emptyList()
 
-        // Mock svar fra Dokarkiv
-        val mockEngine =
+        val kallLoggRepository = mockk<KallLoggRepository>()
+        every { kallLoggRepository.lagreKallLogg(any()) } returns 1
+        every { kallLoggRepository.lagreRequest(eq(1), any()) } just runs
+
+        // Mock svar fra PDFgenerator
+        val pdf =
+            if (endring) {
+                this::class.java.getResource("/korrigert_expected.pdf")!!.readBytes()
+            } else {
+                this::class.java.getResource("/expected.pdf")!!.readBytes()
+            }
+
+        val mockPdfGeneratorEngine =
             MockEngine { _ ->
                 respond(
-                    content =
-                        ByteReadChannel(
-                            """
-                                {
-                                    "journalpostId": 2,
-                                    "journalstatus": "OK",
-                                    "journalpostferdigstilt": true,
-                                    "dokumenter": [
-                                        {
-                                            "dokumentInfoId": 3
-                                        }
-                                    ]
-                                }
-                            """.trimMargin(),
-                        ),
+                    content = ByteReadChannel(pdf),
                     status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                    headers = headersOf(HttpHeaders.ContentType, "application/pdf"),
                 )
             }
 
-        val dokarkivConnector = DokarkivConnector(dokarkivUrl, mockTokenProvider(), createHttpClient(mockEngine), actionTimer)
-
+        // Opprett
         val journalfoeringService =
             JournalfoeringService(
-                meldepliktConnector,
-                dokarkivConnector,
                 journalfoeringRepository,
+                kallLoggRepository,
+                createHttpClient(mockPdfGeneratorEngine),
                 meterRegistry,
             )
 
-        val rapporteringsperiode = createRapporteringsperiode(endring, html)
-
-        // Kjører
-        runBlocking {
-            journalfoeringService.journalfoer("01020312345", 0, token, headers, rapporteringsperiode)
-        }
-
-        // Sjekker
-        mockEngine.requestHistory.size shouldBe 1
-        mockEngine.responseHistory.size shouldBe 1
+        val rapporteringsperiode = createRapporteringsperiode(endring)
 
         runBlocking {
-            checkJournalpost(endring, mockEngine.requestHistory[0].body, rapporteringsperiode, html != null)
+            mockkObject(ApplicationBuilder) {
+                every { getRapidsConnection() } returns rapidsConnection
+
+                // Kjør
+                journalfoeringService.journalfoer(ident, navn, loginLevel, headers, rapporteringsperiode)
+            }
+
+            // Sjekk
+            checkMessage(endring, message.captured, rapporteringsperiode)
         }
     }
 
@@ -318,7 +269,7 @@ class JournalfoeringServiceTest {
             kanEndres = true,
             bruttoBelop = 0.0,
             begrunnelseEndring = if (endring) "Begrunnelse" else null,
-            status = TilUtfylling,
+            status = if (endring) Endret else TilUtfylling,
             mottattDato = LocalDate.now(),
             registrertArbeidssoker = true,
             originalId = if (endring) 123L else null,
@@ -327,87 +278,50 @@ class JournalfoeringServiceTest {
         )
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
-    private suspend fun checkJournalpost(
+    private fun checkMessage(
         endring: Boolean,
-        content: OutgoingContent,
-        opprineligRapporteringsperiode: Rapporteringsperiode,
-        withHtml: Boolean = false,
+        message: String,
+        rapporteringsperiode: Rapporteringsperiode,
     ) {
-        // Henter Journalpost vi har sendt
-        val bodyString =
-            when (content) {
-                is OutgoingContent.WriteChannelContent -> {
-                    val channel = GlobalScope.writer(Dispatchers.IO) { content.writeTo(channel) }.channel
-                    String(channel.toByteArray())
-                }
+        val jsonNode = objectMapper.readTree(message)
 
-                is TextContent -> content.text
-                else -> throw IllegalArgumentException("Unsupported content type")
-            }
+        jsonNode.get("@event_name").asText() shouldBe "behov"
+        jsonNode.get("@behov").asIterable().iterator().next().asText() shouldBe "JournalføreRapportering"
 
-        val journalpost = objectMapper.readValue(bodyString, Journalpost::class.java)
-
-        // Sjekker journalpost
-        journalpost.journalposttype shouldBe Journalposttype.INNGAAENDE
-
-        journalpost.avsenderMottaker?.id shouldBe "01020312345"
-        journalpost.avsenderMottaker?.idType shouldBe AvsenderIdType.FNR
-        journalpost.avsenderMottaker?.navn shouldBe "TEST TESTESSEN"
-
-        journalpost.bruker?.id shouldBe "01020312345"
-        journalpost.bruker?.idType shouldBe BrukerIdType.FNR
-
-        journalpost.tema shouldBe Tema.DAG
-        journalpost.kanal shouldBe "NAV_NO"
-        journalpost.journalfoerendeEnhet shouldBe "9999"
-        journalpost.datoMottatt shouldBe LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+        val behov = jsonNode.get("JournalføreRapportering")
+        behov.get("periodeId").asInt() shouldBe 1
         if (endring) {
-            journalpost.tittel shouldBe "Korrigert meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av NAV"
+            behov.get("brevkode").asText() shouldBe "NAV 00-10.03"
         } else {
-            journalpost.tittel shouldBe "Meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av NAV"
+            behov.get("brevkode").asText() shouldBe "NAV 00-10.02"
         }
 
-        journalpost.tilleggsopplysninger?.size shouldBe 5
-        journalpost.tilleggsopplysninger?.get(0)?.nokkel shouldBe "id"
-        journalpost.tilleggsopplysninger?.get(0)?.verdi shouldBe "1"
-        journalpost.tilleggsopplysninger?.get(1)?.nokkel shouldBe "kanSendesFra"
-        journalpost.tilleggsopplysninger?.get(1)?.verdi shouldBe "2024-07-06"
-        journalpost.tilleggsopplysninger?.get(2)?.nokkel shouldBe "userAgent"
-        journalpost.tilleggsopplysninger?.get(2)?.verdi shouldBe "Some agent"
-        journalpost.tilleggsopplysninger?.get(3)?.nokkel shouldBe "frontendGithubSha"
-        journalpost.tilleggsopplysninger?.get(3)?.verdi shouldBe "Some image"
-        journalpost.tilleggsopplysninger?.get(4)?.nokkel shouldBe "backendGithubSha"
-        journalpost.tilleggsopplysninger?.get(4)?.verdi shouldBe githubSha
+        checkJson(behov.get("json").asText(), rapporteringsperiode)
+        checkPdf(endring, behov.get("pdf").asText())
 
-        journalpost.sak?.sakstype shouldBe Sakstype.GENERELL_SAK
+        val to = behov.get("tilleggsopplysninger")
 
-        journalpost.dokumenter?.size shouldBe 1
-        val dokument = journalpost.dokumenter?.get(0)
-        if (endring) {
-            dokument?.tittel shouldBe "Korrigert meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av NAV"
-            dokument?.brevkode shouldBe "NAV 00-10.03"
-        } else {
-            dokument?.tittel shouldBe "Meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av NAV"
-            dokument?.brevkode shouldBe "NAV 00-10.02"
-        }
-
-        dokument?.dokumentvarianter?.size shouldBe 2
-
-        checkJson(journalpost, opprineligRapporteringsperiode)
-        checkPdf(endring, journalpost, withHtml)
+        to.get(0).get("first").asText() shouldBe "periodeId"
+        to.get(0).get("second").asLong() shouldBe rapporteringsperiode.id
+        to.get(1).get("first").asText() shouldBe "kanSendesFra"
+        to.get(1).get("second").asText() shouldBe rapporteringsperiode.kanSendesFra.format(DateTimeFormatter.ISO_DATE)
+        to.get(2).get("first").asText() shouldBe "userAgent"
+        to.get(2).get("second").asText() shouldBe userAgent
+        to.get(3).get("first").asText() shouldBe "frontendGithubSha"
+        to.get(3).get("second").asText() shouldBe frontendGithubSha
+        to.get(4).get("first").asText() shouldBe "backendGithubSha"
+        to.get(4).get("second").asText() shouldBe backendGithubSha
+        to.get(5).get("first").asText() shouldBe "loginLevel"
+        to.get(5).get("second").asInt() shouldBe loginLevel
     }
 
     private fun checkJson(
-        journalpost: Journalpost,
+        json: String,
         opprineligRapporteringsperiode: Rapporteringsperiode,
     ) {
-        journalpost.dokumenter!![0].dokumentvarianter[0].filtype shouldBe Filetype.JSON
-        journalpost.dokumenter!![0].dokumentvarianter[0].variantformat shouldBe Variantformat.ORIGINAL
-
         val rapporteringsperiode =
             objectMapper.readValue(
-                Base64.getDecoder().decode(journalpost.dokumenter!![0].dokumentvarianter[0].fysiskDokument),
+                json,
                 Rapporteringsperiode::class.java,
             )
 
@@ -416,30 +330,20 @@ class JournalfoeringServiceTest {
 
     private fun checkPdf(
         endring: Boolean,
-        journalpost: Journalpost,
-        withHtml: Boolean = false,
+        base64EncodedPdf: String,
     ) {
-        journalpost.dokumenter!![0].dokumentvarianter[1].filtype shouldBe Filetype.PDFA
-        journalpost.dokumenter!![0].dokumentvarianter[1].variantformat shouldBe Variantformat.ARKIV
-
-        var expectedFilePath = "src/test/resources/dokarkiv_expected.pdf"
+        var expectedFilePath = "src/test/resources/expected.pdf"
         var actualFilePath = "actual.pdf"
         var diffFilePath = "diffOutput" // Uten .pdf
 
-        if (withHtml) {
-            expectedFilePath = "src/test/resources/dokarkiv_expected_with_html.pdf"
-            actualFilePath = "actual_with_html.pdf"
-            diffFilePath = "diffOutput_with_html" // Uten .pdf
-        }
-
         if (endring) {
-            expectedFilePath = "src/test/resources/dokarkiv_korrigert_expected.pdf"
+            expectedFilePath = "src/test/resources/korrigert_expected.pdf"
             actualFilePath = "korrigert_actual.pdf"
             diffFilePath = "korrigert_diffOutput" // Uten .pdf
         }
 
         // Henter generert pdf vi har sendt
-        val pdf = Base64.getDecoder().decode(journalpost.dokumenter!![0].dokumentvarianter[1].fysiskDokument)
+        val pdf = Base64.getDecoder().decode(base64EncodedPdf)
 
         val actualFile = File(actualFilePath)
         actualFile.writeBytes(pdf)

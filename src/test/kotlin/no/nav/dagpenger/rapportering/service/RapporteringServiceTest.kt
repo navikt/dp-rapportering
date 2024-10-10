@@ -20,6 +20,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Periode
+import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
@@ -50,6 +51,7 @@ class RapporteringServiceTest {
 
     private val ident = "12345678910"
     private val token = "jwtToken"
+    private val loginLevel = 4
     private val headers = Headers.Empty
 
     @Test
@@ -474,6 +476,7 @@ class RapporteringServiceTest {
         val rapporteringsperiode = rapporteringsperiodeListe.first()
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
+        coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
         coEvery { meldepliktConnector.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
                 id = rapporteringsperiode.id,
@@ -483,7 +486,7 @@ class RapporteringServiceTest {
 
         val innsendingResponse =
             runBlocking {
-                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, 4, headers)
+                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, loginLevel, headers)
             }
 
         innsendingResponse.id shouldBe rapporteringsperiode.id
@@ -505,7 +508,7 @@ class RapporteringServiceTest {
                     rapporteringsperiodeListe.first().copy(kanSendes = false),
                     token,
                     ident,
-                    4,
+                    loginLevel,
                     headers,
                 )
             }
@@ -526,6 +529,7 @@ class RapporteringServiceTest {
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any(), false) }
         coEvery { meldepliktConnector.hentEndringId(any(), any()) } returns endringId
+        coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
@@ -540,7 +544,7 @@ class RapporteringServiceTest {
 
         val innsendingResponse =
             runBlocking {
-                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, 4, headers)
+                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, loginLevel, headers)
             }
 
         innsendingResponse.id shouldBe endringId.toLong()
@@ -568,7 +572,7 @@ class RapporteringServiceTest {
                     rapporteringsperiodeListe.first().copy(status = TilUtfylling, begrunnelseEndring = null, originalId = 125L),
                     token,
                     ident,
-                    4,
+                    loginLevel,
                     headers,
                 )
             }

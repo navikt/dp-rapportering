@@ -29,7 +29,7 @@ internal class RapporterDatabaseMetrikkerJob(
                         metrikker.oppdater(
                             lagredeRapporteringsperioder = rapporteringRepository.hentAntallRapporteringsperioder(),
                             lagredeJournalposter = journalfoeringRepository.hentAntallJournalposter(),
-                            midlertidigLagredeJournalposter = journalfoeringRepository.hentAntallMidlertidligeJournalposter(),
+                            midlertidigLagredeJournalposter = journalfoeringRepository.hentAntallMidlertidigLagretData(),
                         )
                     }
                 } catch (e: Exception) {

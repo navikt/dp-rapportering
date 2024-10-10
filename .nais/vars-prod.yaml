@@ -1,2 +1,1 @@
-DOKARKIV_HOST: dokarkiv.prod-fss-pub.nais.io
-DOKARKIV_AUDIENCE: prod-fss.teamdokumenthandtering.dokarkiv
+PDF_GENERATOR_URL: https://dp-pdf-generator.intern.nav.no

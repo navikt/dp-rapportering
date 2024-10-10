@@ -7,10 +7,10 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
 import no.nav.dagpenger.rapportering.config.konfigurasjon
-import no.nav.dagpenger.rapportering.connector.DokarkivConnector
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
+import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder
@@ -93,16 +93,17 @@ open class ApiTestSetup {
             val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
             val rapporteringRepository = RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
-            val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
+            val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
+            val kallLoggRepository = KallLoggRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
             val rapporteringService =
                 RapporteringService(
                     meldepliktConnector,
                     rapporteringRepository,
                     innsendingtidspunktRepository,
                     JournalfoeringService(
-                        meldepliktConnector,
-                        DokarkivConnector(httpClient = httpClient, actionTimer = actionTimer),
                         journalfoeringRepository,
+                        kallLoggRepository,
+                        httpClient,
                         meterRegistry,
                     ),
                     rapporteringsperiodeMetrikker,
@@ -121,8 +122,7 @@ open class ApiTestSetup {
     private fun setEnvConfig() {
         System.setProperty("MELDEPLIKT_ADAPTER_HOST", "meldeplikt-adapter")
         System.setProperty("MELDEPLIKT_ADAPTER_AUDIENCE", REQUIRED_AUDIENCE)
-        System.setProperty("DOKARKIV_HOST", "dokarkiv")
-        System.setProperty("DOKARKIV_AUDIENCE", REQUIRED_AUDIENCE)
+        System.setProperty("PDF_GENERATOR_URL", "https://pdf-generator")
         System.setProperty("DB_JDBC_URL", "${database.jdbcUrl}&user=${database.username}&password=${database.password}")
         System.setProperty("token-x.client-id", TOKENX_ISSUER_ID)
         System.setProperty("TOKEN_X_CLIENT_ID", TOKENX_ISSUER_ID)
@@ -130,7 +130,6 @@ open class ApiTestSetup {
         System.setProperty("token-x.well-known-url", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
         System.setProperty("TOKEN_X_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
         System.setProperty("azure-app.well-known-url", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
-        System.setProperty("AZURE_APP_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
         System.setProperty("AZURE_APP_CLIENT_ID", AZURE_ISSUER_ID)
         System.setProperty("AZURE_APP_CLIENT_SECRET", TEST_PRIVATE_JWK)
         System.setProperty("GITHUB_SHA", "some_sha")
