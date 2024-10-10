@@ -11,7 +11,6 @@ import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.util.UUID
 
 class RapporteringJournalførtMottakTest {
     private val testRapid = TestRapid()
@@ -42,7 +41,7 @@ private val løstBehovJSON =
     """
     {
       "@event_name": "behov",
-      "@behovId": "${UUID.randomUUID()}",
+      "@behovId": "34f6743c-bd9a-4902-ae68-fae0171b1e68",
       "@behov": [
         "JournalføreRapportering"
       ],
@@ -54,11 +53,10 @@ private val løstBehovJSON =
         "json": "{\"key1\": \"value1\"}",
         "pdf": "UERG",
         "tilleggsopplysninger": [],
-        "kallLoggId": "12345" 
+        "kallLoggId": "12345"
       },
-      "@final": true,
       "@løsning": {
-        "journalpostId": "123456"
+        "JournalføreRapportering": "123456"
       },
       "@id": "30ef9625-196a-445b-9b4e-67e0e6a5118d",
       "@opprettet": "2023-10-23T18:53:08.056035121",
