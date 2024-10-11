@@ -31,6 +31,7 @@ internal object Configuration {
                 "RAPID_APP_NAME" to APP_NAME,
                 "KAFKA_CONSUMER_GROUP_ID" to "dp-rapportering-v1",
                 "KAFKA_RAPID_TOPIC" to "teamdagpenger.rapid.v1",
+                "KAFKA_EXTRA_TOPIC" to "teamdagpenger.journalforing.v1",
                 "KAFKA_RESET_POLICY" to "LATEST",
             ),
         )
@@ -54,13 +55,7 @@ internal object Configuration {
 
     val meldepliktAdapterAudience by lazy { properties[Key("MELDEPLIKT_ADAPTER_AUDIENCE", stringType)] }
 
-    val dokarkivUrl by lazy {
-        properties[Key("DOKARKIV_HOST", stringType)].let {
-            "https://$it"
-        }
-    }
-
-    val dokarkivAudience by lazy { properties[Key("DOKARKIV_AUDIENCE", stringType)] }
+    val pdfGeneratorUrl by lazy { properties[Key("PDF_GENERATOR_URL", stringType)] }
 
     private val tokenXClient by lazy {
         val tokenX = OAuth2Config.TokenX(properties)

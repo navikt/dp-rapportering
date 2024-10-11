@@ -1,28 +1,26 @@
 package no.nav.dagpenger.rapportering.repository
 
-import no.nav.dagpenger.rapportering.model.Journalpost
+import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 
 interface JournalfoeringRepository {
-    fun lagreJournalpostData(
+    suspend fun lagreJournalpostData(
         journalpostId: Long,
         dokumentInfoId: Long,
         rapporteringsperiodeId: Long,
     )
 
-    fun lagreJournalpostMidlertidig(journalpost: Journalpost)
+    suspend fun lagreDataMidlertidig(midlertidigLagretData: MidlertidigLagretData)
 
-    fun hentMidlertidigLagredeJournalposter(): List<Triple<String, Journalpost, Int>>
+    suspend fun hentMidlertidigLagretData(): List<Triple<String, MidlertidigLagretData, Int>>
 
-    fun hentJournalpostData(journalpostId: Long): List<Triple<Long, Long, Long>>
+    suspend fun sletteMidlertidigLagretData(id: String)
 
-    fun sletteMidlertidigLagretJournalpost(id: String)
-
-    fun oppdaterMidlertidigLagretJournalpost(
+    suspend fun oppdaterMidlertidigLagretData(
         id: String,
         retries: Int,
     )
 
-    fun hentAntallJournalposter(): Int
+    suspend fun hentAntallJournalposter(): Int
 
-    fun hentAntallMidlertidligeJournalposter(): Int
+    suspend fun hentAntallMidlertidigLagretData(): Int
 }

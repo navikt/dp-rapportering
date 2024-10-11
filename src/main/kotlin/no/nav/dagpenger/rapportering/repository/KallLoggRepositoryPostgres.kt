@@ -19,21 +19,40 @@ class KallLoggRepositoryPostgres(
                             "(korrelasjon_id, type, tidspunkt, kall_retning, method, " +
                             "operation, status, kalltid, request, response, ident, logginfo) " +
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        kallLogg.korrelasjonId,
-                        kallLogg.type,
+                        kallLogg.korrelasjonId.replace("\u0000", ""),
+                        kallLogg.type.replace("\u0000", ""),
                         kallLogg.tidspunkt,
-                        kallLogg.kallRetning,
-                        kallLogg.method,
-                        kallLogg.operation,
+                        kallLogg.kallRetning.replace("\u0000", ""),
+                        kallLogg.method.replace("\u0000", ""),
+                        kallLogg.operation.replace("\u0000", ""),
                         kallLogg.status,
                         kallLogg.kallTid,
-                        kallLogg.request,
-                        kallLogg.response,
-                        kallLogg.ident,
-                        kallLogg.logginfo,
+                        kallLogg.request.replace("\u0000", ""),
+                        kallLogg.response.replace("\u0000", ""),
+                        kallLogg.ident.replace("\u0000", ""),
+                        kallLogg.logginfo.replace("\u0000", ""),
                     ).asUpdateAndReturnGeneratedKey,
                 ) ?: 0L
         }
+
+    override fun lagreRequest(
+        kallLoggId: Long,
+        request: String,
+    ) {
+        using(sessionOf(dataSource)) { session ->
+            session
+                .run(
+                    queryOf(
+                        "UPDATE kall_logg " +
+                            "SET request = ?, kalltid = ? " +
+                            "WHERE kall_logg_id = ?",
+                        request,
+                        Instant.now().toEpochMilli(),
+                        kallLoggId,
+                    ).asUpdate,
+                )
+        }
+    }
 
     override fun lagreResponse(
         kallLoggId: Long,
