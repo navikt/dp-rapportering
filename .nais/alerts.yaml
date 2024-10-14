@@ -2,7 +2,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-    name: dp-rapportering-alerts
+    name: dp-rapportering-alert
     namespace: teamdagpenger
     labels:
         team: teamdagpenger
