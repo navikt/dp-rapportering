@@ -30,6 +30,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.service.RapporteringService
+import no.nav.dagpenger.rapportering.utils.getCallId
 import java.net.URI
 
 private val logger = KotlinLogging.logger {}
@@ -162,7 +163,7 @@ internal fun Application.rapporteringApi(
                         rapporteringService
                             .hentPeriode(rapporteringId, ident, jwtToken, hentOriginal)
                             ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
-                            ?: call.respond(HttpStatusCode.NotFound)
+                            ?: throw NotFoundException("Rapportering med id $rapporteringId ikke funnet")
                     }
 
                     route("/start") {
@@ -230,7 +231,7 @@ internal fun Application.rapporteringApi(
                             val rapporteringstype = call.receive(RapporteringstypeRequest::class).rapporteringstype
 
                             if (rapporteringstype.isBlank()) {
-                                call.respond(HttpStatusCode.BadRequest)
+                                throw BadRequestException("Rapporteringstype kan ikke være tom")
                             }
 
                             rapporteringService.oppdaterRapporteringstype(rapporteringId, ident, rapporteringstype)
@@ -290,6 +291,7 @@ data class HttpProblem(
     val detail: String? = null,
     val instance: URI = URI.create("about:blank"),
     val errorType: String? = null,
+    val correlationId: String = getCallId(),
 )
 
 data class ArbeidssokerRequest(

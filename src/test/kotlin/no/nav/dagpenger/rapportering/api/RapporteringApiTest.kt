@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.api
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -503,8 +504,13 @@ class RapporteringApiTest : ApiTestSetup() {
             }
 
             val response =
-                client.doPost("/rapporteringsperiode/123/rapporteringstype", issueToken(fnr), RapporteringstypeRequest("harIkkeAktivitet"))
-            response.status shouldBe HttpStatusCode.InternalServerError
+                client.doPostAndReceive<HttpProblem>(
+                    "/rapporteringsperiode/123/rapporteringstype",
+                    issueToken(fnr),
+                    RapporteringstypeRequest("harIkkeAktivitet"),
+                )
+            response.httpResponse.status shouldBe HttpStatusCode.InternalServerError
+            response.body.correlationId shouldContain "dp-rapp"
         }
 
     @Test
