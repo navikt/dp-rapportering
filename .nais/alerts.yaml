@@ -39,3 +39,17 @@ spec:
                 labels:
                     namespace: teamdagpenger
                     severity: warning
+              -   alert: Gjennomsnittlig responstid
+                  expr: |
+                      sum(rate(http_request_duration_seconds_sum{container=~"dp-rapportering"}[5m])) /
+                      sum(rate(http_request_duration_seconds_count{container=~"dp-rapportering"}[5m]))
+                      >
+                      1
+                  for: 5m
+                  annotations:
+                      description: 'Gjennomsnittlig responstid til applikasjonen dp-rapportering er for høy'
+                      consequence: 'Brukere kan få ConnectTimeoutException'
+                      action: 'Sjekk Grafana for detaljer'
+                  labels:
+                      namespace: teamdagpenger
+                      severity: warning
