@@ -1,3 +1,12 @@
+kafka:
+  pool: nav-prod
+ingresses:
+  - https://dp-rapportering.nav.no
+wonderwalled: true
+
+beregningsdato:
+  strategi: fom
+
 MELDEPLIKT_ADAPTER_HOST: dp-arena-meldeplikt-adapter.nav.no
 MELDEPLIKT_ADAPTER_AUDIENCE: prod-gcp:teamdagpenger:dp-arena-meldeplikt-adapter
 PDF_GENERATOR_URL: https://dp-pdf-generator.intern.nav.no
