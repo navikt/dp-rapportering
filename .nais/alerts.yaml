@@ -28,7 +28,8 @@ spec:
                     severity: warning
               - alert: CPU-forbruk
                 expr: |
-                    (sum(irate(container_cpu_usage_seconds_total{container=~"dp-rapportering"}[1m])) / sum(machine_cpu_cores)) * 100
+                    sum(irate(container_cpu_usage_seconds_total{container=~"dp-rapportering"}[1m])) /
+                    sum(machine_cpu_cores) * 100
                     >
                     60
                 for: 5m
