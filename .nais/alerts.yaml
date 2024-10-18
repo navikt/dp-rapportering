@@ -22,7 +22,48 @@ spec:
                 annotations:
                     description: 'Minneforbruket til applikasjonen dp-rapportering nærmer seg limit'
                     consequence: 'Applikasjonen kan bli terminert'
-                    action: 'Sjekk grafana for detaljer'
+                    action: 'Sjekk Grafana for detaljer'
+                labels:
+                    namespace: teamdagpenger
+                    severity: warning
+              - alert: CPU-forbruk
+                expr: |
+                    sum(irate(container_cpu_usage_seconds_total{container=~"dp-rapportering"}[1m])) /
+                    sum(machine_cpu_cores) * 100
+                    >
+                    60
+                for: 5m
+                annotations:
+                    description: 'CPU-forbruk til applikasjonen dp-rapportering er for høy'
+                    consequence: 'Applikasjonen kan bli terminert'
+                    action: 'Sjekk Grafana for detaljer'
+                labels:
+                    namespace: teamdagpenger
+                    severity: warning
+              - alert: Gjennomsnittlig responstid
+                expr: |
+                    sum(rate(http_request_duration_seconds_sum{container=~"dp-rapportering"}[5m])) /
+                    sum(rate(http_request_duration_seconds_count{container=~"dp-rapportering"}[5m]))
+                    >
+                    1
+                for: 5m
+                annotations:
+                    description: 'Gjennomsnittlig responstid til applikasjonen dp-rapportering er for høy'
+                    consequence: 'Brukere kan få ConnectTimeoutException'
+                    action: 'Sjekk Grafana for detaljer'
+                labels:
+                    namespace: teamdagpenger
+                    severity: warning
+              - alert: Antall feil
+                expr: |
+                    sum(rate(nginx_ingress_controller_requests{status!~"^[23].*", container=~"dp-rapportering"}[5m]))
+                    >
+                    10
+                for: 5m
+                annotations:
+                    description: 'Antall feil i applikasjonen dp-rapportering er for høyt'
+                    consequence: 'Det er mulig at brukere ikke kan sende meldekort'
+                    action: 'Sjekk Grafana for detaljer'
                 labels:
                     namespace: teamdagpenger
                     severity: warning
