@@ -4,6 +4,7 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.micrometer.core.instrument.Clock
+import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.prometheus.metrics.model.registry.PrometheusRegistry
@@ -77,6 +78,8 @@ class ApplicationBuilder(
         )
 
     init {
+        JvmInfoMetrics().bindTo(meterRegistry)
+
         rapidsConnection =
             RapidApplication
                 .create(configuration) { engine, _: RapidsConnection ->
