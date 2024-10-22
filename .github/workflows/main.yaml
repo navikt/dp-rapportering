@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev-gcp
     steps:
-      -  uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - uses: nais/deploy/actions/deploy@v2
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
@@ -54,3 +54,19 @@ jobs:
           RESOURCE: .nais/app.yaml,.nais/alerts.yaml
           VAR: image=${{ needs.build.outputs.image }},githubSha=${{ github.sha }}
           VARS: .nais/vars-dev.yaml
+
+  deploy-prod:
+    name: Deploy to prod
+    needs: [ build ]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: prod-gcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/app.yaml,.nais/alerts.yaml
+          VAR: image=${{ needs.build.outputs.image }},githubSha=${{ github.sha }}
+          VARS: .nais/vars-prod.yaml
