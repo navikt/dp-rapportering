@@ -56,9 +56,9 @@ spec:
                     severity: warning
               - alert: Antall feil
                 expr: |
-                    sum(rate(nginx_ingress_controller_requests{status!~"^[23].*", container=~"dp-rapportering"}[5m]))
+                    sum(increase(nginx_ingress_controller_requests{status!~"^[23].*", service="dp-rapportering"}[5m]))
                     >
-                    10
+                    50
                 for: 5m
                 annotations:
                     description: 'Antall feil i applikasjonen dp-rapportering er for høyt'
