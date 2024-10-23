@@ -169,7 +169,7 @@ class JournalfoeringService(
         logger.info("Oppretter journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
 
         var brevkode = "NAV 00-10.02"
-        if (rapporteringsperiode.status == RapporteringsperiodeStatus.Endret) {
+        if (rapporteringsperiode.status == RapporteringsperiodeStatus.TilUtfylling && rapporteringsperiode.originalId != null) {
             brevkode = "NAV 00-10.03"
         }
 
@@ -183,6 +183,7 @@ class JournalfoeringService(
             mapOf(
                 "periodeId" to rapporteringsperiode.id,
                 "brevkode" to brevkode,
+                "tittel" to getTittle(rapporteringsperiode),
                 "json" to json,
                 "pdf" to pdf,
                 "tilleggsopplysninger" to tilleggsopplysninger,

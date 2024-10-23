@@ -269,7 +269,7 @@ class JournalfoeringServiceTest {
             kanEndres = true,
             bruttoBelop = 0.0,
             begrunnelseEndring = if (endring) "Begrunnelse" else null,
-            status = if (endring) Endret else TilUtfylling,
+            status = TilUtfylling,
             mottattDato = LocalDate.now(),
             registrertArbeidssoker = true,
             originalId = if (endring) 123L else null,
@@ -292,8 +292,10 @@ class JournalfoeringServiceTest {
         behov.get("periodeId").asInt() shouldBe 1
         if (endring) {
             behov.get("brevkode").asText() shouldBe "NAV 00-10.03"
+            behov.get("tittel").asText() shouldBe "Korrigert meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av NAV"
         } else {
             behov.get("brevkode").asText() shouldBe "NAV 00-10.02"
+            behov.get("tittel").asText() shouldBe "Meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av NAV"
         }
 
         checkJson(behov.get("json").asText(), rapporteringsperiode)
