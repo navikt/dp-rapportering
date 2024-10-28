@@ -54,6 +54,7 @@ class RapporteringService(
                 ?: rapporteringRepository
                     .hentRapporteringsperiode(rapporteringId, ident)
         } else {
+            logger.info { "Henter periode med id $rapporteringId fra databsen, da hentOriginal var false" }
             rapporteringRepository
                 .hentRapporteringsperiode(rapporteringId, ident)
                 ?.justerInnsendingstidspunkt()

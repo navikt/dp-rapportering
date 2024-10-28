@@ -170,7 +170,9 @@ internal fun Application.rapporteringApi(
                         rapporteringService
                             .hentPeriode(rapporteringId, ident, jwtToken, hentOriginal)
                             ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
-                            ?: throw NotFoundException("Rapportering med id $rapporteringId ikke funnet")
+                            ?: throw NotFoundException(
+                                "Rapportering med id $rapporteringId ikke funnet. Header Hent-Original: $hentOriginal",
+                            )
                     }
 
                     route("/start") {
