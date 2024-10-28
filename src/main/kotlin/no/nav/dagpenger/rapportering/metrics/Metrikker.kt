@@ -42,7 +42,7 @@ class MeldepliktMetrikker(
 
     private fun counter(
         name: String,
-        tags: Iterable<Tag>
+        tags: Iterable<Tag>,
     ): Counter {
         return meterRegistry.counter(name, tags)
     }
