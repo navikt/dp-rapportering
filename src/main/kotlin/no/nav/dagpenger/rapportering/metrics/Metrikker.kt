@@ -40,11 +40,17 @@ class MeldepliktMetrikker(
             .description("Indikerer antall feil i kall eller mapping av respons mot meldeplikt")
             .register(meterRegistry)
 
-    private fun counter(name: String, tags: Iterable<Tag>): Counter {
+    private fun counter(
+        name: String,
+        tags: Iterable<Tag>
+    ): Counter {
         return meterRegistry.counter(name, tags)
     }
 
-    fun increment(name: String, vararg tags: String) {
+    fun increment(
+        name: String,
+        vararg tags: String,
+    ) {
         counter(name, Tags.of(*tags) as Iterable<Tag>).increment()
     }
 }
