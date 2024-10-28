@@ -4,6 +4,8 @@ import io.ktor.http.HttpStatusCode
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Tag
+import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.Timer
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeUnit.SECONDS
@@ -30,13 +32,21 @@ class RapporteringsperiodeMetrikker(
 }
 
 class MeldepliktMetrikker(
-    meterRegistry: MeterRegistry,
+    private val meterRegistry: MeterRegistry,
 ) {
     val rapporteringApiFeil: Counter =
         Counter
             .builder("${NAMESPACE}_antall_meldeplikt_exception_total")
             .description("Indikerer antall feil i kall eller mapping av respons mot meldeplikt")
             .register(meterRegistry)
+
+    private fun counter(name: String, tags: Iterable<Tag>): Counter {
+        return meterRegistry.counter(name, tags)
+    }
+
+    fun increment(name: String, vararg tags: String) {
+        counter(name, Tags.of(*tags) as Iterable<Tag>).increment()
+    }
 }
 
 class DatabaseMetrikker(
