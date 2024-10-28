@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.connector
 
+import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Fravaer
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Syk
@@ -20,6 +21,8 @@ import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.DurationUnit.HOURS
 import kotlin.time.toDuration
+
+private val logger = KotlinLogging.logger {}
 
 data class AdapterRapporteringsperiode(
     val id: Long,
@@ -68,7 +71,14 @@ data class AdapterAktivitet(
 }
 
 fun List<AdapterRapporteringsperiode>?.toRapporteringsperioder(): List<Rapporteringsperiode> =
-    this?.map { it.toRapporteringsperiode() } ?: emptyList()
+    this?.map {
+        try {
+            it.toRapporteringsperiode()
+        } catch (e: Exception) {
+            logger.error(e) { "Kunne ikke konvertere AdapterRapporteringsperiode til Rapporteringsperiode: $it" }
+            throw e
+        }
+    } ?: emptyList()
 
 fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
     Rapporteringsperiode(
