@@ -21,7 +21,6 @@ import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meldepliktMetrikker
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
-import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.rapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.utils.OutgoingCallLoggingPlugin
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
@@ -106,7 +105,6 @@ open class ApiTestSetup {
                         httpClient,
                         meterRegistry,
                     ),
-                    rapporteringsperiodeMetrikker,
                 )
 
             application {

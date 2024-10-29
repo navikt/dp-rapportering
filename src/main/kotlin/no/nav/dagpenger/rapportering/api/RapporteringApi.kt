@@ -144,17 +144,17 @@ internal fun Application.rapporteringApi(
                             )
 
                         if (response.status == "OK") {
-                            meldepliktMetrikker.increment("dp_rapportering_innsendte_meldekort_ok")
+                            meldepliktMetrikker.innsendteMeldekortOk.increment()
                             if (rapporteringsperiode.dager.all { dag -> dag.aktiviteter.isEmpty() }) {
-                                meldepliktMetrikker.increment("dp_rapportering_innsendte_ingen_aktiviteter")
+                                meldepliktMetrikker.innsendteIngenAktiviteter.increment()
                             }
                             call.respond(HttpStatusCode.OK, response)
                         } else {
-                            meldepliktMetrikker.increment("dp_rapportering_innsendte_meldekort_not_ok")
+                            meldepliktMetrikker.innsendteMeldekortIkkeOk.increment()
                             call.respond(HttpStatusCode.BadRequest, response)
                         }
                     } catch (e: Exception) {
-                        meldepliktMetrikker.increment("dp_rapportering_innsendte_meldekort_feil")
+                        meldepliktMetrikker.innsendteMeldekortFeil.increment()
                         logger.error("Feil ved innsending: $e")
                         throw e
                     }

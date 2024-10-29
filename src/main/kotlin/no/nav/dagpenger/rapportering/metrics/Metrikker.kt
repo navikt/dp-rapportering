@@ -4,8 +4,6 @@ import io.ktor.http.HttpStatusCode
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
-import io.micrometer.core.instrument.Tag
-import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.Timer
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeUnit.SECONDS
@@ -15,24 +13,8 @@ import kotlin.time.measureTime
 
 private const val NAMESPACE = "dp_rapportering"
 
-class RapporteringsperiodeMetrikker(
-    meterRegistry: MeterRegistry,
-) {
-    val hentet: Counter =
-        Counter
-            .builder("${NAMESPACE}_antall_personer_hentet_total")
-            .description("Indikerer antall uthentede personer med rapporteringsperioder")
-            .register(meterRegistry)
-
-    val kontrollFeilet: Counter =
-        Counter
-            .builder("${NAMESPACE}_antall_kontroll_feilet_total")
-            .description("Indikerer antall feil ved kontroll av innsendt rapporteringsperiode")
-            .register(meterRegistry)
-}
-
 class MeldepliktMetrikker(
-    private val meterRegistry: MeterRegistry,
+    meterRegistry: MeterRegistry,
 ) {
     val rapporteringApiFeil: Counter =
         Counter
@@ -40,19 +22,29 @@ class MeldepliktMetrikker(
             .description("Indikerer antall feil i kall eller mapping av respons mot meldeplikt")
             .register(meterRegistry)
 
-    private fun counter(
-        name: String,
-        tags: Iterable<Tag>,
-    ): Counter {
-        return meterRegistry.counter(name, tags)
-    }
+    val innsendteMeldekortOk: Counter =
+        Counter
+            .builder("${NAMESPACE}_innsendte_meldekort_ok_total")
+            .description("Indikerer antall innsendte meldekort som ble kontrollert OK")
+            .register(meterRegistry)
 
-    fun increment(
-        name: String,
-        vararg tags: String,
-    ) {
-        counter(name, Tags.of(*tags) as Iterable<Tag>).increment()
-    }
+    val innsendteMeldekortIkkeOk: Counter =
+        Counter
+            .builder("${NAMESPACE}_innsendte_meldekort_not_ok_total")
+            .description("Indikerer antall innsendte meldekort som ble kontrollert ikke OK")
+            .register(meterRegistry)
+
+    val innsendteMeldekortFeil: Counter =
+        Counter
+            .builder("${NAMESPACE}_innsendte_meldekort_feil_total")
+            .description("Indikerer antall feill ved innsending av meldekort")
+            .register(meterRegistry)
+
+    val innsendteIngenAktiviteter: Counter =
+        Counter
+            .builder("${NAMESPACE}_innsendte_ingen_aktiviteter_total")
+            .description("Indikerer antall innsendte meldekort uten aktiviteter")
+            .register(meterRegistry)
 }
 
 class DatabaseMetrikker(

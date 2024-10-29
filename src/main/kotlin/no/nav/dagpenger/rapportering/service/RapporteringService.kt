@@ -6,7 +6,6 @@ import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
-import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
@@ -32,7 +31,6 @@ class RapporteringService(
     private val rapporteringRepository: RapporteringRepository,
     private val innsendingtidspunktRepository: InnsendingtidspunktRepository,
     private val journalfoeringService: JournalfoeringService,
-    private val rapporteringsperiodeMetrikker: RapporteringsperiodeMetrikker,
 ) {
     suspend fun harMeldeplikt(
         ident: String,
@@ -74,7 +72,6 @@ class RapporteringService(
                     periode
                 }
             }?.sortedBy { it.periode.fraOgMed }
-            .also { rapporteringsperiodeMetrikker.hentet.increment() }
 
     private suspend fun hentRapporteringsperioder(
         ident: String,
@@ -364,7 +361,6 @@ class RapporteringService(
                     }
                 } else {
                     logger.warn { "Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}: $response" }
-                    rapporteringsperiodeMetrikker.kontrollFeilet.increment()
                 }
             }
     }
