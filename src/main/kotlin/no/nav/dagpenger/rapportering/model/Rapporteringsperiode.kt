@@ -26,8 +26,7 @@ data class Rapporteringsperiode(
     val html: String? = null,
 )
 
-fun Rapporteringsperiode.erEndring(): Boolean =
-    this.status == RapporteringsperiodeStatus.TilUtfylling && this.originalId != null
+fun Rapporteringsperiode.erEndring(): Boolean = this.status == RapporteringsperiodeStatus.TilUtfylling && this.originalId != null
 
 fun List<Rapporteringsperiode>.toResponse(): List<RapporteringsperiodeResponse> =
     this.map { rapporteringsperiode -> rapporteringsperiode.toResponse() }
