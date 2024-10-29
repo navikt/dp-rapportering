@@ -72,6 +72,49 @@ class RapporteringRepositoryPostgresTest {
     }
 
     @Test
+    fun `kan hente id for alle rapporteringsperioder som er sendt inn`() {
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = getRapporteringsperiode(1L),
+                ident = ident,
+            )
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = getRapporteringsperiode(id = 2L, status = Innsendt),
+                ident = ident,
+            )
+
+            with(rapporteringRepositoryPostgres.hentRapporteringsperiodeIdForInnsendtePerioder()) {
+                size shouldBe 1
+                first() shouldBe 2L
+            }
+        }
+    }
+
+    @Test
+    fun `kan hente id for rapporteringsperioder som er eldre enn siste frist`() {
+        withMigratedDb {
+            val now = LocalDate.now()
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = getRapporteringsperiode(1L, Periode(now.minusDays(13), now)),
+                ident = ident,
+            )
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = getRapporteringsperiode(2L, Periode(now.minusDays(22), now.minusDays(9))),
+                ident = ident,
+            )
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = getRapporteringsperiode(3L, Periode(now.minusDays(21), now.minusDays(8))),
+                ident = ident,
+            )
+
+            with(rapporteringRepositoryPostgres.hentRapporteringsperiodeIdForPerioderEtterSisteFrist()) {
+                size shouldBe 1
+                first() shouldBe 2L
+            }
+        }
+    }
+
+    @Test
     fun `kan lagre rapporteringsperiode`() {
         val rapporteringsperiode = getRapporteringsperiode()
         withMigratedDb {
