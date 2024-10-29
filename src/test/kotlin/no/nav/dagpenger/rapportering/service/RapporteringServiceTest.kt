@@ -636,32 +636,28 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan slette mellomlagrede rapporteringsperioder som er sendt inn`() {
-        coEvery { rapporteringRepository.hentAlleLagredeRapporteringsperioder() } returns
-            listOf(rapporteringsperiodeListe.first().copy(status = Innsendt))
+        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForInnsendtePerioder() } returns
+            listOf(rapporteringsperiodeListe.first().id)
+        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForPerioderEtterSisteFrist() } returns emptyList()
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
 
-        runBlocking { rapporteringService.slettMellomlagredeRapporteringsperioder() }
+        val slettedePerioder = runBlocking { rapporteringService.slettMellomlagredeRapporteringsperioder() }
 
         coVerify(exactly = 1) { rapporteringRepository.slettRaporteringsperiode(3) }
+        slettedePerioder shouldBe 1
     }
 
     @Test
     fun `kan slette mellomlagrede rapporteringsperioder som er ikke er sendt inn innen siste frist`() {
-        coEvery { rapporteringRepository.hentAlleLagredeRapporteringsperioder() } returns rapporteringsperiodeListe
+        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForInnsendtePerioder() } returns emptyList()
+        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForPerioderEtterSisteFrist() } returns
+            rapporteringsperiodeListe.map { it.id }
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
 
-        runBlocking { rapporteringService.slettMellomlagredeRapporteringsperioder() }
+        val slettedePerioder = runBlocking { rapporteringService.slettMellomlagredeRapporteringsperioder() }
 
         coVerify(exactly = 3) { rapporteringRepository.slettRaporteringsperiode(any()) }
-    }
-
-    @Test
-    fun `sletter ikke mellomlagrede rapporteringsperioder som er fortsatt skal være mellomlagret`() {
-        coEvery { rapporteringRepository.hentAlleLagredeRapporteringsperioder() } returns fremtidigeRaporteringsperioder
-
-        runBlocking { rapporteringService.slettMellomlagredeRapporteringsperioder() }
-
-        coVerify(exactly = 0) { rapporteringRepository.slettRaporteringsperiode(any()) }
+        slettedePerioder shouldBe 3
     }
 }
 
