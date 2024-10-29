@@ -28,7 +28,6 @@ internal class RapporterDatabaseMetrikkerJob(
                     runBlocking {
                         metrikker.oppdater(
                             lagredeRapporteringsperioder = rapporteringRepository.hentAntallRapporteringsperioder(),
-                            lagredeJournalposter = journalfoeringRepository.hentAntallJournalposter(),
                             midlertidigLagredeJournalposter = journalfoeringRepository.hentAntallMidlertidigLagretData(),
                         )
                     }
@@ -36,7 +35,6 @@ internal class RapporterDatabaseMetrikkerJob(
                     logger.warn(e) { "Uthenting av metrikker for lagrede elementer i databasen feilet" }
                     metrikker.oppdater(
                         lagredeRapporteringsperioder = -1,
-                        lagredeJournalposter = -1,
                         midlertidigLagredeJournalposter = -1,
                     )
                 }
