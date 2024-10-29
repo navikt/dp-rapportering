@@ -13,22 +13,6 @@ import kotlin.time.measureTime
 
 private const val NAMESPACE = "dp_rapportering"
 
-class RapporteringsperiodeMetrikker(
-    meterRegistry: MeterRegistry,
-) {
-    val hentet: Counter =
-        Counter
-            .builder("${NAMESPACE}_antall_personer_hentet_total")
-            .description("Indikerer antall uthentede personer med rapporteringsperioder")
-            .register(meterRegistry)
-
-    val kontrollFeilet: Counter =
-        Counter
-            .builder("${NAMESPACE}_antall_kontroll_feilet_total")
-            .description("Indikerer antall feil ved kontroll av innsendt rapporteringsperiode")
-            .register(meterRegistry)
-}
-
 class MeldepliktMetrikker(
     meterRegistry: MeterRegistry,
 ) {
@@ -37,23 +21,42 @@ class MeldepliktMetrikker(
             .builder("${NAMESPACE}_antall_meldeplikt_exception_total")
             .description("Indikerer antall feil i kall eller mapping av respons mot meldeplikt")
             .register(meterRegistry)
+
+    val innsendteMeldekortOk: Counter =
+        Counter
+            .builder("${NAMESPACE}_innsendte_meldekort_ok_total")
+            .description("Indikerer antall innsendte meldekort som ble kontrollert OK")
+            .register(meterRegistry)
+
+    val innsendteMeldekortIkkeOk: Counter =
+        Counter
+            .builder("${NAMESPACE}_innsendte_meldekort_not_ok_total")
+            .description("Indikerer antall innsendte meldekort som ble kontrollert ikke OK")
+            .register(meterRegistry)
+
+    val innsendteMeldekortFeil: Counter =
+        Counter
+            .builder("${NAMESPACE}_innsendte_meldekort_feil_total")
+            .description("Indikerer antall feill ved innsending av meldekort")
+            .register(meterRegistry)
+
+    val innsendteIngenAktiviteter: Counter =
+        Counter
+            .builder("${NAMESPACE}_innsendte_ingen_aktiviteter_total")
+            .description("Indikerer antall innsendte meldekort uten aktiviteter")
+            .register(meterRegistry)
 }
 
 class DatabaseMetrikker(
     meterRegistry: MeterRegistry,
 ) {
     private val lagredeRapporteringsperioder: AtomicInteger = AtomicInteger(0)
-    private val lagredeJournalposter: AtomicInteger = AtomicInteger(0)
     private val midlertidigLagredeJournalposter: AtomicInteger = AtomicInteger(0)
 
     init {
         Gauge
             .builder("${NAMESPACE}_lagrede_rapporteringsperioder_total", lagredeRapporteringsperioder) { it.get().toDouble() }
             .description("Antall lagrede rapporteringsperioder i databasen")
-            .register(meterRegistry)
-        Gauge
-            .builder("${NAMESPACE}_lagrede_journalposter_total", lagredeJournalposter) { it.get().toDouble() }
-            .description("Antall lagrede journalposter i databasen")
             .register(meterRegistry)
         Gauge
             .builder("${NAMESPACE}_midlertidig_lagrede_journalposter_total", midlertidigLagredeJournalposter) { it.get().toDouble() }
@@ -63,11 +66,9 @@ class DatabaseMetrikker(
 
     fun oppdater(
         lagredeRapporteringsperioder: Int,
-        lagredeJournalposter: Int,
         midlertidigLagredeJournalposter: Int,
     ) {
         this.lagredeRapporteringsperioder.set(lagredeRapporteringsperioder)
-        this.lagredeJournalposter.set(lagredeJournalposter)
         this.midlertidigLagredeJournalposter.set(midlertidigLagredeJournalposter)
     }
 }

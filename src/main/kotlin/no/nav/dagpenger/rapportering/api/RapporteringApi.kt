@@ -142,12 +142,19 @@ internal fun Application.rapporteringApi(
                                 loginLevel,
                                 headers,
                             )
+
                         if (response.status == "OK") {
+                            meldepliktMetrikker.innsendteMeldekortOk.increment()
+                            if (rapporteringsperiode.dager.all { dag -> dag.aktiviteter.isEmpty() }) {
+                                meldepliktMetrikker.innsendteIngenAktiviteter.increment()
+                            }
                             call.respond(HttpStatusCode.OK, response)
                         } else {
+                            meldepliktMetrikker.innsendteMeldekortIkkeOk.increment()
                             call.respond(HttpStatusCode.BadRequest, response)
                         }
                     } catch (e: Exception) {
+                        meldepliktMetrikker.innsendteMeldekortFeil.increment()
                         logger.error("Feil ved innsending: $e")
                         throw e
                     }

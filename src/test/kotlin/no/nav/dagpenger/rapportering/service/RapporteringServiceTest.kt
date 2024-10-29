@@ -28,7 +28,6 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
-import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.rapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.utils.februar
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
@@ -46,7 +45,6 @@ class RapporteringServiceTest {
             rapporteringRepository,
             innsendingtidspunktRepository,
             journalfoeringService,
-            rapporteringsperiodeMetrikker,
         )
 
     private val ident = "12345678910"

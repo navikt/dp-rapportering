@@ -19,7 +19,6 @@ import no.nav.dagpenger.rapportering.jobs.SlettRapporteringsperioderJob
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.metrics.DatabaseMetrikker
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
-import no.nav.dagpenger.rapportering.metrics.RapporteringsperiodeMetrikker
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
@@ -46,7 +45,6 @@ class ApplicationBuilder(
 
     private val meterRegistry =
         PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry, Clock.SYSTEM)
-    private val rapporteringsperiodeMetrikker = RapporteringsperiodeMetrikker(meterRegistry)
     private val meldepliktMetrikker = MeldepliktMetrikker(meterRegistry)
     private val databaseMetrikker = DatabaseMetrikker(meterRegistry)
     private val actionTimer = ActionTimer(meterRegistry)
@@ -74,7 +72,6 @@ class ApplicationBuilder(
             rapporteringRepository,
             innsendingtidspunktRepository,
             journalfoeringService,
-            rapporteringsperiodeMetrikker,
         )
 
     init {
