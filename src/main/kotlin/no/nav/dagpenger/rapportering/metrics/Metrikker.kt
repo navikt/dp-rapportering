@@ -45,6 +45,12 @@ class MeldepliktMetrikker(
             .builder("${NAMESPACE}_innsendte_ingen_aktiviteter_total")
             .description("Indikerer antall innsendte meldekort uten aktiviteter")
             .register(meterRegistry)
+
+    val innsendteEndring: Counter =
+        Counter
+            .builder("${NAMESPACE}_innsendte_endring_total")
+            .description("Indikerer antall endrede innsendte meldekort")
+            .register(meterRegistry)
 }
 
 class DatabaseMetrikker(

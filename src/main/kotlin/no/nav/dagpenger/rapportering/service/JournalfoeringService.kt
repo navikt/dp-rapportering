@@ -23,7 +23,7 @@ import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
-import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import no.nav.dagpenger.rapportering.utils.getCallId
@@ -169,7 +169,7 @@ class JournalfoeringService(
         logger.info("Oppretter journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
 
         var brevkode = "NAV 00-10.02"
-        if (rapporteringsperiode.status == RapporteringsperiodeStatus.TilUtfylling && rapporteringsperiode.originalId != null) {
+        if (rapporteringsperiode.erEndring()) {
             brevkode = "NAV 00-10.03"
         }
 
@@ -220,7 +220,7 @@ class JournalfoeringService(
         val til = rapporteringsperiode.periode.tilOgMed.format(dateFormatter)
 
         var tittel = "Meldekort"
-        if (rapporteringsperiode.status == RapporteringsperiodeStatus.TilUtfylling && rapporteringsperiode.originalId != null) {
+        if (rapporteringsperiode.erEndring()) {
             tittel = "Korrigert meldekort"
         }
 

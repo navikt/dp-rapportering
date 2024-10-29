@@ -28,6 +28,8 @@ import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.getCallId
@@ -147,6 +149,9 @@ internal fun Application.rapporteringApi(
                             meldepliktMetrikker.innsendteMeldekortOk.increment()
                             if (rapporteringsperiode.dager.all { dag -> dag.aktiviteter.isEmpty() }) {
                                 meldepliktMetrikker.innsendteIngenAktiviteter.increment()
+                            }
+                            if (rapporteringsperiode.erEndring()) {
+                                meldepliktMetrikker.innsendteEndring.increment()
                             }
                             call.respond(HttpStatusCode.OK, response)
                         } else {
