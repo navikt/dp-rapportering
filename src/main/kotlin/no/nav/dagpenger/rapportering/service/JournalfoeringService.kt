@@ -58,18 +58,16 @@ class JournalfoeringService(
         val timerTask: TimerTask =
             object : TimerTask() {
                 override fun run() {
-                    runBlocking {
-                        try {
-                            var rowsAffected: Int
-                            val tidBrukt =
-                                measureTime {
-                                    rowsAffected = journalfoerPaaNytt()
-                                }
-                            metrikker.jobbFullfort(tidBrukt, rowsAffected)
-                        } catch (e: Exception) {
-                            metrikker.jobbFeilet()
-                            e
-                        }
+                    try {
+                        var rowsAffected: Int
+                        val tidBrukt =
+                            measureTime {
+                                rowsAffected = runBlocking { journalfoerPaaNytt() }
+                            }
+                        metrikker.jobbFullfort(tidBrukt, rowsAffected)
+                    } catch (e: Exception) {
+                        logger.warn(e) { "JournalfoerPaaNytt feilet" }
+                        metrikker.jobbFeilet()
                     }
                 }
             }
