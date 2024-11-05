@@ -47,9 +47,10 @@ class RapporteringService(
 
         if (!hentOriginal) {
             logger.info { "Henter periode med id $rapporteringId fra databasen, da hentOriginal var false" }
-            rapporteringsperiode = rapporteringRepository
-                .hentRapporteringsperiode(rapporteringId, ident)
-                ?.justerInnsendingstidspunkt()
+            rapporteringsperiode =
+                rapporteringRepository
+                    .hentRapporteringsperiode(rapporteringId, ident)
+                    ?.justerInnsendingstidspunkt()
         }
 
         if (rapporteringsperiode == null) {
@@ -59,7 +60,7 @@ class RapporteringService(
                 ?.let { lagreEllerOppdaterPeriode(it, ident) }
                 ?: hentInnsendteRapporteringsperioder(ident, token)
                     ?.firstOrNull { it.id == rapporteringId }
-                    ?: rapporteringRepository
+                ?: rapporteringRepository
                     .hentRapporteringsperiode(rapporteringId, ident)
         }
 
