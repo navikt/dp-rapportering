@@ -19,6 +19,8 @@ import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnKanSendesFra
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
+import no.nav.dagpenger.rapportering.utils.kontrollerAktiviteter
+import no.nav.dagpenger.rapportering.utils.kontrollerRapporteringsperiode
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.random.Random
@@ -253,6 +255,7 @@ class RapporteringService(
         rapporteringId: Long,
         dag: Dag,
     ) {
+        kontrollerAktiviteter(listOf(dag))
         val dagId = rapporteringRepository.hentDagId(rapporteringId, dag.dagIndex)
         val eksisterendeAktiviteter = rapporteringRepository.hentAktiviteter(dagId)
         rapporteringRepository.slettAktiviteter(eksisterendeAktiviteter.map { it.id })
@@ -304,8 +307,7 @@ class RapporteringService(
         loginLevel: Int,
         headers: Headers,
     ): InnsendingResponse {
-        rapporteringsperiode.takeIf { it.kanSendes }
-            ?: throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
+        kontrollerRapporteringsperiode(rapporteringsperiode)
 
         var periodeTilInnsending = rapporteringsperiode
 

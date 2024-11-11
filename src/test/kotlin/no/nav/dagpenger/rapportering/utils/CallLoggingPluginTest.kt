@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test
 
 class CallLoggingPluginTest : ApiTestSetup() {
     private val ident = "0102031234"
-    private val rapporteringsperiode = rapporteringsperiodeFor(id = 123L)
+    private val rapporteringsperiode = rapporteringsperiodeFor(id = 123L, registrertArbeidssoker = true)
     private val rapporteringsperiodeString = defaultObjectMapper.writeValueAsString(rapporteringsperiode)
     private val sendinnResponse =
         defaultObjectMapper.writeValueAsString(
