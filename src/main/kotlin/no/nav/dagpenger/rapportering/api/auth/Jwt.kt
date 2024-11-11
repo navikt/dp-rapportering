@@ -2,7 +2,6 @@ package no.nav.dagpenger.rapportering.api.auth
 
 import io.ktor.http.auth.HttpAuthHeader
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.auth.Principal
 import io.ktor.server.auth.authentication
 import io.ktor.server.auth.jwt.JWTCredential
 import io.ktor.server.auth.jwt.JWTPayloadHolder
@@ -11,7 +10,7 @@ import io.ktor.server.auth.parseAuthorizationHeader
 import io.ktor.server.request.ApplicationRequest
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.issuerFromString
 
-internal fun validator(jwtCredential: JWTCredential): Principal {
+internal fun validator(jwtCredential: JWTCredential): JWTPrincipal {
     requirePid(jwtCredential)
     return JWTPrincipal(jwtCredential.payload)
 }

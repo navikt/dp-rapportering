@@ -3,7 +3,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     alias(libs.plugins.shadow.jar)
     alias(libs.plugins.kotlin)
-    id("io.ktor.plugin") version "2.3.12"
+    id("io.ktor.plugin") version "3.0.1"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
 }
 
@@ -65,8 +65,8 @@ dependencies {
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.client)
     implementation(libs.jackson.annotation)
-    implementation(libs.dp.biblioteker.oauth2.klient)
-    implementation("io.ktor:ktor-server-netty:${libs.versions.ktor.get()}")
+    implementation("no.nav.dagpenger:oauth2-klient:2024.10.31-15.02.1d4f08a38d24")
+    implementation("io.ktor:ktor-server-cio:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.5.4")
@@ -79,5 +79,5 @@ dependencies {
     testImplementation(libs.ktor.server.test.host)
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.11.3")
     testImplementation(libs.ktor.client.mock)
-    testImplementation("de.redsix:pdfcompare:1.2.2")
+    testImplementation("de.redsix:pdfcompare:1.2.3")
 }

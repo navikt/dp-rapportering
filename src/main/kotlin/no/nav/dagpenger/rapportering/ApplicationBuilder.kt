@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.server.engine.embeddedServer
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics
 import io.micrometer.prometheusmetrics.PrometheusConfig
@@ -29,6 +30,7 @@ import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.tjenester.RapporteringJournalførtMottak
 import no.nav.helse.rapids_rivers.RapidApplication
+import io.ktor.server.cio.CIO as CIOEngine
 
 class ApplicationBuilder(
     configuration: Map<String, String>,
@@ -79,7 +81,10 @@ class ApplicationBuilder(
 
         rapidsConnection =
             RapidApplication
-                .create(configuration) { engine, _: RapidsConnection ->
+                .create(
+                    env = configuration,
+                    builder = { this.withKtor(embeddedServer(CIOEngine, port = 8080, module = {})) },
+                ) { engine, _: RapidsConnection ->
                     engine.application.konfigurasjon()
                     engine.application.internalApi()
                     engine.application.rapporteringApi(rapporteringService, meldepliktMetrikker)
