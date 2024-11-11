@@ -471,7 +471,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan sende inn rapporteringsperiode`() {
-        val rapporteringsperiode = rapporteringsperiodeListe.first()
+        val rapporteringsperiode = rapporteringsperiodeListe.first().copy(registrertArbeidssoker = true)
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
         coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
@@ -522,6 +522,7 @@ class RapporteringServiceTest {
                 status = TilUtfylling,
                 begrunnelseEndring = "Endring",
                 originalId = originalPeriode.id,
+                registrertArbeidssoker = true,
             )
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
