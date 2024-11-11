@@ -59,12 +59,13 @@ fun Application.konfigurasjon(
 
     install(MicrometerMetrics) {
         registry = prometheusMeterRegistry
-        meterBinders = listOf(
-            JvmMemoryMetrics(),
-            JvmGcMetrics(),
-            JvmThreadMetrics(),
-            ProcessorMetrics()
-        )
+        meterBinders =
+            listOf(
+                JvmMemoryMetrics(),
+                JvmGcMetrics(),
+                JvmThreadMetrics(),
+                ProcessorMetrics(),
+            )
     }
 
     install(DoubleReceive) {
