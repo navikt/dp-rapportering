@@ -68,6 +68,7 @@ dependencies {
     implementation("no.nav.dagpenger:oauth2-klient:2024.10.31-15.02.1d4f08a38d24")
     implementation("io.ktor:ktor-server-cio:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
+    implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.5.4")
 
