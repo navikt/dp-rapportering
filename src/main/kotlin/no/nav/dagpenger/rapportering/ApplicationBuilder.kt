@@ -86,7 +86,7 @@ class ApplicationBuilder(
                     builder = { this.withKtor(embeddedServer(CIOEngine, port = 8080, module = {})) },
                 ) { engine, _: RapidsConnection ->
                     engine.application.konfigurasjon()
-                    engine.application.internalApi()
+                    engine.application.internalApi(meterRegistry)
                     engine.application.rapporteringApi(rapporteringService, meldepliktMetrikker)
                 }
         rapidsConnection.register(this)
