@@ -108,8 +108,8 @@ open class ApiTestSetup {
                 )
 
             application {
-                konfigurasjon()
-                internalApi()
+                konfigurasjon(meterRegistry)
+                internalApi(meterRegistry)
                 rapporteringApi(rapporteringService, meldepliktMetrikker)
             }
 

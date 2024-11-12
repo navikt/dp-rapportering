@@ -102,7 +102,7 @@ class RapporteringApiTest : ApiTestSetup() {
             // Lagrer perioden i databasen
             client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
 
-            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor())) {
+            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(registrertArbeidssoker = true))) {
                 status shouldBe HttpStatusCode.OK
             }
         }
@@ -137,7 +137,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 )
             }
 
-            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor())) {
+            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(registrertArbeidssoker = true))) {
                 status shouldBe HttpStatusCode.BadRequest
                 val innsendingResponse = defaultObjectMapper.readValue<InnsendingResponse>(bodyAsText())
                 innsendingResponse.id shouldBe 123L
@@ -155,7 +155,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 )
             }
 
-            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor())) {
+            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(registrertArbeidssoker = true))) {
                 status shouldBe HttpStatusCode.InternalServerError
             }
         }
@@ -181,6 +181,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         status = Endret,
                         begrunnelseEndring = "Endring",
                         originalId = endretPeriode.originalId,
+                        registrertArbeidssoker = true,
                     ),
                 ),
             ) {
