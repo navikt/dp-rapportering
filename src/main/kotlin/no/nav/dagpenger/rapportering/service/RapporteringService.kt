@@ -44,21 +44,30 @@ class RapporteringService(
         ident: String,
         token: String,
         hentOriginal: Boolean,
-    ): Rapporteringsperiode? =
-        if (hentOriginal) {
-            hentRapporteringsperioder(ident, token)
+    ): Rapporteringsperiode? {
+        var rapporteringsperiode: Rapporteringsperiode? = null
+
+        if (!hentOriginal) {
+            logger.info { "Henter periode med id $rapporteringId fra databasen, da hentOriginal var false" }
+            rapporteringsperiode =
+                rapporteringRepository
+                    .hentRapporteringsperiode(rapporteringId, ident)
+                    ?.justerInnsendingstidspunkt()
+        }
+
+        if (rapporteringsperiode == null) {
+            logger.info { "Henter periode med id $rapporteringId fra Arena" }
+            rapporteringsperiode = hentRapporteringsperioder(ident, token)
                 ?.firstOrNull { it.id == rapporteringId }
                 ?.let { lagreEllerOppdaterPeriode(it, ident) }
                 ?: hentInnsendteRapporteringsperioder(ident, token)
                     ?.firstOrNull { it.id == rapporteringId }
                 ?: rapporteringRepository
                     .hentRapporteringsperiode(rapporteringId, ident)
-        } else {
-            logger.info { "Henter periode med id $rapporteringId fra databsen, da hentOriginal var false" }
-            rapporteringRepository
-                .hentRapporteringsperiode(rapporteringId, ident)
-                ?.justerInnsendingstidspunkt()
         }
+
+        return rapporteringsperiode
+    }
 
     suspend fun hentOgOppdaterRapporteringsperioder(
         ident: String,
