@@ -343,6 +343,7 @@ class RapporteringService(
                         }
 
                 periodeTilInnsending = rapporteringsperiode.copy(id = endringId, dager = dager)
+                rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Innsendt)
                 rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending, ident)
             }
         }
