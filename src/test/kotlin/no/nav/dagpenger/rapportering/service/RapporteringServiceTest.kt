@@ -10,6 +10,7 @@ import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
@@ -530,7 +531,8 @@ class RapporteringServiceTest {
         coEvery { meldepliktConnector.hentEndringId(any(), any()) } returns endringId
         coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
-        coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        val periode = slot<Rapporteringsperiode>()
+        coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(capture(periode), any()) }
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
@@ -560,6 +562,17 @@ class RapporteringServiceTest {
         ) {
             rapporteringRepository
                 .oppdaterPeriodeEtterInnsending(originalPeriode.id, ident, false, false, any(), false)
+        }
+        coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), ident) }
+        periode.captured.id shouldBe endringId.toLong()
+        periode.captured.dager.forEachIndexed { dagIndex, dag ->
+            dag.dato shouldBe rapporteringsperiode.dager[dagIndex].dato
+            dag.dagIndex shouldBe rapporteringsperiode.dager[dagIndex].dagIndex
+            dag.aktiviteter.forEachIndexed { index, aktivitet ->
+                aktivitet.id shouldNotBe rapporteringsperiode.dager[dagIndex].aktiviteter[index].id
+                aktivitet.type shouldBe rapporteringsperiode.dager[dagIndex].aktiviteter[index].type
+                aktivitet.timer shouldBe rapporteringsperiode.dager[dagIndex].aktiviteter[index].timer
+            }
         }
     }
 
