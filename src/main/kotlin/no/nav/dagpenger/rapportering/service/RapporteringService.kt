@@ -6,6 +6,7 @@ import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
+import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
@@ -330,9 +331,19 @@ class RapporteringService(
                     meldepliktConnector
                         .hentEndringId(rapporteringsperiode.originalId, token)
                         .toLong()
+                // Oppretter nye ID for aktiviteter slik at vi kan lagre både original og midlertidig periode
+                val dager =
+                    rapporteringsperiode
+                        .dager.map { dag ->
+                            Dag(
+                                dag.dato,
+                                dag.aktiviteter.map { aktivitet -> Aktivitet(UUID.randomUUID(), aktivitet.type, aktivitet.timer) },
+                                dag.dagIndex,
+                            )
+                        }
 
-                periodeTilInnsending = rapporteringsperiode.copy(id = endringId)
-                rapporteringRepository.slettRaporteringsperiode(rapporteringsperiode.id)
+                periodeTilInnsending = rapporteringsperiode.copy(id = endringId, dager = dager)
+                rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Innsendt)
                 rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending, ident)
             }
         }
