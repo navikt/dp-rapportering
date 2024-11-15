@@ -14,6 +14,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Feilet
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
@@ -343,7 +344,7 @@ class RapporteringService(
                         }
 
                 periodeTilInnsending = rapporteringsperiode.copy(id = endringId, dager = dager)
-                rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Innsendt)
+                rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Midlertidig)
                 rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending, ident)
             }
         }

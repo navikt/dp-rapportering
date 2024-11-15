@@ -26,6 +26,7 @@ import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
@@ -532,7 +533,7 @@ class RapporteringServiceTest {
         coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
         val periode = slot<Rapporteringsperiode>()
-        coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(capture(periode), any()) }
+        coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(capture(periode), ident) }
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
         coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
@@ -556,12 +557,17 @@ class RapporteringServiceTest {
                 journalfoeringService.journalfoer(any(), any(), any(), any(), any())
             }
         }
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(endringId.toLong(), ident, false, false, any()) }
-        coVerify(
-            exactly = 1,
-        ) {
+        coVerify(exactly = 1) {
             rapporteringRepository
-                .oppdaterPeriodeEtterInnsending(originalPeriode.id, ident, false, false, any(), false)
+                .oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Midlertidig)
+        }
+        coVerify(exactly = 1) {
+            rapporteringRepository
+                .oppdaterPeriodeEtterInnsending(endringId.toLong(), ident, false, false, Innsendt)
+        }
+        coVerify(exactly = 1) {
+            rapporteringRepository
+                .oppdaterPeriodeEtterInnsending(originalPeriode.id, ident, false, false, Innsendt, false)
         }
         coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), ident) }
         periode.captured.id shouldBe endringId.toLong()
