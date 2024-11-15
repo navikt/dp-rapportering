@@ -6,4 +6,5 @@ enum class RapporteringsperiodeStatus {
     Innsendt,
     Ferdig,
     Feilet,
+    Midlertidig,
 }

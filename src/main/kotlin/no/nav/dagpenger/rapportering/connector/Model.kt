@@ -139,6 +139,7 @@ fun Rapporteringsperiode.toAdapterRapporteringsperiode(): AdapterRapporteringspe
                 RapporteringsperiodeStatus.Innsendt -> Innsendt
                 RapporteringsperiodeStatus.Ferdig -> Ferdig
                 RapporteringsperiodeStatus.Feilet -> Feilet
+                RapporteringsperiodeStatus.Midlertidig -> Feilet // Vi må ikke sende midlertidige perioder til adapter
             },
         mottattDato = this.mottattDato,
         registrertArbeidssoker = this.registrertArbeidssoker,

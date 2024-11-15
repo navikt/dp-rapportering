@@ -73,6 +73,7 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
                 RapporteringsperiodeStatus.Innsendt -> RapporteringsperiodeStatusResponse.Innsendt
                 RapporteringsperiodeStatus.Ferdig -> RapporteringsperiodeStatusResponse.Ferdig
                 RapporteringsperiodeStatus.Feilet -> RapporteringsperiodeStatusResponse.Feilet
+                RapporteringsperiodeStatus.Midlertidig -> RapporteringsperiodeStatusResponse.Feilet // Midlertidig her? Det er en feil
             },
         mottattDato = this.mottattDato,
         registrertArbeidssoker = this.registrertArbeidssoker,
