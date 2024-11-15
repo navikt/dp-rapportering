@@ -654,7 +654,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan slette mellomlagrede rapporteringsperioder som er sendt inn`() {
-        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForInnsendtePerioder() } returns
+        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForInnsendteOgMidlertidigePerioder() } returns
             listOf(rapporteringsperiodeListe.first().id)
         coEvery { rapporteringRepository.hentRapporteringsperiodeIdForPerioderEtterSisteFrist() } returns emptyList()
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
@@ -667,7 +667,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan slette mellomlagrede rapporteringsperioder som er ikke er sendt inn innen siste frist`() {
-        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForInnsendtePerioder() } returns emptyList()
+        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForInnsendteOgMidlertidigePerioder() } returns emptyList()
         coEvery { rapporteringRepository.hentRapporteringsperiodeIdForPerioderEtterSisteFrist() } returns
             rapporteringsperiodeListe.map { it.id }
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }

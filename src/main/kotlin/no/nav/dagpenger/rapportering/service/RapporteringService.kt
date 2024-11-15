@@ -394,7 +394,7 @@ class RapporteringService(
 
         // Sletter innsendte rapporteringsperioder
         rapporteringRepository
-            .hentRapporteringsperiodeIdForInnsendtePerioder()
+            .hentRapporteringsperiodeIdForInnsendteOgMidlertidigePerioder()
             .also {
                 logger.info { "Sletter ${it.size} innsendte rapporteringsperioder" }
                 innsendtePerioder = it.size
