@@ -557,11 +557,15 @@ class RapporteringServiceTest {
                 journalfoeringService.journalfoer(any(), any(), any(), any(), any())
             }
         }
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Midlertidig) }
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(endringId.toLong(), ident, false, false, Innsendt) }
-        coVerify(
-            exactly = 1,
-        ) {
+        coVerify(exactly = 1) {
+            rapporteringRepository
+                .oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Midlertidig)
+        }
+        coVerify(exactly = 1) {
+            rapporteringRepository
+                .oppdaterPeriodeEtterInnsending(endringId.toLong(), ident, false, false, Innsendt)
+        }
+        coVerify(exactly = 1) {
             rapporteringRepository
                 .oppdaterPeriodeEtterInnsending(originalPeriode.id, ident, false, false, Innsendt, false)
         }
