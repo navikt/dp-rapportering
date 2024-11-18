@@ -297,9 +297,7 @@ class RapporteringServiceTest {
     fun `kan lagre aktivitet på eksisterende rapporteringsperiode`() {
         val aktiviteter = listOf(Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null))
         coEvery { rapporteringRepository.hentDagId(any(), any()) } returns UUID.randomUUID()
-        coEvery { rapporteringRepository.hentAktiviteter(any()) } returns aktiviteter
-        coJustRun { rapporteringRepository.slettAktiviteter(any()) }
-        coJustRun { rapporteringRepository.lagreAktiviteter(any(), any(), any()) }
+        coJustRun { rapporteringRepository.slettOgLagreAktiviteter(any(), any(), any()) }
 
         runBlocking {
             rapporteringService.lagreEllerOppdaterAktiviteter(
@@ -313,10 +311,8 @@ class RapporteringServiceTest {
             )
         }
 
-        coVerify(exactly = 1) { rapporteringRepository.lagreAktiviteter(any(), any(), any()) }
-        coVerify(exactly = 1) { rapporteringRepository.slettAktiviteter(any()) }
+        coVerify(exactly = 1) { rapporteringRepository.slettOgLagreAktiviteter(any(), any(), any()) }
         coVerify(exactly = 1) { rapporteringRepository.hentDagId(any(), any()) }
-        coVerify(exactly = 1) { rapporteringRepository.hentAktiviteter(any()) }
     }
 
     @Test
@@ -632,14 +628,12 @@ class RapporteringServiceTest {
         val dagPairList: List<Pair<UUID, Dag>> = getDager().map { UUID.randomUUID() to it }
         coEvery { rapporteringRepository.finnesRapporteringsperiode(any(), any()) } returns true
         coEvery { rapporteringRepository.hentDagerUtenAktivitet(any()) } returns dagPairList
-        coEvery { rapporteringRepository.hentAktiviteter(any()) } returns listOf(Aktivitet(UUID.randomUUID(), Utdanning, null))
         coJustRun { rapporteringRepository.slettAktiviteter(any()) }
 
         runBlocking { rapporteringService.resettAktiviteter(1L, ident) }
 
         coVerify { rapporteringRepository.finnesRapporteringsperiode(1L, ident) }
         coVerify { rapporteringRepository.hentDagerUtenAktivitet(1L) }
-        coVerify(exactly = 14) { rapporteringRepository.hentAktiviteter(any()) }
         coVerify(exactly = 14) { rapporteringRepository.slettAktiviteter(any()) }
     }
 

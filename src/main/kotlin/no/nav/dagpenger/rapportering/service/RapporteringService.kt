@@ -268,9 +268,7 @@ class RapporteringService(
     ) {
         kontrollerAktiviteter(listOf(dag))
         val dagId = rapporteringRepository.hentDagId(rapporteringId, dag.dagIndex)
-        val eksisterendeAktiviteter = rapporteringRepository.hentAktiviteter(dagId)
-        rapporteringRepository.slettAktiviteter(eksisterendeAktiviteter.map { it.id })
-        rapporteringRepository.lagreAktiviteter(rapporteringId, dagId, dag)
+        rapporteringRepository.slettOgLagreAktiviteter(rapporteringId, dagId, dag)
     }
 
     suspend fun resettAktiviteter(
@@ -282,10 +280,7 @@ class RapporteringService(
         }
         val dager = rapporteringRepository.hentDagerUtenAktivitet(rapporteringId)
         dager.forEach { (dagId, _) ->
-            val aktiviteter = rapporteringRepository.hentAktiviteter(dagId)
-            if (aktiviteter.isNotEmpty()) {
-                rapporteringRepository.slettAktiviteter(aktiviteter.map { it.id })
-            }
+            rapporteringRepository.slettAktiviteter(dagId)
         }
     }
 

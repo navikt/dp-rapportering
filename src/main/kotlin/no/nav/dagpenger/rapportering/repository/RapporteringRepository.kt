@@ -39,7 +39,7 @@ interface RapporteringRepository {
         ident: String,
     )
 
-    suspend fun lagreAktiviteter(
+    suspend fun slettOgLagreAktiviteter(
         rapporteringId: Long,
         dagId: UUID,
         dag: Dag,
@@ -77,7 +77,7 @@ interface RapporteringRepository {
         oppdaterMottattDato: Boolean = true,
     )
 
-    suspend fun slettAktiviteter(aktivitetIdListe: List<UUID>)
+    suspend fun slettAktiviteter(dagId: UUID): Int
 
     suspend fun slettRaporteringsperiode(rapporteringId: Long)
 

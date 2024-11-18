@@ -17,7 +17,6 @@ import no.nav.dagpenger.rapportering.repository.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
-import java.sql.BatchUpdateException
 import java.time.LocalDate
 import java.util.UUID
 
@@ -222,7 +221,7 @@ class RapporteringRepositoryPostgresTest {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
 
             val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringId = rapporteringsperiode.id, dagIdex = dag.dagIndex)
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringId = rapporteringsperiode.id, dagId = dagId, dag = dag)
+            rapporteringRepositoryPostgres.slettOgLagreAktiviteter(rapporteringId = rapporteringsperiode.id, dagId = dagId, dag = dag)
 
             val result = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = rapporteringsperiode.id, ident = ident)
 
@@ -230,36 +229,6 @@ class RapporteringRepositoryPostgresTest {
                 id shouldBe rapporteringsperiode.id
                 dager.size shouldBe 14
                 dager.first().aktiviteter.size shouldBe 2
-            }
-        }
-    }
-
-    @Test
-    fun `lagring av aktivitet som allerede aksisterer feiler`() {
-        val rapporteringsperiode = getRapporteringsperiode()
-        val dag =
-            Dag(
-                dato = 1.januar,
-                aktiviteter = listOf(Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null)),
-                dagIndex = 0,
-            )
-
-        withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
-
-            val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringId = rapporteringsperiode.id, dagIdex = dag.dagIndex)
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringId = rapporteringsperiode.id, dagId = dagId, dag = dag)
-
-            shouldThrow<BatchUpdateException> {
-                rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringId = rapporteringsperiode.id, dagId = dagId, dag = dag)
-            }
-
-            val result = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = rapporteringsperiode.id, ident = ident)
-
-            with(result!!) {
-                id shouldBe rapporteringsperiode.id
-                dager.size shouldBe 14
-                dager.first().aktiviteter.size shouldBe 1
             }
         }
     }
@@ -333,7 +302,7 @@ class RapporteringRepositoryPostgresTest {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
 
             val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringId = rapporteringsperiode.id, dagIdex = dag.dagIndex)
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringId = rapporteringsperiode.id, dagId = dagId, dag = dag)
+            rapporteringRepositoryPostgres.slettOgLagreAktiviteter(rapporteringId = rapporteringsperiode.id, dagId = dagId, dag = dag)
 
             val lagretRapporteringsperiode =
                 rapporteringRepositoryPostgres.hentRapporteringsperiode(
@@ -445,7 +414,7 @@ class RapporteringRepositoryPostgresTest {
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
             val dagId = rapporteringRepositoryPostgres.hentDagId(rapporteringId = rapporteringsperiode.id, dagIdex = dag.dagIndex)
-            rapporteringRepositoryPostgres.lagreAktiviteter(rapporteringId = rapporteringsperiode.id, dagId = dagId, dag = dag)
+            rapporteringRepositoryPostgres.slettOgLagreAktiviteter(rapporteringId = rapporteringsperiode.id, dagId = dagId, dag = dag)
             val resultatMedToAktiviteter =
                 rapporteringRepositoryPostgres.hentRapporteringsperiode(
                     id = rapporteringsperiode.id,
@@ -468,7 +437,7 @@ class RapporteringRepositoryPostgresTest {
                     .id shouldBe dag.aktiviteter.last().id
             }
 
-            rapporteringRepositoryPostgres.slettAktiviteter(aktivitetIdListe = listOf(dag.aktiviteter.first().id))
+            rapporteringRepositoryPostgres.slettAktiviteter(dagId)
             val resultatMedEnAktivitet =
                 rapporteringRepositoryPostgres.hentRapporteringsperiode(
                     id = rapporteringsperiode.id,
@@ -478,21 +447,7 @@ class RapporteringRepositoryPostgresTest {
             with(resultatMedEnAktivitet!!) {
                 id shouldBe rapporteringsperiode.id
                 dager.size shouldBe 14
-                dager.first().aktiviteter.size shouldBe 1
-                dager
-                    .first()
-                    .aktiviteter
-                    .first()
-                    .id shouldBe dag.aktiviteter.last().id
-            }
-        }
-    }
-
-    @Test
-    fun `slett av ikke-eksisterende aktivitet kaster exception`() {
-        withMigratedDb {
-            shouldThrow<RuntimeException> {
-                rapporteringRepositoryPostgres.slettAktiviteter(aktivitetIdListe = listOf(UUID.randomUUID()))
+                dager.first().aktiviteter.size shouldBe 0
             }
         }
     }
