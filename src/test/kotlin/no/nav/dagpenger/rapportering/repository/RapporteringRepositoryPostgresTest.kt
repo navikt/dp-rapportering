@@ -17,7 +17,6 @@ import no.nav.dagpenger.rapportering.repository.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
-import java.sql.BatchUpdateException
 import java.time.LocalDate
 import java.util.UUID
 
