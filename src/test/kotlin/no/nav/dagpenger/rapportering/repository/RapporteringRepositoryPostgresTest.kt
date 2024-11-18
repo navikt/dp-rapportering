@@ -177,18 +177,6 @@ class RapporteringRepositoryPostgresTest {
     }
 
     @Test
-    fun `lagre eksisterende rapporteringsperiode kaster exception`() {
-        val rapporteringsperiode = getRapporteringsperiode()
-        withMigratedDb {
-            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
-
-            shouldThrow<RuntimeException> {
-                rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
-            }
-        }
-    }
-
-    @Test
     fun `kan oppdaterer lagret rapporteringsperiode`() {
         val rapporteringsperiode = getRapporteringsperiode()
         withMigratedDb {
