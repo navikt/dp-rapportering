@@ -280,10 +280,7 @@ class RapporteringService(
         }
         val dager = rapporteringRepository.hentDagerUtenAktivitet(rapporteringId)
         dager.forEach { (dagId, _) ->
-            val aktiviteter = rapporteringRepository.hentAktiviteter(dagId)
-            if (aktiviteter.isNotEmpty()) {
-                rapporteringRepository.slettAktiviteter(aktiviteter.map { it.id })
-            }
+            rapporteringRepository.slettAktiviteter(dagId)
         }
     }
 

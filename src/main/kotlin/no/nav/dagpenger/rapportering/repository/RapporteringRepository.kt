@@ -77,7 +77,7 @@ interface RapporteringRepository {
         oppdaterMottattDato: Boolean = true,
     )
 
-    suspend fun slettAktiviteter(aktivitetIdListe: List<UUID>)
+    suspend fun slettAktiviteter(dagId: UUID): Int
 
     suspend fun slettRaporteringsperiode(rapporteringId: Long)
 

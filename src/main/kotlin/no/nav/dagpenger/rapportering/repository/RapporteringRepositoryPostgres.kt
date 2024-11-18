@@ -418,18 +418,17 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    override suspend fun slettAktiviteter(aktivitetIdListe: List<UUID>) =
+    override suspend fun slettAktiviteter(dagId: UUID) =
         actionTimer.timedAction("db-slettAktiviteter") {
             using(sessionOf(dataSource)) { session ->
                 session.transaction { tx ->
                     tx
-                        .batchPreparedNamedStatement(
-                            "DELETE FROM aktivitet WHERE uuid = :uuid",
-                            aktivitetIdListe.map { id ->
-                                mapOf("uuid" to id)
-                            },
-                        ).sum()
-                        .validateRowsAffected(excepted = aktivitetIdListe.size)
+                        .run(
+                            queryOf(
+                                "DELETE FROM aktivitet WHERE dag_id = ?",
+                                dagId,
+                            ).asUpdate,
+                        )
                 }
             }
         }

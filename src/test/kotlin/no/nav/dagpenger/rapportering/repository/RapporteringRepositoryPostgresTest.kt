@@ -437,7 +437,7 @@ class RapporteringRepositoryPostgresTest {
                     .id shouldBe dag.aktiviteter.last().id
             }
 
-            rapporteringRepositoryPostgres.slettAktiviteter(aktivitetIdListe = listOf(dag.aktiviteter.first().id))
+            rapporteringRepositoryPostgres.slettAktiviteter(dagId)
             val resultatMedEnAktivitet =
                 rapporteringRepositoryPostgres.hentRapporteringsperiode(
                     id = rapporteringsperiode.id,
@@ -447,21 +447,7 @@ class RapporteringRepositoryPostgresTest {
             with(resultatMedEnAktivitet!!) {
                 id shouldBe rapporteringsperiode.id
                 dager.size shouldBe 14
-                dager.first().aktiviteter.size shouldBe 1
-                dager
-                    .first()
-                    .aktiviteter
-                    .first()
-                    .id shouldBe dag.aktiviteter.last().id
-            }
-        }
-    }
-
-    @Test
-    fun `slett av ikke-eksisterende aktivitet kaster exception`() {
-        withMigratedDb {
-            shouldThrow<RuntimeException> {
-                rapporteringRepositoryPostgres.slettAktiviteter(aktivitetIdListe = listOf(UUID.randomUUID()))
+                dager.first().aktiviteter.size shouldBe 0
             }
         }
     }

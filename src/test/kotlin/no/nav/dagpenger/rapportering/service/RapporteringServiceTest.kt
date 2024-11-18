@@ -628,14 +628,12 @@ class RapporteringServiceTest {
         val dagPairList: List<Pair<UUID, Dag>> = getDager().map { UUID.randomUUID() to it }
         coEvery { rapporteringRepository.finnesRapporteringsperiode(any(), any()) } returns true
         coEvery { rapporteringRepository.hentDagerUtenAktivitet(any()) } returns dagPairList
-        coEvery { rapporteringRepository.hentAktiviteter(any()) } returns listOf(Aktivitet(UUID.randomUUID(), Utdanning, null))
         coJustRun { rapporteringRepository.slettAktiviteter(any()) }
 
         runBlocking { rapporteringService.resettAktiviteter(1L, ident) }
 
         coVerify { rapporteringRepository.finnesRapporteringsperiode(1L, ident) }
         coVerify { rapporteringRepository.hentDagerUtenAktivitet(1L) }
-        coVerify(exactly = 14) { rapporteringRepository.hentAktiviteter(any()) }
         coVerify(exactly = 14) { rapporteringRepository.slettAktiviteter(any()) }
     }
 
