@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.withMigratedDb
@@ -21,9 +22,9 @@ import java.time.LocalDate
 import java.util.UUID
 
 class RapporteringRepositoryPostgresTest {
-    val rapporteringRepositoryPostgres = RapporteringRepositoryPostgres(dataSource, actionTimer)
+    private val rapporteringRepositoryPostgres = RapporteringRepositoryPostgres(dataSource, actionTimer)
 
-    val ident = "12345678910"
+    private val ident = "12345678910"
 
     @Test
     fun `kan hente alle rapporteringsperioder`() {
@@ -41,9 +42,9 @@ class RapporteringRepositoryPostgresTest {
 
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
-            val rapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = id, ident = ident)
+            val hentetRapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = id, ident = ident)
 
-            with(rapporteringsperiode) {
+            with(hentetRapporteringsperiode) {
                 id shouldBe id
                 this?.bruttoBelop?.shouldBe(null)
                 this?.registrertArbeidssoker?.shouldBe(null)
@@ -58,9 +59,9 @@ class RapporteringRepositoryPostgresTest {
 
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
-            val rapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = id, ident = ident)
+            val hentetRapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = id, ident = ident)
 
-            rapporteringsperiode!!.id shouldBe id
+            hentetRapporteringsperiode!!.id shouldBe id
         }
     }
 
@@ -82,10 +83,15 @@ class RapporteringRepositoryPostgresTest {
                 rapporteringsperiode = getRapporteringsperiode(id = 2L, status = Innsendt),
                 ident = ident,
             )
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = getRapporteringsperiode(id = 3L, status = Midlertidig),
+                ident = ident,
+            )
 
-            with(rapporteringRepositoryPostgres.hentRapporteringsperiodeIdForInnsendtePerioder()) {
-                size shouldBe 1
-                first() shouldBe 2L
+            with(rapporteringRepositoryPostgres.hentRapporteringsperiodeIdForInnsendteOgMidlertidigePerioder()) {
+                size shouldBe 2
+                get(0) shouldBe 2L
+                get(1) shouldBe 3L
             }
         }
     }
