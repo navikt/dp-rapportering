@@ -183,7 +183,7 @@ class RapporteringRepositoryPostgres(
         rapporteringsperiode.dager.forEach { dag ->
             if (dag.aktiviteter.isNotEmpty()) {
                 val dagId = hentDagId(rapporteringsperiode.id, dag.dagIndex)
-                lagreAktiviteter(rapporteringsperiode.id, dagId, dag)
+                slettOgLagreAktiviteter(rapporteringsperiode.id, dagId, dag)
             }
         }
     }
@@ -233,13 +233,21 @@ class RapporteringRepositoryPostgres(
                 },
             ).sum()
 
-    override suspend fun lagreAktiviteter(
+    override suspend fun slettOgLagreAktiviteter(
         rapporteringId: Long,
         dagId: UUID,
         dag: Dag,
     ) = actionTimer.timedAction("db-lagreAktiviteter") {
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
+                tx
+                    .run(
+                        queryOf(
+                            "DELETE FROM aktivitet WHERE dag_id = ?",
+                            dagId,
+                        ).asUpdate,
+                    )
+
                 tx
                     .batchPreparedNamedStatement(
                         """

@@ -39,7 +39,7 @@ interface RapporteringRepository {
         ident: String,
     )
 
-    suspend fun lagreAktiviteter(
+    suspend fun slettOgLagreAktiviteter(
         rapporteringId: Long,
         dagId: UUID,
         dag: Dag,
