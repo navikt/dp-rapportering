@@ -171,13 +171,19 @@ class RapporteringRepositoryPostgres(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
     ) = actionTimer.timedAction("db-lagreRapporteringsperiodeOgDager") {
-        if (hentRapporteringsperiode(rapporteringsperiode.id, ident) != null) {
-            throw RuntimeException("Rapporteringsperioden finnes allerede")
-        }
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
-                tx.lagreRapporteringsperiode(rapporteringsperiode, ident).validateRowsAffected()
-                tx.lagreDager(rapporteringsperiode.id, rapporteringsperiode.dager).validateRowsAffected(excepted = 14)
+                val lagretPeriode =
+                    tx.run(
+                        // Sjekker at rapporteringsperioden finnes
+                        queryOf("SELECT id FROM rapporteringsperiode WHERE id = ?", rapporteringsperiode.id)
+                            .map { row -> row.long("id") }
+                            .asSingle,
+                    )
+                if (lagretPeriode == null) {
+                    tx.lagreRapporteringsperiode(rapporteringsperiode, ident).validateRowsAffected()
+                    tx.lagreDager(rapporteringsperiode.id, rapporteringsperiode.dager).validateRowsAffected(excepted = 14)
+                }
             }
         }
         rapporteringsperiode.dager.forEach { dag ->

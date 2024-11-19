@@ -129,7 +129,7 @@ class RapporteringService(
         hentRapporteringsperioder(ident, token)
             ?.firstOrNull { it.id == rapporteringId }
             ?.let { lagreEllerOppdaterPeriode(it, ident) }
-            ?: throw RuntimeException("Fant ingen ikke periode med id $rapporteringId for ident $ident")
+            ?: throw RuntimeException("Fant ingen periode med id $rapporteringId for ident $ident")
     }
 
     suspend fun startEndring(
