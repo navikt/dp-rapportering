@@ -70,7 +70,7 @@ dependencies {
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
-    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.5.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.6.0")
 
     testImplementation(libs.rapids.and.rivers.test)
     testImplementation(libs.bundles.postgres.test)
