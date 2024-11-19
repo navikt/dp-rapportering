@@ -45,6 +45,7 @@ spec:
             highAvailability: true
             diskAutoresize: true
             pointInTimeRecovery: false
+            autoBackupHour: 3
             tier: {{gcp.sql.tier}}
             databases:
                 - name: rapportering
