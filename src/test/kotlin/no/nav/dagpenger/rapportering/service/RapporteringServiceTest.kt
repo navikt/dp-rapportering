@@ -25,6 +25,7 @@ import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
+import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
@@ -422,6 +423,33 @@ class RapporteringServiceTest {
     }
 
     @Test
+    fun `liste med innsendte rapporteringsperioder blir populert med siste versjoner av perioder fra databasen`() {
+        val perioderFraArena =
+            rapporteringsperiodeListe
+                .map { it.copy(status = Ferdig, kanSendes = false, kanEndres = true) }
+                .toAdapterRapporteringsperioder()
+        coEvery { meldepliktConnector.hentInnsendteRapporteringsperioder(any(), any()) } returns perioderFraArena
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns
+            listOf(
+                lagRapporteringsperiode(1, Periode(1.januar, 14.januar), status = Ferdig, registrertArbeidssoker = true),
+                lagRapporteringsperiode(2, Periode(15.januar, 28.januar), status = Innsendt, registrertArbeidssoker = true),
+            )
+
+        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
+
+        // Perioden med ID = 3 finnes ikke i databasen og skal ikke endres
+        // Perioden med ID = 2 har lavere status (Innsendt) i databasen enn i Arena (Ferdig) og skal ikke endres
+        // Perioden med ID = 1 har samme status i databasen og Arena og skal populeres fra databasen
+        innsendteRapporteringsperioder.size shouldBe 3
+        innsendteRapporteringsperioder[0].id shouldBe 3L
+        innsendteRapporteringsperioder[0].registrertArbeidssoker shouldBe null
+        innsendteRapporteringsperioder[1].id shouldBe 2L
+        innsendteRapporteringsperioder[1].registrertArbeidssoker shouldBe null
+        innsendteRapporteringsperioder[2].id shouldBe 1L
+        innsendteRapporteringsperioder[2].registrertArbeidssoker shouldBe true
+    }
+
+    @Test
     fun `liste med innsendte rapporteringsperioder blir sortert riktig med endret meldekort før originalt meldekort`() {
         val perioderFraArena =
             rapporteringsperiodeListe
@@ -721,6 +749,7 @@ fun lagRapporteringsperiode(
     id: Long,
     periode: Periode,
     status: RapporteringsperiodeStatus = TilUtfylling,
+    registrertArbeidssoker: Boolean? = null,
 ) = Rapporteringsperiode(
     id = id,
     periode = periode,
@@ -730,7 +759,7 @@ fun lagRapporteringsperiode(
     kanEndres = false,
     bruttoBelop = null,
     status = status,
-    registrertArbeidssoker = null,
+    registrertArbeidssoker = registrertArbeidssoker,
     begrunnelseEndring = null,
     originalId = null,
     rapporteringstype = null,

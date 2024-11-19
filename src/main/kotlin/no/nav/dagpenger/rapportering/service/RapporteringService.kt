@@ -218,8 +218,11 @@ class RapporteringService(
             .hentLagredeRapporteringsperioder(ident)
             .filter { it.status == Innsendt || it.status == Ferdig || it.status == Endret || it.status == Feilet }
             .forEach { periodeFraDb ->
-                if (innsendteRapporteringsperioder.none { it.id == periodeFraDb.id }) {
+                val periodeIndex = innsendteRapporteringsperioder.indexOfFirst { it.id == periodeFraDb.id }
+                if (periodeIndex < 0) {
                     innsendteRapporteringsperioder.add(periodeFraDb)
+                } else if (periodeFraDb.status.ordinal >= innsendteRapporteringsperioder[periodeIndex].status.ordinal) {
+                    innsendteRapporteringsperioder[periodeIndex] = periodeFraDb
                 }
             }
         return innsendteRapporteringsperioder
