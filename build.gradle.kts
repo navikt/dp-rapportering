@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.shadow.jar)
     alias(libs.plugins.kotlin)
     id("io.ktor.plugin") version "3.0.1"
-    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
 }
 
 group = "no.nav.dagpenger.rapportering"
