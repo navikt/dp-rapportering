@@ -39,6 +39,8 @@ spec:
       value: {{PDF_GENERATOR_URL}}
     - name: GITHUB_SHA
       value: {{ githubSha }}
+    - name: JDK_JAVA_OPTIONS # Bytter GC og lar JVMen se at det er flere CPU kjerner
+      value: -XX:+UseParallelGC -XX:ActiveProcessorCount=4
   gcp:
       sqlInstances:
           - type: POSTGRES_15
