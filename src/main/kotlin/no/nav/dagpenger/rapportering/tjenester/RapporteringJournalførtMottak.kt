@@ -51,7 +51,7 @@ internal class RapporteringJournalførtMottak(
         packet: JsonMessage,
         context: MessageContext,
         metadata: MessageMetadata,
-        meterRegistry: MeterRegistry
+        meterRegistry: MeterRegistry,
     ) {
         val periodeId = packet[behov]["periodeId"].asText()
         val kallLoggId = packet[behov]["kallLoggId"].asLong()
