@@ -28,8 +28,8 @@ internal class RapporteringJournalførtMottak(
 
     init {
         River(rapidsConnection).apply {
-            validate { it.demandValue("@event_name", "behov") }
-            validate { it.demandAll("@behov", listOf(behov)) }
+            precondition { it.requireValue("@event_name", "behov") }
+            precondition { it.requireAll("@behov", listOf(behov)) }
             validate { it.requireKey("@løsning") }
             validate { it.requireValue("@final", true) }
             validate {
