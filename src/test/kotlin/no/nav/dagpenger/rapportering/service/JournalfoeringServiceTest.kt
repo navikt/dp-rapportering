@@ -30,6 +30,7 @@ import io.mockk.slot
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
+import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
@@ -109,7 +110,7 @@ class JournalfoeringServiceTest {
                         navn,
                         loginLevel,
                         headers.toMap(),
-                        rapporteringsperiode,
+                        defaultObjectMapper.writeValueAsString(rapporteringsperiode),
                     ),
                     0,
                 ),

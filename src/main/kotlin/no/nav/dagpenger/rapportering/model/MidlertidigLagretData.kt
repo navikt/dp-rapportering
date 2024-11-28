@@ -5,5 +5,5 @@ data class MidlertidigLagretData(
     val navn: String,
     val loginLevel: Int,
     val headers: Map<String, List<String>>,
-    val rapporteringsperiode: Rapporteringsperiode,
+    val rapporteringsperiode: String,
 )

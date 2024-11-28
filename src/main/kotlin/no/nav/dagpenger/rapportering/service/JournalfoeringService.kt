@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.service
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import com.natpryce.konfig.Key
 import com.natpryce.konfig.stringType
@@ -88,6 +89,8 @@ class JournalfoeringService(
             val midlertidigLagretData = triple.second
             val retries = triple.third
 
+            val rapporteringsperiode = defaultObjectMapper.readValue<Rapporteringsperiode>(midlertidigLagretData.rapporteringsperiode)
+
             try {
                 // Journalfør
                 opprettOgSendBehov(
@@ -95,7 +98,7 @@ class JournalfoeringService(
                     midlertidigLagretData.navn,
                     midlertidigLagretData.loginLevel,
                     HeadersImpl(midlertidigLagretData.headers),
-                    midlertidigLagretData.rapporteringsperiode,
+                    rapporteringsperiode,
                 )
 
                 // Slette midlertidig lagret data
@@ -104,7 +107,7 @@ class JournalfoeringService(
                 // Kan ikke journalføre igjen. Oppdater teller
                 journalfoeringRepository.oppdaterMidlertidigLagretData(id, retries + 1)
                 logger.warn(
-                    "Kan ikke journalføre periode ${midlertidigLagretData.rapporteringsperiode.id}, retries $retries",
+                    "Kan ikke journalføre periode ${rapporteringsperiode.id}, retries $retries",
                     e,
                 )
             }
@@ -124,7 +127,7 @@ class JournalfoeringService(
             opprettOgSendBehov(ident, navn, loginLevel, headers, rapporteringsperiode)
         } catch (e: Exception) {
             logger.warn("Feil ved journalføring", e)
-            lagreDataMidlertidig(MidlertidigLagretData(ident, navn, loginLevel, headers.toMap(), rapporteringsperiode))
+            lagreDataMidlertidig(ident, navn, loginLevel, headers, rapporteringsperiode)
         }
     }
 
@@ -261,9 +264,23 @@ class JournalfoeringService(
             ),
         )
 
-    private suspend fun lagreDataMidlertidig(midlertidigLagretData: MidlertidigLagretData) {
-        logger.info("Mellomlagrer data for rapporteringsperiode ${midlertidigLagretData.rapporteringsperiode.id}")
-        journalfoeringRepository.lagreDataMidlertidig(midlertidigLagretData)
+    private suspend fun lagreDataMidlertidig(
+        ident: String,
+        navn: String,
+        loginLevel: Int,
+        headers: Headers,
+        rapporteringsperiode: Rapporteringsperiode,
+    ) {
+        logger.info("Mellomlagrer data for rapporteringsperiode ${rapporteringsperiode.id}")
+        journalfoeringRepository.lagreDataMidlertidig(
+            MidlertidigLagretData(
+                ident,
+                navn,
+                loginLevel,
+                headers.toMap(),
+                defaultObjectMapper.writeValueAsString(rapporteringsperiode),
+            ),
+        )
     }
 
     private fun lagreKallLogg(ident: String): Long {
