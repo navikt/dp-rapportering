@@ -12,6 +12,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HeadersImpl
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.util.toMap
 import io.micrometer.core.instrument.MeterRegistry
@@ -166,6 +167,10 @@ class JournalfoeringService(
                 contentType(ContentType.Text.Plain)
                 setBody(htmlMal)
             }
+
+        if (pdfGeneratorResponse.status != HttpStatusCode.OK) {
+            throw Exception("Kunne ikke generere PDF. Fikk status ${pdfGeneratorResponse.status}")
+        }
 
         val pdf: ByteArray = pdfGeneratorResponse.body()
 

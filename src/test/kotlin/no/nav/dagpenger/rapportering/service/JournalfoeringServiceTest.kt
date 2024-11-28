@@ -79,6 +79,46 @@ class JournalfoeringServiceTest {
     }
 
     @Test
+    fun `Kan lagre data midlertidig ved feil ved generering av PDF`() {
+        setProperties()
+
+        // Oppretter rapporteringsperiode
+        val rapporteringsperiode = createRapporteringsperiode(false)
+
+        // Mock svar fra PDFgenerator
+        val mockPdfGeneratorEngine =
+            MockEngine { _ ->
+                respond(
+                    content = ByteReadChannel.Empty,
+                    status = HttpStatusCode.BadGateway,
+                    headers = headersOf(HttpHeaders.ContentType, "application/pdf"),
+                )
+            }
+
+        // Mock
+        val journalfoeringRepository = mockk<JournalfoeringRepository>()
+        coEvery { journalfoeringRepository.lagreDataMidlertidig(any()) } just runs
+
+        val kallLoggRepository = mockk<KallLoggRepository>()
+
+        val journalfoeringService =
+            JournalfoeringService(
+                journalfoeringRepository,
+                kallLoggRepository,
+                createHttpClient(mockPdfGeneratorEngine),
+                meterRegistry,
+            )
+
+        // Prøver å journalføre
+        runBlocking {
+            journalfoeringService.journalfoer(ident, navn, loginLevel, headers, rapporteringsperiode)
+        }
+
+        // Får feil og sjekker at JournalfoeringService lagrer data midlertidig
+        coVerify(exactly = 1) { journalfoeringRepository.lagreDataMidlertidig(any()) }
+    }
+
+    @Test
     fun `Kan lagre data midlertidig ved feil og sende paa nytt`() {
         setProperties()
 
