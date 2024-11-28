@@ -10,7 +10,9 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
+import io.ktor.http.HeadersImpl
 import io.ktor.http.contentType
+import io.ktor.util.toMap
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
@@ -92,7 +94,7 @@ class JournalfoeringService(
                     midlertidigLagretData.ident,
                     midlertidigLagretData.navn,
                     midlertidigLagretData.loginLevel,
-                    midlertidigLagretData.headers,
+                    HeadersImpl(midlertidigLagretData.headers),
                     midlertidigLagretData.rapporteringsperiode,
                 )
 
@@ -122,7 +124,7 @@ class JournalfoeringService(
             opprettOgSendBehov(ident, navn, loginLevel, headers, rapporteringsperiode)
         } catch (e: Exception) {
             logger.warn("Feil ved journalføring", e)
-            lagreDataMidlertidig(MidlertidigLagretData(ident, navn, loginLevel, headers, rapporteringsperiode))
+            lagreDataMidlertidig(MidlertidigLagretData(ident, navn, loginLevel, headers.toMap(), rapporteringsperiode))
         }
     }
 

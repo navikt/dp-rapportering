@@ -16,6 +16,7 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import io.ktor.util.toMap
 import io.ktor.utils.io.ByteReadChannel
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -107,7 +108,7 @@ class JournalfoeringServiceTest {
                         ident,
                         navn,
                         loginLevel,
-                        headers,
+                        headers.toMap(),
                         rapporteringsperiode,
                     ),
                     0,

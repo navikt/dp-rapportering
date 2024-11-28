@@ -1,11 +1,9 @@
 package no.nav.dagpenger.rapportering.model
 
-import io.ktor.http.Headers
-
 data class MidlertidigLagretData(
     val ident: String,
     val navn: String,
     val loginLevel: Int,
-    val headers: Headers,
+    val headers: Map<String, List<String>>,
     val rapporteringsperiode: Rapporteringsperiode,
 )
