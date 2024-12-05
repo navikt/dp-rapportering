@@ -173,15 +173,11 @@ class RapporteringRepositoryPostgres(
     ) = actionTimer.timedAction("db-lagreRapporteringsperiodeOgDager") {
         using(sessionOf(dataSource)) { session ->
             session.transaction { tx ->
-                val lagretPeriode =
-                    tx.run(
-                        // Sjekker at rapporteringsperioden finnes
-                        queryOf("SELECT id FROM rapporteringsperiode WHERE id = ?", rapporteringsperiode.id)
-                            .map { row -> row.long("id") }
-                            .asSingle,
-                    )
-                if (lagretPeriode == null) {
-                    tx.lagreRapporteringsperiode(rapporteringsperiode, ident).validateRowsAffected()
+                // Vi skal få 1 når INSERT i lagreRapporteringsperiode går som normalt
+                // Vi skal få 0 når INSERT i lagreRapporteringsperiode får CONFLICT
+                // Men siden vi har ON CONFLICT DO NOTHING, skal vi ikke få feil og skal bare svare OK
+                // lagreRapporteringsperiode skal kaste exception når noe annet er galt
+                if (tx.lagreRapporteringsperiode(rapporteringsperiode, ident) == 1) {
                     tx.lagreDager(rapporteringsperiode.id, rapporteringsperiode.dager).validateRowsAffected(excepted = 14)
                 }
             }
@@ -204,6 +200,7 @@ class RapporteringRepositoryPostgres(
                 INSERT INTO rapporteringsperiode 
                 (id, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id, rapporteringstype) 
                 VALUES (:id, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id, :rapporteringstype)
+                ON CONFLICT DO NOTHING
                 """.trimIndent(),
                 mapOf(
                     "id" to rapporteringsperiode.id,
