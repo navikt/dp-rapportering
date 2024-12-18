@@ -71,7 +71,7 @@ internal object Configuration {
                 .tokenExchange(
                     token = subjectToken,
                     audience = audience,
-                ).accessToken
+                ).access_token
         }
 
     private val azureAd by lazy {
@@ -86,7 +86,7 @@ internal object Configuration {
         { audience: String ->
             azureAd
                 .clientCredentials(audience)
-                .accessToken
+                .access_token
         }
 
     val defaultObjectMapper: ObjectMapper =
