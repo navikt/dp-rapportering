@@ -21,30 +21,31 @@ internal class RapporteringJournalførtMottak(
 ) : River.PacketListener {
     private companion object {
         private val logger = KotlinLogging.logger {}
-        private val sikkerlogg = KotlinLogging.logger("tjenestekall.${this::class.java.simpleName}")
+        private val sikkerlogg = KotlinLogging.logger("tjenestekall.RapporteringJournalførtMottak")
     }
 
     private val behov = MineBehov.JournalføreRapportering.name
 
     init {
-        River(rapidsConnection).apply {
-            precondition { it.requireValue("@event_name", "behov") }
-            precondition { it.requireAll("@behov", listOf(behov)) }
-            validate { it.requireKey("@løsning") }
-            validate { it.requireValue("@final", true) }
-            validate {
-                it.require(behov) { behov ->
-                    behov.required("periodeId")
-                    behov.required("kallLoggId")
+        River(rapidsConnection)
+            .apply {
+                precondition { it.requireValue("@event_name", "behov") }
+                precondition { it.requireAll("@behov", listOf(behov)) }
+                validate { it.requireKey("@løsning") }
+                validate { it.requireValue("@final", true) }
+                validate {
+                    it.require(behov) { behov ->
+                        behov.required("periodeId")
+                        behov.required("kallLoggId")
+                    }
                 }
-            }
-            validate {
-                it.require("@løsning") { løsning ->
-                    løsning.required(behov)
+                validate {
+                    it.require("@løsning") { løsning ->
+                        løsning.required(behov)
+                    }
                 }
-            }
-            validate { it.interestedIn("@id", "@opprettet") }
-        }.register(this)
+                validate { it.interestedIn("@id", "@opprettet", "@behovId") }
+            }.register(this)
     }
 
     override fun onPacket(
@@ -53,6 +54,7 @@ internal class RapporteringJournalførtMottak(
         metadata: MessageMetadata,
         meterRegistry: MeterRegistry,
     ) {
+        val behovId = packet["@behovId"].asText()
         val periodeId = packet[behov]["periodeId"].asText()
         val kallLoggId = packet[behov]["kallLoggId"].asLong()
         val journalpostId = packet["@løsning"][behov].asLong()
@@ -60,8 +62,16 @@ internal class RapporteringJournalførtMottak(
         packet[behov] = "SE TILSVARENDE REQUEST" // Bare for å spare litt plass i vår DB
 
         withLoggingContext(
+            "behovId" to behovId,
             "periodeId" to periodeId,
         ) {
+            if (packet["@id"].asText() in listOf("84478f4a-f27d-4dcb-adf4-b627c7a03872")) {
+                logger.warn {
+                    "Ignorerer melding fordi den inneholder en duplikat journalføring, periodeId=$periodeId, journalpostId=$journalpostId"
+                }
+                return
+            }
+
             logger.info { "Fått løsning for JournalføreRapportering for $periodeId" }
             sikkerlogg.info { "Fått løsning for JournalføreRapportering for $periodeId. Packet: ${packet.toJson()}" }
 
