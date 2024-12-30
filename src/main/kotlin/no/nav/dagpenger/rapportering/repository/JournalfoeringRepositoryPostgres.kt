@@ -23,7 +23,8 @@ class JournalfoeringRepositoryPostgres(
                 .run(
                     queryOf(
                         "INSERT INTO opprettede_journalposter (journalpost_id, dokumentinfo_id, rapportering_id) " +
-                            "VALUES (?, ?, ?)",
+                            "VALUES (?, ?, ?) " +
+                            "ON CONFLICT DO NOTHING",
                         journalpostId,
                         dokumentInfoId,
                         rapporteringsperiodeId,
