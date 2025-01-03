@@ -388,14 +388,23 @@ class RapporteringService(
 
     suspend fun slettMellomlagredeRapporteringsperioder(): Int {
         var innsendtePerioder = 0
+        var midlertidigePerioder = 0
         var foreldredePerioder = 0
 
         // Sletter innsendte rapporteringsperioder
         rapporteringRepository
-            .hentRapporteringsperiodeIdForInnsendteOgMidlertidigePerioder()
+            .hentRapporteringsperiodeIdForInnsendtePerioder()
             .also {
                 logger.info { "Sletter ${it.size} innsendte rapporteringsperioder" }
                 innsendtePerioder = it.size
+            }.forEach { slettRapporteringsperiode(it) }
+
+        // Sletter midlertidige rapporteringsperioder
+        rapporteringRepository
+            .hentRapporteringsperiodeIdForMidlertidigePerioder()
+            .also {
+                logger.info { "Sletter ${it.size} midlertidige rapporteringsperioder" }
+                midlertidigePerioder = it.size
             }.forEach { slettRapporteringsperiode(it) }
 
         // Sletter rapporteringsperioder som ikke er sendt inn til siste frist
@@ -406,7 +415,7 @@ class RapporteringService(
                 foreldredePerioder = it.size
             }.forEach { slettRapporteringsperiode(it) }
 
-        return innsendtePerioder + foreldredePerioder
+        return innsendtePerioder + midlertidigePerioder + foreldredePerioder
     }
 
     private suspend fun slettRapporteringsperiode(periodeId: Long) =

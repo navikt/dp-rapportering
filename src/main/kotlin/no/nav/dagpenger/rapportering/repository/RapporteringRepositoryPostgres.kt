@@ -59,13 +59,26 @@ class RapporteringRepositoryPostgres(
             }.let { it != null }
         }
 
-    override suspend fun hentRapporteringsperiodeIdForInnsendteOgMidlertidigePerioder(): List<Long> =
+    override suspend fun hentRapporteringsperiodeIdForInnsendtePerioder(): List<Long> =
         actionTimer.timedAction("db-hentRapporteringsperiodeIdForInnsendtePerioder") {
             using(sessionOf(dataSource)) { session ->
                 session.run(
                     queryOf(
-                        "SELECT id FROM rapporteringsperiode WHERE status = ? or status = ?",
+                        "SELECT id FROM rapporteringsperiode WHERE status = ? AND mottatt_dato <= CURRENT_DATE - INTERVAL '5 days'",
                         RapporteringsperiodeStatus.Innsendt.name,
+                    )
+                        .map { it.long("id") }
+                        .asList,
+                )
+            }
+        }
+
+    override suspend fun hentRapporteringsperiodeIdForMidlertidigePerioder(): List<Long> =
+        actionTimer.timedAction("db-hentRapporteringsperiodeIdForMidlertidigePerioder") {
+            using(sessionOf(dataSource)) { session ->
+                session.run(
+                    queryOf(
+                        "SELECT id FROM rapporteringsperiode WHERE status = ?",
                         RapporteringsperiodeStatus.Midlertidig.name,
                     )
                         .map { it.long("id") }

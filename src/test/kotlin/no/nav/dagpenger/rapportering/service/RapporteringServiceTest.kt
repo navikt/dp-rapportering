@@ -676,7 +676,22 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan slette mellomlagrede rapporteringsperioder som er sendt inn`() {
-        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForInnsendteOgMidlertidigePerioder() } returns
+        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForInnsendtePerioder() } returns
+            listOf(rapporteringsperiodeListe.first().id)
+        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForMidlertidigePerioder() } returns emptyList()
+        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForPerioderEtterSisteFrist() } returns emptyList()
+        coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
+
+        val slettedePerioder = runBlocking { rapporteringService.slettMellomlagredeRapporteringsperioder() }
+
+        coVerify(exactly = 1) { rapporteringRepository.slettRaporteringsperiode(3) }
+        slettedePerioder shouldBe 1
+    }
+
+    @Test
+    fun `kan slette midlertidige rapporteringsperioder`() {
+        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForInnsendtePerioder() } returns emptyList()
+        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForMidlertidigePerioder() } returns
             listOf(rapporteringsperiodeListe.first().id)
         coEvery { rapporteringRepository.hentRapporteringsperiodeIdForPerioderEtterSisteFrist() } returns emptyList()
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
@@ -689,7 +704,8 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan slette mellomlagrede rapporteringsperioder som er ikke er sendt inn innen siste frist`() {
-        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForInnsendteOgMidlertidigePerioder() } returns emptyList()
+        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForInnsendtePerioder() } returns emptyList()
+        coEvery { rapporteringRepository.hentRapporteringsperiodeIdForMidlertidigePerioder() } returns emptyList()
         coEvery { rapporteringRepository.hentRapporteringsperiodeIdForPerioderEtterSisteFrist() } returns
             rapporteringsperiodeListe.map { it.id }
         coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }

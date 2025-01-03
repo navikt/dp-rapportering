@@ -2,6 +2,9 @@ package no.nav.dagpenger.rapportering.repository
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
@@ -83,14 +86,50 @@ class RapporteringRepositoryPostgresTest {
                 ident = ident,
             )
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = getRapporteringsperiode(id = 3L, status = Innsendt),
+                ident = ident,
+            )
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = getRapporteringsperiode(id = 4L, status = Midlertidig),
+                ident = ident,
+            )
+
+            // Mock LocalDate.now slik at vi kan sette mottattDato tilbake i tid
+            val date = LocalDate.now().minusDays(10)
+            mockkStatic(LocalDate::class)
+            every { LocalDate.now() } returns date
+
+            //
+            rapporteringRepositoryPostgres.oppdaterPeriodeEtterInnsending(3L, ident, false, false, Innsendt, true)
+
+            unmockkAll()
+
+            with(rapporteringRepositoryPostgres.hentRapporteringsperiodeIdForInnsendtePerioder()) {
+                size shouldBe 1
+                get(0) shouldBe 3L
+            }
+        }
+    }
+
+    @Test
+    fun `kan hente id for alle midlertidige rapporteringsperioder`() {
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = getRapporteringsperiode(1L),
+                ident = ident,
+            )
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
+                rapporteringsperiode = getRapporteringsperiode(id = 2L, status = Innsendt),
+                ident = ident,
+            )
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
                 rapporteringsperiode = getRapporteringsperiode(id = 3L, status = Midlertidig),
                 ident = ident,
             )
 
-            with(rapporteringRepositoryPostgres.hentRapporteringsperiodeIdForInnsendteOgMidlertidigePerioder()) {
-                size shouldBe 2
-                get(0) shouldBe 2L
-                get(1) shouldBe 3L
+            with(rapporteringRepositoryPostgres.hentRapporteringsperiodeIdForMidlertidigePerioder()) {
+                size shouldBe 1
+                get(0) shouldBe 3L
             }
         }
     }
