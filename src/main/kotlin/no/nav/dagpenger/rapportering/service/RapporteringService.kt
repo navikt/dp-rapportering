@@ -316,6 +316,11 @@ class RapporteringService(
         loginLevel: Int,
         headers: Headers,
     ): InnsendingResponse {
+        val lagretRapporteringsperiode = rapporteringRepository.hentRapporteringsperiode(rapporteringsperiode.id, ident)
+        if (lagretRapporteringsperiode != null && !lagretRapporteringsperiode.kanSendes) {
+            throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
+        }
+
         kontrollerRapporteringsperiode(rapporteringsperiode)
 
         var periodeTilInnsending = rapporteringsperiode
