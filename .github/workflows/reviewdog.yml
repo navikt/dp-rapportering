@@ -5,7 +5,8 @@ jobs:
   code-style-violations:
     name: Check coding style violations
     runs-on: ubuntu-latest
-
+    permissions:
+        contents: read
     steps:
       - uses: actions/checkout@v4
       - name: ktlint

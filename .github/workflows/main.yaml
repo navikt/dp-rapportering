@@ -6,10 +6,6 @@ on:
     paths-ignore:
       - '.github/workflows/reviewdog.yaml'
 
-permissions:
-  contents: "read"
-  id-token: "write"
-
 jobs:
   build:
     name: Build and publish Docker image
@@ -45,6 +41,9 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: dev-gcp
+    permissions:
+        contents: read
+        id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: nais/deploy/actions/deploy@v2
@@ -61,6 +60,9 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: prod-gcp
+    permissions:
+        contents: read
+        id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: nais/deploy/actions/deploy@v2
