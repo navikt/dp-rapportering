@@ -22,10 +22,10 @@ internal object PostgresDataSourceBuilder {
             jdbcUrl = getOrThrow(DB_URL_KEY) + "&tcpKeepAlive=true"
             maximumPoolSize = 10
             minimumIdle = 1
-            idleTimeout = 10001
-            connectionTimeout = 1000
-            maxLifetime = 30001
-            initializationFailTimeout = 5000
+            idleTimeout = 10000 // 10s
+            connectionTimeout = 5000 // 5s
+            maxLifetime = 30000 // 30s
+            initializationFailTimeout = 5000 // 5s
         }
     }
     private val flyWayBuilder: FluentConfiguration =
