@@ -70,7 +70,7 @@ internal fun Application.rapporteringApi(
                 }
 
                 is IllegalArgumentException -> {
-                    logger.info(cause) { "Kunne ikke håndtere API kall - Bad request" }
+                    logger.error(cause) { "Kunne ikke håndtere API kall - Bad request" }
                     meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
@@ -80,7 +80,7 @@ internal fun Application.rapporteringApi(
                 }
 
                 is NotFoundException -> {
-                    logger.info(cause) { "Kunne ikke håndtere API kall - Ikke funnet" }
+                    logger.error(cause) { "Kunne ikke håndtere API kall - Ikke funnet" }
                     meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
@@ -90,7 +90,7 @@ internal fun Application.rapporteringApi(
                 }
 
                 is BadRequestException -> {
-                    logger.error(cause) { "Kunne ikke håndtere API kall - feil i request" }
+                    logger.error(cause) { "Kunne ikke håndtere API kall - Feil i request" }
                     meldepliktMetrikker.rapporteringApiFeil.increment()
 
                     call.respond(
