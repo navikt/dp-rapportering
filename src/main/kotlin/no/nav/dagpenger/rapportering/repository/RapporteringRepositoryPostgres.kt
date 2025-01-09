@@ -453,13 +453,6 @@ class RapporteringRepositoryPostgres(
         actionTimer.timedAction("db-slettRaporteringsperiode") {
             using(sessionOf(dataSource)) { session ->
                 session.transaction { tx ->
-                    tx.run(
-                        // Sjekker at rapporteringsperioden finnes
-                        queryOf("SELECT id FROM rapporteringsperiode WHERE id = ?", rapporteringId)
-                            .map { row -> row.long("id") }
-                            .asSingle,
-                    ) ?: throw RuntimeException("Finner ikke rapporteringsperiode med id: $rapporteringId")
-
                     // Henter ut id for alle dagene i rapporteringsperioden
                     val dagIdListe = (0..13).map { dagIndex -> runBlocking { hentDagId(rapporteringId, dagIndex) } }
 
