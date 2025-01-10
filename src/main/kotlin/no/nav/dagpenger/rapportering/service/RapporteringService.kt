@@ -397,11 +397,12 @@ class RapporteringService(
                         }
                     }
                 } else {
+                    // Oppdaterer perioden slik at den kan sendes inn på nytt
                     rapporteringRepository.oppdaterPeriodeEtterInnsending(
                         rapporteringId = periodeTilInnsending.id,
                         ident = ident,
                         kanEndres = periodeTilInnsending.begrunnelseEndring == null && periodeTilInnsending.originalId == null,
-                        kanSendes = true,
+                        kanSendes = periodeTilInnsending.kanSendes,
                         status = periodeTilInnsending.status,
                     )
                     logger.warn { "Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}: $response" }
