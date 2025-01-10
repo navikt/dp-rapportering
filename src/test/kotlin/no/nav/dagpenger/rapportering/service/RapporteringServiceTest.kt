@@ -500,7 +500,8 @@ class RapporteringServiceTest {
         val rapporteringsperiode = rapporteringsperiodeListe.first().copy(registrertArbeidssoker = true)
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
-        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, any(), false, any(), false) }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, true, false, Innsendt) }
         coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
         coEvery { meldepliktConnector.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
