@@ -404,6 +404,7 @@ class RapporteringService(
                         kanEndres = periodeTilInnsending.begrunnelseEndring == null && periodeTilInnsending.originalId == null,
                         kanSendes = periodeTilInnsending.kanSendes,
                         status = periodeTilInnsending.status,
+                        oppdaterMottattDato = false,
                     )
                     logger.warn { "Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}: $response" }
                 }
