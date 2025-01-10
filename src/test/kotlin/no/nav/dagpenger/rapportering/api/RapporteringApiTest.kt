@@ -162,6 +162,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 periode.id shouldBe 123L
                 periode.status shouldBe TilUtfylling
                 periode.kanSendes shouldBe true
+                periode.mottattDato shouldBe null
             }
         }
 
