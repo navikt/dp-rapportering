@@ -24,8 +24,7 @@ internal class SlettRapporteringsperioderJob(
     private val logger = KotlinLogging.logger { }
     private val metrikker: JobbkjoringMetrikker = JobbkjoringMetrikker(meterRegistry, this::class.simpleName!!)
 
-    // Tidspunkt for kjøring er satt til et tilfeldig tidspunkt mellom 00:00 og 00:10
-    private val tidspunktForKjoring = LocalTime.of(0, Random.nextInt(10))
+    private val tidspunktForKjoring = LocalTime.of(0, 50)
     private val naa = ZonedDateTime.now()
     private val tidspunktForNesteKjoring = naa.with(tidspunktForKjoring).plusDays(1)
     private val millisekunderTilNesteKjoring =
