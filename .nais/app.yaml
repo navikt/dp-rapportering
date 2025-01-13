@@ -24,6 +24,8 @@ spec:
   kafka:
     pool: {{ kafka.pool }}
 
+  leaderElection: true
+
   env:
     - name: BEREGNINGSDATO_STRATEGI
       value: {{beregningsdato.strategi}}

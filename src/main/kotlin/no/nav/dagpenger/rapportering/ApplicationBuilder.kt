@@ -51,7 +51,7 @@ class ApplicationBuilder(
     private val databaseMetrikker = DatabaseMetrikker(meterRegistry)
     private val actionTimer = ActionTimer(meterRegistry)
 
-    private val slettRapporteringsperioderJob = SlettRapporteringsperioderJob(meterRegistry)
+    private val slettRapporteringsperioderJob = SlettRapporteringsperioderJob(meterRegistry, httpClient)
     private val rapporterDatabaseMetrikker = RapporterDatabaseMetrikkerJob(databaseMetrikker)
 
     private val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
