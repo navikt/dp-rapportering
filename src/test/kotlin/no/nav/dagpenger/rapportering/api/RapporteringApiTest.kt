@@ -128,6 +128,14 @@ class RapporteringApiTest : ApiTestSetup() {
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter(
+                    rapporteringsperioderResponse =
+                        listOf(
+                            adapterRapporteringsperiode(
+                                id = 123L,
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                status = AdapterRapporteringsperiodeStatus.TilUtfylling,
+                            ),
+                        ),
                     sendInnResponse =
                         InnsendingResponse(
                             id = 123L,
@@ -137,11 +145,24 @@ class RapporteringApiTest : ApiTestSetup() {
                 )
             }
 
+            // Lagrer perioden i databasen
+            client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
+
             with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(registrertArbeidssoker = true))) {
                 status shouldBe HttpStatusCode.BadRequest
                 val innsendingResponse = defaultObjectMapper.readValue<InnsendingResponse>(bodyAsText())
                 innsendingResponse.id shouldBe 123L
                 innsendingResponse.status shouldBe "FEIL"
+            }
+
+            // Sjekker at perioden ikke er sendt
+            with(client.doGet("/rapporteringsperiode/123", issueToken(fnr))) {
+                status shouldBe HttpStatusCode.OK
+                val periode = defaultObjectMapper.readValue<Rapporteringsperiode>(bodyAsText())
+                periode.id shouldBe 123L
+                periode.status shouldBe TilUtfylling
+                periode.kanSendes shouldBe true
+                periode.mottattDato shouldBe null
             }
         }
 

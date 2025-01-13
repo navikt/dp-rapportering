@@ -325,6 +325,16 @@ class RapporteringService(
 
         var periodeTilInnsending = rapporteringsperiode
 
+        // Oppdaterer perioden slik at den ikke kan sendes inn på nytt
+        rapporteringRepository.oppdaterPeriodeEtterInnsending(
+            rapporteringId = rapporteringsperiode.id,
+            ident = ident,
+            kanEndres = rapporteringsperiode.kanEndres,
+            kanSendes = false,
+            status = rapporteringsperiode.status,
+            oppdaterMottattDato = false,
+        )
+
         if (rapporteringsperiode.status == TilUtfylling && rapporteringsperiode.originalId != null) {
             if (rapporteringsperiode.begrunnelseEndring.isNullOrBlank()) {
                 throw BadRequestException(
@@ -338,7 +348,8 @@ class RapporteringService(
                 // Oppretter nye ID for aktiviteter slik at vi kan lagre både original og midlertidig periode
                 val dager =
                     rapporteringsperiode
-                        .dager.map { dag ->
+                        .dager
+                        .map { dag ->
                             Dag(
                                 dag.dato,
                                 dag.aktiviteter.map { aktivitet -> Aktivitet(UUID.randomUUID(), aktivitet.type, aktivitet.timer) },
@@ -386,6 +397,15 @@ class RapporteringService(
                         }
                     }
                 } else {
+                    // Oppdaterer perioden slik at den kan sendes inn på nytt
+                    rapporteringRepository.oppdaterPeriodeEtterInnsending(
+                        rapporteringId = periodeTilInnsending.id,
+                        ident = ident,
+                        kanEndres = periodeTilInnsending.begrunnelseEndring == null && periodeTilInnsending.originalId == null,
+                        kanSendes = periodeTilInnsending.kanSendes,
+                        status = periodeTilInnsending.status,
+                        oppdaterMottattDato = false,
+                    )
                     logger.warn { "Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}: $response" }
                 }
             }
