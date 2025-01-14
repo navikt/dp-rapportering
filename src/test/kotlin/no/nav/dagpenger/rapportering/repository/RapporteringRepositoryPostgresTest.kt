@@ -143,7 +143,7 @@ class RapporteringRepositoryPostgresTest {
                 ident = ident,
             )
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
-                rapporteringsperiode = getRapporteringsperiode(2L, Periode(now.minusDays(22), now.minusDays(9))),
+                rapporteringsperiode = getRapporteringsperiode(2L, Periode(now.minusDays(43), now.minusDays(30))),
                 ident = ident,
             )
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(

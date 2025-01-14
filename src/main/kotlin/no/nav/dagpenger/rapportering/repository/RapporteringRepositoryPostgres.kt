@@ -87,12 +87,16 @@ class RapporteringRepositoryPostgres(
             }
         }
 
+    // Vi må slette gamle meldekort av hensyn til personvernet
+    // Men vi må samtidig gi nok tid slik at man kan sende meldekort selv om frist for trekk er passert
+    // Bruker tas ut av arbeidssøkerregisteret når det har gått mer enn 20 dager siden siste innsendt meldekort
+    // Da er det OK å slette meldekort etter 30 dager fra TOM-datoen
     override suspend fun hentRapporteringsperiodeIdForPerioderEtterSisteFrist(): List<Long> =
         actionTimer.timedAction("db-hentRapporteringsperiodeIdForPerioderEtterSisteFrist") {
             using(sessionOf(dataSource)) { session ->
                 session.run(
-                    queryOf("SELECT id FROM rapporteringsperiode WHERE tom <= CURRENT_DATE - INTERVAL '9 days'")
-                        .map { it.long("id") }
+                    queryOf("SELECT id FROM rapporteringsperiode WHERE tom <= CURRENT_DATE - INTERVAL '30 days'")
+                        .map { it.long("id") } //
                         .asList,
                 )
             }
