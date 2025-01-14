@@ -50,8 +50,8 @@ class JournalfoeringService(
 ) {
     companion object : KLogging()
 
-    private val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.YYYY")
-    private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.YYYY HH:mm")
+    private val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+    private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
     private var locale: Locale? = Locale.of("nb", "NO") // Vi skal regne ukenummer iht norske regler
     private val woy = WeekFields.of(locale).weekOfWeekBasedYear()
 
