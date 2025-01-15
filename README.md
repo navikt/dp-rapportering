@@ -7,7 +7,10 @@ Endepunktene benyttes av [**`dp-rapportering-frontend`**][dp-rapportering-fronte
 - Henter og sender rapporteringsperioder via [**`dp-arena-meldeplikt-adapter`**][dp-arena-meldeplikt-adapter] som 
 konverterer meldekort til rapporteringsperioder og motsatt.
 - Mellomlagrer rapporteringsperioder som er til utfylling. 
-- Mellomlagrede rapporteringsperioder som er sendt inn eller som er forbi siste frist for innsending blir slettet av en jobb som kjører hver natt.
+- Slettejobb kjører hver natt:
+  - Mellomlagrede rapporteringsperioder som er sendt inn blir slettet 5 dager etter innsending. 
+  - Mellomlagrede rapporteringsperioder som er forbi siste frist for innsending (og ikke er sendt inn) blir slettet 30 dager etter siste dag i perioden.
+  - Midlertidige rapporteringsperioder som blir opprettet i forbinnelse med endring/korrigering blir slettet hver natt.
 - Jornalfører innsendte rapporteringsperioder i dokarkiv.
 - Kall-logg for alle innkommende og utgående kall lagres i 90 dager.
 
