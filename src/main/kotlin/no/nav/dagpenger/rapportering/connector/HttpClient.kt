@@ -18,7 +18,7 @@ fun createHttpClient(engine: HttpClientEngine) =
 
         install(HttpTimeout) {
             connectTimeoutMillis = Duration.ofSeconds(60).toMillis()
-            requestTimeoutMillis = Duration.ofSeconds(60).toMillis()
+            requestTimeoutMillis = Duration.ofSeconds(100).toMillis() // Adapter gjør 3 forsøk med 30s timeout + 10s
             socketTimeoutMillis = Duration.ofSeconds(60).toMillis()
         }
 
