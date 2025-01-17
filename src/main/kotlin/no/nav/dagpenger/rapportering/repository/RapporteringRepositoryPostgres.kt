@@ -96,7 +96,7 @@ class RapporteringRepositoryPostgres(
             using(sessionOf(dataSource)) { session ->
                 session.run(
                     queryOf("SELECT id FROM rapporteringsperiode WHERE tom <= CURRENT_DATE - INTERVAL '30 days'")
-                        .map { it.long("id") } //
+                        .map { it.long("id") }
                         .asList,
                 )
             }
@@ -462,7 +462,7 @@ class RapporteringRepositoryPostgres(
                         queryOf("SELECT id FROM rapporteringsperiode WHERE id = ?", rapporteringId)
                             .map { row -> row.long("id") }
                             .asSingle,
-                    ) ?: return@using
+                    ) ?: throw RuntimeException("Finner ikke rapporteringsperiode med id: $rapporteringId")
 
                     // Henter ut id for alle dagene i rapporteringsperioden
                     val dagIdListe = (0..13).map { dagIndex -> runBlocking { hentDagId(rapporteringId, dagIndex) } }
