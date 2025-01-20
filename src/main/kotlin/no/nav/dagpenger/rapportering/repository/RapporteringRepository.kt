@@ -36,6 +36,8 @@ interface RapporteringRepository {
 
     suspend fun hentAktiviteter(dagId: UUID): List<Aktivitet>
 
+    suspend fun hentKanSendes(rapporteringId: Long): Boolean?
+
     suspend fun lagreRapporteringsperiodeOgDager(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
@@ -62,6 +64,12 @@ interface RapporteringRepository {
         rapporteringId: Long,
         ident: String,
         begrunnelse: String,
+    )
+
+    suspend fun settKanSendes(
+        rapporteringId: Long,
+        ident: String,
+        kanSendes: Boolean,
     )
 
     suspend fun oppdaterRapporteringstype(

@@ -171,10 +171,20 @@ class RapporteringApiTest : ApiTestSetup() {
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter(
+                    rapporteringsperioderResponse =
+                        listOf(
+                            adapterRapporteringsperiode(
+                                id = 123L,
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                status = AdapterRapporteringsperiodeStatus.TilUtfylling,
+                            ),
+                        ),
                     sendInnResponseStatus = HttpStatusCode.InternalServerError,
                     sendInnResponse = null,
                 )
             }
+
+            client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
 
             with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(registrertArbeidssoker = true))) {
                 status shouldBe HttpStatusCode.InternalServerError

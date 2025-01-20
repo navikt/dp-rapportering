@@ -499,7 +499,8 @@ class RapporteringServiceTest {
     fun `kan sende inn rapporteringsperiode`() {
         val rapporteringsperiode = rapporteringsperiodeListe.first().copy(registrertArbeidssoker = true)
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
-        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
+        coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
+        coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, any(), false, any(), false) }
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, true, false, Innsendt) }
         coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
@@ -550,7 +551,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan ikke sende inn rapporteringsperiode som ikke kan sendes`() {
-        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
+        coEvery { rapporteringRepository.hentKanSendes(any()) } returns false
 
         shouldThrow<BadRequestException> {
             runBlocking {
@@ -577,7 +578,8 @@ class RapporteringServiceTest {
                 registrertArbeidssoker = true,
             )
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
-        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
+        coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
+        coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any(), false) }
         coEvery { meldepliktConnector.hentEndringId(any(), any()) } returns endringId
@@ -635,7 +637,8 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan ikke sende inn endret rapporteringsperiode uten begrunnelse`() {
-        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
+        coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
+        coJustRun { rapporteringRepository.settKanSendes(any(), any(), false) }
 
         shouldThrow<BadRequestException> {
             runBlocking {

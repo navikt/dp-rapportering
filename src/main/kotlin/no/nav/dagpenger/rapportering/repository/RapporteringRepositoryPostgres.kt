@@ -66,8 +66,7 @@ class RapporteringRepositoryPostgres(
                     queryOf(
                         "SELECT id FROM rapporteringsperiode WHERE status = ? AND mottatt_dato <= CURRENT_DATE - INTERVAL '5 days'",
                         RapporteringsperiodeStatus.Innsendt.name,
-                    )
-                        .map { it.long("id") }
+                    ).map { it.long("id") }
                         .asList,
                 )
             }
@@ -80,8 +79,7 @@ class RapporteringRepositoryPostgres(
                     queryOf(
                         "SELECT id FROM rapporteringsperiode WHERE status = ?",
                         RapporteringsperiodeStatus.Midlertidig.name,
-                    )
-                        .map { it.long("id") }
+                    ).map { it.long("id") }
                         .asList,
                 )
             }
@@ -180,6 +178,19 @@ class RapporteringRepositoryPostgres(
                         "SELECT * FROM aktivitet WHERE dag_id = ?",
                         dagId,
                     ).map { it.toAktivitet() }.asList,
+                )
+            }
+        }
+
+    override suspend fun hentKanSendes(rapporteringId: Long): Boolean? =
+        actionTimer.timedAction("db-hentKanSendes") {
+            using(sessionOf(dataSource)) { session ->
+                session.run(
+                    queryOf(
+                        "SELECT kan_sendes FROM rapporteringsperiode WHERE id = ?",
+                        rapporteringId,
+                    ).map { it.boolean("kan_sendes") }
+                        .asSingle,
                 )
             }
         }
@@ -363,6 +374,32 @@ class RapporteringRepositoryPostgres(
                             """.trimIndent(),
                             mapOf(
                                 "begrunnelse" to begrunnelse,
+                                "id" to rapporteringId,
+                                "ident" to ident,
+                            ),
+                        ).asUpdate,
+                    ).validateRowsAffected()
+            }
+        }
+    }
+
+    override suspend fun settKanSendes(
+        rapporteringId: Long,
+        ident: String,
+        kanSendes: Boolean,
+    ) = actionTimer.timedAction("db-settKanSendes") {
+        using(sessionOf(dataSource)) { session ->
+            session.transaction { tx ->
+                tx
+                    .run(
+                        queryOf(
+                            """
+                            UPDATE rapporteringsperiode
+                            SET kan_sendes = :kanSendes
+                            WHERE id = :id AND ident = :ident
+                            """.trimIndent(),
+                            mapOf(
+                                "kanSendes" to kanSendes,
                                 "id" to rapporteringId,
                                 "ident" to ident,
                             ),

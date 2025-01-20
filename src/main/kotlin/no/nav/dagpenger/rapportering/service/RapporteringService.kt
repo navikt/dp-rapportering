@@ -316,24 +316,20 @@ class RapporteringService(
         loginLevel: Int,
         headers: Headers,
     ): InnsendingResponse {
-        val lagretRapporteringsperiode = rapporteringRepository.hentRapporteringsperiode(rapporteringsperiode.id, ident)
-        if (lagretRapporteringsperiode != null && !lagretRapporteringsperiode.kanSendes) {
+        val kanSendes = rapporteringRepository.hentKanSendes(rapporteringsperiode.id)
+        if (kanSendes == null || !kanSendes) {
             throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
         }
+        // Oppdaterer perioden slik at den ikke kan sendes inn på nytt
+        rapporteringRepository.settKanSendes(
+            rapporteringId = rapporteringsperiode.id,
+            ident = ident,
+            kanSendes = false,
+        )
 
         kontrollerRapporteringsperiode(rapporteringsperiode)
 
         var periodeTilInnsending = rapporteringsperiode
-
-        // Oppdaterer perioden slik at den ikke kan sendes inn på nytt
-        rapporteringRepository.oppdaterPeriodeEtterInnsending(
-            rapporteringId = rapporteringsperiode.id,
-            ident = ident,
-            kanEndres = rapporteringsperiode.kanEndres,
-            kanSendes = false,
-            status = rapporteringsperiode.status,
-            oppdaterMottattDato = false,
-        )
 
         if (rapporteringsperiode.status == TilUtfylling && rapporteringsperiode.originalId != null) {
             if (rapporteringsperiode.begrunnelseEndring.isNullOrBlank()) {
@@ -398,13 +394,10 @@ class RapporteringService(
                     }
                 } else {
                     // Oppdaterer perioden slik at den kan sendes inn på nytt
-                    rapporteringRepository.oppdaterPeriodeEtterInnsending(
+                    rapporteringRepository.settKanSendes(
                         rapporteringId = periodeTilInnsending.id,
                         ident = ident,
-                        kanEndres = periodeTilInnsending.begrunnelseEndring == null && periodeTilInnsending.originalId == null,
                         kanSendes = periodeTilInnsending.kanSendes,
-                        status = periodeTilInnsending.status,
-                        oppdaterMottattDato = false,
                     )
                     logger.warn { "Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}: $response" }
                 }
