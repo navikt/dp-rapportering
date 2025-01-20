@@ -529,12 +529,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan ikke sende inn rapporteringsperiode som allerede ble sendt`() {
-        coEvery {
-            rapporteringRepository.hentRapporteringsperiode(
-                any(),
-                any(),
-            )
-        } returns rapporteringsperiodeListe.first().copy(kanSendes = false)
+        coEvery { rapporteringRepository.hentKanSendes(any()) } returns false
 
         shouldThrow<BadRequestException> {
             runBlocking {
@@ -557,6 +552,23 @@ class RapporteringServiceTest {
             runBlocking {
                 rapporteringService.sendRapporteringsperiode(
                     rapporteringsperiodeListe.first().copy(kanSendes = false),
+                    token,
+                    ident,
+                    loginLevel,
+                    headers,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `kan ikke sende inn rapporteringsperiode som ikke finnes i databasen`() {
+        coEvery { rapporteringRepository.hentKanSendes(any()) } returns null
+
+        shouldThrow<BadRequestException> {
+            runBlocking {
+                rapporteringService.sendRapporteringsperiode(
+                    rapporteringsperiodeListe.first().copy(kanSendes = true),
                     token,
                     ident,
                     loginLevel,

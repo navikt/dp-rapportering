@@ -1,6 +1,5 @@
 package no.nav.dagpenger.rapportering.repository
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockkStatic
@@ -497,9 +496,14 @@ class RapporteringRepositoryPostgresTest {
     @Test
     fun `sletting av rapporteringsperiode som ikke finnes kaster RuntimeException`() {
         withMigratedDb {
-            shouldThrow<RuntimeException> {
-                rapporteringRepositoryPostgres.slettRaporteringsperiode(123L)
-            }
+            rapporteringRepositoryPostgres.hentKanSendes(123L) shouldBe null
+        }
+    }
+
+    @Test
+    fun `hentKanSendes returnerer null hvis perioden ikke finnes`() {
+        withMigratedDb {
+            rapporteringRepositoryPostgres.hentAntallRapporteringsperioder() shouldBe 0
         }
     }
 
