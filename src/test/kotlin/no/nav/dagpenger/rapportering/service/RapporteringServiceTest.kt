@@ -1,5 +1,9 @@
 package no.nav.dagpenger.rapportering.service
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectReader
+import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDate
+import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
@@ -9,10 +13,15 @@ import io.ktor.server.plugins.BadRequestException
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
+import no.nav.dagpenger.rapportering.ApplicationBuilder
+import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
+import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperioder
@@ -33,6 +42,8 @@ import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.februar
 import no.nav.dagpenger.rapportering.utils.januar
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.UUID
@@ -54,6 +65,22 @@ class RapporteringServiceTest {
     private val token = "jwtToken"
     private val loginLevel = 4
     private val headers = Headers.Empty
+
+    companion object {
+        private val testRapid = TestRapid()
+
+        @BeforeAll
+        @JvmStatic
+        fun setup() {
+            mockkObject(ApplicationBuilder.Companion)
+            every { getRapidsConnection() } returns testRapid
+        }
+    }
+
+    @BeforeEach
+    fun reset() {
+        testRapid.reset()
+    }
 
     @Test
     fun `harMeldeplikt returnerer det samme som meldepliktConnector returnerer`() {
@@ -525,6 +552,8 @@ class RapporteringServiceTest {
             }
         }
         coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
+
+        checkRapid(rapporteringsperiode)
     }
 
     @Test
@@ -645,6 +674,8 @@ class RapporteringServiceTest {
                 aktivitet.timer shouldBe rapporteringsperiode.dager[dagIndex].aktiviteter[index].timer
             }
         }
+
+        checkRapid(rapporteringsperiode, endringId)
     }
 
     @Test
@@ -758,6 +789,45 @@ class RapporteringServiceTest {
 
         coVerify(exactly = 3) { rapporteringRepository.slettRaporteringsperiode(any()) }
         slettedePerioder shouldBe 3
+    }
+
+    private fun checkRapid(
+        rapporteringsperiode: Rapporteringsperiode,
+        endringId: String? = null,
+    ) {
+        testRapid.inspektør.size shouldBe 1
+
+        if (endringId == null) {
+            testRapid.inspektør.field(0, "@event_name").asText() shouldBe "meldekort_innsendt"
+            testRapid.inspektør.field(0, "id").asLong() shouldBe rapporteringsperiode.id
+            testRapid.inspektør.field(0, "type").asText() shouldBe "Original"
+            testRapid.inspektør.message(0)["originalId"].isNull shouldBe true
+        } else {
+            testRapid.inspektør.field(0, "@event_name").asText() shouldBe "meldekort_korrigert"
+            testRapid.inspektør.field(0, "id").asText() shouldBe endringId
+            testRapid.inspektør.field(0, "type").asText() shouldBe "Korrigert"
+            testRapid.inspektør.field(0, "originalId").asLong() shouldBe rapporteringsperiode.id
+        }
+
+        testRapid.inspektør.field(0, "ident").asText() shouldBe ident
+
+        val periode = testRapid.inspektør.field(0, "periode")
+        periode["fraOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.fraOgMed
+        periode["tilOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.tilOgMed
+
+        val reader: ObjectReader = defaultObjectMapper.readerFor(object : TypeReference<List<Dag>>() {})
+        val dager: List<String> = reader.readValue(testRapid.inspektør.field(0, "dager"))
+        dager shouldBeEqual rapporteringsperiode.dager
+
+        testRapid.inspektør.field(0, "kanSendesFra").asLocalDate() shouldBe rapporteringsperiode.kanSendesFra
+        testRapid.inspektør.field(0, "opprettetAv").asText() shouldBe "Arena"
+
+        val kilde = testRapid.inspektør.field(0, "kilde")
+        kilde["rolle"].asText() shouldBe "Bruker"
+        kilde["ident"].asText() shouldBe ident
+
+        testRapid.inspektør.field(0, "status").asText() shouldBe "Innsendt"
+        testRapid.inspektør.field(0, "mottattDato").asLocalDate() shouldBe LocalDate.now()
     }
 }
 
