@@ -1,11 +1,16 @@
 package no.nav.dagpenger.rapportering.api
 
+import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
+import io.mockk.every
+import io.mockk.mockkObject
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
+import no.nav.dagpenger.rapportering.ApplicationBuilder
+import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.konfigurasjon
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
@@ -54,6 +59,9 @@ open class ApiTestSetup {
         @BeforeAll
         @JvmStatic
         fun setup() {
+            mockkObject(ApplicationBuilder.Companion)
+            every { getRapidsConnection() } returns TestRapid()
+
             try {
                 println("Start mockserver")
                 mockOAuth2Server = MockOAuth2Server()
