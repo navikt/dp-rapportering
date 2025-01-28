@@ -11,6 +11,7 @@ import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.PeriodeData
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
@@ -401,6 +402,7 @@ class RapporteringService(
                     }
 
                     sendPeriodeDataTilRnR(ident, periodeTilInnsending)
+                    sendArbeidssokerstatusTilRnR(ident, periodeTilInnsending)
                 } else {
                     // Oppdaterer perioden slik at den kan sendes inn på nytt
                     rapporteringRepository.settKanSendes(
@@ -492,7 +494,54 @@ class RapporteringService(
 
             kallLoggService.lagreResponse(kallLoggId, 200, "")
         } catch (e: Exception) {
-            JournalfoeringService.logger.error("Kunne ikke sende melding til Kafka", e)
+            JournalfoeringService.logger.error("Kunne ikke sende periode til RnR", e)
+
+            kallLoggService.lagreResponse(kallLoggId, 500, "")
+
+            throw Exception(e)
+        }
+    }
+
+    private fun sendArbeidssokerstatusTilRnR(
+        ident: String,
+        rapporteringsperiode: Rapporteringsperiode,
+    ) {
+        // Sender ikke i prod ennå
+        if (getenv("NAIS_CLUSTER_NAME") == "prod-gcp") {
+            return
+        }
+
+        val behovNavn = MineBehov.BekreftArbeidssøkerstatus.name
+        val behovParams =
+            mapOf(
+                "ident" to ident,
+                "periodeId" to rapporteringsperiode.id,
+                "meldeperiode" to
+                    mapOf(
+                        "fraOgMed" to rapporteringsperiode.periode.fraOgMed,
+                        "tilOgMed" to rapporteringsperiode.periode.tilOgMed,
+                    ),
+                "arbeidssøkerNestePeriode" to rapporteringsperiode.registrertArbeidssoker?.or(false),
+                "arbeidet" to (rapporteringsperiode.dager.find { dag -> dag.aktiviteter.find { a -> a.type == Aktivitet.AktivitetsType.Arbeid } != null } != null),
+            )
+        val behov =
+            JsonMessage.newNeed(
+                listOf(behovNavn),
+                mapOf(
+                    behovNavn to behovParams,
+                ),
+            )
+
+        val kallLoggId = kallLoggService.lagreKafkaUtKallLogg(ident)
+
+        try {
+            kallLoggService.lagreRequest(kallLoggId, behov.toJson())
+
+            getRapidsConnection().publish(ident, behov.toJson())
+
+            kallLoggService.lagreResponse(kallLoggId, 200, "")
+        } catch (e: Exception) {
+            JournalfoeringService.logger.error("Kunne ikke sende arbeidssøkerstatus til RnR", e)
 
             kallLoggService.lagreResponse(kallLoggId, 500, "")
 

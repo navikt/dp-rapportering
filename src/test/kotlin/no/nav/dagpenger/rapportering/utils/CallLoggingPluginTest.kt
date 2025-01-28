@@ -23,6 +23,7 @@ import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.KallLogg
+import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import org.junit.jupiter.api.Test
@@ -99,7 +100,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
 
             val list = getLogList()
 
-            list.size shouldBe 8
+            list.size shouldBe 9
             list[2].type shouldBe "REST"
             list[2].kallRetning shouldBe "INN"
             list[2].method shouldBe "POST"
@@ -171,7 +172,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[6].method shouldBe "PUBLISH"
             list[6].operation shouldBe "teamdagpenger.rapid.v1"
             list[6].status shouldBe 200
-            list[6].request shouldContain "JournalføreRapportering"
+            list[6].request shouldContain MineBehov.JournalføreRapportering.name
             list[6].response shouldBe ""
             list[6].ident shouldBe ident
             list[6].logginfo shouldBe ""
@@ -185,6 +186,16 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[7].response shouldBe ""
             list[7].ident shouldBe ident
             list[7].logginfo shouldBe ""
+
+            list[8].type shouldBe "KAFKA"
+            list[8].kallRetning shouldBe "UT"
+            list[8].method shouldBe "PUBLISH"
+            list[8].operation shouldBe "teamdagpenger.rapid.v1"
+            list[8].status shouldBe 200
+            list[8].request shouldContain MineBehov.BekreftArbeidssøkerstatus.name
+            list[8].response shouldBe ""
+            list[8].ident shouldBe ident
+            list[8].logginfo shouldBe ""
         }
 
     private fun getLogList() =

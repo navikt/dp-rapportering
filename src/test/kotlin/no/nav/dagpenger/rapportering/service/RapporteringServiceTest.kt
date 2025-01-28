@@ -31,6 +31,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
@@ -805,41 +806,60 @@ class RapporteringServiceTest {
         rapporteringsperiode: Rapporteringsperiode,
         endringId: String? = null,
     ) {
-        testRapid.inspektør.size shouldBe 1
+        testRapid.inspektør.size shouldBe 2
 
-        val message = testRapid.inspektør.message(0)
+        val message1 = testRapid.inspektør.message(0)
 
         if (endringId == null) {
-            message["@event_name"].asText() shouldBe "meldekort_innsendt"
-            message["id"].asLong() shouldBe rapporteringsperiode.id
-            message["type"].asText() shouldBe "Original"
-            message["originalId"].isNull shouldBe true
+            message1["@event_name"].asText() shouldBe "meldekort_innsendt"
+            message1["id"].asLong() shouldBe rapporteringsperiode.id
+            message1["type"].asText() shouldBe "Original"
+            message1["originalId"].isNull shouldBe true
         } else {
-            message["@event_name"].asText() shouldBe "meldekort_korrigert"
-            message["id"].asText() shouldBe endringId
-            message["type"].asText() shouldBe "Korrigert"
-            message["originalId"].asLong() shouldBe rapporteringsperiode.id
+            message1["@event_name"].asText() shouldBe "meldekort_korrigert"
+            message1["id"].asText() shouldBe endringId
+            message1["type"].asText() shouldBe "Korrigert"
+            message1["originalId"].asLong() shouldBe rapporteringsperiode.id
         }
 
-        message["ident"].asText() shouldBe ident
+        message1["ident"].asText() shouldBe ident
 
-        val periode = message["periode"]
+        val periode = message1["periode"]
         periode["fraOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.fraOgMed
         periode["tilOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.tilOgMed
 
         val reader: ObjectReader = defaultObjectMapper.readerFor(object : TypeReference<List<Dag>>() {})
-        val dager: List<String> = reader.readValue(message["dager"])
+        val dager: List<String> = reader.readValue(message1["dager"])
         dager shouldBeEqual rapporteringsperiode.dager
 
-        message["kanSendesFra"].asLocalDate() shouldBe rapporteringsperiode.kanSendesFra
-        message["opprettetAv"].asText() shouldBe "Arena"
+        message1["kanSendesFra"].asLocalDate() shouldBe rapporteringsperiode.kanSendesFra
+        message1["opprettetAv"].asText() shouldBe "Arena"
 
-        val kilde = message["kilde"]
+        val kilde = message1["kilde"]
         kilde["rolle"].asText() shouldBe "Bruker"
         kilde["ident"].asText() shouldBe ident
 
-        message["status"].asText() shouldBe "Innsendt"
-        message["mottattDato"].asLocalDate() shouldBe LocalDate.now()
+        message1["status"].asText() shouldBe "Innsendt"
+        message1["mottattDato"].asLocalDate() shouldBe LocalDate.now()
+
+        val message2 = testRapid.inspektør.message(1)
+        message2["@event_name"].asText() shouldBe "behov"
+        message2["@behov"].asIterable().iterator().next().asText() shouldBe MineBehov.BekreftArbeidssøkerstatus.name
+
+        val behov = message2[MineBehov.BekreftArbeidssøkerstatus.name]
+        behov["ident"].asText() shouldBe ident
+        behov["arbeidssøkerNestePeriode"].asBoolean() shouldBe true
+        behov["arbeidet"].asBoolean() shouldBe false
+
+        if (endringId == null) {
+            behov["periodeId"].asLong() shouldBe rapporteringsperiode.id
+        } else {
+            behov["periodeId"].asText() shouldBe endringId
+        }
+
+        val periode2 = behov["meldeperiode"]
+        periode2["fraOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.fraOgMed
+        periode2["tilOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.tilOgMed
     }
 }
 

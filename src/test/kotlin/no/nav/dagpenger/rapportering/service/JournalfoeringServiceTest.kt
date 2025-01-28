@@ -35,6 +35,7 @@ import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
+import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
@@ -326,9 +327,9 @@ class JournalfoeringServiceTest {
         val jsonNode = objectMapper.readTree(message)
 
         jsonNode.get("@event_name").asText() shouldBe "behov"
-        jsonNode.get("@behov").asIterable().iterator().next().asText() shouldBe "JournalføreRapportering"
+        jsonNode.get("@behov").asIterable().iterator().next().asText() shouldBe MineBehov.JournalføreRapportering.name
 
-        val behov = jsonNode.get("JournalføreRapportering")
+        val behov = jsonNode.get(MineBehov.JournalføreRapportering.name)
         behov.get("periodeId").asInt() shouldBe 1
         if (endring) {
             behov.get("brevkode").asText() shouldBe "NAV 00-10.03"
