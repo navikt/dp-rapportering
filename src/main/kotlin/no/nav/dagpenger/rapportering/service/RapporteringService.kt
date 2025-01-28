@@ -28,6 +28,7 @@ import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
 import no.nav.dagpenger.rapportering.utils.kontrollerAktiviteter
 import no.nav.dagpenger.rapportering.utils.kontrollerRapporteringsperiode
+import java.lang.System.getenv
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.random.Random
@@ -454,6 +455,11 @@ class RapporteringService(
         ident: String,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
+        // Sender ikke i prod ennå
+        if (getenv("NAIS_CLUSTER_NAME") == "prod-gcp") {
+            return
+        }
+
         val periodeData =
             PeriodeData(
                 rapporteringsperiode.id,
