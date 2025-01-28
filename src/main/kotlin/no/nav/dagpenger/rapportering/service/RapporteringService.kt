@@ -485,8 +485,6 @@ class RapporteringService(
 
         val kallLoggId = kallLoggService.lagreKafkaUtKallLogg(ident)
 
-        getRapidsConnection().publish(ident, message.toJson())
-
         try {
             getRapidsConnection().publish(ident, message.toJson())
 
