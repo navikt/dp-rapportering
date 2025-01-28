@@ -486,10 +486,11 @@ class RapporteringService(
         val kallLoggId = kallLoggService.lagreKafkaUtKallLogg(ident)
 
         try {
+            kallLoggService.lagreRequest(kallLoggId, message.toJson())
+
             getRapidsConnection().publish(ident, message.toJson())
 
-            // Lagrer request
-            kallLoggService.lagreRequest(kallLoggId, message.toJson())
+            kallLoggService.lagreResponse(kallLoggId, 200, "")
         } catch (e: Exception) {
             JournalfoeringService.logger.error("Kunne ikke sende melding til Kafka", e)
 
