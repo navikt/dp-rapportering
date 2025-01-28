@@ -99,7 +99,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
 
             val list = getLogList()
 
-            list.size shouldBe 7
+            list.size shouldBe 8
             list[2].type shouldBe "REST"
             list[2].kallRetning shouldBe "INN"
             list[2].method shouldBe "POST"
@@ -175,6 +175,16 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[6].response shouldBe ""
             list[6].ident shouldBe ident
             list[6].logginfo shouldBe ""
+
+            list[7].type shouldBe "KAFKA"
+            list[7].kallRetning shouldBe "UT"
+            list[7].method shouldBe "PUBLISH"
+            list[7].operation shouldBe "teamdagpenger.rapid.v1"
+            list[7].status shouldBe 200
+            list[7].request shouldContain "meldekort_innsendt"
+            list[7].response shouldBe ""
+            list[7].ident shouldBe ident
+            list[7].logginfo shouldBe ""
         }
 
     private fun getLogList() =

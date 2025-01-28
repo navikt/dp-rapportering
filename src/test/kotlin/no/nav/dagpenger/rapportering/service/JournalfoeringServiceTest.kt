@@ -39,7 +39,6 @@ import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
-import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
 import org.junit.jupiter.api.Test
@@ -99,12 +98,12 @@ class JournalfoeringServiceTest {
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
         coEvery { journalfoeringRepository.lagreDataMidlertidig(any()) } just runs
 
-        val kallLoggRepository = mockk<KallLoggRepository>()
+        val kallLoggService = mockk<KallLoggService>()
 
         val journalfoeringService =
             JournalfoeringService(
                 journalfoeringRepository,
-                kallLoggRepository,
+                kallLoggService,
                 createHttpClient(mockPdfGeneratorEngine),
                 meterRegistry,
             )
@@ -156,15 +155,15 @@ class JournalfoeringServiceTest {
                 ),
             )
 
-        val kallLoggRepository = mockk<KallLoggRepository>()
-        every { kallLoggRepository.lagreKallLogg(any()) } returns 1
-        every { kallLoggRepository.lagreResponse(any(), any(), any()) } just runs
-        every { kallLoggRepository.lagreRequest(any(), any()) } just runs
+        val kallLoggService = mockk<KallLoggService>()
+        every { kallLoggService.lagreKafkaUtKallLogg(any()) } returns 1
+        every { kallLoggService.lagreResponse(any(), any(), any()) } just runs
+        every { kallLoggService.lagreRequest(any(), any()) } just runs
 
         val journalfoeringService =
             JournalfoeringService(
                 journalfoeringRepository,
-                kallLoggRepository,
+                kallLoggService,
                 createHttpClient(mockPdfGeneratorEngine),
                 meterRegistry,
             )
@@ -225,9 +224,9 @@ class JournalfoeringServiceTest {
         coEvery { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) } just runs
         coEvery { journalfoeringRepository.hentMidlertidigLagretData() } returns emptyList()
 
-        val kallLoggRepository = mockk<KallLoggRepository>()
-        every { kallLoggRepository.lagreKallLogg(any()) } returns 1
-        every { kallLoggRepository.lagreRequest(eq(1), any()) } just runs
+        val kallLoggService = mockk<KallLoggService>()
+        every { kallLoggService.lagreKafkaUtKallLogg(any()) } returns 1
+        every { kallLoggService.lagreRequest(eq(1), any()) } just runs
 
         // Mock svar fra PDFgenerator
         val pdf =
@@ -250,7 +249,7 @@ class JournalfoeringServiceTest {
         val journalfoeringService =
             JournalfoeringService(
                 journalfoeringRepository,
-                kallLoggRepository,
+                kallLoggService,
                 createHttpClient(mockPdfGeneratorEngine),
                 meterRegistry,
             )

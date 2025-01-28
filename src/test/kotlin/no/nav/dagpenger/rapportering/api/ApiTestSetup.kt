@@ -22,6 +22,7 @@ import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.runMigration
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
+import no.nav.dagpenger.rapportering.service.KallLoggService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meldepliktMetrikker
@@ -101,7 +102,7 @@ open class ApiTestSetup {
             val rapporteringRepository = RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
-            val kallLoggRepository = KallLoggRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
+            val kallLoggService = KallLoggService(KallLoggRepositoryPostgres(PostgresDataSourceBuilder.dataSource))
             val rapporteringService =
                 RapporteringService(
                     meldepliktConnector,
@@ -109,10 +110,11 @@ open class ApiTestSetup {
                     innsendingtidspunktRepository,
                     JournalfoeringService(
                         journalfoeringRepository,
-                        kallLoggRepository,
+                        kallLoggService,
                         httpClient,
                         meterRegistry,
                     ),
+                    kallLoggService,
                 )
 
             application {

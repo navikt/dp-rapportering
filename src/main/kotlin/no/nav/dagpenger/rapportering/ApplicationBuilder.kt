@@ -27,6 +27,7 @@ import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSo
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.preparePartitions
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
+import no.nav.dagpenger.rapportering.service.KallLoggService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.tjenester.RapporteringJournalførtMottak
 import no.nav.helse.rapids_rivers.RapidApplication
@@ -60,10 +61,12 @@ class ApplicationBuilder(
     private val journalfoeringRepository = JournalfoeringRepositoryPostgres(dataSource, actionTimer)
     private val kallLoggRepository = KallLoggRepositoryPostgres(dataSource)
 
+    private val kallLoggService = KallLoggService(kallLoggRepository)
+
     private val journalfoeringService =
         JournalfoeringService(
             journalfoeringRepository,
-            kallLoggRepository,
+            kallLoggService,
             httpClient,
             meterRegistry,
         )
@@ -74,6 +77,7 @@ class ApplicationBuilder(
             rapporteringRepository,
             innsendingtidspunktRepository,
             journalfoeringService,
+            kallLoggService,
         )
 
     init {

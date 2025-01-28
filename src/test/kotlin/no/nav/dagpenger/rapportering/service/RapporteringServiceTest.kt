@@ -14,8 +14,10 @@ import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.runs
 import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
@@ -51,14 +53,16 @@ import java.util.UUID
 class RapporteringServiceTest {
     private val meldepliktConnector = mockk<MeldepliktConnector>()
     private val rapporteringRepository = mockk<RapporteringRepository>()
-    private val journalfoeringService = mockk<JournalfoeringService>()
     private val innsendingtidspunktRepository = mockk<InnsendingtidspunktRepository>()
+    private val journalfoeringService = mockk<JournalfoeringService>()
+    private val kallLoggService = mockk<KallLoggService>()
     private val rapporteringService =
         RapporteringService(
             meldepliktConnector,
             rapporteringRepository,
             innsendingtidspunktRepository,
             journalfoeringService,
+            kallLoggService,
         )
 
     private val ident = "12345678910"
@@ -537,6 +541,9 @@ class RapporteringServiceTest {
                 status = "OK",
                 feil = listOf(),
             )
+        coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
+        coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
+        coEvery { kallLoggService.lagreResponse(eq(1), eq(500), eq("")) } just runs
 
         val innsendingResponse =
             runBlocking {
@@ -637,6 +644,9 @@ class RapporteringServiceTest {
                 status = "OK",
                 feil = listOf(),
             )
+        coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
+        coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
+        coEvery { kallLoggService.lagreResponse(eq(1), eq(500), eq("")) } just runs
 
         val innsendingResponse =
             runBlocking {
@@ -795,39 +805,41 @@ class RapporteringServiceTest {
         rapporteringsperiode: Rapporteringsperiode,
         endringId: String? = null,
     ) {
-        testRapid.inspektør.size shouldBe 1
+        testRapid.inspektør.size shouldBe 2
+
+        val message = testRapid.inspektør.message(1)
 
         if (endringId == null) {
-            testRapid.inspektør.field(0, "@event_name").asText() shouldBe "meldekort_innsendt"
-            testRapid.inspektør.field(0, "id").asLong() shouldBe rapporteringsperiode.id
-            testRapid.inspektør.field(0, "type").asText() shouldBe "Original"
-            testRapid.inspektør.message(0)["originalId"].isNull shouldBe true
+            message["@event_name"].asText() shouldBe "meldekort_innsendt"
+            message["id"].asLong() shouldBe rapporteringsperiode.id
+            message["type"].asText() shouldBe "Original"
+            message["originalId"].isNull shouldBe true
         } else {
-            testRapid.inspektør.field(0, "@event_name").asText() shouldBe "meldekort_korrigert"
-            testRapid.inspektør.field(0, "id").asText() shouldBe endringId
-            testRapid.inspektør.field(0, "type").asText() shouldBe "Korrigert"
-            testRapid.inspektør.field(0, "originalId").asLong() shouldBe rapporteringsperiode.id
+            message["@event_name"].asText() shouldBe "meldekort_korrigert"
+            message["id"].asText() shouldBe endringId
+            message["type"].asText() shouldBe "Korrigert"
+            message["originalId"].asLong() shouldBe rapporteringsperiode.id
         }
 
-        testRapid.inspektør.field(0, "ident").asText() shouldBe ident
+        message["ident"].asText() shouldBe ident
 
-        val periode = testRapid.inspektør.field(0, "periode")
+        val periode = message["periode"]
         periode["fraOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.fraOgMed
         periode["tilOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.tilOgMed
 
         val reader: ObjectReader = defaultObjectMapper.readerFor(object : TypeReference<List<Dag>>() {})
-        val dager: List<String> = reader.readValue(testRapid.inspektør.field(0, "dager"))
+        val dager: List<String> = reader.readValue(message["dager"])
         dager shouldBeEqual rapporteringsperiode.dager
 
-        testRapid.inspektør.field(0, "kanSendesFra").asLocalDate() shouldBe rapporteringsperiode.kanSendesFra
-        testRapid.inspektør.field(0, "opprettetAv").asText() shouldBe "Arena"
+        message["kanSendesFra"].asLocalDate() shouldBe rapporteringsperiode.kanSendesFra
+        message["opprettetAv"].asText() shouldBe "Arena"
 
-        val kilde = testRapid.inspektør.field(0, "kilde")
+        val kilde = message["kilde"]
         kilde["rolle"].asText() shouldBe "Bruker"
         kilde["ident"].asText() shouldBe ident
 
-        testRapid.inspektør.field(0, "status").asText() shouldBe "Innsendt"
-        testRapid.inspektør.field(0, "mottattDato").asLocalDate() shouldBe LocalDate.now()
+        message["status"].asText() shouldBe "Innsendt"
+        message["mottattDato"].asLocalDate() shouldBe LocalDate.now()
     }
 }
 
