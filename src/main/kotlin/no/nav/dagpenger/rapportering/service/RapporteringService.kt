@@ -1,14 +1,17 @@
 package no.nav.dagpenger.rapportering.service
 
+import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import io.ktor.http.Headers
 import io.ktor.server.plugins.BadRequestException
 import mu.KotlinLogging
+import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.PeriodeData
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Feilet
@@ -16,6 +19,8 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.erEndring
+import no.nav.dagpenger.rapportering.model.toMap
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnKanSendesFra
@@ -23,6 +28,7 @@ import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
 import no.nav.dagpenger.rapportering.utils.kontrollerAktiviteter
 import no.nav.dagpenger.rapportering.utils.kontrollerRapporteringsperiode
+import java.lang.System.getenv
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.random.Random
@@ -392,6 +398,8 @@ class RapporteringService(
                                 "med kanEndres og kanSendes til false"
                         }
                     }
+
+                    sendPeriodeDataTilRnR(ident, periodeTilInnsending)
                 } else {
                     // Oppdaterer perioden slik at den kan sendes inn på nytt
                     rapporteringRepository.settKanSendes(
@@ -442,4 +450,37 @@ class RapporteringService(
         } catch (e: Exception) {
             logger.error(e) { "Klarte ikke å slette rapporteringsperiode med id $periodeId" }
         }
+
+    private fun sendPeriodeDataTilRnR(
+        ident: String,
+        rapporteringsperiode: Rapporteringsperiode,
+    ) {
+        // Sender ikke i prod ennå
+        if (getenv("NAIS_CLUSTER_NAME") == "prod-gcp") {
+            return
+        }
+
+        val periodeData =
+            PeriodeData(
+                rapporteringsperiode.id,
+                ident,
+                rapporteringsperiode.periode,
+                rapporteringsperiode.dager,
+                rapporteringsperiode.kanSendesFra,
+                // Nå har vi meldekort kun fra Arena
+                PeriodeData.OpprettetAv.Arena,
+                // dp-rapportering er kun for brukere
+                PeriodeData.Kilde(PeriodeData.Rolle.Bruker, ident),
+                if (rapporteringsperiode.erEndring()) PeriodeData.Type.Korrigert else PeriodeData.Type.Original,
+                "Innsendt",
+                LocalDate.now(),
+                rapporteringsperiode.originalId,
+            )
+        val message =
+            JsonMessage.newMessage(
+                if (rapporteringsperiode.erEndring()) "meldekort_korrigert" else "meldekort_innsendt",
+                periodeData.toMap(),
+            )
+        getRapidsConnection().publish(ident, message.toJson())
+    }
 }
