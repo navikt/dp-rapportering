@@ -23,14 +23,11 @@ import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.properties
 import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
-import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
-import no.nav.dagpenger.rapportering.repository.KallLoggRepository
-import no.nav.dagpenger.rapportering.utils.getCallId
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
@@ -41,7 +38,7 @@ import kotlin.time.measureTime
 
 class JournalfoeringService(
     private val journalfoeringRepository: JournalfoeringRepository,
-    private val kallLoggRepository: KallLoggRepository,
+    private val kallLoggService: KallLoggService,
     private val httpClient: HttpClient,
     meterRegistry: MeterRegistry,
     delay: Long = 10000,
@@ -184,7 +181,7 @@ class JournalfoeringService(
         val tilleggsopplysninger = getTilleggsopplysninger(loginLevel, headers, rapporteringsperiode)
 
         // Oppretter kallLogg for å få kallLoggId slik at vi kan sende den med Behov
-        val kallLoggId = lagreKallLogg(ident)
+        val kallLoggId = kallLoggService.lagreKafkaUtKallLogg(ident)
 
         val behovNavn = MineBehov.JournalføreRapportering.name
         val behovParams =
@@ -211,11 +208,11 @@ class JournalfoeringService(
             getRapidsConnection().publish(ident, behov.toJson())
 
             // Lagrer request (Behov)
-            kallLoggRepository.lagreRequest(kallLoggId, behov.toJson())
+            kallLoggService.lagreRequest(kallLoggId, behov.toJson())
         } catch (e: Exception) {
             logger.error("Kunne ikke sende melding til Kafka", e)
 
-            kallLoggRepository.lagreResponse(kallLoggId, 500, "")
+            kallLoggService.lagreResponse(kallLoggId, 500, "")
 
             throw Exception(e)
         }
@@ -284,25 +281,6 @@ class JournalfoeringService(
                 loginLevel,
                 headers.toMap(),
                 defaultObjectMapper.writeValueAsString(rapporteringsperiode),
-            ),
-        )
-    }
-
-    private fun lagreKallLogg(ident: String): Long {
-        return kallLoggRepository.lagreKallLogg(
-            KallLogg(
-                korrelasjonId = getCallId(),
-                tidspunkt = LocalDateTime.now(),
-                type = "KAFKA",
-                kallRetning = "UT",
-                method = "PUBLISH",
-                operation = properties[Key("KAFKA_RAPID_TOPIC", stringType)],
-                status = 200,
-                kallTid = 0,
-                request = "",
-                response = "",
-                ident = ident,
-                logginfo = "",
             ),
         )
     }

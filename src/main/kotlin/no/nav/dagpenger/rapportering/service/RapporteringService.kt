@@ -41,6 +41,7 @@ class RapporteringService(
     private val rapporteringRepository: RapporteringRepository,
     private val innsendingtidspunktRepository: InnsendingtidspunktRepository,
     private val journalfoeringService: JournalfoeringService,
+    private val kallLoggService: KallLoggService,
 ) {
     suspend fun harMeldeplikt(
         ident: String,
@@ -481,6 +482,21 @@ class RapporteringService(
                 if (rapporteringsperiode.erEndring()) "meldekort_korrigert" else "meldekort_innsendt",
                 periodeData.toMap(),
             )
-        getRapidsConnection().publish(ident, message.toJson())
+
+        val kallLoggId = kallLoggService.lagreKafkaUtKallLogg(ident)
+
+        try {
+            kallLoggService.lagreRequest(kallLoggId, message.toJson())
+
+            getRapidsConnection().publish(ident, message.toJson())
+
+            kallLoggService.lagreResponse(kallLoggId, 200, "")
+        } catch (e: Exception) {
+            JournalfoeringService.logger.error("Kunne ikke sende melding til Kafka", e)
+
+            kallLoggService.lagreResponse(kallLoggId, 500, "")
+
+            throw Exception(e)
+        }
     }
 }
