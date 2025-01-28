@@ -543,7 +543,7 @@ class RapporteringServiceTest {
             )
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
-        coEvery { kallLoggService.lagreResponse(eq(1), eq(500), eq("")) } just runs
+        coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
 
         val innsendingResponse =
             runBlocking {
@@ -646,7 +646,7 @@ class RapporteringServiceTest {
             )
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
-        coEvery { kallLoggService.lagreResponse(eq(1), eq(500), eq("")) } just runs
+        coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
 
         val innsendingResponse =
             runBlocking {
@@ -805,9 +805,9 @@ class RapporteringServiceTest {
         rapporteringsperiode: Rapporteringsperiode,
         endringId: String? = null,
     ) {
-        testRapid.inspektør.size shouldBe 2
+        testRapid.inspektør.size shouldBe 1
 
-        val message = testRapid.inspektør.message(1)
+        val message = testRapid.inspektør.message(0)
 
         if (endringId == null) {
             message["@event_name"].asText() shouldBe "meldekort_innsendt"
