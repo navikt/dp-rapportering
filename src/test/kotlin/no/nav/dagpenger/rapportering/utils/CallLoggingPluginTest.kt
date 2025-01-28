@@ -171,7 +171,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[6].method shouldBe "PUBLISH"
             list[6].operation shouldBe "teamdagpenger.rapid.v1"
             list[6].status shouldBe 200
-            list[6].request shouldContain ""
+            list[6].request shouldContain "JournalføreRapportering"
             list[6].response shouldBe ""
             list[6].ident shouldBe ident
             list[6].logginfo shouldBe ""
