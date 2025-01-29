@@ -20,6 +20,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.arbeidet
 import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toMap
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
@@ -522,7 +523,7 @@ class RapporteringService(
                         "tilOgMed" to rapporteringsperiode.periode.tilOgMed,
                     ),
                 "arbeidssøkerNestePeriode" to rapporteringsperiode.registrertArbeidssoker?.or(false),
-                "arbeidet" to (rapporteringsperiode.dager.find { dag -> dag.aktiviteter.find { a -> a.type == Aktivitet.AktivitetsType.Arbeid } != null } != null),
+                "arbeidet" to rapporteringsperiode.arbeidet(),
             )
         val behov =
             JsonMessage.newNeed(

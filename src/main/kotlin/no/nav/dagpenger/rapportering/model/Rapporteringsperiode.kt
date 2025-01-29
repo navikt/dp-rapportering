@@ -28,6 +28,9 @@ data class Rapporteringsperiode(
 
 fun Rapporteringsperiode.erEndring(): Boolean = this.status == RapporteringsperiodeStatus.TilUtfylling && this.originalId != null
 
+fun Rapporteringsperiode.arbeidet(): Boolean =
+    this.dager.find { dag -> dag.aktiviteter.find { a -> a.type == Aktivitet.AktivitetsType.Arbeid } != null } != null
+
 fun List<Rapporteringsperiode>.toResponse(): List<RapporteringsperiodeResponse> =
     this.map { rapporteringsperiode -> rapporteringsperiode.toResponse() }
 
