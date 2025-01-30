@@ -1,11 +1,24 @@
 package no.nav.dagpenger.rapportering.api
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.serialization.jackson.jackson
 import io.ktor.server.config.MapApplicationConfig
+import io.ktor.server.response.header
+import io.ktor.server.response.respond
+import io.ktor.server.routing.post
+import io.ktor.server.routing.routing
 import io.ktor.server.testing.ApplicationTestBuilder
+import io.ktor.server.testing.ExternalServicesBuilder
 import io.ktor.server.testing.testApplication
 import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.runs
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
@@ -13,6 +26,8 @@ import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.konfigurasjon
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.kafka.KafkaProdusent
+import no.nav.dagpenger.rapportering.model.ArbeidssøkerBekreftelse
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
@@ -21,6 +36,7 @@ import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.runMigration
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
+import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
 import no.nav.dagpenger.rapportering.service.RapporteringService
@@ -96,6 +112,11 @@ open class ApiTestSetup {
                     install("OutgoingCallInterceptor") {
                         OutgoingCallLoggingPlugin().intercept(this)
                     }
+                    install(ContentNegotiation) {
+                        jackson {
+                            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                        }
+                    }
                 }
 
             val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
@@ -103,6 +124,14 @@ open class ApiTestSetup {
             val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val kallLoggService = KallLoggService(KallLoggRepositoryPostgres(PostgresDataSourceBuilder.dataSource))
+            val kafkaProdusent = mockk<KafkaProdusent<ArbeidssøkerBekreftelse>>()
+            every { kafkaProdusent.send(any(), any()) } just runs
+            val arbeidssøkerService =
+                ArbeidssøkerService(
+                    kallLoggService = kallLoggService,
+                    httpClient = httpClient,
+                    bekreftelseKafkaProdusent = kafkaProdusent,
+                )
             val rapporteringService =
                 RapporteringService(
                     meldepliktConnector,
@@ -115,6 +144,7 @@ open class ApiTestSetup {
                         meterRegistry,
                     ),
                     kallLoggService,
+                    arbeidssøkerService,
                 )
 
             application {
@@ -138,8 +168,11 @@ open class ApiTestSetup {
         System.setProperty("token-x.well-known-url", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
         System.setProperty("TOKEN_X_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
         System.setProperty("azure-app.well-known-url", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
+        System.setProperty("AZURE_APP_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
         System.setProperty("AZURE_APP_CLIENT_ID", AZURE_ISSUER_ID)
         System.setProperty("AZURE_APP_CLIENT_SECRET", TEST_PRIVATE_JWK)
+        System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_URL", "http://arbeidssokerregister_record_key_url/api/v1/record-key")
+        System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE", "api://test.scope.arbeidssokerregister_record_key/.default")
         System.setProperty("GITHUB_SHA", "some_sha")
     }
 
@@ -174,4 +207,26 @@ open class ApiTestSetup {
                     claims = mapOf("pid" to ident, "acr" to "Level4"),
                 ),
             ).serialize()
+
+    fun ExternalServicesBuilder.pdfGenerator() {
+        hosts("https://pdf-generator") {
+            routing {
+                post("/convert-html-to-pdf/meldekort") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Pdf.toString())
+                    call.respond("PDF")
+                }
+            }
+        }
+    }
+
+    fun ExternalServicesBuilder.arbeidssokerregister() {
+        hosts("http://arbeidssokerregister_record_key_url") {
+            routing {
+                post("/api/v1/record-key") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    call.respond("{ \"key\": 1 }")
+                }
+            }
+        }
+    }
 }

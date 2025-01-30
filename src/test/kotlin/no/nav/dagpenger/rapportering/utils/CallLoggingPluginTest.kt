@@ -5,7 +5,6 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
-import io.ktor.server.application.call
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
@@ -85,6 +84,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
             externalServices {
                 meldepliktAdapter()
                 pdfGenerator()
+                arbeidssokerregister()
             }
 
             val adapterRapporteringsperiodeString =
@@ -100,7 +100,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
 
             val list = getLogList()
 
-            list.size shouldBe 9
+            list.size shouldBe 10
             list[2].type shouldBe "REST"
             list[2].kallRetning shouldBe "INN"
             list[2].method shouldBe "POST"
@@ -159,8 +159,8 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[5].response.trimIndent() shouldBe
                 """
                 HTTP/1.1 200 OK
-                Content-Length: 4
-                Content-Type: text/plain; charset=UTF-8
+                Content-Type: application/pdf
+                Content-Length: 3
                 
                 PDF
                 """.trimIndent()
@@ -187,15 +187,32 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[7].ident shouldBe ident
             list[7].logginfo shouldBe ""
 
-            list[8].type shouldBe "KAFKA"
+            list[8].type shouldBe "REST"
             list[8].kallRetning shouldBe "UT"
-            list[8].method shouldBe "PUBLISH"
-            list[8].operation shouldBe "teamdagpenger.rapid.v1"
+            list[8].method shouldBe "POST"
+            list[8].operation shouldBe "/api/v1/record-key"
             list[8].status shouldBe 200
-            list[8].request shouldContain MineBehov.BekreftArbeidssøkerstatus.name
-            list[8].response shouldBe ""
-            list[8].ident shouldBe ident
+            list[8].request shouldStartWith "POST http://arbeidssokerregister_record_key_url:80/api/v1/record-key"
+            list[8].response.trimIndent() shouldBe
+                """
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+                Content-Length: 12
+                
+                { "key": 1 }
+                """.trimIndent()
+            list[8].ident shouldBe "" // Det finnes ikke token med ident når vi henter record key
             list[8].logginfo shouldBe ""
+
+            list[9].type shouldBe "KAFKA"
+            list[9].kallRetning shouldBe "UT"
+            list[9].method shouldBe "PUBLISH"
+            list[9].operation shouldBe "teamdagpenger.rapid.v1"
+            list[9].status shouldBe 200
+            list[9].request shouldContain ""
+            list[9].response shouldBe ""
+            list[9].ident shouldBe ident
+            list[9].logginfo shouldBe ""
         }
 
     private fun getLogList() =
@@ -236,16 +253,6 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 post("/sendinn") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond(sendinnResponse)
-                }
-            }
-        }
-    }
-
-    private fun ExternalServicesBuilder.pdfGenerator() {
-        hosts("https://pdf-generator") {
-            routing {
-                post("/convert-html-to-pdf/meldekort") {
-                    call.respond("%PDF")
                 }
             }
         }

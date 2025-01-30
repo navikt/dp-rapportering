@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.github.navikt.tbd_libs.kafka.AivenConfig
 import com.natpryce.konfig.ConfigurationMap
 import com.natpryce.konfig.ConfigurationProperties
 import com.natpryce.konfig.EnvironmentVariables
@@ -13,8 +14,15 @@ import com.natpryce.konfig.PropertyGroup
 import com.natpryce.konfig.getValue
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
+import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.oauth2.CachedOauth2Client
 import no.nav.dagpenger.oauth2.OAuth2Config
+import no.nav.dagpenger.rapportering.kafka.KafkaProdusent
+import no.nav.dagpenger.rapportering.model.ArbeidssøkerBekreftelse
+import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.common.serialization.LongSerializer
+import org.apache.kafka.common.serialization.StringSerializer
+import java.util.Properties
 
 internal object Configuration {
     const val APP_NAME = "dp-rapportering"
@@ -57,6 +65,35 @@ internal object Configuration {
 
     val pdfGeneratorUrl by lazy { properties[Key("PDF_GENERATOR_URL", stringType)] }
 
+    val arbeidssokerregisterRecordKeyUrl by lazy {
+        properties[Key("ARBEIDSSOKERREGISTER_RECORD_KEY_URL", stringType)]
+    }
+
+    val arbeidssokerregisterRecordKeyTokenProvider: () -> String by lazy {
+        {
+            runBlocking {
+                azureAdClient
+                    .clientCredentials(properties[Key("ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE", stringType)])
+                    .access_token ?: throw RuntimeException("Failed to get token")
+            }
+        }
+    }
+
+    val bekreftelseTopic by lazy { properties[Key("BEKREFTELSE_TOPIC", stringType)] }
+
+    val bekreftelseKafkaProdusent by lazy {
+        val kafkaProducer =
+            KafkaProducer(AivenConfig.default.producerConfig(Properties()), LongSerializer(), StringSerializer()).also {
+                Runtime.getRuntime().addShutdownHook(
+                    Thread {
+                        it.close()
+                    },
+                )
+            }
+
+        KafkaProdusent<ArbeidssøkerBekreftelse>(kafkaProducer, bekreftelseTopic)
+    }
+
     private val tokenXClient by lazy {
         val tokenX = OAuth2Config.TokenX(properties)
         CachedOauth2Client(
@@ -74,20 +111,14 @@ internal object Configuration {
                 ).access_token
         }
 
-    private val azureAd by lazy {
-        val aad = OAuth2Config.AzureAd(properties)
+    private val azureAdConfig by lazy { OAuth2Config.AzureAd(properties) }
+
+    private val azureAdClient by lazy {
         CachedOauth2Client(
-            tokenEndpointUrl = aad.tokenEndpointUrl,
-            authType = aad.clientSecret(),
+            tokenEndpointUrl = azureAdConfig.tokenEndpointUrl,
+            authType = azureAdConfig.clientSecret(),
         )
     }
-
-    fun azureADClient() =
-        { audience: String ->
-            azureAd
-                .clientCredentials(audience)
-                .access_token
-        }
 
     val defaultObjectMapper: ObjectMapper =
         ObjectMapper()

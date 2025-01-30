@@ -1,6 +1,8 @@
 package no.nav.dagpenger.rapportering.utils
 
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 fun Int.januar(year: Int = 2018) = LocalDate.of(year, 1, this)
 
@@ -38,3 +40,7 @@ val Int.september get() = this.september()
 val Int.oktober get() = this.oktober()
 val Int.november get() = this.november()
 val Int.desember get() = this.desember()
+
+fun LocalDate.tilMillis(): Long = this.atStartOfDay().tilMillis()
+
+fun LocalDateTime.tilMillis(): Long = this.toInstant(ZoneOffset.UTC).toEpochMilli()

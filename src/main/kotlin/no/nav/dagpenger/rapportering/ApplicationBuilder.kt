@@ -26,6 +26,7 @@ import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.preparePartitions
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
+import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
 import no.nav.dagpenger.rapportering.service.RapporteringService
@@ -71,6 +72,8 @@ class ApplicationBuilder(
             meterRegistry,
         )
 
+    private val arbeidssøkerService = ArbeidssøkerService(kallLoggService)
+
     private val rapporteringService =
         RapporteringService(
             meldepliktConnector,
@@ -78,6 +81,7 @@ class ApplicationBuilder(
             innsendingtidspunktRepository,
             journalfoeringService,
             kallLoggService,
+            arbeidssøkerService,
         )
 
     init {

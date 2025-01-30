@@ -41,6 +41,12 @@ spec:
       value: {{PDF_GENERATOR_URL}}
     - name: GITHUB_SHA
       value: {{ githubSha }}
+    - name: ARBEIDSSOKERREGISTER_RECORD_KEY_URL
+      value: {{ ARBEIDSSOKERREGISTER_RECORD_KEY_URL }}
+    - name: ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE
+      value: {{ ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE }}
+    - name: BEKREFTELSE_TOPIC
+      value: {{ BEKREFTELSE_TOPIC }}
     - name: JDK_JAVA_OPTIONS # Bytter GC og lar JVMen se at det er flere CPU kjerner
       value: -XX:+UseParallelGC -XX:ActiveProcessorCount=4
   gcp:
