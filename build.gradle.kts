@@ -52,7 +52,8 @@ ktlint {
 
 repositories {
     mavenCentral()
-    maven { setUrl("https://github-package-registry-mirror.gc.nav.no/cached/maven-release") }
+    maven("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
+    maven("https://packages.confluent.io/maven/")
 }
 
 dependencies {
@@ -71,6 +72,7 @@ dependencies {
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.6.0")
+    implementation("io.confluent:kafka-avro-serializer:7.8.0")
 
     testImplementation(libs.rapids.and.rivers.test)
     testImplementation(libs.bundles.postgres.test)

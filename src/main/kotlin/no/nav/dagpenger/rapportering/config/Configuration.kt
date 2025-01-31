@@ -14,6 +14,7 @@ import com.natpryce.konfig.PropertyGroup
 import com.natpryce.konfig.getValue
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
+import io.confluent.kafka.serializers.KafkaAvroSerializer
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.oauth2.CachedOauth2Client
 import no.nav.dagpenger.oauth2.OAuth2Config
@@ -21,7 +22,6 @@ import no.nav.dagpenger.rapportering.kafka.KafkaProdusent
 import no.nav.dagpenger.rapportering.model.ArbeidssøkerBekreftelse
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.common.serialization.LongSerializer
-import org.apache.kafka.common.serialization.StringSerializer
 import java.util.Properties
 
 internal object Configuration {
@@ -83,7 +83,7 @@ internal object Configuration {
 
     val bekreftelseKafkaProdusent by lazy {
         val kafkaProducer =
-            KafkaProducer(AivenConfig.default.producerConfig(Properties()), LongSerializer(), StringSerializer()).also {
+            KafkaProducer(AivenConfig.default.producerConfig(Properties()), LongSerializer(), KafkaAvroSerializer()).also {
                 Runtime.getRuntime().addShutdownHook(
                     Thread {
                         it.close()
