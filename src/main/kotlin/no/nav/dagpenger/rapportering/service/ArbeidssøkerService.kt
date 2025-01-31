@@ -32,33 +32,10 @@ class ArbeidssøkerService(
     private val bekreftelseKafkaProdusent: KafkaProdusent<ArbeidssøkerBekreftelse> = Configuration.bekreftelseKafkaProdusent,
     private val httpClient: HttpClient = defaultHttpClient(),
 ) {
-    private val logger = KotlinLogging.logger {}
-
-    suspend fun hentRecordKey(ident: String): RecordKeyResponse =
-        withContext(Dispatchers.IO) {
-            val result =
-                httpClient
-                    .post(URI(recordKeyUrl).toURL()) {
-                        bearerAuth(
-                            recordKeyTokenProvider.invoke() ?: throw RuntimeException("Klarte ikke å hente token"),
-                        )
-                        contentType(ContentType.Application.Json)
-                        setBody(defaultObjectMapper.writeValueAsString(RecordKeyRequestBody(ident)))
-                    }.also {
-                        sikkerlogg.info {
-                            "Kall til arbeidssøkerregister for å hente record key for $ident ga status ${it.status}"
-                        }
-                    }
-
-            if (result.status != HttpStatusCode.OK) {
-                val body = result.bodyAsText()
-                sikkerlogg.warn {
-                    "Uforventet status ${result.status.value} ved henting av record key for $ident. Response: $body"
-                }
-                throw RuntimeException("Uforventet status ${result.status.value} ved henting av record key")
-            }
-            result.body()
-        }
+    companion object {
+        private val logger = KotlinLogging.logger {}
+        private val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
+    }
 
     fun sendBekreftelse(
         ident: String,
@@ -101,15 +78,37 @@ class ArbeidssøkerService(
         }
     }
 
-    companion object {
-        private val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
-    }
+    private suspend fun hentRecordKey(ident: String): RecordKeyResponse =
+        withContext(Dispatchers.IO) {
+            val result =
+                httpClient
+                    .post(URI(recordKeyUrl).toURL()) {
+                        bearerAuth(
+                            recordKeyTokenProvider.invoke() ?: throw RuntimeException("Klarte ikke å hente token"),
+                        )
+                        contentType(ContentType.Application.Json)
+                        setBody(defaultObjectMapper.writeValueAsString(RecordKeyRequestBody(ident)))
+                    }.also {
+                        sikkerlogg.info {
+                            "Kall til arbeidssøkerregister for å hente record key for $ident ga status ${it.status}"
+                        }
+                    }
+
+            if (result.status != HttpStatusCode.OK) {
+                val body = result.bodyAsText()
+                sikkerlogg.warn {
+                    "Uforventet status ${result.status.value} ved henting av record key for $ident. Response: $body"
+                }
+                throw RuntimeException("Uforventet status ${result.status.value} ved henting av record key")
+            }
+            result.body()
+        }
+
+    data class RecordKeyRequestBody(
+        val ident: String,
+    )
+
+    data class RecordKeyResponse(
+        val key: Long,
+    )
 }
-
-data class RecordKeyRequestBody(
-    val ident: String,
-)
-
-data class RecordKeyResponse(
-    val key: Long,
-)
