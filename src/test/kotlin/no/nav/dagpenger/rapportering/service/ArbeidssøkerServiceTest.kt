@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.service
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -148,7 +149,7 @@ class ArbeidssøkerServiceTest {
                 arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
             }
 
-        exception.message shouldBe "Klarte ikke å hente token"
+        exception.message shouldBe "java.lang.RuntimeException: Klarte ikke å hente token"
     }
 
     @Test
@@ -171,7 +172,7 @@ class ArbeidssøkerServiceTest {
                 arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
             }
 
-        exception.message shouldBe "Uforventet status 500 ved henting av record key"
+        exception.message shouldBe "java.lang.RuntimeException: Uforventet status 500 ved henting av record key"
     }
 
     @Test
@@ -200,7 +201,7 @@ class ArbeidssøkerServiceTest {
                 arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
             }
 
-        exception.message shouldBe "Klarte ikke å hente token"
+        exception.message shouldBe "java.lang.RuntimeException: Klarte ikke å hente token"
     }
 
     @Test
@@ -234,7 +235,7 @@ class ArbeidssøkerServiceTest {
                 arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
             }
 
-        exception.message shouldBe "Kunne ikke prosessere arbeidssøkerperioder"
+        exception.message shouldStartWith "io.ktor.serialization.JsonConvertException: Illegal json parameter found"
     }
 
     @Test
