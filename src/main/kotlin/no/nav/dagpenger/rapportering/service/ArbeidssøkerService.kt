@@ -97,59 +97,67 @@ class ArbeidssøkerService(
 
     private suspend fun hentRecordKey(ident: String): RecordKeyResponse =
         withContext(Dispatchers.IO) {
-            val result =
-                httpClient
-                    .post(URI(recordKeyUrl).toURL()) {
-                        bearerAuth(
-                            recordKeyTokenProvider.invoke() ?: throw RuntimeException("Klarte ikke å hente token"),
-                        )
-                        contentType(ContentType.Application.Json)
-                        setBody(defaultObjectMapper.writeValueAsString(RecordKeyRequestBody(ident)))
-                    }.also {
-                        sikkerlogg.info {
-                            "Kall til arbeidssøkerregister for å hente record key for $ident ga status ${it.status}"
+            try {
+                val result =
+                    httpClient
+                        .post(URI(recordKeyUrl).toURL()) {
+                            bearerAuth(
+                                recordKeyTokenProvider.invoke() ?: throw RuntimeException("Klarte ikke å hente token"),
+                            )
+                            contentType(ContentType.Application.Json)
+                            setBody(defaultObjectMapper.writeValueAsString(RecordKeyRequestBody(ident)))
+                        }.also {
+                            sikkerlogg.info {
+                                "Kall til arbeidssøkerregister for å hente record key for $ident ga status ${it.status}"
+                            }
                         }
-                    }
 
-            if (result.status != HttpStatusCode.OK) {
-                val body = result.bodyAsText()
-                sikkerlogg.warn {
-                    "Uforventet status ${result.status.value} ved henting av record key for $ident. Response: $body"
+                if (result.status != HttpStatusCode.OK) {
+                    val body = result.bodyAsText()
+                    sikkerlogg.warn {
+                        "Uforventet status ${result.status.value} ved henting av record key for $ident. Response: $body"
+                    }
+                    throw RuntimeException("Uforventet status ${result.status.value} ved henting av record key")
                 }
-                throw RuntimeException("Uforventet status ${result.status.value} ved henting av record key")
+                result.body()
+            } catch (e: Exception) {
+                logger.error(e) { "Kunne ikke hente record key" }
+                throw RuntimeException(e)
             }
-            result.body()
         }
 
     private suspend fun hentSisteArbeidssøkerperiode(ident: String): ArbeidssøkerperiodeResponse =
         withContext(Dispatchers.IO) {
-            val result =
-                httpClient
-                    .post(URI(oppslagUrl).toURL()) {
-                        bearerAuth(oppslagTokenProvider.invoke() ?: throw RuntimeException("Klarte ikke å hente token"))
-                        contentType(ContentType.Application.Json)
-                        parameter("siste", true)
-                        setBody(defaultObjectMapper.writeValueAsString(ArbeidssøkerperiodeRequestBody(ident)))
-                    }.also {
-                        sikkerlogg.info {
-                            "Kall til arbeidssøkerregister for å hente arbeidssøkerperiode for $ident ga status ${it.status}"
-                        }
-                    }
-
-            if (result.status != HttpStatusCode.OK) {
-                val body = result.bodyAsText()
-                sikkerlogg.warn {
-                    "Uforventet status ${result.status.value} ved henting av arbeidssøkerperiode for $ident. Response: $body"
-                }
-                throw RuntimeException("Uforventet status ${result.status.value} ved henting av arbeidssøkerperiode")
-            }
-
             try {
+                val result =
+                    httpClient
+                        .post(URI(oppslagUrl).toURL()) {
+                            bearerAuth(
+                                oppslagTokenProvider.invoke() ?: throw RuntimeException("Klarte ikke å hente token"),
+                            )
+                            contentType(ContentType.Application.Json)
+                            parameter("siste", true)
+                            setBody(defaultObjectMapper.writeValueAsString(ArbeidssøkerperiodeRequestBody(ident)))
+                        }.also {
+                            sikkerlogg.info {
+                                "Kall til arbeidssøkerregister for å hente arbeidssøkerperiode for $ident ga status ${it.status}"
+                            }
+                        }
+
+                if (result.status != HttpStatusCode.OK) {
+                    val body = result.bodyAsText()
+                    sikkerlogg.warn {
+                        "Uforventet status ${result.status.value} ved henting av arbeidssøkerperiode for $ident. Response: $body"
+                    }
+                    throw RuntimeException("Uforventet status ${result.status.value} ved henting av arbeidssøkerperiode")
+                }
+
                 val response: List<ArbeidssøkerperiodeResponse> = result.body()
 
                 response.first()
             } catch (e: Exception) {
-                throw RuntimeException("Kunne ikke prosessere arbeidssøkerperioder")
+                logger.error(e) { "Kunne ikke hente arbeidssøkerperiode" }
+                throw RuntimeException(e)
             }
         }
 }
