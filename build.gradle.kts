@@ -23,6 +23,10 @@ application {
 }
 
 tasks {
+    compileTestKotlin {
+        dependsOn(generateTestAvroJava)
+    }
+
     test {
         useJUnitPlatform()
     }
