@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.service
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -17,19 +18,31 @@ import no.nav.dagpenger.oauth2.defaultHttpClient
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.kafka.KafkaProdusent
-import no.nav.dagpenger.rapportering.model.ArbeidssøkerBekreftelse
+import no.nav.dagpenger.rapportering.model.ArbeidssøkerperiodeRequestBody
+import no.nav.dagpenger.rapportering.model.ArbeidssøkerperiodeResponse
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.RecordKeyRequestBody
+import no.nav.dagpenger.rapportering.model.RecordKeyResponse
 import no.nav.dagpenger.rapportering.model.arbeidet
-import no.nav.dagpenger.rapportering.utils.tilMillis
+import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
+import no.nav.paw.bekreftelse.melding.v1.vo.Bekreftelsesloesning
+import no.nav.paw.bekreftelse.melding.v1.vo.Bruker
+import no.nav.paw.bekreftelse.melding.v1.vo.BrukerType
+import no.nav.paw.bekreftelse.melding.v1.vo.Metadata
+import no.nav.paw.bekreftelse.melding.v1.vo.Svar
 import java.lang.System.getenv
 import java.net.URI
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.util.UUID
 
 class ArbeidssøkerService(
     private val kallLoggService: KallLoggService,
     private val recordKeyUrl: String = Configuration.arbeidssokerregisterRecordKeyUrl,
     private val recordKeyTokenProvider: () -> String? = Configuration.arbeidssokerregisterRecordKeyTokenProvider,
-    private val bekreftelseKafkaProdusent: KafkaProdusent<ArbeidssøkerBekreftelse> = Configuration.bekreftelseKafkaProdusent,
+    private val oppslagUrl: String = Configuration.arbeidssokerregisterOppslagUrl,
+    private val oppslagTokenProvider: () -> String? = Configuration.arbeidssokerregisterOppslagTokenProvider,
+    private val bekreftelseKafkaProdusent: KafkaProdusent = Configuration.bekreftelseKafkaProdusent,
     private val httpClient: HttpClient = defaultHttpClient(),
 ) {
     companion object {
@@ -47,23 +60,29 @@ class ArbeidssøkerService(
         }
 
         val recordKeyResponse = runBlocking { hentRecordKey(ident) }
+        val arbeidssøkerperiodeResponse = runBlocking { hentSisteArbeidssøkerperiode(ident) }
 
         val arbeidssøkerBekreftelse =
-            ArbeidssøkerBekreftelse(
-                periodeId = rapporteringsperiode.id.toString(),
-                // TODO: partisjonsnøkkel?
-                id = UUID.randomUUID(),
-                svar =
-                    ArbeidssøkerBekreftelse.Svar(
-                        gjelderFra = rapporteringsperiode.periode.fraOgMed.tilMillis(),
-                        gjelderTil = rapporteringsperiode.periode.tilOgMed.tilMillis(),
-                        harJobbetIDennePerioden = rapporteringsperiode.arbeidet(),
-                        vilFortsetteSomArbeidssoeker = rapporteringsperiode.registrertArbeidssoker == true,
+            Bekreftelse(
+                arbeidssøkerperiodeResponse.periodeId,
+                Bekreftelsesloesning.DAGPENGER,
+                UUID.randomUUID(),
+                Svar(
+                    Metadata(
+                        LocalDateTime.now().toInstant(ZoneOffset.UTC),
+                        Bruker(BrukerType.SLUTTBRUKER, ident),
+                        Bekreftelsesloesning.DAGPENGER.name,
+                        "Bruker sendte inn dagpengermeldekort",
                     ),
+                    rapporteringsperiode.periode.fraOgMed.atStartOfDay().toInstant(ZoneOffset.UTC),
+                    rapporteringsperiode.periode.tilOgMed.atStartOfDay().toInstant(ZoneOffset.UTC),
+                    rapporteringsperiode.arbeidet(),
+                    rapporteringsperiode.registrertArbeidssoker == true,
+                ),
             )
 
         val kallLoggId = kallLoggService.lagreKafkaUtKallLogg(ident)
-        kallLoggService.lagreRequest(kallLoggId, defaultObjectMapper.writeValueAsString(arbeidssøkerBekreftelse))
+        kallLoggService.lagreRequest(kallLoggId, arbeidssøkerBekreftelse.toString())
 
         try {
             bekreftelseKafkaProdusent.send(key = recordKeyResponse.key, value = arbeidssøkerBekreftelse)
@@ -104,11 +123,35 @@ class ArbeidssøkerService(
             result.body()
         }
 
-    data class RecordKeyRequestBody(
-        val ident: String,
-    )
+    private suspend fun hentSisteArbeidssøkerperiode(ident: String): ArbeidssøkerperiodeResponse =
+        withContext(Dispatchers.IO) {
+            val result =
+                httpClient
+                    .post(URI(oppslagUrl).toURL()) {
+                        bearerAuth(oppslagTokenProvider.invoke() ?: throw RuntimeException("Klarte ikke å hente token"))
+                        contentType(ContentType.Application.Json)
+                        parameter("siste", true)
+                        setBody(defaultObjectMapper.writeValueAsString(ArbeidssøkerperiodeRequestBody(ident)))
+                    }.also {
+                        sikkerlogg.info {
+                            "Kall til arbeidssøkerregister for å hente arbeidssøkerperiode for $ident ga status ${it.status}"
+                        }
+                    }
 
-    data class RecordKeyResponse(
-        val key: Long,
-    )
+            if (result.status != HttpStatusCode.OK) {
+                val body = result.bodyAsText()
+                sikkerlogg.warn {
+                    "Uforventet status ${result.status.value} ved henting av arbeidssøkerperiode for $ident. Response: $body"
+                }
+                throw RuntimeException("Uforventet status ${result.status.value} ved henting av arbeidssøkerperiode")
+            }
+
+            try {
+                val response: List<ArbeidssøkerperiodeResponse> = result.body()
+
+                response.first()
+            } catch (e: Exception) {
+                throw RuntimeException("Kunne ikke prosessere arbeidssøkerperioder")
+            }
+        }
 }

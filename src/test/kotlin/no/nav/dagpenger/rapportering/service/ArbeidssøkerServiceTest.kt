@@ -2,22 +2,39 @@ package no.nav.dagpenger.rapportering.service
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.headersOf
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.slot
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
+import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.connector.createMockClient
 import no.nav.dagpenger.rapportering.kafka.KafkaProdusent
-import no.nav.dagpenger.rapportering.model.ArbeidssøkerBekreftelse
-import no.nav.dagpenger.rapportering.model.BekreftelsesLøsning
 import no.nav.dagpenger.rapportering.repository.Postgres.database
-import no.nav.dagpenger.rapportering.utils.tilMillis
+import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
+import no.nav.paw.bekreftelse.melding.v1.vo.Bekreftelsesloesning
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.time.ZoneOffset
 
 class ArbeidssøkerServiceTest {
+    private val ident = "01020312345"
+    private val arbeidsregisterPeriodeId = "68219fd0-98d1-4ae9-8ddd-19bca28de5ee"
+    private val recordKeyTokenProvider = {
+        "TOKEN"
+    }
+    private val oppslagTokenProvider = {
+        "TOKEN"
+    }
+
     companion object {
         @BeforeAll
         @JvmStatic
@@ -30,12 +47,15 @@ class ArbeidssøkerServiceTest {
                 "ARBEIDSSOKERREGISTER_RECORD_KEY_URL",
                 "http://arbeidssokerregister_record_key_url/api/v1/record-key",
             )
+            System.setProperty(
+                "ARBEIDSSOKERREGISTER_OPPSLAG_KEY_URL",
+                "http://arbeidssokerregister_oppslag_url/api/v1/arbeidssoekerperioder",
+            )
         }
     }
 
     @Test
     fun `Kan sende bekreftelse med vilFortsetteSomArbeidssoeker = true`() {
-        val ident = "01020312345"
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = true)
 
         val kallLoggService = mockk<KallLoggService>()
@@ -43,37 +63,33 @@ class ArbeidssøkerServiceTest {
         every { kallLoggService.lagreRequest(eq(1), any()) } just runs
         every { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
 
-        val recordKeyTokenProvider = {
-            "TOKEN"
-        }
-
-        val bekreftelseKafkaProdusent = mockk<KafkaProdusent<ArbeidssøkerBekreftelse>>()
-        val slot = slot<ArbeidssøkerBekreftelse>()
+        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
+        val slot = slot<Bekreftelse>()
         every { bekreftelseKafkaProdusent.send(any(), capture(slot)) } just runs
 
-        val arbeidssøkerService =
+        val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService,
                 recordKeyTokenProvider = recordKeyTokenProvider,
+                oppslagTokenProvider = oppslagTokenProvider,
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
-                httpClient = createMockClient(200, "{ \"key\": 123456789 }"),
+                httpClient = mockHttpClient(),
             )
 
-        arbeidssøkerService.sendBekreftelse(ident, rapporteringsperiode)
+        arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
 
         val bekreftelse = slot.captured
-        bekreftelse.periodeId shouldBe rapporteringsperiode.id.toString()
-        bekreftelse.bekreftelsesLøsning shouldBe BekreftelsesLøsning.DAGPENGER
+        bekreftelse.periodeId.toString() shouldBe arbeidsregisterPeriodeId
+        bekreftelse.bekreftelsesloesning shouldBe Bekreftelsesloesning.DAGPENGER
         val svar = bekreftelse.svar
-        svar.gjelderFra shouldBe rapporteringsperiode.periode.fraOgMed.tilMillis()
-        svar.gjelderTil shouldBe rapporteringsperiode.periode.tilOgMed.tilMillis()
+        svar.gjelderFra shouldBe rapporteringsperiode.periode.fraOgMed.atStartOfDay().toInstant(ZoneOffset.UTC)
+        svar.gjelderTil shouldBe rapporteringsperiode.periode.tilOgMed.atStartOfDay().toInstant(ZoneOffset.UTC)
         svar.harJobbetIDennePerioden shouldBe false
         svar.vilFortsetteSomArbeidssoeker shouldBe true
     }
 
     @Test
     fun `Kan sende bekreftelse med vilFortsetteSomArbeidssoeker = false`() {
-        val ident = "01020312345"
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
 
         val kallLoggService = mockk<KallLoggService>()
@@ -81,37 +97,33 @@ class ArbeidssøkerServiceTest {
         every { kallLoggService.lagreRequest(eq(1), any()) } just runs
         every { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
 
-        val recordKeyTokenProvider = {
-            "TOKEN"
-        }
-
-        val bekreftelseKafkaProdusent = mockk<KafkaProdusent<ArbeidssøkerBekreftelse>>()
-        val slot = slot<ArbeidssøkerBekreftelse>()
+        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
+        val slot = slot<Bekreftelse>()
         every { bekreftelseKafkaProdusent.send(any(), capture(slot)) } just runs
 
-        val arbeidssøkerService =
+        val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService,
                 recordKeyTokenProvider = recordKeyTokenProvider,
+                oppslagTokenProvider = oppslagTokenProvider,
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
-                httpClient = createMockClient(200, "{ \"key\": 123456789 }"),
+                httpClient = mockHttpClient(),
             )
 
-        arbeidssøkerService.sendBekreftelse(ident, rapporteringsperiode)
+        arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
 
         val bekreftelse = slot.captured
-        bekreftelse.periodeId shouldBe rapporteringsperiode.id.toString()
-        bekreftelse.bekreftelsesLøsning shouldBe BekreftelsesLøsning.DAGPENGER
+        bekreftelse.periodeId.toString() shouldBe arbeidsregisterPeriodeId
+        bekreftelse.bekreftelsesloesning shouldBe Bekreftelsesloesning.DAGPENGER
         val svar = bekreftelse.svar
-        svar.gjelderFra shouldBe rapporteringsperiode.periode.fraOgMed.tilMillis()
-        svar.gjelderTil shouldBe rapporteringsperiode.periode.tilOgMed.tilMillis()
+        svar.gjelderFra shouldBe rapporteringsperiode.periode.fraOgMed.atStartOfDay().toInstant(ZoneOffset.UTC)
+        svar.gjelderTil shouldBe rapporteringsperiode.periode.tilOgMed.atStartOfDay().toInstant(ZoneOffset.UTC)
         svar.harJobbetIDennePerioden shouldBe false
         svar.vilFortsetteSomArbeidssoeker shouldBe false
     }
 
     @Test
     fun `Kaster Exception hvis ikke kan hente recordKey token`() {
-        val ident = "01020312345"
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
 
         val kallLoggService = mockk<KallLoggService>()
@@ -120,19 +132,20 @@ class ArbeidssøkerServiceTest {
             null
         }
 
-        val bekreftelseKafkaProdusent = mockk<KafkaProdusent<ArbeidssøkerBekreftelse>>()
+        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
 
-        val arbeidssøkerService =
+        val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService,
                 recordKeyTokenProvider = recordKeyTokenProvider,
+                oppslagTokenProvider = oppslagTokenProvider,
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
-                httpClient = createMockClient(200, "{ \"key\": 123456789 }"),
+                httpClient = mockHttpClient(),
             )
 
         val exception =
             shouldThrow<RuntimeException> {
-                arbeidssøkerService.sendBekreftelse(ident, rapporteringsperiode)
+                arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
             }
 
         exception.message shouldBe "Klarte ikke å hente token"
@@ -140,18 +153,12 @@ class ArbeidssøkerServiceTest {
 
     @Test
     fun `Kaster Exception hvis ikke kan hente recordKey`() {
-        val ident = "01020312345"
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
 
         val kallLoggService = mockk<KallLoggService>()
+        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
 
-        val recordKeyTokenProvider = {
-            "TOKEN"
-        }
-
-        val bekreftelseKafkaProdusent = mockk<KafkaProdusent<ArbeidssøkerBekreftelse>>()
-
-        val arbeidssøkerService =
+        val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService,
                 recordKeyTokenProvider = recordKeyTokenProvider,
@@ -161,15 +168,77 @@ class ArbeidssøkerServiceTest {
 
         val exception =
             shouldThrow<RuntimeException> {
-                arbeidssøkerService.sendBekreftelse(ident, rapporteringsperiode)
+                arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
             }
 
         exception.message shouldBe "Uforventet status 500 ved henting av record key"
     }
 
     @Test
+    fun `Kaster Exception hvis ikke kan hente oppslag token`() {
+        val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
+
+        val kallLoggService = mockk<KallLoggService>()
+
+        val oppslagTokenProvider = {
+            null
+        }
+
+        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
+
+        val arbeidssoekerService =
+            ArbeidssøkerService(
+                kallLoggService,
+                recordKeyTokenProvider = recordKeyTokenProvider,
+                oppslagTokenProvider = oppslagTokenProvider,
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
+                httpClient = mockHttpClient(),
+            )
+
+        val exception =
+            shouldThrow<RuntimeException> {
+                arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
+            }
+
+        exception.message shouldBe "Klarte ikke å hente token"
+    }
+
+    @Test
+    fun `Kaster Exception hvis ikke kan hente arbeidssøkerperioder`() {
+        val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
+
+        val kallLoggService = mockk<KallLoggService>()
+        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
+
+        val arbeidssoekerService =
+            ArbeidssøkerService(
+                kallLoggService,
+                recordKeyTokenProvider = recordKeyTokenProvider,
+                oppslagTokenProvider = oppslagTokenProvider,
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
+                // Returnerer svar kun for RecordKey slik at hentSisteArbeidssøkerperiode kaster exception
+                httpClient =
+                    createHttpClient(
+                        MockEngine {
+                            respond(
+                                content = "{ \"key\": 123456789 }",
+                                status = HttpStatusCode.fromValue(200),
+                                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+                            )
+                        },
+                    ),
+            )
+
+        val exception =
+            shouldThrow<RuntimeException> {
+                arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
+            }
+
+        exception.message shouldBe "Kunne ikke prosessere arbeidssøkerperioder"
+    }
+
+    @Test
     fun `Kaster Exception hvis ikke kan sende til Kafka`() {
-        val ident = "01020312345"
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = true)
 
         val kallLoggService = mockk<KallLoggService>()
@@ -177,26 +246,55 @@ class ArbeidssøkerServiceTest {
         every { kallLoggService.lagreRequest(eq(1), any()) } just runs
         every { kallLoggService.lagreResponse(eq(1), eq(500), eq("")) } just runs
 
-        val recordKeyTokenProvider = {
-            "TOKEN"
-        }
-
-        val bekreftelseKafkaProdusent = mockk<KafkaProdusent<ArbeidssøkerBekreftelse>>()
+        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
         every { bekreftelseKafkaProdusent.send(any(), any()) } throws RuntimeException("Kunne ikke sende til Kafka")
 
-        val arbeidssøkerService =
+        val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService,
                 recordKeyTokenProvider = recordKeyTokenProvider,
+                oppslagTokenProvider = oppslagTokenProvider,
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
-                httpClient = createMockClient(200, "{ \"key\": 123456789 }"),
+                httpClient = mockHttpClient(),
             )
 
         val exception =
             shouldThrow<Exception> {
-                arbeidssøkerService.sendBekreftelse(ident, rapporteringsperiode)
+                arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
             }
 
         exception.message shouldBe "java.lang.RuntimeException: Kunne ikke sende til Kafka"
+    }
+
+    private fun mockHttpClient(): HttpClient {
+        return createHttpClient(
+            MockEngine { request ->
+                respond(
+                    content =
+                        if (request.url.host == "arbeidssokerregister_record_key_url") {
+                            "{ \"key\": 123456789 }"
+                        } else {
+                            """
+                            [
+                              {
+                                "periodeId": "$arbeidsregisterPeriodeId",
+                                "startet": {
+                                  "tidspunkt": "2025-02-04T10:15:30",
+                                  "utfoertAv": {
+                                    "type": "Type",
+                                    "id": "1"
+                                  },
+                                  "kilde": "Kilde",
+                                  "aarsak": "Årsak"
+                                }
+                              }
+                            ]
+                            """.trimIndent()
+                        },
+                    status = HttpStatusCode.fromValue(200),
+                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+                )
+            },
+        )
     }
 }

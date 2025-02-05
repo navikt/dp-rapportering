@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin)
     id("io.ktor.plugin") version "3.0.3"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
+    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
 
 group = "no.nav.dagpenger.rapportering"
@@ -19,19 +20,6 @@ application {
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
-}
-
-sourceSets {
-    main {
-        kotlin {
-            setSrcDirs(
-                listOf(
-                    "src/main/kotlin",
-                    "${layout.buildDirectory.get()}/generated/src/main/kotlin",
-                ),
-            )
-        }
-    }
 }
 
 tasks {
@@ -72,7 +60,9 @@ dependencies {
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.6.0")
-    implementation("io.confluent:kafka-avro-serializer:7.8.0")
+
+    implementation("io.confluent:kafka-streams-avro-serde:7.8.0")
+    implementation("org.apache.avro:avro:1.12.0")
 
     testImplementation(libs.rapids.and.rivers.test)
     testImplementation(libs.bundles.postgres.test)

@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.api
 
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.ContentType
@@ -27,7 +28,6 @@ import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConne
 import no.nav.dagpenger.rapportering.config.konfigurasjon
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.kafka.KafkaProdusent
-import no.nav.dagpenger.rapportering.model.ArbeidssøkerBekreftelse
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
@@ -114,6 +114,7 @@ open class ApiTestSetup {
                     }
                     install(ContentNegotiation) {
                         jackson {
+                            registerModule(JavaTimeModule())
                             configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                         }
                     }
@@ -124,9 +125,9 @@ open class ApiTestSetup {
             val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val kallLoggService = KallLoggService(KallLoggRepositoryPostgres(PostgresDataSourceBuilder.dataSource))
-            val kafkaProdusent = mockk<KafkaProdusent<ArbeidssøkerBekreftelse>>()
+            val kafkaProdusent = mockk<KafkaProdusent>()
             every { kafkaProdusent.send(any(), any()) } just runs
-            val arbeidssøkerService =
+            val arbeidssoekerService =
                 ArbeidssøkerService(
                     kallLoggService = kallLoggService,
                     httpClient = httpClient,
@@ -144,7 +145,7 @@ open class ApiTestSetup {
                         meterRegistry,
                     ),
                     kallLoggService,
-                    arbeidssøkerService,
+                    arbeidssoekerService,
                 )
 
             application {
@@ -173,6 +174,8 @@ open class ApiTestSetup {
         System.setProperty("AZURE_APP_CLIENT_SECRET", TEST_PRIVATE_JWK)
         System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_URL", "http://arbeidssokerregister_record_key_url/api/v1/record-key")
         System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE", "api://test.scope.arbeidssokerregister_record_key/.default")
+        System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_KEY_URL", "http://arbeidssokerregister_oppslag_url/api/v1/arbeidssoekerperioder")
+        System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_SCOPE", "api://test.scope.arbeidssokerregister_oppslag/.default")
         System.setProperty("GITHUB_SHA", "some_sha")
     }
 
@@ -219,12 +222,40 @@ open class ApiTestSetup {
         }
     }
 
-    fun ExternalServicesBuilder.arbeidssokerregister() {
+    fun ExternalServicesBuilder.arbeidssokerregisterRecordKey() {
         hosts("http://arbeidssokerregister_record_key_url") {
             routing {
                 post("/api/v1/record-key") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond("{ \"key\": 1 }")
+                }
+            }
+        }
+    }
+
+    fun ExternalServicesBuilder.arbeidssokerregisterOppslag() {
+        hosts("http://arbeidssokerregister_oppslag_url") {
+            routing {
+                post("/api/v1/arbeidssoekerperioder") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    call.respond(
+                        """
+                        [
+                          {
+                            "periodeId": "68219fd0-98d1-4ae9-8ddd-19bca28de5ee",
+                            "startet": {
+                              "tidspunkt": "2025-02-04T10:15:30",
+                              "utfoertAv": {
+                                "type": "Type",
+                                "id": "1"
+                              },
+                              "kilde": "Kilde",
+                              "aarsak": "Årsak"
+                            }
+                          }
+                        ]
+                        """.trimIndent(),
+                    )
                 }
             }
         }

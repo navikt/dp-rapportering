@@ -1,25 +1,24 @@
 package no.nav.dagpenger.rapportering.kafka
 
-import io.confluent.kafka.serializers.KafkaAvroSerializer
+import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerializer
 import mu.KotlinLogging
+import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 
-class KafkaProdusent<T>(
-    private val kafkaProducer: KafkaProducer<Long, Any>,
+class KafkaProdusent(
+    private val kafkaProducer: KafkaProducer<Long, Bekreftelse>,
     val topic: String,
 ) {
     fun send(
         key: Long,
-        value: T,
+        value: Bekreftelse,
     ) {
-        val valueSerialized = KafkaAvroSerializer().serialize(topic, value)
-
-        val record = ProducerRecord<Long, Any>(topic, key, valueSerialized)
+        val record = ProducerRecord(topic, key, value)
 
         kafkaProducer.send(record) { metadata, exception ->
             if (exception != null) {
-                logger.info { "Kunne ikke sende melding: Nøkkel=$key, Verdi=$value, Feil=${exception.message}" }
+                logger.error { "Kunne ikke sende melding: Nøkkel=$key, Verdi=$value, Feil=${exception.message}" }
             } else {
                 logger.info { "Melding sendt: Nøkkel=$key, Verdi=$value til Topic=${metadata.topic()} på Offset=${metadata.offset()}" }
             }
@@ -34,3 +33,5 @@ class KafkaProdusent<T>(
         private val logger = KotlinLogging.logger {}
     }
 }
+
+class BekreftelseAvroSerializer : SpecificAvroSerializer<Bekreftelse>()

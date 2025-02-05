@@ -84,7 +84,8 @@ class CallLoggingPluginTest : ApiTestSetup() {
             externalServices {
                 meldepliktAdapter()
                 pdfGenerator()
-                arbeidssokerregister()
+                arbeidssokerregisterRecordKey()
+                arbeidssokerregisterOppslag()
             }
 
             val adapterRapporteringsperiodeString =
@@ -100,7 +101,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
 
             val list = getLogList()
 
-            list.size shouldBe 10
+            list.size shouldBe 11
             list[2].type shouldBe "REST"
             list[2].kallRetning shouldBe "INN"
             list[2].method shouldBe "POST"
@@ -204,15 +205,45 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[8].ident shouldBe "" // Det finnes ikke token med ident når vi henter record key
             list[8].logginfo shouldBe ""
 
-            list[9].type shouldBe "KAFKA"
+            list[9].type shouldBe "REST"
             list[9].kallRetning shouldBe "UT"
-            list[9].method shouldBe "PUBLISH"
-            list[9].operation shouldBe "teamdagpenger.rapid.v1"
+            list[9].method shouldBe "POST"
+            list[9].operation shouldBe "/api/v1/arbeidssoekerperioder"
             list[9].status shouldBe 200
-            list[9].request shouldContain ""
-            list[9].response shouldBe ""
-            list[9].ident shouldBe ident
+            list[9].request shouldStartWith "POST http://arbeidssokerregister_oppslag_url:80/api/v1/arbeidssoekerperioder"
+            list[9].response.trimIndent() shouldBe
+                """
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+                Content-Length: 254
+                
+                [
+                  {
+                    "periodeId": "68219fd0-98d1-4ae9-8ddd-19bca28de5ee",
+                    "startet": {
+                      "tidspunkt": "2025-02-04T10:15:30",
+                      "utfoertAv": {
+                        "type": "Type",
+                        "id": "1"
+                      },
+                      "kilde": "Kilde",
+                      "aarsak": "Årsak"
+                    }
+                  }
+                ]
+                """.trimIndent()
+            list[9].ident shouldBe "" // Det finnes ikke token med ident når vi henter record key
             list[9].logginfo shouldBe ""
+
+            list[10].type shouldBe "KAFKA"
+            list[10].kallRetning shouldBe "UT"
+            list[10].method shouldBe "PUBLISH"
+            list[10].operation shouldBe "teamdagpenger.rapid.v1"
+            list[10].status shouldBe 200
+            list[10].request shouldContain ""
+            list[10].response shouldBe ""
+            list[10].ident shouldBe ident
+            list[10].logginfo shouldBe ""
         }
 
     private fun getLogList() =

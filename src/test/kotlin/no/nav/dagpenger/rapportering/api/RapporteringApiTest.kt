@@ -96,7 +96,8 @@ class RapporteringApiTest : ApiTestSetup() {
             externalServices {
                 meldepliktAdapter()
                 pdfGenerator()
-                arbeidssokerregister()
+                arbeidssokerregisterRecordKey()
+                arbeidssokerregisterOppslag()
             }
 
             // Lagrer perioden i databasen
@@ -197,7 +198,8 @@ class RapporteringApiTest : ApiTestSetup() {
             externalServices {
                 meldepliktAdapter()
                 pdfGenerator()
-                arbeidssokerregister()
+                arbeidssokerregisterRecordKey()
+                arbeidssokerregisterOppslag()
             }
 
             val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
