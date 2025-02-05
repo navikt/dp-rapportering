@@ -31,6 +31,9 @@ class MeldepliktConnector(
     private val httpClient: HttpClient,
     private val actionTimer: ActionTimer,
 ) {
+    private val logger = KotlinLogging.logger {}
+    private val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
+
     suspend fun harMeldeplikt(
         ident: String,
         subjectToken: String,
@@ -213,10 +216,5 @@ class MeldepliktConnector(
             }
         actionTimer.httpTimer(metrikkNavn, response.status, HttpMethod.Post, tidBrukt.inWholeSeconds)
         return response
-    }
-
-    companion object {
-        private val logger = KotlinLogging.logger {}
-        val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
     }
 }

@@ -10,6 +10,8 @@ class KafkaProdusent(
     private val kafkaProducer: KafkaProducer<Long, Bekreftelse>,
     val topic: String,
 ) {
+    private val logger = KotlinLogging.logger {}
+
     fun send(
         key: Long,
         value: Bekreftelse,
@@ -27,10 +29,6 @@ class KafkaProdusent(
 
     fun close() {
         kafkaProducer.close()
-    }
-
-    companion object {
-        private val logger = KotlinLogging.logger {}
     }
 }
 

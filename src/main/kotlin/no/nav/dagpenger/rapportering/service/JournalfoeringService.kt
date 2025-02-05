@@ -17,7 +17,7 @@ import io.ktor.http.contentType
 import io.ktor.util.toMap
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
-import mu.KLogging
+import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
@@ -45,7 +45,7 @@ class JournalfoeringService(
     // 5 minutes by default
     resendInterval: Long = 300_000L,
 ) {
-    companion object : KLogging()
+    private val logger = KotlinLogging.logger {}
 
     private val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")

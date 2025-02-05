@@ -45,10 +45,8 @@ class ArbeidssøkerService(
     private val bekreftelseKafkaProdusent: KafkaProdusent = Configuration.bekreftelseKafkaProdusent,
     private val httpClient: HttpClient = defaultHttpClient(),
 ) {
-    companion object {
-        private val logger = KotlinLogging.logger {}
-        private val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
-    }
+    private val logger = KotlinLogging.logger {}
+    private val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
 
     fun sendBekreftelse(
         ident: String,

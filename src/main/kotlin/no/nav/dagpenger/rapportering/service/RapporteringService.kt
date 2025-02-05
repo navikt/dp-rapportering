@@ -494,7 +494,7 @@ class RapporteringService(
 
             kallLoggService.lagreResponse(kallLoggId, 200, "")
         } catch (e: Exception) {
-            JournalfoeringService.logger.error("Kunne ikke sende periode til RnR", e)
+            logger.error("Kunne ikke sende periode til RnR", e)
 
             kallLoggService.lagreResponse(kallLoggId, 500, "")
 
