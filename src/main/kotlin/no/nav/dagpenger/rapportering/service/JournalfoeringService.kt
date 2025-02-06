@@ -229,7 +229,7 @@ class JournalfoeringService(
             tittel = "Korrigert meldekort"
         }
 
-        return "$tittel for uke $uke1 - $uke2 ($fra - $til) elektronisk mottatt av NAV"
+        return "$tittel for uke $uke1 - $uke2 ($fra - $til) elektronisk mottatt av Nav"
     }
 
     private fun getTilleggsopplysninger(
