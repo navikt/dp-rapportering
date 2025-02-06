@@ -332,10 +332,10 @@ class JournalfoeringServiceTest {
         behov.get("periodeId").asInt() shouldBe 1
         if (endring) {
             behov.get("brevkode").asText() shouldBe "NAV 00-10.03"
-            behov.get("tittel").asText() shouldBe "Korrigert meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av NAV"
+            behov.get("tittel").asText() shouldBe "Korrigert meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av Nav"
         } else {
             behov.get("brevkode").asText() shouldBe "NAV 00-10.02"
-            behov.get("tittel").asText() shouldBe "Meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av NAV"
+            behov.get("tittel").asText() shouldBe "Meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av Nav"
         }
 
         checkJson(behov.get("json").asText(), rapporteringsperiode)
