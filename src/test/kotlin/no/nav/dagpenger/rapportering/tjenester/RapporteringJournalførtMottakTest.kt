@@ -59,7 +59,7 @@ private val løstBehovJSON =
       "JournalføreRapportering": {
         "periodeId": "1234567890",
         "brevkode": "NAV 00-10.02",
-        "tittel": "Meldekort for uke 42-43 (14.10.2024 - 27.10.2024) elektronisk mottatt av NAV",
+        "tittel": "Meldekort for uke 42-43 (14.10.2024 - 27.10.2024) elektronisk mottatt av Nav",
         "json": "{\"key1\": \"value1\"}",
         "pdf": "UERG",
         "tilleggsopplysninger": [],
