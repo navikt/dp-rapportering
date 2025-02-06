@@ -49,7 +49,7 @@ class ArbeidssøkerServiceTest {
                 "http://arbeidssokerregister_record_key_url/api/v1/record-key",
             )
             System.setProperty(
-                "ARBEIDSSOKERREGISTER_OPPSLAG_KEY_URL",
+                "ARBEIDSSOKERREGISTER_OPPSLAG_URL",
                 "http://arbeidssokerregister_oppslag_url/api/v1/arbeidssoekerperioder",
             )
         }

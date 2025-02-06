@@ -174,7 +174,7 @@ open class ApiTestSetup {
         System.setProperty("AZURE_APP_CLIENT_SECRET", TEST_PRIVATE_JWK)
         System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_URL", "http://arbeidssokerregister_record_key_url/api/v1/record-key")
         System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE", "api://test.scope.arbeidssokerregister_record_key/.default")
-        System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_KEY_URL", "http://arbeidssokerregister_oppslag_url/api/v1/arbeidssoekerperioder")
+        System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_URL", "http://arbeidssokerregister_oppslag_url/api/v1/arbeidssoekerperioder")
         System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_SCOPE", "api://test.scope.arbeidssokerregister_oppslag/.default")
         System.setProperty("GITHUB_SHA", "some_sha")
     }

@@ -79,7 +79,7 @@ internal object Configuration {
     }
 
     val arbeidssokerregisterOppslagUrl by lazy {
-        properties[Key("ARBEIDSSOKERREGISTER_OPPSLAG_KEY_URL", stringType)]
+        properties[Key("ARBEIDSSOKERREGISTER_OPPSLAG_URL", stringType)]
     }
 
     val arbeidssokerregisterOppslagTokenProvider: () -> String by lazy {
