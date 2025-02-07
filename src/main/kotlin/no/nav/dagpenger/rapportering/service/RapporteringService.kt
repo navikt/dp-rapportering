@@ -84,7 +84,8 @@ class RapporteringService(
     ): List<Rapporteringsperiode>? =
         hentRapporteringsperioder(ident, token)
             ?.map { periode ->
-                if (rapporteringRepository.hentRapporteringsperiode(periode.id, ident) != null) {
+                val periodeFraDb = rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
+                if (periodeFraDb != null && periodeFraDb.status.ordinal < periode.status.ordinal) {
                     rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
                     rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
                         ?: throw RuntimeException("Fant ikke rapporteringsperiode, selv om den er lagret")
@@ -124,7 +125,7 @@ class RapporteringService(
                 )
             it.copy(
                 kanSendesFra = kanSendesFra,
-                kanSendes = kanSendesInn(kanSendesFra, it.status),
+                kanSendes = kanSendesInn(kanSendesFra, it.status, it.kanSendes),
             )
         }
 

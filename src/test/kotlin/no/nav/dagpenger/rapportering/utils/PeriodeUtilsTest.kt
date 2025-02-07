@@ -32,20 +32,34 @@ class PeriodeUtilsTest {
 
     @Test
     fun `kanSendesInn returnerer true hvis status er TilUtfylling og kanSendesFra er nå eller passert`() {
-        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.TilUtfylling) shouldBe true
-        PeriodeUtils.kanSendesInn(LocalDate.now(), RapporteringsperiodeStatus.TilUtfylling) shouldBe true
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.TilUtfylling, true) shouldBe true
+        PeriodeUtils.kanSendesInn(LocalDate.now(), RapporteringsperiodeStatus.TilUtfylling, true) shouldBe true
     }
 
     @Test
     fun `kanSendesInn returnerer false hvis status ikke er TilUtfylling`() {
-        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Endret) shouldBe false
-        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Innsendt) shouldBe false
-        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Ferdig) shouldBe false
-        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Feilet) shouldBe false
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Endret, true) shouldBe false
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Innsendt, true) shouldBe false
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Ferdig, true) shouldBe false
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Feilet, true) shouldBe false
     }
 
     @Test
     fun `kanSendesInn returnerer false hvis kanSendesFra er i fremtiden`() {
-        PeriodeUtils.kanSendesInn(LocalDate.now().plusDays(1), RapporteringsperiodeStatus.TilUtfylling) shouldBe false
+        PeriodeUtils.kanSendesInn(LocalDate.now().plusDays(1), RapporteringsperiodeStatus.TilUtfylling, true) shouldBe false
+    }
+
+    @Test
+    fun `kanSendesInn returnerer false hvis kansSendes = false uavhengig av andre parametere`() {
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.TilUtfylling, false) shouldBe false
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Endret, false) shouldBe false
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Innsendt, false) shouldBe false
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Ferdig, false) shouldBe false
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Feilet, false) shouldBe false
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.Midlertidig, false) shouldBe false
+
+        PeriodeUtils.kanSendesInn(17.mai(2020), RapporteringsperiodeStatus.TilUtfylling, false) shouldBe false
+        PeriodeUtils.kanSendesInn(LocalDate.now(), RapporteringsperiodeStatus.TilUtfylling, false) shouldBe false
+        PeriodeUtils.kanSendesInn(LocalDate.now().plusDays(1), RapporteringsperiodeStatus.TilUtfylling, false) shouldBe false
     }
 }

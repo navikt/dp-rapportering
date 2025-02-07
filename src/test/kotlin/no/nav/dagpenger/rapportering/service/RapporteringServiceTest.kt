@@ -288,6 +288,7 @@ class RapporteringServiceTest {
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
+        // Rapporteringsperiode med ID = 1 oppdateres siden meldepliktConnector returnerer data med høyere status (Innsendt)
         coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
 
         rapporteringsperioder[0].id shouldBe 1L
@@ -852,6 +853,7 @@ val rapporteringsperiodeListe =
         lagRapporteringsperiode(
             id = 1,
             periode = Periode(fraOgMed = 1.januar, tilOgMed = 14.januar),
+            status = Innsendt,
         ),
         lagRapporteringsperiode(
             id = 2,
