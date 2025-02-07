@@ -17,8 +17,11 @@ object PeriodeUtils {
     fun kanSendesInn(
         kanSendesFra: LocalDate,
         status: RapporteringsperiodeStatus,
+        kanSendes: Boolean,
     ): Boolean =
-        if (status == TilUtfylling) {
+        if (!kanSendes) {
+            false
+        } else if (status == TilUtfylling) {
             val naa = LocalDate.now()
             kanSendesFra.isBefore(naa) || kanSendesFra == naa
         } else {
