@@ -46,7 +46,7 @@ configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
 }
 
 openApiGenerate {
-    generatorName.set("kotlin-server")
+    generatorName.set("kotlin")
     inputSpec.set("$projectDir/src/main/resources/rapportering-api.yaml")
     outputDir.set("${layout.buildDirectory.get()}/generated/")
     packageName.set("no.nav.dagpenger.rapportering.api")
