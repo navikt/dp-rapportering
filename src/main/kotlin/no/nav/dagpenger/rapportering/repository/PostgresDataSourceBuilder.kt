@@ -19,13 +19,15 @@ internal object PostgresDataSourceBuilder {
 
     val dataSource by lazy {
         HikariDataSource().apply {
-            jdbcUrl = getOrThrow(DB_URL_KEY) + "&tcpKeepAlive=true"
+            jdbcUrl = getOrThrow(DB_URL_KEY)
             maximumPoolSize = 10
             minimumIdle = 1
             idleTimeout = 10000 // 10s
             connectionTimeout = 5000 // 5s
             maxLifetime = 30000 // 30s
             initializationFailTimeout = 5000 // 5s
+            addDataSourceProperty("tcpKeepAlive", true)
+            addDataSourceProperty("socketTimeout", 30)
         }
     }
     private val flyWayBuilder: FluentConfiguration =
