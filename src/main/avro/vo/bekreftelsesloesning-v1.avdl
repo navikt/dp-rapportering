@@ -1,9 +1,0 @@
-@namespace("no.nav.paw.bekreftelse.melding.v1.vo")
-protocol Bekreftelsesloesning {
-
-	enum Bekreftelsesloesning {
-		UKJENT_VERDI,
-		ARBEIDSSOEKERREGISTERET,
-		DAGPENGER
-	} = UKJENT_VERDI;
-}
