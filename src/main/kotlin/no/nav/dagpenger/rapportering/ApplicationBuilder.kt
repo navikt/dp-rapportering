@@ -72,7 +72,7 @@ class ApplicationBuilder(
             meterRegistry,
         )
 
-    private val arbeidssøkerService = ArbeidssøkerService(kallLoggService)
+    private val arbeidssøkerService = ArbeidssøkerService(kallLoggService, httpClient)
 
     private val rapporteringService =
         RapporteringService(

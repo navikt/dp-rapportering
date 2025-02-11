@@ -70,11 +70,11 @@ class ArbeidssøkerServiceTest {
 
         val arbeidssoekerService =
             ArbeidssøkerService(
-                kallLoggService,
+                kallLoggService = kallLoggService,
+                httpClient = mockHttpClient(),
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
-                httpClient = mockHttpClient(),
             )
 
         arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
@@ -104,11 +104,11 @@ class ArbeidssøkerServiceTest {
 
         val arbeidssoekerService =
             ArbeidssøkerService(
-                kallLoggService,
+                kallLoggService = kallLoggService,
+                httpClient = mockHttpClient(),
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
-                httpClient = mockHttpClient(),
             )
 
         arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
@@ -137,11 +137,11 @@ class ArbeidssøkerServiceTest {
 
         val arbeidssoekerService =
             ArbeidssøkerService(
-                kallLoggService,
+                kallLoggService = kallLoggService,
+                httpClient = mockHttpClient(),
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
-                httpClient = mockHttpClient(),
             )
 
         val exception =
@@ -161,10 +161,10 @@ class ArbeidssøkerServiceTest {
 
         val arbeidssoekerService =
             ArbeidssøkerService(
-                kallLoggService,
+                kallLoggService = kallLoggService,
+                httpClient = createMockClient(500, ""),
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
-                httpClient = createMockClient(500, ""),
             )
 
         val exception =
@@ -189,11 +189,11 @@ class ArbeidssøkerServiceTest {
 
         val arbeidssoekerService =
             ArbeidssøkerService(
-                kallLoggService,
+                kallLoggService = kallLoggService,
+                httpClient = mockHttpClient(),
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
-                httpClient = mockHttpClient(),
             )
 
         val exception =
@@ -213,7 +213,7 @@ class ArbeidssøkerServiceTest {
 
         val arbeidssoekerService =
             ArbeidssøkerService(
-                kallLoggService,
+                kallLoggService = kallLoggService,
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
@@ -252,11 +252,11 @@ class ArbeidssøkerServiceTest {
 
         val arbeidssoekerService =
             ArbeidssøkerService(
-                kallLoggService,
+                kallLoggService = kallLoggService,
+                httpClient = mockHttpClient(),
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
-                httpClient = mockHttpClient(),
             )
 
         val exception =

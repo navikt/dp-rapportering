@@ -14,7 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
-import no.nav.dagpenger.oauth2.defaultHttpClient
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.kafka.KafkaProdusent
@@ -38,12 +37,12 @@ import java.util.UUID
 
 class ArbeidssøkerService(
     private val kallLoggService: KallLoggService,
+    private val httpClient: HttpClient,
     private val recordKeyUrl: String = Configuration.arbeidssokerregisterRecordKeyUrl,
     private val recordKeyTokenProvider: () -> String? = Configuration.arbeidssokerregisterRecordKeyTokenProvider,
     private val oppslagUrl: String = Configuration.arbeidssokerregisterOppslagUrl,
     private val oppslagTokenProvider: () -> String? = Configuration.arbeidssokerregisterOppslagTokenProvider,
     private val bekreftelseKafkaProdusent: KafkaProdusent = Configuration.bekreftelseKafkaProdusent,
-    private val httpClient: HttpClient = defaultHttpClient(),
 ) {
     private val logger = KotlinLogging.logger {}
     private val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
