@@ -59,6 +59,10 @@ class ArbeidssøkerService(
         val recordKeyResponse = runBlocking { hentRecordKey(ident) }
         val arbeidssøkerperiodeResponse = runBlocking { hentSisteArbeidssøkerperiode(ident) }
 
+        if (arbeidssøkerperiodeResponse == null) {
+            return
+        }
+
         val arbeidssøkerBekreftelse =
             Bekreftelse(
                 arbeidssøkerperiodeResponse.periodeId,
@@ -125,7 +129,7 @@ class ArbeidssøkerService(
             }
         }
 
-    private suspend fun hentSisteArbeidssøkerperiode(ident: String): ArbeidssøkerperiodeResponse =
+    private suspend fun hentSisteArbeidssøkerperiode(ident: String): ArbeidssøkerperiodeResponse? =
         withContext(Dispatchers.IO) {
             try {
                 val result =
@@ -153,7 +157,7 @@ class ArbeidssøkerService(
 
                 val response: List<ArbeidssøkerperiodeResponse> = result.body()
 
-                response.first()
+                response.firstOrNull()
             } catch (e: Exception) {
                 logger.error(e) { "Kunne ikke hente arbeidssøkerperiode" }
                 throw RuntimeException(e)

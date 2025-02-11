@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.service
 
+import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
@@ -239,6 +240,27 @@ class ArbeidssøkerServiceTest {
     }
 
     @Test
+    fun `Kaster ikke Exception hvis henter en tom liste med arbeidssøkerperioder`() {
+        val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
+
+        val kallLoggService = mockk<KallLoggService>()
+        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
+
+        val arbeidssoekerService =
+            ArbeidssøkerService(
+                kallLoggService = kallLoggService,
+                httpClient = mockHttpClient(true),
+                recordKeyTokenProvider = recordKeyTokenProvider,
+                oppslagTokenProvider = oppslagTokenProvider,
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
+            )
+
+        shouldNotThrow<RuntimeException> {
+            arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
+        }
+    }
+
+    @Test
     fun `Kaster Exception hvis ikke kan sende til Kafka`() {
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = true)
 
@@ -267,7 +289,7 @@ class ArbeidssøkerServiceTest {
         exception.message shouldBe "java.lang.RuntimeException: Kunne ikke sende til Kafka"
     }
 
-    private fun mockHttpClient(): HttpClient {
+    private fun mockHttpClient(tomPeriodeListe: Boolean = false): HttpClient {
         return createHttpClient(
             MockEngine { request ->
                 respond(
@@ -275,22 +297,26 @@ class ArbeidssøkerServiceTest {
                         if (request.url.host == "arbeidssokerregister_record_key_url") {
                             "{ \"key\": 123456789 }"
                         } else {
-                            """
-                            [
-                              {
-                                "periodeId": "$arbeidsregisterPeriodeId",
-                                "startet": {
-                                  "tidspunkt": "2025-02-04T10:15:30",
-                                  "utfoertAv": {
-                                    "type": "Type",
-                                    "id": "1"
-                                  },
-                                  "kilde": "Kilde",
-                                  "aarsak": "Årsak"
-                                }
-                              }
-                            ]
-                            """.trimIndent()
+                            if (tomPeriodeListe) {
+                                "[]"
+                            } else {
+                                """
+                                [
+                                  {
+                                    "periodeId": "$arbeidsregisterPeriodeId",
+                                    "startet": {
+                                      "tidspunkt": "2025-02-04T10:15:30",
+                                      "utfoertAv": {
+                                        "type": "Type",
+                                        "id": "1"
+                                      },
+                                      "kilde": "Kilde",
+                                      "aarsak": "Årsak"
+                                    }
+                                  }
+                                ]
+                                """.trimIndent()
+                            }
                         },
                     status = HttpStatusCode.fromValue(200),
                     headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
