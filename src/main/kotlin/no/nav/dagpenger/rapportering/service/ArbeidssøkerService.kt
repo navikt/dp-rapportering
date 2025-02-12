@@ -15,8 +15,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.config.Configuration
+import no.nav.dagpenger.rapportering.config.Configuration.bekreftelseTopic
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
-import no.nav.dagpenger.rapportering.kafka.KafkaProdusent
+import no.nav.dagpenger.rapportering.kafka.sendDeferred
 import no.nav.dagpenger.rapportering.model.ArbeidssøkerperiodeRequestBody
 import no.nav.dagpenger.rapportering.model.ArbeidssøkerperiodeResponse
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
@@ -29,6 +30,8 @@ import no.nav.paw.bekreftelse.melding.v1.vo.Bruker
 import no.nav.paw.bekreftelse.melding.v1.vo.BrukerType
 import no.nav.paw.bekreftelse.melding.v1.vo.Metadata
 import no.nav.paw.bekreftelse.melding.v1.vo.Svar
+import org.apache.kafka.clients.producer.Producer
+import org.apache.kafka.clients.producer.ProducerRecord
 import java.lang.System.getenv
 import java.net.URI
 import java.time.LocalDateTime
@@ -38,11 +41,11 @@ import java.util.UUID
 class ArbeidssøkerService(
     private val kallLoggService: KallLoggService,
     private val httpClient: HttpClient,
+    private val bekreftelseKafkaProdusent: Producer<Long, Bekreftelse>,
     private val recordKeyUrl: String = Configuration.arbeidssokerregisterRecordKeyUrl,
     private val recordKeyTokenProvider: () -> String? = Configuration.arbeidssokerregisterRecordKeyTokenProvider,
     private val oppslagUrl: String = Configuration.arbeidssokerregisterOppslagUrl,
     private val oppslagTokenProvider: () -> String? = Configuration.arbeidssokerregisterOppslagTokenProvider,
-    private val bekreftelseKafkaProdusent: KafkaProdusent = Configuration.bekreftelseKafkaProdusent,
 ) {
     private val logger = KotlinLogging.logger {}
     private val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
@@ -60,6 +63,7 @@ class ArbeidssøkerService(
         val arbeidssøkerperiodeResponse = runBlocking { hentSisteArbeidssøkerperiode(ident) }
 
         if (arbeidssøkerperiodeResponse == null) {
+            logger.info { "Kunne ikke hente arbeidssøkerperiode. Sender ikke sp.5 til PAW" }
             return
         }
 
@@ -86,7 +90,12 @@ class ArbeidssøkerService(
         kallLoggService.lagreRequest(kallLoggId, arbeidssøkerBekreftelse.toString())
 
         try {
-            bekreftelseKafkaProdusent.send(key = recordKeyResponse.key, value = arbeidssøkerBekreftelse)
+            val record = ProducerRecord(bekreftelseTopic, recordKeyResponse.key, arbeidssøkerBekreftelse)
+            val metadata = runBlocking { bekreftelseKafkaProdusent.sendDeferred(record).await() }
+            sikkerlogg.info {
+                "Sendt arbeidssøkerstatus for ident = $ident til Team PAW. " +
+                    "Metadata: topic=${metadata.topic()} (partition=${metadata.partition()}, offset=${metadata.offset()})"
+            }
 
             kallLoggService.lagreResponse(kallLoggId, 200, "")
         } catch (e: Exception) {

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.github.navikt.tbd_libs.kafka.AivenConfig
 import com.natpryce.konfig.ConfigurationMap
 import com.natpryce.konfig.ConfigurationProperties
 import com.natpryce.konfig.EnvironmentVariables
@@ -17,11 +16,8 @@ import com.natpryce.konfig.stringType
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.oauth2.CachedOauth2Client
 import no.nav.dagpenger.oauth2.OAuth2Config
-import no.nav.dagpenger.rapportering.kafka.BekreftelseAvroSerializer
-import no.nav.dagpenger.rapportering.kafka.KafkaProdusent
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.common.serialization.LongSerializer
-import java.util.Properties
+import no.nav.dagpenger.rapportering.kafka.KafkaSchemaRegistryConfig
+import no.nav.dagpenger.rapportering.kafka.KafkaServerKonfigurasjon
 
 internal object Configuration {
     const val APP_NAME = "dp-rapportering"
@@ -92,20 +88,25 @@ internal object Configuration {
         }
     }
 
+    val kafkaServerKonfigurasjon =
+        KafkaServerKonfigurasjon(
+            autentisering = "SSL",
+            kafkaBrokers = properties[Key("KAFKA_BROKERS", stringType)],
+            keystorePath = properties.getOrNull(Key("KAFKA_KEYSTORE_PATH", stringType)),
+            credstorePassword = properties.getOrNull(Key("KAFKA_CREDSTORE_PASSWORD", stringType)),
+            truststorePath = properties.getOrNull(Key("KAFKA_TRUSTSTORE_PATH", stringType)),
+        )
+
+    val kafkaSchemaRegistryConfig =
+        KafkaSchemaRegistryConfig(
+            url = properties[Key("KAFKA_SCHEMA_REGISTRY", stringType)],
+            username = properties[Key("KAFKA_SCHEMA_REGISTRY_USER", stringType)],
+            password = properties[Key("KAFKA_SCHEMA_REGISTRY_PASSWORD", stringType)],
+            autoRegisterSchema = true,
+            avroSpecificReaderConfig = true,
+        )
+
     val bekreftelseTopic by lazy { properties[Key("BEKREFTELSE_TOPIC", stringType)] }
-
-    val bekreftelseKafkaProdusent by lazy {
-        val kafkaProducer =
-            KafkaProducer(AivenConfig.default.producerConfig(Properties()), LongSerializer(), BekreftelseAvroSerializer()).also {
-                Runtime.getRuntime().addShutdownHook(
-                    Thread {
-                        it.close()
-                    },
-                )
-            }
-
-        KafkaProdusent(kafkaProducer, bekreftelseTopic)
-    }
 
     private val tokenXClient by lazy {
         val tokenX = OAuth2Config.TokenX(properties)

@@ -19,13 +19,18 @@ import io.mockk.slot
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.connector.createMockClient
-import no.nav.dagpenger.rapportering.kafka.KafkaProdusent
 import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
 import no.nav.paw.bekreftelse.melding.v1.vo.Bekreftelsesloesning
+import org.apache.kafka.clients.producer.Callback
+import org.apache.kafka.clients.producer.Producer
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.clients.producer.RecordMetadata
+import org.apache.kafka.common.TopicPartition
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.time.ZoneOffset
+import java.util.concurrent.CompletableFuture
 
 class ArbeidssøkerServiceTest {
     private val ident = "01020312345"
@@ -36,6 +41,8 @@ class ArbeidssøkerServiceTest {
     private val oppslagTokenProvider = {
         "TOKEN"
     }
+    private val topicPartition = TopicPartition("test-topic", 1)
+    private val recordMetadata = RecordMetadata(topicPartition, 1L, 2, 3L, 4, 5)
 
     companion object {
         @BeforeAll
@@ -53,6 +60,11 @@ class ArbeidssøkerServiceTest {
                 "ARBEIDSSOKERREGISTER_OPPSLAG_URL",
                 "http://arbeidssokerregister_oppslag_url/api/v1/arbeidssoekerperioder",
             )
+            System.setProperty("KAFKA_SCHEMA_REGISTRY", "KAFKA_SCHEMA_REGISTRY")
+            System.setProperty("KAFKA_SCHEMA_REGISTRY_USER", "KAFKA_SCHEMA_REGISTRY_USER")
+            System.setProperty("KAFKA_SCHEMA_REGISTRY_PASSWORD", "KAFKA_SCHEMA_REGISTRY_PASSWORD")
+            System.setProperty("KAFKA_BROKERS", "KAFKA_BROKERS")
+            System.setProperty("BEKREFTELSE_TOPIC", "BEKREFTELSE_TOPIC")
         }
     }
 
@@ -65,22 +77,25 @@ class ArbeidssøkerServiceTest {
         every { kallLoggService.lagreRequest(eq(1), any()) } just runs
         every { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
 
-        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
-        val slot = slot<Bekreftelse>()
-        every { bekreftelseKafkaProdusent.send(any(), capture(slot)) } just runs
+        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
+        val slot = slot<ProducerRecord<Long, Bekreftelse>>()
+        every { bekreftelseKafkaProdusent.send(capture(slot), any()) } answers {
+            secondArg<Callback>().onCompletion(recordMetadata, null)
+            CompletableFuture.completedFuture(recordMetadata)
+        }
 
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
                 httpClient = mockHttpClient(),
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
-                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
             )
 
         arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
 
-        val bekreftelse = slot.captured
+        val bekreftelse = slot.captured.value()
         bekreftelse.periodeId.toString() shouldBe arbeidsregisterPeriodeId
         bekreftelse.bekreftelsesloesning shouldBe Bekreftelsesloesning.DAGPENGER
         val svar = bekreftelse.svar
@@ -99,22 +114,25 @@ class ArbeidssøkerServiceTest {
         every { kallLoggService.lagreRequest(eq(1), any()) } just runs
         every { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
 
-        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
-        val slot = slot<Bekreftelse>()
-        every { bekreftelseKafkaProdusent.send(any(), capture(slot)) } just runs
+        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
+        val slot = slot<ProducerRecord<Long, Bekreftelse>>()
+        every { bekreftelseKafkaProdusent.send(capture(slot), any()) } answers {
+            secondArg<Callback>().onCompletion(recordMetadata, null)
+            CompletableFuture.completedFuture(recordMetadata)
+        }
 
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
                 httpClient = mockHttpClient(),
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
-                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
             )
 
         arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
 
-        val bekreftelse = slot.captured
+        val bekreftelse = slot.captured.value()
         bekreftelse.periodeId.toString() shouldBe arbeidsregisterPeriodeId
         bekreftelse.bekreftelsesloesning shouldBe Bekreftelsesloesning.DAGPENGER
         val svar = bekreftelse.svar
@@ -134,15 +152,15 @@ class ArbeidssøkerServiceTest {
             null
         }
 
-        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
+        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
 
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
                 httpClient = mockHttpClient(),
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
-                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
             )
 
         val exception =
@@ -158,14 +176,14 @@ class ArbeidssøkerServiceTest {
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
 
         val kallLoggService = mockk<KallLoggService>()
-        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
+        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
 
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
                 httpClient = createMockClient(500, ""),
-                recordKeyTokenProvider = recordKeyTokenProvider,
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
+                recordKeyTokenProvider = recordKeyTokenProvider,
             )
 
         val exception =
@@ -186,15 +204,15 @@ class ArbeidssøkerServiceTest {
             null
         }
 
-        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
+        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
 
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
                 httpClient = mockHttpClient(),
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
-                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
             )
 
         val exception =
@@ -210,14 +228,14 @@ class ArbeidssøkerServiceTest {
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
 
         val kallLoggService = mockk<KallLoggService>()
-        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
+        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
 
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
-                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 // Returnerer svar kun for RecordKey slik at hentSisteArbeidssøkerperiode kaster exception
                 httpClient =
                     createHttpClient(
@@ -244,15 +262,15 @@ class ArbeidssøkerServiceTest {
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
 
         val kallLoggService = mockk<KallLoggService>()
-        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
+        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
 
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
                 httpClient = mockHttpClient(true),
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
-                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
             )
 
         shouldNotThrow<RuntimeException> {
@@ -269,16 +287,16 @@ class ArbeidssøkerServiceTest {
         every { kallLoggService.lagreRequest(eq(1), any()) } just runs
         every { kallLoggService.lagreResponse(eq(1), eq(500), eq("")) } just runs
 
-        val bekreftelseKafkaProdusent = mockk<KafkaProdusent>()
+        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
         every { bekreftelseKafkaProdusent.send(any(), any()) } throws RuntimeException("Kunne ikke sende til Kafka")
 
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
                 httpClient = mockHttpClient(),
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
-                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
             )
 
         val exception =

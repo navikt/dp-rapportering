@@ -16,10 +16,9 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.ExternalServicesBuilder
 import io.ktor.server.testing.testApplication
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.runs
+import io.mockk.slot
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
@@ -27,7 +26,6 @@ import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.konfigurasjon
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
-import no.nav.dagpenger.rapportering.kafka.KafkaProdusent
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
@@ -44,10 +42,17 @@ import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meldepliktMetrikker
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
 import no.nav.dagpenger.rapportering.utils.OutgoingCallLoggingPlugin
+import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
+import org.apache.kafka.clients.producer.Callback
+import org.apache.kafka.clients.producer.Producer
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.clients.producer.RecordMetadata
+import org.apache.kafka.common.TopicPartition
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
+import java.util.concurrent.CompletableFuture
 
 open class ApiTestSetup {
     companion object {
@@ -125,13 +130,21 @@ open class ApiTestSetup {
             val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val kallLoggService = KallLoggService(KallLoggRepositoryPostgres(PostgresDataSourceBuilder.dataSource))
-            val kafkaProdusent = mockk<KafkaProdusent>()
-            every { kafkaProdusent.send(any(), any()) } just runs
+
+            val topicPartition = TopicPartition("test-topic", 1)
+            val recordMetadata = RecordMetadata(topicPartition, 1L, 2, 3L, 4, 5)
+            val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
+            val slot = slot<ProducerRecord<Long, Bekreftelse>>()
+            every { bekreftelseKafkaProdusent.send(capture(slot), any()) } answers {
+                secondArg<Callback>().onCompletion(recordMetadata, null)
+                CompletableFuture.completedFuture(recordMetadata)
+            }
+
             val arbeidssoekerService =
                 ArbeidssøkerService(
                     kallLoggService = kallLoggService,
                     httpClient = httpClient,
-                    bekreftelseKafkaProdusent = kafkaProdusent,
+                    bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 )
             val rapporteringService =
                 RapporteringService(
@@ -176,6 +189,11 @@ open class ApiTestSetup {
         System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE", "api://test.scope.arbeidssokerregister_record_key/.default")
         System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_URL", "http://arbeidssokerregister_oppslag_url/api/v1/arbeidssoekerperioder")
         System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_SCOPE", "api://test.scope.arbeidssokerregister_oppslag/.default")
+        System.setProperty("KAFKA_SCHEMA_REGISTRY", "KAFKA_SCHEMA_REGISTRY")
+        System.setProperty("KAFKA_SCHEMA_REGISTRY_USER", "KAFKA_SCHEMA_REGISTRY_USER")
+        System.setProperty("KAFKA_SCHEMA_REGISTRY_PASSWORD", "KAFKA_SCHEMA_REGISTRY_PASSWORD")
+        System.setProperty("KAFKA_BROKERS", "KAFKA_BROKERS")
+        System.setProperty("BEKREFTELSE_TOPIC", "BEKREFTELSE_TOPIC")
         System.setProperty("GITHUB_SHA", "some_sha")
     }
 
