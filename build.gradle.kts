@@ -76,7 +76,7 @@ dependencies {
 
     implementation("io.confluent:kafka-streams-avro-serde:7.8.0")
     implementation("org.apache.avro:avro:1.12.0")
-    schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:1.25.02.10.17-1")
+    schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:25.02.07.15-1")
 
     testImplementation(libs.rapids.and.rivers.test)
     testImplementation(libs.bundles.postgres.test)
