@@ -31,7 +31,7 @@ import kotlin.coroutines.CoroutineContext
 class OutgoingCallLoggingPlugin(
     private val kallLoggRepository: KallLoggRepository = KallLoggRepositoryPostgres(dataSource),
 ) {
-    val logger = KotlinLogging.logger {}
+    private val logger = KotlinLogging.logger {}
 
     fun intercept(httpClient: HttpClient) {
         httpClient.plugin(HttpSend).intercept { requestBuilder ->

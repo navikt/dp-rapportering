@@ -5,7 +5,6 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
-import io.ktor.server.application.call
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
@@ -23,6 +22,7 @@ import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.KallLogg
+import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import org.junit.jupiter.api.Test
@@ -84,6 +84,8 @@ class CallLoggingPluginTest : ApiTestSetup() {
             externalServices {
                 meldepliktAdapter()
                 pdfGenerator()
+                arbeidssokerregisterRecordKey()
+                arbeidssokerregisterOppslag()
             }
 
             val adapterRapporteringsperiodeString =
@@ -99,7 +101,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
 
             val list = getLogList()
 
-            list.size shouldBe 8
+            list.size shouldBe 11
             list[2].type shouldBe "REST"
             list[2].kallRetning shouldBe "INN"
             list[2].method shouldBe "POST"
@@ -158,8 +160,8 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[5].response.trimIndent() shouldBe
                 """
                 HTTP/1.1 200 OK
-                Content-Length: 4
-                Content-Type: text/plain; charset=UTF-8
+                Content-Type: application/pdf
+                Content-Length: 3
                 
                 PDF
                 """.trimIndent()
@@ -171,7 +173,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[6].method shouldBe "PUBLISH"
             list[6].operation shouldBe "teamdagpenger.rapid.v1"
             list[6].status shouldBe 200
-            list[6].request shouldContain "JournalføreRapportering"
+            list[6].request shouldContain MineBehov.JournalføreRapportering.name
             list[6].response shouldBe ""
             list[6].ident shouldBe ident
             list[6].logginfo shouldBe ""
@@ -185,6 +187,63 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[7].response shouldBe ""
             list[7].ident shouldBe ident
             list[7].logginfo shouldBe ""
+
+            list[8].type shouldBe "REST"
+            list[8].kallRetning shouldBe "UT"
+            list[8].method shouldBe "POST"
+            list[8].operation shouldBe "/api/v1/record-key"
+            list[8].status shouldBe 200
+            list[8].request shouldStartWith "POST http://arbeidssokerregister_record_key_url:80/api/v1/record-key"
+            list[8].response.trimIndent() shouldBe
+                """
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+                Content-Length: 12
+                
+                { "key": 1 }
+                """.trimIndent()
+            list[8].ident shouldBe "" // Det finnes ikke token med ident når vi henter record key
+            list[8].logginfo shouldBe ""
+
+            list[9].type shouldBe "REST"
+            list[9].kallRetning shouldBe "UT"
+            list[9].method shouldBe "POST"
+            list[9].operation shouldBe "/api/v1/arbeidssoekerperioder"
+            list[9].status shouldBe 200
+            list[9].request shouldStartWith "POST http://arbeidssokerregister_oppslag_url:80/api/v1/arbeidssoekerperioder"
+            list[9].response.trimIndent() shouldBe
+                """
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+                Content-Length: 254
+                
+                [
+                  {
+                    "periodeId": "68219fd0-98d1-4ae9-8ddd-19bca28de5ee",
+                    "startet": {
+                      "tidspunkt": "2025-02-04T10:15:30",
+                      "utfoertAv": {
+                        "type": "Type",
+                        "id": "1"
+                      },
+                      "kilde": "Kilde",
+                      "aarsak": "Årsak"
+                    }
+                  }
+                ]
+                """.trimIndent()
+            list[9].ident shouldBe "" // Det finnes ikke token med ident når vi henter record key
+            list[9].logginfo shouldBe ""
+
+            list[10].type shouldBe "KAFKA"
+            list[10].kallRetning shouldBe "UT"
+            list[10].method shouldBe "PUBLISH"
+            list[10].operation shouldBe "teamdagpenger.rapid.v1"
+            list[10].status shouldBe 200
+            list[10].request shouldContain ""
+            list[10].response shouldBe ""
+            list[10].ident shouldBe ident
+            list[10].logginfo shouldBe ""
         }
 
     private fun getLogList() =
@@ -225,16 +284,6 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 post("/sendinn") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond(sendinnResponse)
-                }
-            }
-        }
-    }
-
-    private fun ExternalServicesBuilder.pdfGenerator() {
-        hosts("https://pdf-generator") {
-            routing {
-                post("/convert-html-to-pdf/meldekort") {
-                    call.respond("%PDF")
                 }
             }
         }

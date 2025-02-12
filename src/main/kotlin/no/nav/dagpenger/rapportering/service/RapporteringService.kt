@@ -42,6 +42,7 @@ class RapporteringService(
     private val innsendingtidspunktRepository: InnsendingtidspunktRepository,
     private val journalfoeringService: JournalfoeringService,
     private val kallLoggService: KallLoggService,
+    private val arbeidssøkerService: ArbeidssøkerService,
 ) {
     suspend fun harMeldeplikt(
         ident: String,
@@ -402,6 +403,7 @@ class RapporteringService(
                     }
 
                     sendPeriodeDataTilRnR(ident, periodeTilInnsending)
+                    arbeidssøkerService.sendBekreftelse(ident, periodeTilInnsending)
                 } else {
                     // Oppdaterer perioden slik at den kan sendes inn på nytt
                     rapporteringRepository.settKanSendes(
@@ -493,7 +495,7 @@ class RapporteringService(
 
             kallLoggService.lagreResponse(kallLoggId, 200, "")
         } catch (e: Exception) {
-            JournalfoeringService.logger.error("Kunne ikke sende melding til Kafka", e)
+            logger.error("Kunne ikke sende periode til RnR", e)
 
             kallLoggService.lagreResponse(kallLoggId, 500, "")
 

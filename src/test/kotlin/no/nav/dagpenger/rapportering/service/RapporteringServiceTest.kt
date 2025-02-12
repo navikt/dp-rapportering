@@ -56,6 +56,7 @@ class RapporteringServiceTest {
     private val innsendingtidspunktRepository = mockk<InnsendingtidspunktRepository>()
     private val journalfoeringService = mockk<JournalfoeringService>()
     private val kallLoggService = mockk<KallLoggService>()
+    private val arbeidssøkerService = mockk<ArbeidssøkerService>()
     private val rapporteringService =
         RapporteringService(
             meldepliktConnector,
@@ -63,6 +64,7 @@ class RapporteringServiceTest {
             innsendingtidspunktRepository,
             journalfoeringService,
             kallLoggService,
+            arbeidssøkerService,
         )
 
     private val ident = "12345678910"
@@ -545,6 +547,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
+        every { arbeidssøkerService.sendBekreftelse(eq(ident), any()) } just runs
 
         val innsendingResponse =
             runBlocking {
@@ -648,6 +651,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
+        every { arbeidssøkerService.sendBekreftelse(eq(ident), any()) } just runs
 
         val innsendingResponse =
             runBlocking {

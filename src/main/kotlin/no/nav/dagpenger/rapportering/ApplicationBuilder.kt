@@ -12,11 +12,16 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.api.internalApi
 import no.nav.dagpenger.rapportering.api.rapporteringApi
+import no.nav.dagpenger.rapportering.config.Configuration.kafkaSchemaRegistryConfig
+import no.nav.dagpenger.rapportering.config.Configuration.kafkaServerKonfigurasjon
 import no.nav.dagpenger.rapportering.config.konfigurasjon
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.jobs.RapporterDatabaseMetrikkerJob
 import no.nav.dagpenger.rapportering.jobs.SlettRapporteringsperioderJob
+import no.nav.dagpenger.rapportering.kafka.BekreftelseAvroSerializer
+import no.nav.dagpenger.rapportering.kafka.KafkaFactory
+import no.nav.dagpenger.rapportering.kafka.KafkaKonfigurasjon
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.metrics.DatabaseMetrikker
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
@@ -26,11 +31,14 @@ import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.preparePartitions
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
+import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.tjenester.RapporteringJournalførtMottak
 import no.nav.helse.rapids_rivers.RapidApplication
+import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
+import org.apache.kafka.common.serialization.LongSerializer
 import io.ktor.server.cio.CIO as CIOEngine
 
 class ApplicationBuilder(
@@ -71,6 +79,17 @@ class ApplicationBuilder(
             meterRegistry,
         )
 
+    private val kafkaKonfigurasjon = KafkaKonfigurasjon(kafkaServerKonfigurasjon, kafkaSchemaRegistryConfig)
+    private val kafkaFactory = KafkaFactory(kafkaKonfigurasjon)
+    private val bekreftelseKafkaProdusent =
+        kafkaFactory.createProducer<Long, Bekreftelse>(
+            clientId = "teamdagpenger-rapportering-producer",
+            keySerializer = LongSerializer::class,
+            valueSerializer = BekreftelseAvroSerializer::class,
+        )
+
+    private val arbeidssøkerService = ArbeidssøkerService(kallLoggService, httpClient, bekreftelseKafkaProdusent)
+
     private val rapporteringService =
         RapporteringService(
             meldepliktConnector,
@@ -78,6 +97,7 @@ class ApplicationBuilder(
             innsendingtidspunktRepository,
             journalfoeringService,
             kallLoggService,
+            arbeidssøkerService,
         )
 
     init {

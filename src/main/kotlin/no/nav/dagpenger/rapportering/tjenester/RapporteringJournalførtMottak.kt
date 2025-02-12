@@ -19,10 +19,8 @@ internal class RapporteringJournalførtMottak(
     private val journalfoeringRepository: JournalfoeringRepository,
     private val kallLoggRepository: KallLoggRepository,
 ) : River.PacketListener {
-    private companion object {
-        private val logger = KotlinLogging.logger {}
-        private val sikkerlogg = KotlinLogging.logger("tjenestekall.RapporteringJournalførtMottak")
-    }
+    private val logger = KotlinLogging.logger {}
+    private val sikkerlogg = KotlinLogging.logger("tjenestekall.RapporteringJournalførtMottak")
 
     private val behov = MineBehov.JournalføreRapportering.name
 

@@ -1,11 +1,24 @@
 package no.nav.dagpenger.rapportering.api
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.serialization.jackson.jackson
 import io.ktor.server.config.MapApplicationConfig
+import io.ktor.server.response.header
+import io.ktor.server.response.respond
+import io.ktor.server.routing.post
+import io.ktor.server.routing.routing
 import io.ktor.server.testing.ApplicationTestBuilder
+import io.ktor.server.testing.ExternalServicesBuilder
 import io.ktor.server.testing.testApplication
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.slot
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
@@ -21,6 +34,7 @@ import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.runMigration
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
+import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
 import no.nav.dagpenger.rapportering.service.RapporteringService
@@ -28,10 +42,17 @@ import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meldepliktMetrikker
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
 import no.nav.dagpenger.rapportering.utils.OutgoingCallLoggingPlugin
+import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
+import org.apache.kafka.clients.producer.Callback
+import org.apache.kafka.clients.producer.Producer
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.clients.producer.RecordMetadata
+import org.apache.kafka.common.TopicPartition
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
+import java.util.concurrent.CompletableFuture
 
 open class ApiTestSetup {
     companion object {
@@ -96,6 +117,12 @@ open class ApiTestSetup {
                     install("OutgoingCallInterceptor") {
                         OutgoingCallLoggingPlugin().intercept(this)
                     }
+                    install(ContentNegotiation) {
+                        jackson {
+                            registerModule(JavaTimeModule())
+                            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                        }
+                    }
                 }
 
             val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
@@ -103,6 +130,22 @@ open class ApiTestSetup {
             val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val kallLoggService = KallLoggService(KallLoggRepositoryPostgres(PostgresDataSourceBuilder.dataSource))
+
+            val topicPartition = TopicPartition("test-topic", 1)
+            val recordMetadata = RecordMetadata(topicPartition, 1L, 2, 3L, 4, 5)
+            val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
+            val slot = slot<ProducerRecord<Long, Bekreftelse>>()
+            every { bekreftelseKafkaProdusent.send(capture(slot), any()) } answers {
+                secondArg<Callback>().onCompletion(recordMetadata, null)
+                CompletableFuture.completedFuture(recordMetadata)
+            }
+
+            val arbeidssoekerService =
+                ArbeidssøkerService(
+                    kallLoggService = kallLoggService,
+                    httpClient = httpClient,
+                    bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
+                )
             val rapporteringService =
                 RapporteringService(
                     meldepliktConnector,
@@ -115,6 +158,7 @@ open class ApiTestSetup {
                         meterRegistry,
                     ),
                     kallLoggService,
+                    arbeidssoekerService,
                 )
 
             application {
@@ -138,8 +182,18 @@ open class ApiTestSetup {
         System.setProperty("token-x.well-known-url", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
         System.setProperty("TOKEN_X_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
         System.setProperty("azure-app.well-known-url", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
+        System.setProperty("AZURE_APP_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
         System.setProperty("AZURE_APP_CLIENT_ID", AZURE_ISSUER_ID)
         System.setProperty("AZURE_APP_CLIENT_SECRET", TEST_PRIVATE_JWK)
+        System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_URL", "http://arbeidssokerregister_record_key_url/api/v1/record-key")
+        System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE", "api://test.scope.arbeidssokerregister_record_key/.default")
+        System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_URL", "http://arbeidssokerregister_oppslag_url/api/v1/arbeidssoekerperioder")
+        System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_SCOPE", "api://test.scope.arbeidssokerregister_oppslag/.default")
+        System.setProperty("KAFKA_SCHEMA_REGISTRY", "KAFKA_SCHEMA_REGISTRY")
+        System.setProperty("KAFKA_SCHEMA_REGISTRY_USER", "KAFKA_SCHEMA_REGISTRY_USER")
+        System.setProperty("KAFKA_SCHEMA_REGISTRY_PASSWORD", "KAFKA_SCHEMA_REGISTRY_PASSWORD")
+        System.setProperty("KAFKA_BROKERS", "KAFKA_BROKERS")
+        System.setProperty("BEKREFTELSE_TOPIC", "BEKREFTELSE_TOPIC")
         System.setProperty("GITHUB_SHA", "some_sha")
     }
 
@@ -174,4 +228,54 @@ open class ApiTestSetup {
                     claims = mapOf("pid" to ident, "acr" to "Level4"),
                 ),
             ).serialize()
+
+    fun ExternalServicesBuilder.pdfGenerator() {
+        hosts("https://pdf-generator") {
+            routing {
+                post("/convert-html-to-pdf/meldekort") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Pdf.toString())
+                    call.respond("PDF")
+                }
+            }
+        }
+    }
+
+    fun ExternalServicesBuilder.arbeidssokerregisterRecordKey() {
+        hosts("http://arbeidssokerregister_record_key_url") {
+            routing {
+                post("/api/v1/record-key") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    call.respond("{ \"key\": 1 }")
+                }
+            }
+        }
+    }
+
+    fun ExternalServicesBuilder.arbeidssokerregisterOppslag() {
+        hosts("http://arbeidssokerregister_oppslag_url") {
+            routing {
+                post("/api/v1/arbeidssoekerperioder") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    call.respond(
+                        """
+                        [
+                          {
+                            "periodeId": "68219fd0-98d1-4ae9-8ddd-19bca28de5ee",
+                            "startet": {
+                              "tidspunkt": "2025-02-04T10:15:30",
+                              "utfoertAv": {
+                                "type": "Type",
+                                "id": "1"
+                              },
+                              "kilde": "Kilde",
+                              "aarsak": "Årsak"
+                            }
+                          }
+                        ]
+                        """.trimIndent(),
+                    )
+                }
+            }
+        }
+    }
 }

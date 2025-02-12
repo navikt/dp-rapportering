@@ -96,6 +96,8 @@ class RapporteringApiTest : ApiTestSetup() {
             externalServices {
                 meldepliktAdapter()
                 pdfGenerator()
+                arbeidssokerregisterRecordKey()
+                arbeidssokerregisterOppslag()
             }
 
             // Lagrer perioden i databasen
@@ -196,6 +198,8 @@ class RapporteringApiTest : ApiTestSetup() {
             externalServices {
                 meldepliktAdapter()
                 pdfGenerator()
+                arbeidssokerregisterRecordKey()
+                arbeidssokerregisterOppslag()
             }
 
             val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
@@ -792,17 +796,6 @@ class RapporteringApiTest : ApiTestSetup() {
             val response = client.doGet("/rapporteringsperioder/innsendte", issueToken(fnr))
             response.status shouldBe HttpStatusCode.NoContent
         }
-
-    private fun ExternalServicesBuilder.pdfGenerator() {
-        hosts("https://pdf-generator") {
-            routing {
-                post("/convert-html-to-pdf/meldekort") {
-                    call.response.header(HttpHeaders.ContentType, ContentType.Application.Pdf.toString())
-                    call.respond("PDF")
-                }
-            }
-        }
-    }
 
     private val defaultAdapterAktivitet =
         AdapterAktivitet(

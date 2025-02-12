@@ -13,8 +13,12 @@ import com.natpryce.konfig.PropertyGroup
 import com.natpryce.konfig.getValue
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
+import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.oauth2.CachedOauth2Client
 import no.nav.dagpenger.oauth2.OAuth2Config
+import no.nav.dagpenger.rapportering.kafka.KafkaSchemaRegistryConfig
+import no.nav.dagpenger.rapportering.kafka.KafkaServerKonfigurasjon
+import java.time.ZoneId
 
 internal object Configuration {
     const val APP_NAME = "dp-rapportering"
@@ -22,6 +26,8 @@ internal object Configuration {
     const val MDC_CORRELATION_ID = "correlationId"
 
     val NO_LOG_PATHS = setOf("/metrics", "/isAlive", "/isReady")
+
+    val ZONE_ID = ZoneId.of("Europe/Oslo")
 
     private val defaultProperties =
         ConfigurationMap(
@@ -57,6 +63,54 @@ internal object Configuration {
 
     val pdfGeneratorUrl by lazy { properties[Key("PDF_GENERATOR_URL", stringType)] }
 
+    val arbeidssokerregisterRecordKeyUrl by lazy {
+        properties[Key("ARBEIDSSOKERREGISTER_RECORD_KEY_URL", stringType)]
+    }
+
+    val arbeidssokerregisterRecordKeyTokenProvider: () -> String by lazy {
+        {
+            runBlocking {
+                azureAdClient
+                    .clientCredentials(properties[Key("ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE", stringType)])
+                    .access_token ?: throw RuntimeException("Failed to get token")
+            }
+        }
+    }
+
+    val arbeidssokerregisterOppslagUrl by lazy {
+        properties[Key("ARBEIDSSOKERREGISTER_OPPSLAG_URL", stringType)]
+    }
+
+    val arbeidssokerregisterOppslagTokenProvider: () -> String by lazy {
+        {
+            runBlocking {
+                azureAdClient
+                    .clientCredentials(properties[Key("ARBEIDSSOKERREGISTER_OPPSLAG_SCOPE", stringType)])
+                    .access_token ?: throw RuntimeException("Failed to get token")
+            }
+        }
+    }
+
+    val kafkaServerKonfigurasjon =
+        KafkaServerKonfigurasjon(
+            autentisering = "SSL",
+            kafkaBrokers = properties[Key("KAFKA_BROKERS", stringType)],
+            keystorePath = properties.getOrNull(Key("KAFKA_KEYSTORE_PATH", stringType)),
+            credstorePassword = properties.getOrNull(Key("KAFKA_CREDSTORE_PASSWORD", stringType)),
+            truststorePath = properties.getOrNull(Key("KAFKA_TRUSTSTORE_PATH", stringType)),
+        )
+
+    val kafkaSchemaRegistryConfig =
+        KafkaSchemaRegistryConfig(
+            url = properties[Key("KAFKA_SCHEMA_REGISTRY", stringType)],
+            username = properties[Key("KAFKA_SCHEMA_REGISTRY_USER", stringType)],
+            password = properties[Key("KAFKA_SCHEMA_REGISTRY_PASSWORD", stringType)],
+            autoRegisterSchema = true,
+            avroSpecificReaderConfig = true,
+        )
+
+    val bekreftelseTopic by lazy { properties[Key("BEKREFTELSE_TOPIC", stringType)] }
+
     private val tokenXClient by lazy {
         val tokenX = OAuth2Config.TokenX(properties)
         CachedOauth2Client(
@@ -74,20 +128,14 @@ internal object Configuration {
                 ).access_token
         }
 
-    private val azureAd by lazy {
-        val aad = OAuth2Config.AzureAd(properties)
+    private val azureAdConfig by lazy { OAuth2Config.AzureAd(properties) }
+
+    private val azureAdClient by lazy {
         CachedOauth2Client(
-            tokenEndpointUrl = aad.tokenEndpointUrl,
-            authType = aad.clientSecret(),
+            tokenEndpointUrl = azureAdConfig.tokenEndpointUrl,
+            authType = azureAdConfig.clientSecret(),
         )
     }
-
-    fun azureADClient() =
-        { audience: String ->
-            azureAd
-                .clientCredentials(audience)
-                .access_token
-        }
 
     val defaultObjectMapper: ObjectMapper =
         ObjectMapper()
