@@ -15,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.config.Configuration
+import no.nav.dagpenger.rapportering.config.Configuration.ZONE_ID
 import no.nav.dagpenger.rapportering.config.Configuration.bekreftelseTopic
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.kafka.sendDeferred
@@ -34,8 +35,7 @@ import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
 import java.lang.System.getenv
 import java.net.URI
-import java.time.LocalDateTime
-import java.time.ZoneOffset
+import java.time.Instant
 import java.util.UUID
 
 class ArbeidssøkerService(
@@ -74,13 +74,13 @@ class ArbeidssøkerService(
                 UUID.randomUUID(),
                 Svar(
                     Metadata(
-                        LocalDateTime.now().toInstant(ZoneOffset.UTC),
+                        Instant.now().atZone(ZONE_ID).toInstant(),
                         Bruker(BrukerType.SLUTTBRUKER, ident),
                         Bekreftelsesloesning.DAGPENGER.name,
                         "Bruker sendte inn dagpengermeldekort",
                     ),
-                    rapporteringsperiode.periode.fraOgMed.atStartOfDay().toInstant(ZoneOffset.UTC),
-                    rapporteringsperiode.periode.tilOgMed.atStartOfDay().toInstant(ZoneOffset.UTC),
+                    rapporteringsperiode.periode.fraOgMed.atStartOfDay().atZone(ZONE_ID).toInstant(),
+                    rapporteringsperiode.periode.tilOgMed.atStartOfDay().atZone(ZONE_ID).toInstant(),
                     rapporteringsperiode.arbeidet(),
                     rapporteringsperiode.registrertArbeidssoker == true,
                 ),

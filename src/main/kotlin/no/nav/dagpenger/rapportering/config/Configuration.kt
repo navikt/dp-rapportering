@@ -18,6 +18,7 @@ import no.nav.dagpenger.oauth2.CachedOauth2Client
 import no.nav.dagpenger.oauth2.OAuth2Config
 import no.nav.dagpenger.rapportering.kafka.KafkaSchemaRegistryConfig
 import no.nav.dagpenger.rapportering.kafka.KafkaServerKonfigurasjon
+import java.time.ZoneId
 
 internal object Configuration {
     const val APP_NAME = "dp-rapportering"
@@ -25,6 +26,8 @@ internal object Configuration {
     const val MDC_CORRELATION_ID = "correlationId"
 
     val NO_LOG_PATHS = setOf("/metrics", "/isAlive", "/isReady")
+
+    val ZONE_ID = ZoneId.of("Europe/Oslo")
 
     private val defaultProperties =
         ConfigurationMap(

@@ -17,6 +17,7 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.slot
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
+import no.nav.dagpenger.rapportering.config.Configuration.ZONE_ID
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.connector.createMockClient
 import no.nav.dagpenger.rapportering.repository.Postgres.database
@@ -29,7 +30,6 @@ import org.apache.kafka.clients.producer.RecordMetadata
 import org.apache.kafka.common.TopicPartition
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.time.ZoneOffset
 import java.util.concurrent.CompletableFuture
 
 class ArbeidssøkerServiceTest {
@@ -99,8 +99,8 @@ class ArbeidssøkerServiceTest {
         bekreftelse.periodeId.toString() shouldBe arbeidsregisterPeriodeId
         bekreftelse.bekreftelsesloesning shouldBe Bekreftelsesloesning.DAGPENGER
         val svar = bekreftelse.svar
-        svar.gjelderFra shouldBe rapporteringsperiode.periode.fraOgMed.atStartOfDay().toInstant(ZoneOffset.UTC)
-        svar.gjelderTil shouldBe rapporteringsperiode.periode.tilOgMed.atStartOfDay().toInstant(ZoneOffset.UTC)
+        svar.gjelderFra shouldBe rapporteringsperiode.periode.fraOgMed.atStartOfDay().atZone(ZONE_ID).toInstant()
+        svar.gjelderTil shouldBe rapporteringsperiode.periode.tilOgMed.atStartOfDay().atZone(ZONE_ID).toInstant()
         svar.harJobbetIDennePerioden shouldBe false
         svar.vilFortsetteSomArbeidssoeker shouldBe true
     }
@@ -136,8 +136,8 @@ class ArbeidssøkerServiceTest {
         bekreftelse.periodeId.toString() shouldBe arbeidsregisterPeriodeId
         bekreftelse.bekreftelsesloesning shouldBe Bekreftelsesloesning.DAGPENGER
         val svar = bekreftelse.svar
-        svar.gjelderFra shouldBe rapporteringsperiode.periode.fraOgMed.atStartOfDay().toInstant(ZoneOffset.UTC)
-        svar.gjelderTil shouldBe rapporteringsperiode.periode.tilOgMed.atStartOfDay().toInstant(ZoneOffset.UTC)
+        svar.gjelderFra shouldBe rapporteringsperiode.periode.fraOgMed.atStartOfDay().atZone(ZONE_ID).toInstant()
+        svar.gjelderTil shouldBe rapporteringsperiode.periode.tilOgMed.atStartOfDay().atZone(ZONE_ID).toInstant()
         svar.harJobbetIDennePerioden shouldBe false
         svar.vilFortsetteSomArbeidssoeker shouldBe false
     }
