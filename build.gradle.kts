@@ -67,7 +67,7 @@ dependencies {
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.client)
     implementation(libs.jackson.annotation)
-    implementation("no.nav.dagpenger:oauth2-klient:2024.12.19-12.57.9d42f60a1165")
+    implementation("no.nav.dagpenger:oauth2-klient:2025.02.12-15.03.b6caff49b640")
     implementation("io.ktor:ktor-server-cio:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
