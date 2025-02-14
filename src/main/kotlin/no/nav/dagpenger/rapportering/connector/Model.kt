@@ -120,9 +120,9 @@ fun AdapterAktivitet.toAktivitet(): Aktivitet =
     )
 
 fun List<Rapporteringsperiode>.toAdapterRapporteringsperioder(): List<AdapterRapporteringsperiode> =
-    this.map { it.toAdapterRapporteringsperiode() }
+    this.map { it.toAdapterRapporteringsperiode(false) }
 
-fun Rapporteringsperiode.toAdapterRapporteringsperiode(): AdapterRapporteringsperiode =
+fun Rapporteringsperiode.toAdapterRapporteringsperiode(overrideRegistrertArbeidssoker: Boolean = true): AdapterRapporteringsperiode =
     AdapterRapporteringsperiode(
         id = this.id,
         periode = AdapterPeriode(fraOgMed = this.periode.fraOgMed, tilOgMed = this.periode.tilOgMed),
@@ -142,7 +142,8 @@ fun Rapporteringsperiode.toAdapterRapporteringsperiode(): AdapterRapporteringspe
                 RapporteringsperiodeStatus.Midlertidig -> Feilet // Vi må ikke sende midlertidige perioder til adapter
             },
         mottattDato = this.mottattDato,
-        registrertArbeidssoker = this.registrertArbeidssoker,
+        // Sender "true" til adapteren hvis overrideRegistrertArbeidssoker = true (mens det reelle svaret sendes til Team PAW)
+        registrertArbeidssoker = if (overrideRegistrertArbeidssoker) true else this.registrertArbeidssoker,
     )
 
 fun Dag.toAdapterDag(): AdapterDag =
