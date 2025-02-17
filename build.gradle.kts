@@ -4,7 +4,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     alias(libs.plugins.shadow.jar)
     alias(libs.plugins.kotlin)
-    id("io.ktor.plugin") version "3.0.3"
+    id("io.ktor.plugin") version "3.1.0"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
     id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
@@ -67,16 +67,16 @@ dependencies {
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.client)
     implementation(libs.jackson.annotation)
-    implementation("no.nav.dagpenger:oauth2-klient:2024.12.19-12.57.9d42f60a1165")
+    implementation("no.nav.dagpenger:oauth2-klient:2025.02.13-18.02.052b7c34baab")
     implementation("io.ktor:ktor-server-cio:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.6.0")
 
-    implementation("io.confluent:kafka-streams-avro-serde:7.8.0")
+    implementation("io.confluent:kafka-streams-avro-serde:7.8.1")
     implementation("org.apache.avro:avro:1.12.0")
-    schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:1.25.02.10.17-1")
+    schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:25.02.07.15-1")
 
     testImplementation(libs.rapids.and.rivers.test)
     testImplementation(libs.bundles.postgres.test)
