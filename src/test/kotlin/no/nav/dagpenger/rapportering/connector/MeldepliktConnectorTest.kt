@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.connector
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
+import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
@@ -13,11 +14,10 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
-import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import no.nav.dagpenger.rapportering.utils.februar
 import no.nav.dagpenger.rapportering.utils.januar
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.UUID
@@ -29,12 +29,12 @@ class MeldepliktConnectorTest {
     private val ident = "12345678903"
     private val rapporteringId = "1806478069"
 
-    @BeforeEach
-    fun addProperty() {
-        System.setProperty(
-            "DB_JDBC_URL",
-            "${database.jdbcUrl}&user=${database.username}&password=${database.password}",
-        )
+    companion object {
+        @BeforeAll
+        @JvmStatic
+        fun setup() {
+            setEnvConfig()
+        }
     }
 
     private fun meldepliktConnector(

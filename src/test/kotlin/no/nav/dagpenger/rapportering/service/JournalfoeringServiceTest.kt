@@ -30,6 +30,7 @@ import io.mockk.slot
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
+import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
@@ -42,6 +43,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylli
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.LocalDate
@@ -67,6 +69,14 @@ class JournalfoeringServiceTest {
             .registerKotlinModule()
             .registerModule(JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+
+    companion object {
+        @BeforeAll
+        @JvmStatic
+        fun setup() {
+            setEnvConfig()
+        }
+    }
 
     @Test
     fun `Kan opprette og sende journalpost`() {

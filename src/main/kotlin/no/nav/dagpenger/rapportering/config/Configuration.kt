@@ -13,12 +13,15 @@ import com.natpryce.konfig.PropertyGroup
 import com.natpryce.konfig.getValue
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
+import io.getunleash.DefaultUnleash
+import io.getunleash.util.UnleashConfig
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.oauth2.CachedOauth2Client
 import no.nav.dagpenger.oauth2.OAuth2Config
 import no.nav.dagpenger.rapportering.kafka.KafkaSchemaRegistryConfig
 import no.nav.dagpenger.rapportering.kafka.KafkaServerKonfigurasjon
 import java.time.ZoneId
+import java.util.UUID
 
 internal object Configuration {
     const val APP_NAME = "dp-rapportering"
@@ -110,6 +113,21 @@ internal object Configuration {
         )
 
     val bekreftelseTopic by lazy { properties[Key("BEKREFTELSE_TOPIC", stringType)] }
+
+    private val unleashConfig by lazy {
+        UnleashConfig.builder()
+            .fetchTogglesInterval(5)
+            .appName(properties.getOrElse(Key("NAIS_APP_NAME", stringType), UUID.randomUUID().toString()))
+            .instanceId(properties.getOrElse(Key("NAIS_CLIENT_ID", stringType), UUID.randomUUID().toString()))
+            .unleashAPI(properties[Key("UNLEASH_SERVER_API_URL", stringType)] + "/api")
+            .apiKey(properties[Key("UNLEASH_SERVER_API_TOKEN", stringType)])
+            .environment(properties[Key("UNLEASH_SERVER_API_ENV", stringType)])
+            .build()
+    }
+
+    val unleash by lazy {
+        DefaultUnleash(unleashConfig)
+    }
 
     private val tokenXClient by lazy {
         val tokenX = OAuth2Config.TokenX(properties)

@@ -26,6 +26,9 @@ spec:
 
   leaderElection: true
 
+  envFrom:
+    - secret: dp-rapportering-unleash-api-token
+
   env:
     - name: BEREGNINGSDATO_STRATEGI
       value: {{beregningsdato.strategi}}
@@ -81,6 +84,8 @@ spec:
           - NAVident
   accessPolicy:
     outbound:
+      external:
+        - host: dagpenger-unleash-api.nav.cloud.nais.io
       rules:
         - application: dp-arena-meldeplikt-adapter
         - application: dp-behov-pdf-generator

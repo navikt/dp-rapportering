@@ -20,7 +20,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import java.time.LocalDate
 
-val objectMapper = defaultObjectMapper
+fun objectMapper() = defaultObjectMapper
 
 suspend fun HttpClient.doPost(
     urlString: String,
@@ -34,7 +34,7 @@ suspend fun HttpClient.doPost(
             header(HttpHeaders.Authorization, "Bearer $token")
         }
         if (body != null) {
-            setBody(objectMapper.writeValueAsString(body))
+            setBody(objectMapper().writeValueAsString(body))
         }
     }
 
@@ -44,7 +44,7 @@ suspend inline fun <reified T> HttpClient.doPostAndReceive(
     body: Any? = null,
 ): Response<T> =
     this.doPost(urlString, token, body).let {
-        Response(it, objectMapper.readValue(it.bodyAsText(), object : TypeReference<T>() {}))
+        Response(it, objectMapper().readValue(it.bodyAsText(), object : TypeReference<T>() {}))
     }
 
 suspend fun HttpClient.doGet(
@@ -69,7 +69,7 @@ suspend inline fun <reified T> HttpClient.doGetAndReceive(
 ): Response<T> =
     this
         .doGet(urlString, token, extraHeaders)
-        .let { Response(it, objectMapper.readValue(it.bodyAsText(), object : TypeReference<T>() {})) }
+        .let { Response(it, objectMapper().readValue(it.bodyAsText(), object : TypeReference<T>() {})) }
 
 suspend fun HttpClient.doDelete(
     urlString: String,
@@ -83,7 +83,7 @@ suspend fun HttpClient.doDelete(
             header(HttpHeaders.Authorization, "Bearer $token")
         }
         if (body != null) {
-            setBody(objectMapper.writeValueAsString(body))
+            setBody(objectMapper().writeValueAsString(body))
         }
     }
 
