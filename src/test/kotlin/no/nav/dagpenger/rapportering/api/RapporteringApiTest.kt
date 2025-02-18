@@ -204,7 +204,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
             val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
             endreResponse.status shouldBe HttpStatusCode.OK
-            val endretPeriode = objectMapper.readValue(endreResponse.bodyAsText(), Rapporteringsperiode::class.java)
+            val endretPeriode = defaultObjectMapper.readValue(endreResponse.bodyAsText(), Rapporteringsperiode::class.java)
 
             with(
                 client.doPost(
@@ -221,7 +221,7 @@ class RapporteringApiTest : ApiTestSetup() {
             ) {
                 status shouldBe HttpStatusCode.OK
                 println(bodyAsText())
-                val periodeId = objectMapper.readValue<PeriodeId>(bodyAsText())
+                val periodeId = defaultObjectMapper.readValue<PeriodeId>(bodyAsText())
                 periodeId.id shouldBe "123"
             }
         }
@@ -235,7 +235,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
             val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
             endreResponse.status shouldBe HttpStatusCode.OK
-            val nyId = objectMapper.readValue(endreResponse.bodyAsText(), Rapporteringsperiode::class.java).id
+            val nyId = defaultObjectMapper.readValue(endreResponse.bodyAsText(), Rapporteringsperiode::class.java).id
 
             with(
                 client.doPost(
@@ -484,7 +484,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
             val endringResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
             endringResponse.status shouldBe HttpStatusCode.OK
-            val endretPeriode = objectMapper.readValue(endringResponse.bodyAsText(), Rapporteringsperiode::class.java)
+            val endretPeriode = defaultObjectMapper.readValue(endringResponse.bodyAsText(), Rapporteringsperiode::class.java)
 
             val response =
                 client.doPost(

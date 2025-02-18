@@ -81,9 +81,6 @@ open class ApiTestSetup {
         @BeforeAll
         @JvmStatic
         fun setup() {
-            mockkObject(ApplicationBuilder.Companion)
-            every { getRapidsConnection() } returns TestRapid()
-
             try {
                 println("Start mockserver")
                 mockOAuth2Server = MockOAuth2Server()
@@ -92,6 +89,11 @@ open class ApiTestSetup {
                 println("Failed to start mockserver")
                 println(e)
             }
+
+            setEnvConfig()
+
+            mockkObject(ApplicationBuilder.Companion)
+            every { getRapidsConnection() } returns TestRapid()
         }
 
         @AfterAll
@@ -100,10 +102,38 @@ open class ApiTestSetup {
             println("Stopping mockserver")
             mockOAuth2Server.shutdown()
         }
+
+        fun setEnvConfig() {
+            System.setProperty("MELDEPLIKT_ADAPTER_HOST", "meldeplikt-adapter")
+            System.setProperty("MELDEPLIKT_ADAPTER_AUDIENCE", REQUIRED_AUDIENCE)
+            System.setProperty("PDF_GENERATOR_URL", "https://pdf-generator")
+            System.setProperty("DB_JDBC_URL", "${database.jdbcUrl}&user=${database.username}&password=${database.password}")
+            System.setProperty("token-x.client-id", TOKENX_ISSUER_ID)
+            System.setProperty("TOKEN_X_CLIENT_ID", TOKENX_ISSUER_ID)
+            System.setProperty("TOKEN_X_PRIVATE_JWK", TEST_PRIVATE_JWK)
+            System.setProperty("token-x.well-known-url", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
+            System.setProperty("TOKEN_X_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
+            System.setProperty("azure-app.well-known-url", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
+            System.setProperty("AZURE_APP_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
+            System.setProperty("AZURE_APP_CLIENT_ID", AZURE_ISSUER_ID)
+            System.setProperty("AZURE_APP_CLIENT_SECRET", TEST_PRIVATE_JWK)
+            System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_URL", "http://arbeidssokerregister_record_key_url/api/v1/record-key")
+            System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE", "api://test.scope.arbeidssokerregister_record_key/.default")
+            System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_URL", "http://arbeidssokerregister_oppslag_url/api/v1/arbeidssoekerperioder")
+            System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_SCOPE", "api://test.scope.arbeidssokerregister_oppslag/.default")
+            System.setProperty("KAFKA_SCHEMA_REGISTRY", "KAFKA_SCHEMA_REGISTRY")
+            System.setProperty("KAFKA_SCHEMA_REGISTRY_USER", "KAFKA_SCHEMA_REGISTRY_USER")
+            System.setProperty("KAFKA_SCHEMA_REGISTRY_PASSWORD", "KAFKA_SCHEMA_REGISTRY_PASSWORD")
+            System.setProperty("KAFKA_BROKERS", "KAFKA_BROKERS")
+            System.setProperty("BEKREFTELSE_TOPIC", "BEKREFTELSE_TOPIC")
+            System.setProperty("GITHUB_SHA", "some_sha")
+            System.setProperty("UNLEASH_SERVER_API_URL", "http://localhost")
+            System.setProperty("UNLEASH_SERVER_API_TOKEN", "token")
+            System.setProperty("UNLEASH_SERVER_API_ENV", "development")
+        }
     }
 
     fun setUpTestApplication(block: suspend ApplicationTestBuilder.() -> Unit) {
-        setEnvConfig()
         runMigration()
         clean()
 
@@ -169,32 +199,6 @@ open class ApiTestSetup {
 
             block()
         }
-    }
-
-    private fun setEnvConfig() {
-        System.setProperty("MELDEPLIKT_ADAPTER_HOST", "meldeplikt-adapter")
-        System.setProperty("MELDEPLIKT_ADAPTER_AUDIENCE", REQUIRED_AUDIENCE)
-        System.setProperty("PDF_GENERATOR_URL", "https://pdf-generator")
-        System.setProperty("DB_JDBC_URL", "${database.jdbcUrl}&user=${database.username}&password=${database.password}")
-        System.setProperty("token-x.client-id", TOKENX_ISSUER_ID)
-        System.setProperty("TOKEN_X_CLIENT_ID", TOKENX_ISSUER_ID)
-        System.setProperty("TOKEN_X_PRIVATE_JWK", TEST_PRIVATE_JWK)
-        System.setProperty("token-x.well-known-url", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
-        System.setProperty("TOKEN_X_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
-        System.setProperty("azure-app.well-known-url", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
-        System.setProperty("AZURE_APP_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
-        System.setProperty("AZURE_APP_CLIENT_ID", AZURE_ISSUER_ID)
-        System.setProperty("AZURE_APP_CLIENT_SECRET", TEST_PRIVATE_JWK)
-        System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_URL", "http://arbeidssokerregister_record_key_url/api/v1/record-key")
-        System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE", "api://test.scope.arbeidssokerregister_record_key/.default")
-        System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_URL", "http://arbeidssokerregister_oppslag_url/api/v1/arbeidssoekerperioder")
-        System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_SCOPE", "api://test.scope.arbeidssokerregister_oppslag/.default")
-        System.setProperty("KAFKA_SCHEMA_REGISTRY", "KAFKA_SCHEMA_REGISTRY")
-        System.setProperty("KAFKA_SCHEMA_REGISTRY_USER", "KAFKA_SCHEMA_REGISTRY_USER")
-        System.setProperty("KAFKA_SCHEMA_REGISTRY_PASSWORD", "KAFKA_SCHEMA_REGISTRY_PASSWORD")
-        System.setProperty("KAFKA_BROKERS", "KAFKA_BROKERS")
-        System.setProperty("BEKREFTELSE_TOPIC", "BEKREFTELSE_TOPIC")
-        System.setProperty("GITHUB_SHA", "some_sha")
     }
 
     private fun mapAppConfig(): MapApplicationConfig =

@@ -16,11 +16,11 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.slot
+import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
 import no.nav.dagpenger.rapportering.config.Configuration.ZONE_ID
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.connector.createMockClient
-import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
 import no.nav.paw.bekreftelse.melding.v1.vo.Bekreftelsesloesning
 import org.apache.kafka.clients.producer.Callback
@@ -48,23 +48,7 @@ class ArbeidssøkerServiceTest {
         @BeforeAll
         @JvmStatic
         fun setup() {
-            System.setProperty(
-                "DB_JDBC_URL",
-                "${database.jdbcUrl}&user=${database.username}&password=${database.password}",
-            )
-            System.setProperty(
-                "ARBEIDSSOKERREGISTER_RECORD_KEY_URL",
-                "http://arbeidssokerregister_record_key_url/api/v1/record-key",
-            )
-            System.setProperty(
-                "ARBEIDSSOKERREGISTER_OPPSLAG_URL",
-                "http://arbeidssokerregister_oppslag_url/api/v1/arbeidssoekerperioder",
-            )
-            System.setProperty("KAFKA_SCHEMA_REGISTRY", "KAFKA_SCHEMA_REGISTRY")
-            System.setProperty("KAFKA_SCHEMA_REGISTRY_USER", "KAFKA_SCHEMA_REGISTRY_USER")
-            System.setProperty("KAFKA_SCHEMA_REGISTRY_PASSWORD", "KAFKA_SCHEMA_REGISTRY_PASSWORD")
-            System.setProperty("KAFKA_BROKERS", "KAFKA_BROKERS")
-            System.setProperty("BEKREFTELSE_TOPIC", "BEKREFTELSE_TOPIC")
+            setEnvConfig()
         }
     }
 

@@ -23,7 +23,10 @@ import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
+import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.config.Configuration.unleash
+import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperioder
@@ -78,7 +81,10 @@ class RapporteringServiceTest {
         @BeforeAll
         @JvmStatic
         fun setup() {
+            setEnvConfig()
+
             mockkObject(ApplicationBuilder.Companion)
+            mockkObject(unleash)
             every { getRapidsConnection() } returns testRapid
         }
     }
@@ -565,6 +571,36 @@ class RapporteringServiceTest {
         coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
 
         checkRapid(rapporteringsperiode)
+    }
+
+    @Test
+    fun `kan override registrertArbeidssoker i rapporteringsperiode`() {
+        val rapporteringsperiode = rapporteringsperiodeListe.first().copy(registrertArbeidssoker = false)
+
+        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
+        coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
+        coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, any(), false, any(), false) }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, true, false, Innsendt) }
+        coEvery { meldepliktConnector.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
+        val sendtPeriode = slot<AdapterRapporteringsperiode>()
+        coEvery { meldepliktConnector.sendinnRapporteringsperiode(capture(sendtPeriode), token) } returns
+            InnsendingResponse(
+                id = rapporteringsperiode.id,
+                status = "OK",
+                feil = listOf(),
+            )
+        coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
+        coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
+        coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
+        every { arbeidssøkerService.sendBekreftelse(eq(ident), any()) } just runs
+        every { unleash.isEnabled(eq("dp-rapportering-sp5-true")) } returns true
+
+        runBlocking {
+            rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, loginLevel, headers)
+        }
+
+        sendtPeriode.captured.registrertArbeidssoker shouldBe true
     }
 
     @Test
