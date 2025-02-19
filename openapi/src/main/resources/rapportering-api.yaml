@@ -394,6 +394,7 @@ components:
         Rapporteringsperiode:
             required:
                 - id
+                - type
                 - periode
                 - dager
                 - sisteFristForTrekk
@@ -404,6 +405,8 @@ components:
             type: object
             properties:
                 id:
+                    type: string
+                type:
                     type: string
                 periode:
                     $ref: '#/components/schemas/periode'

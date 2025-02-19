@@ -108,9 +108,9 @@ class MeldepliktConnectorTest {
     @Test
     fun `henter rapporteringsperiodeliste med to elementer`() {
         val rapporteringsperiode1 =
-            rapporteringsperiodeFor(id = 123L, fraOgMed = 1.januar, tilOgMed = 14.januar, kanSendesFra = 13.januar)
+            rapporteringsperiodeFor(id = 123L, type = "05", fraOgMed = 1.januar, tilOgMed = 14.januar, kanSendesFra = 13.januar)
         val rapporteringsperiode2 =
-            rapporteringsperiodeFor(id = 456L, fraOgMed = 15.januar, tilOgMed = 28.januar, kanSendesFra = 27.januar)
+            rapporteringsperiodeFor(id = 456L, type = "10", fraOgMed = 15.januar, tilOgMed = 28.januar, kanSendesFra = 27.januar)
 
         val rapporteringsperioder = "[$rapporteringsperiode1, $rapporteringsperiode2]"
 
@@ -126,6 +126,7 @@ class MeldepliktConnectorTest {
 
             with(get(0)) {
                 id shouldBe 123L
+                type shouldBe "05"
                 periode.fraOgMed shouldBe 1.januar
                 periode.tilOgMed shouldBe 14.januar
                 dager.size shouldBe 14
@@ -139,6 +140,7 @@ class MeldepliktConnectorTest {
 
             with(get(1)) {
                 id shouldBe 456L
+                type shouldBe "10"
                 periode.fraOgMed shouldBe 15.januar
                 periode.tilOgMed shouldBe 28.januar
                 dager.size shouldBe 14
@@ -345,6 +347,7 @@ class MeldepliktConnectorTest {
         val rapporteringsperiode =
             Rapporteringsperiode(
                 id = 1L,
+                type = "05",
                 periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()),
                 dager = emptyList(),
                 kanSendesFra = LocalDate.now(),
@@ -375,6 +378,7 @@ class MeldepliktConnectorTest {
 
 fun rapporteringsperiodeFor(
     id: Long = 123L,
+    type: String = "05",
     fraOgMed: LocalDate = LocalDate.now().minusWeeks(2),
     tilOgMed: LocalDate = LocalDate.now(),
     dager: String = aktivitetsdagerlisteFor(startDato = fraOgMed),
@@ -387,6 +391,7 @@ fun rapporteringsperiodeFor(
     """
     {
       "id": $id,
+      "type": "$type",
       "periode": {
         "fraOgMed": "$fraOgMed",
         "tilOgMed": "$tilOgMed"

@@ -10,6 +10,7 @@ import java.time.LocalDate
 
 data class Rapporteringsperiode(
     val id: Long,
+    val type: String,
     val periode: Periode,
     val dager: List<Dag>,
     val kanSendesFra: LocalDate,
@@ -37,6 +38,7 @@ fun List<Rapporteringsperiode>.toResponse(): List<RapporteringsperiodeResponse> 
 fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
     RapporteringsperiodeResponse(
         id = this.id.toString(),
+        type = this.type,
         periode =
             PeriodeResponse(
                 fraOgMed = this.periode.fraOgMed,

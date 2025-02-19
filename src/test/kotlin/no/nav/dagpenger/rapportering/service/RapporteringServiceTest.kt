@@ -936,6 +936,7 @@ fun lagRapporteringsperiode(
     registrertArbeidssoker: Boolean? = null,
 ) = Rapporteringsperiode(
     id = id,
+    type = "05",
     periode = periode,
     dager = getDager(startDato = periode.fraOgMed),
     kanSendesFra = periode.tilOgMed.minusDays(1),
