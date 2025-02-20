@@ -27,6 +27,7 @@ private val logger = KotlinLogging.logger {}
 
 data class AdapterRapporteringsperiode(
     val id: Long,
+    val type: String,
     val periode: AdapterPeriode,
     val dager: List<AdapterDag>,
     val kanSendesFra: LocalDate,
@@ -84,6 +85,7 @@ fun List<AdapterRapporteringsperiode>?.toRapporteringsperioder(): List<Rapporter
 fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
     Rapporteringsperiode(
         id = this.id,
+        type = this.type,
         periode = Periode(fraOgMed = this.periode.fraOgMed, tilOgMed = this.periode.tilOgMed),
         dager = this.dager.map { it.toDag() },
         kanSendesFra = this.kanSendesFra,
@@ -126,6 +128,7 @@ fun List<Rapporteringsperiode>.toAdapterRapporteringsperioder(): List<AdapterRap
 fun Rapporteringsperiode.toAdapterRapporteringsperiode(overrideRegistrertArbeidssoker: Boolean = true): AdapterRapporteringsperiode =
     AdapterRapporteringsperiode(
         id = this.id,
+        type = this.type,
         periode = AdapterPeriode(fraOgMed = this.periode.fraOgMed, tilOgMed = this.periode.tilOgMed),
         dager = this.dager.map { it.toAdapterDag() },
         kanSendesFra = this.kanSendesFra,

@@ -226,12 +226,13 @@ class RapporteringRepositoryPostgres(
             queryOf(
                 """
                 INSERT INTO rapporteringsperiode 
-                (id, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id, rapporteringstype) 
-                VALUES (:id, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id, :rapporteringstype)
+                (id, type, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id, rapporteringstype) 
+                VALUES (:id, :type, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id, :rapporteringstype)
                 ON CONFLICT DO NOTHING
                 """.trimIndent(),
                 mapOf(
                     "id" to rapporteringsperiode.id,
+                    "type" to rapporteringsperiode.type,
                     "ident" to ident,
                     "kan_sendes" to rapporteringsperiode.kanSendes,
                     "kan_sendes_fra" to rapporteringsperiode.kanSendesFra,
@@ -549,6 +550,7 @@ private fun Int.validateRowsAffected(excepted: Int = 1) {
 private fun Row.toRapporteringsperiode() =
     Rapporteringsperiode(
         id = long("id"),
+        type = stringOrNull("type") ?: "09",
         kanSendesFra = localDate("kan_sendes_fra"),
         kanSendes = boolean("kan_sendes"),
         kanEndres = boolean("kan_endres"),

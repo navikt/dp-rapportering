@@ -94,6 +94,7 @@ data class Response<T>(
 
 fun rapporteringsperiodeFor(
     id: Long = 123L,
+    type: String = "05",
     fraOgMed: LocalDate = LocalDate.now().minusDays(13),
     tilOgMed: LocalDate = fraOgMed.plusDays(13),
     aktivitet: Aktivitet? = null,
@@ -108,6 +109,7 @@ fun rapporteringsperiodeFor(
     mottattDato: LocalDate? = null,
 ) = Rapporteringsperiode(
     id = id,
+    type = type,
     periode = Periode(fraOgMed = fraOgMed, tilOgMed = tilOgMed),
     dager =
         (0..13).map {

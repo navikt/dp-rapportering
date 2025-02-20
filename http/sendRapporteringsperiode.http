@@ -6,6 +6,7 @@ Authorization: Bearer {{token}}
 
 {
     "id": "1813236955",
+    "type": "05",
     "periode": {
         "fraOgMed": "2024-03-11",
         "tilOgMed": "2024-03-24"

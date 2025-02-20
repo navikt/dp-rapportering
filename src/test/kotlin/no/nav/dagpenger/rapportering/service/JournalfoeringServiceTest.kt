@@ -288,6 +288,7 @@ class JournalfoeringServiceTest {
 
         return Rapporteringsperiode(
             id = 1L,
+            type = "05",
             periode = Periode(fom, fom.plusDays(13)),
             dager =
                 listOf(

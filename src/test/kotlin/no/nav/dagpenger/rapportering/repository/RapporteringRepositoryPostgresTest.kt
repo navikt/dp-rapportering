@@ -538,6 +538,7 @@ fun getRapporteringsperiode(
     mottattDato: LocalDate? = null,
 ) = Rapporteringsperiode(
     id = id,
+    type = "05",
     periode = periode,
     dager = dager,
     kanSendesFra = kanSendesFra,
