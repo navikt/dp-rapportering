@@ -54,6 +54,22 @@ class RapporteringRepositoryPostgresTest {
     }
 
     @Test
+    fun `kan hente rapporteringsperiode opprettet manuelt (etterregistrering)`() {
+        val id = 6269L
+        val rapporteringsperiode = getRapporteringsperiode(id = id, type = "09")
+
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
+            val hentetRapporteringsperiode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = id, ident = ident)
+
+            with(hentetRapporteringsperiode) {
+                id shouldBe id
+                this?.registrertArbeidssoker?.shouldBe(true)
+            }
+        }
+    }
+
+    @Test
     fun `kan hente rapporteringsperiode med riktig id`() {
         val id = 6269L
         val rapporteringsperiode = getRapporteringsperiode(id = id)
@@ -138,15 +154,15 @@ class RapporteringRepositoryPostgresTest {
         withMigratedDb {
             val now = LocalDate.now()
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
-                rapporteringsperiode = getRapporteringsperiode(1L, Periode(now.minusDays(13), now)),
+                rapporteringsperiode = getRapporteringsperiode(id = 1L, periode = Periode(now.minusDays(13), now)),
                 ident = ident,
             )
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
-                rapporteringsperiode = getRapporteringsperiode(2L, Periode(now.minusDays(43), now.minusDays(30))),
+                rapporteringsperiode = getRapporteringsperiode(id = 2L, periode = Periode(now.minusDays(43), now.minusDays(30))),
                 ident = ident,
             )
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
-                rapporteringsperiode = getRapporteringsperiode(3L, Periode(now.minusDays(21), now.minusDays(8))),
+                rapporteringsperiode = getRapporteringsperiode(id = 3L, periode = Periode(now.minusDays(21), now.minusDays(8))),
                 ident = ident,
             )
 
@@ -526,6 +542,7 @@ class RapporteringRepositoryPostgresTest {
 
 fun getRapporteringsperiode(
     id: Long = 6269L,
+    type: String = "05",
     periode: Periode = Periode(fraOgMed = 1.januar, tilOgMed = 14.januar),
     dager: List<Dag> = getDager(),
     kanSendesFra: LocalDate = 13.januar,
@@ -538,7 +555,7 @@ fun getRapporteringsperiode(
     mottattDato: LocalDate? = null,
 ) = Rapporteringsperiode(
     id = id,
-    type = "05",
+    type = type,
     periode = periode,
     dager = dager,
     kanSendesFra = kanSendesFra,

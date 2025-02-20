@@ -239,7 +239,7 @@ class RapporteringRepositoryPostgres(
                     "kan_endres" to rapporteringsperiode.kanEndres,
                     "brutto_belop" to rapporteringsperiode.bruttoBelop,
                     "status" to rapporteringsperiode.status.name,
-                    "registrert_arbeidssoker" to rapporteringsperiode.registrertArbeidssoker,
+                    "registrert_arbeidssoker" to if (rapporteringsperiode.type == "09") true else rapporteringsperiode.registrertArbeidssoker,
                     "fom" to rapporteringsperiode.periode.fraOgMed,
                     "tom" to rapporteringsperiode.periode.tilOgMed,
                     "original_id" to rapporteringsperiode.originalId,
