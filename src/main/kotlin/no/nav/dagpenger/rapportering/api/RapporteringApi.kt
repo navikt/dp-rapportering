@@ -5,7 +5,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.JsonConvertException
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.auth.authenticate
 import io.ktor.server.plugins.BadRequestException
@@ -30,6 +29,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toResponse
+import no.nav.dagpenger.rapportering.service.PersonregisterService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.getCallId
 import java.net.URI
@@ -38,6 +38,7 @@ private val logger = KotlinLogging.logger {}
 
 internal fun Application.rapporteringApi(
     rapporteringService: RapporteringService,
+    personregisterService: PersonregisterService,
     meldepliktMetrikker: MeldepliktMetrikker,
 ) {
     install(StatusPages) {
@@ -269,6 +270,8 @@ internal fun Application.rapporteringApi(
                 get {
                     val ident = call.ident()
                     val jwtToken = call.request.jwt()
+
+                    personregisterService.oppdaterPersonstatus(ident, jwtToken)
 
                     rapporteringService
                         .hentOgOppdaterRapporteringsperioder(ident, jwtToken)
