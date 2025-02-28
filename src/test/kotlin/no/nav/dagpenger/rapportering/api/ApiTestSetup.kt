@@ -110,6 +110,8 @@ open class ApiTestSetup {
         fun setEnvConfig() {
             System.setProperty("MELDEPLIKT_ADAPTER_HOST", "meldeplikt-adapter")
             System.setProperty("MELDEPLIKT_ADAPTER_AUDIENCE", REQUIRED_AUDIENCE)
+            System.setProperty("PERSONREGISTER_HOST", "personregister")
+            System.setProperty("PERSONREGISTER_AUDIENCE", "personregister_audience")
             System.setProperty("PDF_GENERATOR_URL", "https://pdf-generator")
             System.setProperty("DB_JDBC_URL", "${database.jdbcUrl}&user=${database.username}&password=${database.password}")
             System.setProperty("token-x.client-id", TOKENX_ISSUER_ID)
