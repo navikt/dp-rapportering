@@ -32,29 +32,6 @@ class PersonregisterConnector(
     private val logger = KotlinLogging.logger {}
     private val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
 
-    suspend fun oppdaterPersonstatus(
-        ident: String,
-        subjectToken: String,
-        datoFra: LocalDate,
-    ): Unit =
-        withContext(Dispatchers.IO) {
-            try {
-                sendData(
-                    "/personstatus",
-                    subjectToken,
-                    "personregister-oppdaterPersonstatus",
-                    datoFra.format(DateTimeFormatter.ISO_LOCAL_DATE),
-                )
-                    .also {
-                        logger.info { "Kall til personregister for å sende personstatus ga status ${it.status}" }
-                        sikkerlogg.info { "Kall til personregister for å sende personstatus for $ident ga status ${it.status}" }
-                    }
-            } catch (e: Exception) {
-                logger.error(e) { "Feil ved sending av data til meldeplikt-adapter" }
-                throw e
-            }
-        }
-
     suspend fun hentPersonstatus(
         ident: String,
         subjectToken: String,
@@ -75,6 +52,29 @@ class PersonregisterConnector(
                     .let { defaultObjectMapper.readValue(it, PersonstatusResponse::class.java) }
 
                 response.status
+            }
+        }
+
+    suspend fun oppdaterPersonstatus(
+        ident: String,
+        subjectToken: String,
+        datoFra: LocalDate,
+    ): Unit =
+        withContext(Dispatchers.IO) {
+            try {
+                sendData(
+                    "/personstatus",
+                    subjectToken,
+                    "personregister-oppdaterPersonstatus",
+                    datoFra.format(DateTimeFormatter.ISO_LOCAL_DATE),
+                )
+                    .also {
+                        logger.info { "Kall til personregister for å sende personstatus ga status ${it.status}" }
+                        sikkerlogg.info { "Kall til personregister for å sende personstatus for $ident ga status ${it.status}" }
+                    }
+            } catch (e: Exception) {
+                logger.error(e) { "Feil ved sending av data til meldeplikt-adapter" }
+                throw e
             }
         }
 
