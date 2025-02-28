@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class PersonregisterServiceTest {
-
     private val ident = "12345678910"
     private val token = "jwtToken"
 

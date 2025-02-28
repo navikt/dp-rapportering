@@ -47,9 +47,10 @@ class PersonregisterConnector(
             if (result.status == HttpStatusCode.NotFound) {
                 Personstatus.IKKE_DAGPENGERBRUKER
             } else {
-                val response = result
-                    .bodyAsText()
-                    .let { defaultObjectMapper.readValue(it, PersonstatusResponse::class.java) }
+                val response =
+                    result
+                        .bodyAsText()
+                        .let { defaultObjectMapper.readValue(it, PersonstatusResponse::class.java) }
 
                 response.status
             }
@@ -121,10 +122,10 @@ class PersonregisterConnector(
 
 data class PersonstatusResponse(
     val ident: String,
-    val status: Personstatus
+    val status: Personstatus,
 )
 
 enum class Personstatus {
     DAGPENGERBRUKER,
-    IKKE_DAGPENGERBRUKER;
+    IKKE_DAGPENGERBRUKER,
 }

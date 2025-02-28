@@ -49,10 +49,10 @@ class PersonregisterConnectorTest {
         val connector =
             personregisterConnector(
                 """
-                    {
-                        "ident": "$ident",
-                        "status": "IKKE_DAGPENGERBRUKER"
-                    }
+                {
+                  "ident": "$ident",
+                  "status": "IKKE_DAGPENGERBRUKER"
+                }
                 """.trimIndent(),
                 200,
             )
@@ -70,10 +70,10 @@ class PersonregisterConnectorTest {
         val connector =
             personregisterConnector(
                 """
-                    {
-                        "ident": "$ident",
-                        "status": "DAGPENGERBRUKER"
-                    }
+                {
+                  "ident": "$ident",
+                  "status": "DAGPENGERBRUKER"
+                }
                 """.trimIndent(),
                 200,
             )
