@@ -64,6 +64,14 @@ internal object Configuration {
 
     val meldepliktAdapterAudience by lazy { properties[Key("MELDEPLIKT_ADAPTER_AUDIENCE", stringType)] }
 
+    val personregisterUrl by lazy {
+        properties[Key("PERSONREGISTER_HOST", stringType)].let {
+            "https://$it"
+        }
+    }
+
+    val personregisterUrlAudience by lazy { properties[Key("PERSONREGISTER_AUDIENCE", stringType)] }
+
     val pdfGeneratorUrl by lazy { properties[Key("PDF_GENERATOR_URL", stringType)] }
 
     val arbeidssokerregisterRecordKeyUrl by lazy {
