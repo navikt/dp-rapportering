@@ -16,6 +16,7 @@ import no.nav.dagpenger.rapportering.config.Configuration.kafkaSchemaRegistryCon
 import no.nav.dagpenger.rapportering.config.Configuration.kafkaServerKonfigurasjon
 import no.nav.dagpenger.rapportering.config.konfigurasjon
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.connector.PersonregisterConnector
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.jobs.RapporterDatabaseMetrikkerJob
 import no.nav.dagpenger.rapportering.jobs.SlettRapporteringsperioderJob
@@ -34,6 +35,7 @@ import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
+import no.nav.dagpenger.rapportering.service.PersonregisterService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.tjenester.RapporteringJournalførtMottak
 import no.nav.helse.rapids_rivers.RapidApplication
@@ -64,6 +66,8 @@ class ApplicationBuilder(
     private val rapporterDatabaseMetrikker = RapporterDatabaseMetrikkerJob(databaseMetrikker)
 
     private val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
+    private val personregisterConnector = PersonregisterConnector(httpClient = httpClient, actionTimer = actionTimer)
+
     private val rapporteringRepository = RapporteringRepositoryPostgres(dataSource, actionTimer)
     private val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(dataSource, actionTimer)
     private val journalfoeringRepository = JournalfoeringRepositoryPostgres(dataSource, actionTimer)
@@ -100,6 +104,8 @@ class ApplicationBuilder(
             arbeidssøkerService,
         )
 
+    private val personregisterService = PersonregisterService(personregisterConnector, rapporteringService)
+
     init {
         JvmInfoMetrics().bindTo(meterRegistry)
 
@@ -111,7 +117,7 @@ class ApplicationBuilder(
                 ) { engine, _: RapidsConnection ->
                     engine.application.konfigurasjon(meterRegistry)
                     engine.application.internalApi(meterRegistry)
-                    engine.application.rapporteringApi(rapporteringService, meldepliktMetrikker)
+                    engine.application.rapporteringApi(rapporteringService, personregisterService, meldepliktMetrikker)
                 }
         rapidsConnection.register(this)
         RapporteringJournalførtMottak(rapidsConnection, journalfoeringRepository, kallLoggRepository)

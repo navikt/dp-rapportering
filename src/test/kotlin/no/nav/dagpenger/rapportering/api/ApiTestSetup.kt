@@ -15,9 +15,12 @@ import io.ktor.server.routing.routing
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.ExternalServicesBuilder
 import io.ktor.server.testing.testApplication
+import io.mockk.coEvery
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.runs
 import io.mockk.slot
 import kotliquery.queryOf
 import kotliquery.sessionOf
@@ -37,6 +40,7 @@ import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
+import no.nav.dagpenger.rapportering.service.PersonregisterService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meldepliktMetrikker
@@ -106,6 +110,8 @@ open class ApiTestSetup {
         fun setEnvConfig() {
             System.setProperty("MELDEPLIKT_ADAPTER_HOST", "meldeplikt-adapter")
             System.setProperty("MELDEPLIKT_ADAPTER_AUDIENCE", REQUIRED_AUDIENCE)
+            System.setProperty("PERSONREGISTER_HOST", "personregister")
+            System.setProperty("PERSONREGISTER_AUDIENCE", "personregister_audience")
             System.setProperty("PDF_GENERATOR_URL", "https://pdf-generator")
             System.setProperty("DB_JDBC_URL", "${database.jdbcUrl}&user=${database.username}&password=${database.password}")
             System.setProperty("token-x.client-id", TOKENX_ISSUER_ID)
@@ -191,10 +197,13 @@ open class ApiTestSetup {
                     arbeidssoekerService,
                 )
 
+            val personregisterService = mockk<PersonregisterService>()
+            coEvery { personregisterService.oppdaterPersonstatus(any(), any()) } just runs
+
             application {
                 konfigurasjon(meterRegistry)
                 internalApi(meterRegistry)
-                rapporteringApi(rapporteringService, meldepliktMetrikker)
+                rapporteringApi(rapporteringService, personregisterService, meldepliktMetrikker)
             }
 
             block()
