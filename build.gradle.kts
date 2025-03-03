@@ -80,6 +80,7 @@ dependencies {
 
     implementation("io.getunleash:unleash-client-java:10.0.2")
 
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(libs.rapids.and.rivers.test)
     testImplementation(libs.bundles.postgres.test)
     testImplementation("io.kotest:kotest-assertions-core-jvm:${libs.versions.kotest.get()}")
