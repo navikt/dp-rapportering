@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.repository
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
+import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
@@ -13,6 +14,8 @@ class JournalfoeringRepositoryPostgres(
     private val dataSource: DataSource,
     private val actionTimer: ActionTimer,
 ) : JournalfoeringRepository {
+    private val logger = KotlinLogging.logger {}
+
     override suspend fun lagreJournalpostData(
         journalpostId: Long,
         dokumentInfoId: Long,
@@ -29,7 +32,16 @@ class JournalfoeringRepositoryPostgres(
                         dokumentInfoId,
                         rapporteringsperiodeId,
                     ).asUpdate,
-                ).validateRowsAffected()
+                ).let {
+                    if (it ==
+                        0
+                    ) {
+                        logger.warn {
+                            "Journalpostdata med journalpostId $journalpostId og dokumentInfoId $dokumentInfoId og " +
+                                "rapporteringsperiodeId $rapporteringsperiodeId ble ikke l"
+                        }
+                    }
+                } // .validateRowsAffected()
         }
     }
 
