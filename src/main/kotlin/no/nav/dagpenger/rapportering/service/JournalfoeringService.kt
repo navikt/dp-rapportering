@@ -7,6 +7,7 @@ import com.natpryce.konfig.stringType
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.accept
+import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -23,11 +24,13 @@ import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.properties
 import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
+import no.nav.dagpenger.rapportering.model.Leader
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
+import java.net.InetAddress
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
@@ -73,7 +76,10 @@ class JournalfoeringService(
                 }
             }
 
-        timer.schedule(timerTask, delay, resendInterval)
+        if (isLeader()) {
+            logger.info { "Pod er leader og setter opp jobb for å sende journalposter på nytt" }
+            timer.schedule(timerTask, delay, resendInterval)
+        }
     }
 
     suspend fun journalfoerPaaNytt(): Int {
@@ -139,7 +145,8 @@ class JournalfoeringService(
         // Opprett HTML
         // Erstatt plassholdere med data
         val htmlMal =
-            this::class.java.getResource("/html_pdf_mal.html")!!
+            this::class.java
+                .getResource("/html_pdf_mal.html")!!
                 .readText()
                 .replace("%NAVN%", navn)
                 .replace("%IDENT%", ident)
@@ -148,9 +155,10 @@ class JournalfoeringService(
                 .replace("%MOTTATT%", LocalDateTime.now().format(dateTimeFormatter))
                 .replace(
                     "%NESTE_MELDEKORT_KAN_SENDES_FRA%",
-                    rapporteringsperiode.periode.tilOgMed.plusDays(13).format(dateFormatter),
-                )
-                .replace("%HTML%", rapporteringsperiode.html ?: "")
+                    rapporteringsperiode.periode.tilOgMed
+                        .plusDays(13)
+                        .format(dateFormatter),
+                ).replace("%HTML%", rapporteringsperiode.html ?: "")
 
         val json = defaultObjectMapper.writeValueAsString(rapporteringsperiode)
 
@@ -283,5 +291,23 @@ class JournalfoeringService(
                 defaultObjectMapper.writeValueAsString(rapporteringsperiode),
             ),
         )
+    }
+
+    private fun isLeader(): Boolean {
+        var leader = ""
+        val hostname = InetAddress.getLocalHost().hostName
+
+        try {
+            val electorUrl = System.getenv("ELECTOR_GET_URL")
+            runBlocking {
+                val leaderJson: Leader = httpClient.get(electorUrl).body()
+                leader = leaderJson.name
+            }
+        } catch (e: Exception) {
+            logger.error(e) { "Kunne ikke sjekke leader" }
+            return true // Det er bedre å få flere pod'er til å starte jobben enn ingen
+        }
+
+        return hostname == leader
     }
 }
