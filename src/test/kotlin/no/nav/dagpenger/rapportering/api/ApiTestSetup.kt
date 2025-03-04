@@ -191,7 +191,6 @@ open class ApiTestSetup {
                         journalfoeringRepository,
                         kallLoggService,
                         httpClient,
-                        meterRegistry,
                     ),
                     kallLoggService,
                     arbeidssoekerService,

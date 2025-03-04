@@ -42,7 +42,6 @@ import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.Postgres.database
-import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -116,7 +115,6 @@ class JournalfoeringServiceTest {
                 journalfoeringRepository,
                 kallLoggService,
                 createHttpClient(mockPdfGeneratorEngine),
-                meterRegistry,
             )
 
         // Prøver å journalføre
@@ -176,7 +174,6 @@ class JournalfoeringServiceTest {
                 journalfoeringRepository,
                 kallLoggService,
                 createHttpClient(mockPdfGeneratorEngine),
-                meterRegistry,
             )
 
         // Prøver å journalføre
@@ -262,7 +259,6 @@ class JournalfoeringServiceTest {
                 journalfoeringRepository,
                 kallLoggService,
                 createHttpClient(mockPdfGeneratorEngine),
-                meterRegistry,
             )
 
         val rapporteringsperiode = createRapporteringsperiode(endring)
@@ -338,7 +334,12 @@ class JournalfoeringServiceTest {
         val jsonNode = objectMapper.readTree(message)
 
         jsonNode.get("@event_name").asText() shouldBe "behov"
-        jsonNode.get("@behov").asIterable().iterator().next().asText() shouldBe MineBehov.JournalføreRapportering.name
+        jsonNode
+            .get("@behov")
+            .asIterable()
+            .iterator()
+            .next()
+            .asText() shouldBe MineBehov.JournalføreRapportering.name
 
         val behov = jsonNode.get(MineBehov.JournalføreRapportering.name)
         behov.get("periodeId").asInt() shouldBe 1

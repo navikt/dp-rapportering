@@ -18,6 +18,7 @@ import no.nav.dagpenger.rapportering.config.konfigurasjon
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.PersonregisterConnector
 import no.nav.dagpenger.rapportering.connector.createHttpClient
+import no.nav.dagpenger.rapportering.jobs.MidlertidigJournalføringJob
 import no.nav.dagpenger.rapportering.jobs.RapporterDatabaseMetrikkerJob
 import no.nav.dagpenger.rapportering.jobs.SlettRapporteringsperioderJob
 import no.nav.dagpenger.rapportering.kafka.BekreftelseAvroSerializer
@@ -51,9 +52,7 @@ class ApplicationBuilder(
         private val logger = KotlinLogging.logger {}
         private lateinit var rapidsConnection: RapidsConnection
 
-        fun getRapidsConnection(): RapidsConnection {
-            return rapidsConnection
-        }
+        fun getRapidsConnection(): RapidsConnection = rapidsConnection
     }
 
     private val meterRegistry =
@@ -64,6 +63,7 @@ class ApplicationBuilder(
 
     private val slettRapporteringsperioderJob = SlettRapporteringsperioderJob(meterRegistry, httpClient)
     private val rapporterDatabaseMetrikker = RapporterDatabaseMetrikkerJob(databaseMetrikker)
+    private val midlertidigJournalføringJob = MidlertidigJournalføringJob(httpClient, meterRegistry)
 
     private val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
     private val personregisterConnector = PersonregisterConnector(httpClient = httpClient, actionTimer = actionTimer)
@@ -80,7 +80,6 @@ class ApplicationBuilder(
             journalfoeringRepository,
             kallLoggService,
             httpClient,
-            meterRegistry,
         )
 
     private val kafkaKonfigurasjon = KafkaKonfigurasjon(kafkaServerKonfigurasjon, kafkaSchemaRegistryConfig)
@@ -140,6 +139,11 @@ class ApplicationBuilder(
             .start(rapporteringRepository, journalfoeringRepository)
             .also {
                 logger.info { "Startet jobb for rapportering av metrikker" }
+            }
+        midlertidigJournalføringJob
+            .start(journalfoeringService)
+            .also {
+                logger.info { "Startet jobb for midlertidig journalføring" }
             }
     }
 }
