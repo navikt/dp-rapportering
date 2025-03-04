@@ -26,21 +26,22 @@ internal class MidlertidigJournalføringJob(
             object : TimerTask() {
                 override fun run() {
                     try {
-                        var rowsAffected: Int
-                        val tidBrukt =
-                            measureTime {
-                                rowsAffected = runBlocking { journalføringService.journalfoerPaaNytt() }
-                            }
-                        metrikker.jobbFullfort(tidBrukt, rowsAffected)
+                        if (isLeader(httpClient, logger)) {
+                            logger.info { "Pod er leader. Starter jobb for å sende journalposter på nytt" }
+                            var rowsAffected: Int
+                            val tidBrukt =
+                                measureTime {
+                                    rowsAffected = runBlocking { journalføringService.journalfoerPaaNytt() }
+                                }
+                            metrikker.jobbFullfort(tidBrukt, rowsAffected)
+                        }
                     } catch (e: Exception) {
                         logger.warn(e) { "JournalfoerPaaNytt feilet" }
                         metrikker.jobbFeilet()
                     }
                 }
             }
-        if (isLeader(httpClient, logger)) {
-            logger.info { "Pod er leader. Setter opp jobb for å sende journalposter på nytt" }
-            timer.schedule(timerTask, delay, resendInterval)
-        }
+
+        timer.schedule(timerTask, delay, resendInterval)
     }
 }

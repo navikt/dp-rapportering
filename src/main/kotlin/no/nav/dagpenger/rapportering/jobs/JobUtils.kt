@@ -12,7 +12,6 @@ fun isLeader(
     httpClient: HttpClient,
     logger: KLogger,
 ): Boolean {
-    // var leader = ""
     val hostname: String = InetAddress.getLocalHost().hostName
 
     val leader: String =
