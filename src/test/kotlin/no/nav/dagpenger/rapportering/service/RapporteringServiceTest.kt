@@ -3,8 +3,10 @@ package no.nav.dagpenger.rapportering.service
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectReader
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDate
+import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.date.shouldBeBefore
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -51,6 +53,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 class RapporteringServiceTest {
@@ -880,7 +883,9 @@ class RapporteringServiceTest {
         kilde["ident"].asText() shouldBe ident
 
         message["status"].asText() shouldBe "Innsendt"
-        message["mottattDato"].asLocalDate() shouldBe LocalDate.now()
+        val innsendtTidspunkt = message["innsendtTidspunkt"].asLocalDateTime()
+        innsendtTidspunkt.toLocalDate() shouldBe LocalDate.now()
+        innsendtTidspunkt shouldBeBefore LocalDateTime.now()
     }
 }
 

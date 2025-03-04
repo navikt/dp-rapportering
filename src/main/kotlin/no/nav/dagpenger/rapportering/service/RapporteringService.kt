@@ -30,6 +30,7 @@ import no.nav.dagpenger.rapportering.utils.kontrollerAktiviteter
 import no.nav.dagpenger.rapportering.utils.kontrollerRapporteringsperiode
 import java.lang.System.getenv
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.random.Random
 import kotlin.random.nextLong
@@ -477,7 +478,7 @@ class RapporteringService(
                 PeriodeData.Kilde(PeriodeData.Rolle.Bruker, ident),
                 if (rapporteringsperiode.erEndring()) PeriodeData.Type.Korrigert else PeriodeData.Type.Original,
                 "Innsendt",
-                LocalDate.now(),
+                LocalDateTime.now(),
                 rapporteringsperiode.originalId,
             )
         val message =

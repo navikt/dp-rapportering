@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.model
 import com.fasterxml.jackson.module.kotlin.convertValue
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 data class PeriodeData(
     val id: Long,
@@ -14,7 +15,7 @@ data class PeriodeData(
     val kilde: Kilde,
     val type: Type,
     val status: String = "Innsendt",
-    val mottattDato: LocalDate,
+    val innsendtTidspunkt: LocalDateTime,
     // Refererer til originalt meldekort ved korrigering
     val originalId: Long?,
 ) {
