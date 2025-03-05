@@ -16,14 +16,12 @@ import io.ktor.http.HeadersImpl
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.util.toMap
-import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.properties
-import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
 import no.nav.dagpenger.rapportering.model.Leader
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 import no.nav.dagpenger.rapportering.model.MineBehov
@@ -35,18 +33,11 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
 import java.util.Locale
-import java.util.Timer
-import java.util.TimerTask
-import kotlin.time.measureTime
 
 class JournalfoeringService(
     private val journalfoeringRepository: JournalfoeringRepository,
     private val kallLoggService: KallLoggService,
     private val httpClient: HttpClient,
-    meterRegistry: MeterRegistry,
-    delay: Long = 10000,
-    // 5 minutes by default
-    resendInterval: Long = 300_000L,
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -54,33 +45,6 @@ class JournalfoeringService(
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
     private var locale: Locale? = Locale.of("nb", "NO") // Vi skal regne ukenummer iht norske regler
     private val woy = WeekFields.of(locale).weekOfWeekBasedYear()
-
-    private val metrikker: JobbkjoringMetrikker = JobbkjoringMetrikker(meterRegistry, this::class.simpleName!!)
-
-    init {
-        val timer = Timer()
-        val timerTask: TimerTask =
-            object : TimerTask() {
-                override fun run() {
-                    try {
-                        var rowsAffected: Int
-                        val tidBrukt =
-                            measureTime {
-                                rowsAffected = runBlocking { journalfoerPaaNytt() }
-                            }
-                        metrikker.jobbFullfort(tidBrukt, rowsAffected)
-                    } catch (e: Exception) {
-                        logger.warn(e) { "JournalfoerPaaNytt feilet" }
-                        metrikker.jobbFeilet()
-                    }
-                }
-            }
-
-        if (isLeader()) {
-            logger.info { "Pod er leader og setter opp jobb for å sende journalposter på nytt" }
-            timer.schedule(timerTask, delay, resendInterval)
-        }
-    }
 
     suspend fun journalfoerPaaNytt(): Int {
         // Les data fra DB

@@ -1,15 +1,12 @@
 package no.nav.dagpenger.rapportering.jobs
 
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
-import no.nav.dagpenger.rapportering.model.Leader
 import no.nav.dagpenger.rapportering.service.RapporteringService
-import java.net.InetAddress
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import kotlin.concurrent.fixedRateTimer
@@ -40,7 +37,7 @@ internal class SlettRapporteringsperioderJob(
             period = 1.days.inWholeMilliseconds,
             action = {
                 try {
-                    if (!isLeader()) {
+                    if (!isLeader(httpClient, logger)) {
                         return@fixedRateTimer
                     }
 
@@ -60,23 +57,5 @@ internal class SlettRapporteringsperioderJob(
                 }
             },
         )
-    }
-
-    private fun isLeader(): Boolean {
-        var leader = ""
-        val hostname = InetAddress.getLocalHost().hostName
-
-        try {
-            val electorUrl = System.getenv("ELECTOR_GET_URL")
-            runBlocking {
-                val leaderJson: Leader = httpClient.get(electorUrl).body()
-                leader = leaderJson.name
-            }
-        } catch (e: Exception) {
-            logger.error(e) { "Kunne ikke sjekke leader" }
-            return true // Det er bedre å få flere pod'er til å starte jobben enn ingen
-        }
-
-        return hostname == leader
     }
 }
