@@ -37,6 +37,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Periode
+import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -857,12 +858,12 @@ class RapporteringServiceTest {
             message["@event_name"].asText() shouldBe "meldekort_innsendt"
             message["id"].asLong() shouldBe rapporteringsperiode.id
             message["type"].asText() shouldBe "Original"
-            message["originalId"].isNull shouldBe true
+            message["korrigeringAv"].isNull shouldBe true
         } else {
-            message["@event_name"].asText() shouldBe "meldekort_korrigert"
+            message["@event_name"].asText() shouldBe "meldekort_innsendt"
             message["id"].asText() shouldBe endringId
             message["type"].asText() shouldBe "Korrigert"
-            message["originalId"].asLong() shouldBe rapporteringsperiode.id
+            message["korrigeringAv"].asLong() shouldBe rapporteringsperiode.id
         }
 
         message["ident"].asText() shouldBe ident
@@ -871,9 +872,14 @@ class RapporteringServiceTest {
         periode["fraOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.fraOgMed
         periode["tilOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.tilOgMed
 
-        val reader: ObjectReader = defaultObjectMapper.readerFor(object : TypeReference<List<Dag>>() {})
-        val dager: List<String> = reader.readValue(message["dager"])
-        dager shouldBeEqual rapporteringsperiode.dager
+        val reader: ObjectReader = defaultObjectMapper.readerFor(object : TypeReference<List<PeriodeDag>>() {})
+        val dager: List<PeriodeDag> = reader.readValue(message["dager"])
+        dager.forEachIndexed { i, dag ->
+            dag.dato shouldBeEqual rapporteringsperiode.dager[i].dato
+            dag.dagIndex shouldBeEqual rapporteringsperiode.dager[i].dagIndex
+            dag.aktiviteter shouldBeEqual rapporteringsperiode.dager[i].aktiviteter
+            dag.meldt shouldBe true
+        }
 
         message["kanSendesFra"].asLocalDate() shouldBe rapporteringsperiode.kanSendesFra
         message["opprettetAv"].asText() shouldBe "Arena"

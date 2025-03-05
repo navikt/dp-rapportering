@@ -21,6 +21,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidi
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toMap
+import no.nav.dagpenger.rapportering.model.toPeriodeDager
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnKanSendesFra
@@ -467,23 +468,23 @@ class RapporteringService(
 
         val periodeData =
             PeriodeData(
-                rapporteringsperiode.id,
-                ident,
-                rapporteringsperiode.periode,
-                rapporteringsperiode.dager,
-                rapporteringsperiode.kanSendesFra,
+                id = rapporteringsperiode.id,
+                ident = ident,
+                periode = rapporteringsperiode.periode,
+                dager = rapporteringsperiode.dager.toPeriodeDager(),
+                kanSendesFra = rapporteringsperiode.kanSendesFra,
                 // Nå har vi meldekort kun fra Arena
-                PeriodeData.OpprettetAv.Arena,
+                opprettetAv = PeriodeData.OpprettetAv.Arena,
                 // dp-rapportering er kun for brukere
-                PeriodeData.Kilde(PeriodeData.Rolle.Bruker, ident),
-                if (rapporteringsperiode.erEndring()) PeriodeData.Type.Korrigert else PeriodeData.Type.Original,
-                "Innsendt",
-                LocalDateTime.now(),
-                rapporteringsperiode.originalId,
+                kilde = PeriodeData.Kilde(PeriodeData.Rolle.Bruker, ident),
+                type = if (rapporteringsperiode.erEndring()) PeriodeData.Type.Korrigert else PeriodeData.Type.Original,
+                status = "Innsendt",
+                innsendtTidspunkt = LocalDateTime.now(),
+                korrigeringAv = rapporteringsperiode.originalId,
             )
         val message =
             JsonMessage.newMessage(
-                if (rapporteringsperiode.erEndring()) "meldekort_korrigert" else "meldekort_innsendt",
+                "meldekort_innsendt",
                 periodeData.toMap(),
             )
 

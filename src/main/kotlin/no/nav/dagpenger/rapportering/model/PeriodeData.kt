@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.model
 
 import com.fasterxml.jackson.module.kotlin.convertValue
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -9,7 +10,7 @@ data class PeriodeData(
     val id: Long,
     val ident: String,
     val periode: Periode,
-    val dager: List<Dag>,
+    val dager: List<PeriodeDag>,
     val kanSendesFra: LocalDate,
     val opprettetAv: OpprettetAv,
     val kilde: Kilde,
@@ -17,7 +18,7 @@ data class PeriodeData(
     val status: String = "Innsendt",
     val innsendtTidspunkt: LocalDateTime,
     // Refererer til originalt meldekort ved korrigering
-    val originalId: Long?,
+    val korrigeringAv: Long?,
 ) {
     enum class OpprettetAv {
         Arena,
@@ -38,6 +39,22 @@ data class PeriodeData(
         Original,
         Korrigert,
     }
+
+    data class PeriodeDag(
+        val dato: LocalDate,
+        val aktiviteter: List<Aktivitet> = emptyList(),
+        val dagIndex: Int,
+        val meldt: Boolean = true,
+    )
 }
 
 fun PeriodeData.toMap() = defaultObjectMapper.convertValue<Map<String, Any>>(this)
+
+fun List<Dag>.toPeriodeDager(): List<PeriodeDag> =
+    this.map {
+        PeriodeDag(
+            dato = it.dato,
+            aktiviteter = it.aktiviteter,
+            dagIndex = it.dagIndex,
+        )
+    }
