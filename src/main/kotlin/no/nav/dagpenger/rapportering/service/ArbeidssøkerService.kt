@@ -18,6 +18,7 @@ import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.ZONE_ID
 import no.nav.dagpenger.rapportering.config.Configuration.bekreftelseTopic
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.kafka.sendDeferred
 import no.nav.dagpenger.rapportering.model.ArbeidssøkerperiodeRequestBody
 import no.nav.dagpenger.rapportering.model.ArbeidssøkerperiodeResponse
@@ -54,8 +55,7 @@ class ArbeidssøkerService(
         ident: String,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
-        // Sender ikke i prod ennå
-        if (getenv("NAIS_CLUSTER_NAME") == "prod-gcp") {
+        if (!unleash.isEnabled("send-arbeidssoekerstatus")) {
             return
         }
 

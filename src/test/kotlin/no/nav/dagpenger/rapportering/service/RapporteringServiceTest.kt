@@ -558,6 +558,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
         every { arbeidssøkerService.sendBekreftelse(eq(ident), any()) } just runs
+        every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
         val innsendingResponse =
             runBlocking {
@@ -692,6 +693,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
         every { arbeidssøkerService.sendBekreftelse(eq(ident), any()) } just runs
+        every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
         val innsendingResponse =
             runBlocking {
