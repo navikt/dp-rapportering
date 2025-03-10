@@ -30,7 +30,6 @@ import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
 import no.nav.dagpenger.rapportering.utils.kontrollerAktiviteter
 import no.nav.dagpenger.rapportering.utils.kontrollerRapporteringsperiode
-import java.lang.System.getenv
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
