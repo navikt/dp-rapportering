@@ -1,5 +1,4 @@
-FROM ghcr.io/navikt/baseimages/temurin:21
+FROM gcr.io/distroless/java21
 
-COPY build/libs/*-all.jar app.jar
-
-CMD ["java", "-jar", "app.jar"]
+COPY build/libs/dp-rapportering-all.jar /app.jar
+CMD ["/app.jar"]
