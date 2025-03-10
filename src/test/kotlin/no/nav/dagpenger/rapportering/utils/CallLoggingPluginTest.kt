@@ -11,6 +11,8 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.ExternalServicesBuilder
+import io.mockk.every
+import io.mockk.mockkObject
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
@@ -19,12 +21,14 @@ import no.nav.dagpenger.rapportering.api.doGet
 import no.nav.dagpenger.rapportering.api.doPost
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 class CallLoggingPluginTest : ApiTestSetup() {
@@ -36,6 +40,14 @@ class CallLoggingPluginTest : ApiTestSetup() {
             InnsendingResponse(id = 123L, status = "OK", feil = emptyList()),
         )
     private val personResponse = defaultObjectMapper.writeValueAsString(Person(1L, "TESTESSEN", "TEST", "NO", "EMELD"))
+
+    companion object {
+        @BeforeAll
+        @JvmStatic
+        fun setup() {
+            mockkObject(unleash)
+        }
+    }
 
     @Test
     fun `Kan lagre get request og response`() =
@@ -87,6 +99,9 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 arbeidssokerregisterRecordKey()
                 arbeidssokerregisterOppslag()
             }
+
+            every { unleash.isEnabled(eq("send-periodedata")) } returns true
+            every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
 
             val adapterRapporteringsperiodeString =
                 defaultObjectMapper.writeValueAsString(
