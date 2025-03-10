@@ -5,6 +5,7 @@ import io.ktor.http.Headers
 import io.ktor.server.plugins.BadRequestException
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
+import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
@@ -29,7 +30,6 @@ import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
 import no.nav.dagpenger.rapportering.utils.kontrollerAktiviteter
 import no.nav.dagpenger.rapportering.utils.kontrollerRapporteringsperiode
-import java.lang.System.getenv
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -461,8 +461,7 @@ class RapporteringService(
         ident: String,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
-        // Sender ikke i prod ennå
-        if (getenv("NAIS_CLUSTER_NAME") == "prod-gcp") {
+        if (!unleash.isEnabled("send-periodedata")) {
             return
         }
 

@@ -14,11 +14,13 @@ import io.ktor.http.headersOf
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.runs
 import io.mockk.slot
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
 import no.nav.dagpenger.rapportering.config.Configuration.ZONE_ID
+import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.connector.createMockClient
 import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
@@ -49,6 +51,8 @@ class ArbeidssøkerServiceTest {
         @JvmStatic
         fun setup() {
             setEnvConfig()
+
+            mockkObject(unleash)
         }
     }
 
@@ -67,6 +71,8 @@ class ArbeidssøkerServiceTest {
             secondArg<Callback>().onCompletion(recordMetadata, null)
             CompletableFuture.completedFuture(recordMetadata)
         }
+
+        every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
 
         val arbeidssoekerService =
             ArbeidssøkerService(
@@ -90,6 +96,28 @@ class ArbeidssøkerServiceTest {
     }
 
     @Test
+    fun `Skal ikke sende bekreftelse hvis Unleash send-arbeidssoekerstatus returnerer false`() {
+        val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = true)
+
+        val kallLoggService = mockk<KallLoggService>()
+        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
+        // send() skal ikke kalles og vi kaster Exception hvis det skjer
+        every { bekreftelseKafkaProdusent.send(any(), any()) } throws Exception()
+        every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns false
+
+        val arbeidssoekerService =
+            ArbeidssøkerService(
+                kallLoggService = kallLoggService,
+                httpClient = mockHttpClient(),
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
+                recordKeyTokenProvider = recordKeyTokenProvider,
+                oppslagTokenProvider = oppslagTokenProvider,
+            )
+
+        arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
+    }
+
+    @Test
     fun `Kan sende bekreftelse med vilFortsetteSomArbeidssoeker = false`() {
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
 
@@ -104,6 +132,8 @@ class ArbeidssøkerServiceTest {
             secondArg<Callback>().onCompletion(recordMetadata, null)
             CompletableFuture.completedFuture(recordMetadata)
         }
+
+        every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
 
         val arbeidssoekerService =
             ArbeidssøkerService(
@@ -138,6 +168,8 @@ class ArbeidssøkerServiceTest {
 
         val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
 
+        every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
+
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
@@ -161,6 +193,8 @@ class ArbeidssøkerServiceTest {
 
         val kallLoggService = mockk<KallLoggService>()
         val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
+
+        every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
 
         val arbeidssoekerService =
             ArbeidssøkerService(
@@ -190,6 +224,8 @@ class ArbeidssøkerServiceTest {
 
         val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
 
+        every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
+
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
@@ -213,6 +249,7 @@ class ArbeidssøkerServiceTest {
 
         val kallLoggService = mockk<KallLoggService>()
         val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
+        every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
 
         val arbeidssoekerService =
             ArbeidssøkerService(
@@ -247,6 +284,9 @@ class ArbeidssøkerServiceTest {
 
         val kallLoggService = mockk<KallLoggService>()
         val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
+        // send() skal ikke kalles og vi kaster Exception hvis det skjer
+        every { bekreftelseKafkaProdusent.send(any(), any()) } throws Exception()
+        every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
 
         val arbeidssoekerService =
             ArbeidssøkerService(
@@ -273,6 +313,8 @@ class ArbeidssøkerServiceTest {
 
         val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
         every { bekreftelseKafkaProdusent.send(any(), any()) } throws RuntimeException("Kunne ikke sende til Kafka")
+
+        every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
 
         val arbeidssoekerService =
             ArbeidssøkerService(
