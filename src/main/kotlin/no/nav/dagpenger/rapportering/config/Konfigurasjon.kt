@@ -24,7 +24,6 @@ import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
-import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.azureAd
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.tokenX
 import no.nav.dagpenger.rapportering.config.Configuration.MDC_CORRELATION_ID
@@ -32,12 +31,10 @@ import no.nav.dagpenger.rapportering.config.Configuration.NO_LOG_PATHS
 import no.nav.dagpenger.rapportering.config.Configuration.config
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
-import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.clean
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.runMigration
 import no.nav.dagpenger.rapportering.utils.IncomingCallLoggingPlugin
 import no.nav.dagpenger.rapportering.utils.generateCallId
-import org.flywaydb.core.internal.configuration.ConfigUtils
 import org.slf4j.event.Level
 
 fun Application.konfigurasjon(
@@ -48,13 +45,6 @@ fun Application.konfigurasjon(
         jwt("azureAd") { azureAd() }
     },
 ) {
-    val logger = KotlinLogging.logger {}
-
-    if (config[ConfigUtils.CLEAN_DISABLED] == "false") {
-        logger.info { "Cleaning database" }
-        clean()
-    }
-
     runMigration()
 
     install(MicrometerMetrics) {
