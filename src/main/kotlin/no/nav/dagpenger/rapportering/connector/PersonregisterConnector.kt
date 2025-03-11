@@ -111,8 +111,8 @@ class PersonregisterConnector(
                 response =
                     httpClient.post(URI("$personregisterUrl$path").toURL()) {
                         header(HttpHeaders.Authorization, "Bearer $token")
-                        contentType(ContentType.Application.Json)
-                        setBody(defaultObjectMapper.writeValueAsString(body))
+                        contentType(ContentType.Text.Plain)
+                        setBody(body)
                     }
             }
         actionTimer.httpTimer(metrikkNavn, response.status, HttpMethod.Post, tidBrukt.inWholeSeconds)
