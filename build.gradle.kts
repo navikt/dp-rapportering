@@ -78,7 +78,7 @@ dependencies {
     implementation("org.apache.avro:avro:1.12.0")
     schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:25.02.07.15-1")
 
-    implementation("io.getunleash:unleash-client-java:10.1.0")
+    implementation("io.getunleash:unleash-client-java:10.2.0")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(libs.rapids.and.rivers.test)
