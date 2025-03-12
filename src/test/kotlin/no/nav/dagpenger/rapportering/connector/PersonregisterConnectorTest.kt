@@ -33,19 +33,19 @@ class PersonregisterConnectorTest {
     )
 
     @Test
-    fun `hentPersonstatus returnerer IKKE_DAGPENGERBRUKER hvis 404 Not Found`() {
+    fun `hentBrukerstatus returnerer IKKE_DAGPENGERBRUKER hvis 404 Not Found`() {
         val connector = personregisterConnector("", 404)
 
         val response =
             runBlocking {
-                connector.hentPersonstatus(ident, subjectToken)
+                connector.hentBrukerstatus(ident, subjectToken)
             }
 
-        response shouldBe Personstatus.IKKE_DAGPENGERBRUKER
+        response shouldBe Brukerstatus.IKKE_DAGPENGERBRUKER
     }
 
     @Test
-    fun `hentPersonstatus returnerer IKKE_DAGPENGERBRUKER hvis IKKE_DAGPENGERBRUKER`() {
+    fun `hentBrukerstatus returnerer IKKE_DAGPENGERBRUKER hvis IKKE_DAGPENGERBRUKER`() {
         val connector =
             personregisterConnector(
                 """
@@ -59,14 +59,14 @@ class PersonregisterConnectorTest {
 
         val response =
             runBlocking {
-                connector.hentPersonstatus(ident, subjectToken)
+                connector.hentBrukerstatus(ident, subjectToken)
             }
 
-        response shouldBe Personstatus.IKKE_DAGPENGERBRUKER
+        response shouldBe Brukerstatus.IKKE_DAGPENGERBRUKER
     }
 
     @Test
-    fun `hentPersonstatus returnerer DAGPENGERBRUKER hvis DAGPENGERBRUKER`() {
+    fun `hentBrukerstatus returnerer DAGPENGERBRUKER hvis DAGPENGERBRUKER`() {
         val connector =
             personregisterConnector(
                 """
@@ -80,10 +80,10 @@ class PersonregisterConnectorTest {
 
         val response =
             runBlocking {
-                connector.hentPersonstatus(ident, subjectToken)
+                connector.hentBrukerstatus(ident, subjectToken)
             }
 
-        response shouldBe Personstatus.DAGPENGERBRUKER
+        response shouldBe Brukerstatus.DAGPENGERBRUKER
     }
 
     @Test

@@ -40,6 +40,7 @@ import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
+import no.nav.dagpenger.rapportering.service.MeldepliktService
 import no.nav.dagpenger.rapportering.service.PersonregisterService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
@@ -162,6 +163,7 @@ open class ApiTestSetup {
                 }
 
             val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
+            val meldepliktService = MeldepliktService(meldepliktConnector)
             val rapporteringRepository = RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
@@ -176,15 +178,20 @@ open class ApiTestSetup {
                 CompletableFuture.completedFuture(recordMetadata)
             }
 
+            val personregisterService = mockk<PersonregisterService>()
+            coEvery { personregisterService.oppdaterPersonstatus(any(), any()) } just runs
+            every { personregisterService.erBekreftelseOvertatt(any(), any()) } returns true
+
             val arbeidssoekerService =
                 ArbeidssøkerService(
                     kallLoggService = kallLoggService,
+                    personregisterService = personregisterService,
                     httpClient = httpClient,
                     bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 )
             val rapporteringService =
                 RapporteringService(
-                    meldepliktConnector,
+                    meldepliktService,
                     rapporteringRepository,
                     innsendingtidspunktRepository,
                     JournalfoeringService(
@@ -195,9 +202,6 @@ open class ApiTestSetup {
                     kallLoggService,
                     arbeidssoekerService,
                 )
-
-            val personregisterService = mockk<PersonregisterService>()
-            coEvery { personregisterService.oppdaterPersonstatus(any(), any()) } just runs
 
             application {
                 konfigurasjon(meterRegistry)

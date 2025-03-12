@@ -36,6 +36,7 @@ import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
+import no.nav.dagpenger.rapportering.service.MeldepliktService
 import no.nav.dagpenger.rapportering.service.PersonregisterService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.tjenester.RapporteringJournalførtMottak
@@ -91,19 +92,19 @@ class ApplicationBuilder(
             valueSerializer = BekreftelseAvroSerializer::class,
         )
 
-    private val arbeidssøkerService = ArbeidssøkerService(kallLoggService, httpClient, bekreftelseKafkaProdusent)
+    private val meldepliktService = MeldepliktService(meldepliktConnector)
+    private val personregisterService = PersonregisterService(personregisterConnector, meldepliktService)
+    private val arbeidssøkerService = ArbeidssøkerService(kallLoggService, personregisterService, httpClient, bekreftelseKafkaProdusent)
 
     private val rapporteringService =
         RapporteringService(
-            meldepliktConnector,
+            meldepliktService,
             rapporteringRepository,
             innsendingtidspunktRepository,
             journalfoeringService,
             kallLoggService,
             arbeidssøkerService,
         )
-
-    private val personregisterService = PersonregisterService(personregisterConnector, rapporteringService)
 
     init {
         JvmInfoMetrics().bindTo(meterRegistry)

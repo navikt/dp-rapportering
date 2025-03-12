@@ -65,6 +65,9 @@ class ArbeidssøkerServiceTest {
         every { kallLoggService.lagreRequest(eq(1), any()) } just runs
         every { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
 
+        val personregisterService = mockk<PersonregisterService>()
+        every { personregisterService.erBekreftelseOvertatt(eq(ident), any()) } returns true
+
         val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
         val slot = slot<ProducerRecord<Long, Bekreftelse>>()
         every { bekreftelseKafkaProdusent.send(capture(slot), any()) } answers {
@@ -77,13 +80,14 @@ class ArbeidssøkerServiceTest {
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
+                personregisterService = personregisterService,
                 httpClient = mockHttpClient(),
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
             )
 
-        arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
+        arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
 
         val bekreftelse = slot.captured.value()
         bekreftelse.periodeId.toString() shouldBe arbeidsregisterPeriodeId
@@ -100,21 +104,55 @@ class ArbeidssøkerServiceTest {
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = true)
 
         val kallLoggService = mockk<KallLoggService>()
+
+        val personregisterService = mockk<PersonregisterService>()
+        every { personregisterService.erBekreftelseOvertatt(eq(ident), any()) } returns true
+
         val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
         // send() skal ikke kalles og vi kaster Exception hvis det skjer
         every { bekreftelseKafkaProdusent.send(any(), any()) } throws Exception()
+
         every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns false
 
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
+                personregisterService = personregisterService,
                 httpClient = mockHttpClient(),
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
             )
 
-        arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
+        arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
+    }
+
+    @Test
+    fun `Skal ikke sende bekreftelse hvis erBekreftelseOvertatt returnerer false`() {
+        val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = true)
+
+        val kallLoggService = mockk<KallLoggService>()
+
+        val personregisterService = mockk<PersonregisterService>()
+        every { personregisterService.erBekreftelseOvertatt(eq(ident), any()) } returns false
+
+        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
+        // send() skal ikke kalles og vi kaster Exception hvis det skjer
+        every { bekreftelseKafkaProdusent.send(any(), any()) } throws Exception()
+
+        every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
+
+        val arbeidssoekerService =
+            ArbeidssøkerService(
+                kallLoggService = kallLoggService,
+                personregisterService = personregisterService,
+                httpClient = mockHttpClient(),
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
+                recordKeyTokenProvider = recordKeyTokenProvider,
+                oppslagTokenProvider = oppslagTokenProvider,
+            )
+
+        arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
     }
 
     @Test
@@ -125,6 +163,9 @@ class ArbeidssøkerServiceTest {
         every { kallLoggService.lagreKafkaUtKallLogg(any()) } returns 1
         every { kallLoggService.lagreRequest(eq(1), any()) } just runs
         every { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
+
+        val personregisterService = mockk<PersonregisterService>()
+        every { personregisterService.erBekreftelseOvertatt(eq(ident), any()) } returns true
 
         val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
         val slot = slot<ProducerRecord<Long, Bekreftelse>>()
@@ -138,13 +179,14 @@ class ArbeidssøkerServiceTest {
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
+                personregisterService = personregisterService,
                 httpClient = mockHttpClient(),
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
             )
 
-        arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
+        arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
 
         val bekreftelse = slot.captured.value()
         bekreftelse.periodeId.toString() shouldBe arbeidsregisterPeriodeId
@@ -161,6 +203,8 @@ class ArbeidssøkerServiceTest {
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
 
         val kallLoggService = mockk<KallLoggService>()
+        val personregisterService = mockk<PersonregisterService>()
+        every { personregisterService.erBekreftelseOvertatt(eq(ident), any()) } returns true
 
         val recordKeyTokenProvider = {
             null
@@ -173,6 +217,7 @@ class ArbeidssøkerServiceTest {
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
+                personregisterService = personregisterService,
                 httpClient = mockHttpClient(),
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
@@ -181,7 +226,7 @@ class ArbeidssøkerServiceTest {
 
         val exception =
             shouldThrow<RuntimeException> {
-                arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
+                arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
             }
 
         exception.message shouldBe "java.lang.RuntimeException: Klarte ikke å hente token"
@@ -192,6 +237,10 @@ class ArbeidssøkerServiceTest {
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
 
         val kallLoggService = mockk<KallLoggService>()
+
+        val personregisterService = mockk<PersonregisterService>()
+        every { personregisterService.erBekreftelseOvertatt(eq(ident), any()) } returns true
+
         val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
 
         every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
@@ -199,6 +248,7 @@ class ArbeidssøkerServiceTest {
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
+                personregisterService = personregisterService,
                 httpClient = createMockClient(500, ""),
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
@@ -206,7 +256,7 @@ class ArbeidssøkerServiceTest {
 
         val exception =
             shouldThrow<RuntimeException> {
-                arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
+                arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
             }
 
         exception.message shouldBe "java.lang.RuntimeException: Uforventet status 500 ved henting av record key"
@@ -218,17 +268,21 @@ class ArbeidssøkerServiceTest {
 
         val kallLoggService = mockk<KallLoggService>()
 
+        val personregisterService = mockk<PersonregisterService>()
+        every { personregisterService.erBekreftelseOvertatt(eq(ident), any()) } returns true
+
+        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
+
         val oppslagTokenProvider = {
             null
         }
-
-        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
 
         every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
 
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
+                personregisterService = personregisterService,
                 httpClient = mockHttpClient(),
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
@@ -237,7 +291,7 @@ class ArbeidssøkerServiceTest {
 
         val exception =
             shouldThrow<RuntimeException> {
-                arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
+                arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
             }
 
         exception.message shouldBe "java.lang.RuntimeException: Klarte ikke å hente token"
@@ -248,12 +302,18 @@ class ArbeidssøkerServiceTest {
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
 
         val kallLoggService = mockk<KallLoggService>()
+
+        val personregisterService = mockk<PersonregisterService>()
+        every { personregisterService.erBekreftelseOvertatt(eq(ident), any()) } returns true
+
         val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
+
         every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
 
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
+                personregisterService = personregisterService,
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
                 oppslagTokenProvider = oppslagTokenProvider,
@@ -272,7 +332,7 @@ class ArbeidssøkerServiceTest {
 
         val exception =
             shouldThrow<RuntimeException> {
-                arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
+                arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
             }
 
         exception.message shouldStartWith "io.ktor.serialization.JsonConvertException: Illegal json parameter found"
@@ -283,6 +343,10 @@ class ArbeidssøkerServiceTest {
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
 
         val kallLoggService = mockk<KallLoggService>()
+
+        val personregisterService = mockk<PersonregisterService>()
+        every { personregisterService.erBekreftelseOvertatt(eq(ident), any()) } returns true
+
         val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
         // send() skal ikke kalles og vi kaster Exception hvis det skjer
         every { bekreftelseKafkaProdusent.send(any(), any()) } throws Exception()
@@ -291,6 +355,7 @@ class ArbeidssøkerServiceTest {
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
+                personregisterService = personregisterService,
                 httpClient = mockHttpClient(true),
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
@@ -298,7 +363,7 @@ class ArbeidssøkerServiceTest {
             )
 
         shouldNotThrow<RuntimeException> {
-            arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
+            arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
         }
     }
 
@@ -311,6 +376,9 @@ class ArbeidssøkerServiceTest {
         every { kallLoggService.lagreRequest(eq(1), any()) } just runs
         every { kallLoggService.lagreResponse(eq(1), eq(500), eq("")) } just runs
 
+        val personregisterService = mockk<PersonregisterService>()
+        every { personregisterService.erBekreftelseOvertatt(eq(ident), any()) } returns true
+
         val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
         every { bekreftelseKafkaProdusent.send(any(), any()) } throws RuntimeException("Kunne ikke sende til Kafka")
 
@@ -319,6 +387,7 @@ class ArbeidssøkerServiceTest {
         val arbeidssoekerService =
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
+                personregisterService = personregisterService,
                 httpClient = mockHttpClient(),
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
@@ -327,7 +396,7 @@ class ArbeidssøkerServiceTest {
 
         val exception =
             shouldThrow<Exception> {
-                arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
+                arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
             }
 
         exception.message shouldBe "java.lang.RuntimeException: Kunne ikke sende til Kafka"

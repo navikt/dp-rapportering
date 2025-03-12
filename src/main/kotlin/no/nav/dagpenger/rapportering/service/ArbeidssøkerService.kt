@@ -40,6 +40,7 @@ import java.util.UUID
 
 class ArbeidssøkerService(
     private val kallLoggService: KallLoggService,
+    private val personregisterService: PersonregisterService,
     private val httpClient: HttpClient,
     private val bekreftelseKafkaProdusent: Producer<Long, Bekreftelse>,
     private val recordKeyUrl: String = Configuration.arbeidssokerregisterRecordKeyUrl,
@@ -52,9 +53,14 @@ class ArbeidssøkerService(
 
     fun sendBekreftelse(
         ident: String,
+        token: String,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
         if (!unleash.isEnabled("send-arbeidssoekerstatus")) {
+            return
+        }
+
+        if (!personregisterService.erBekreftelseOvertatt(ident, token)) {
             return
         }
 
