@@ -10,8 +10,8 @@ import io.mockk.runs
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
+import no.nav.dagpenger.rapportering.connector.Brukerstatus
 import no.nav.dagpenger.rapportering.connector.PersonregisterConnector
-import no.nav.dagpenger.rapportering.connector.Personstatus
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -20,7 +20,7 @@ class PersonregisterServiceTest {
     private val ident = "12345678910"
     private val token = "jwtToken"
 
-    private val rapporteringService = mockk<RapporteringService>()
+    private val meldepliktService = mockk<MeldepliktService>()
     private val personregisterConnector = mockk<PersonregisterConnector>()
 
     companion object {
@@ -36,11 +36,11 @@ class PersonregisterServiceTest {
     @Test
     fun `Skal oppdatere personstatus hvis Unleash returnerer true, Personregister returnerer IKKE_DAGPENGERBRUKER og har DP`() {
         every { unleash.isEnabled(eq("send-dp-til-personregister")) } returns true
-        coEvery { personregisterConnector.hentPersonstatus(eq(ident), eq(token)) } returns Personstatus.IKKE_DAGPENGERBRUKER
+        coEvery { personregisterConnector.hentBrukerstatus(eq(ident), eq(token)) } returns Brukerstatus.IKKE_DAGPENGERBRUKER
         coEvery { personregisterConnector.oppdaterPersonstatus(eq(ident), eq(token), eq(LocalDate.now())) } just runs
-        coEvery { rapporteringService.harMeldeplikt(eq(ident), eq(token)) } returns "true"
+        coEvery { meldepliktService.harMeldeplikt(eq(ident), eq(token)) } returns "true"
 
-        val personregisterService = PersonregisterService(personregisterConnector, rapporteringService)
+        val personregisterService = PersonregisterService(personregisterConnector, meldepliktService)
 
         runBlocking { personregisterService.oppdaterPersonstatus(ident, token) }
 
@@ -50,10 +50,10 @@ class PersonregisterServiceTest {
     @Test
     fun `Skal ikke oppdatere personstatus hvis Unleash returnerer true, Personregister returnerer IKKE_DAGPENGERBRUKER og ikke har DP`() {
         every { unleash.isEnabled(eq("send-dp-til-personregister")) } returns true
-        coEvery { personregisterConnector.hentPersonstatus(eq(ident), eq(token)) } returns Personstatus.IKKE_DAGPENGERBRUKER
-        coEvery { rapporteringService.harMeldeplikt(eq(ident), eq(token)) } returns "false"
+        coEvery { personregisterConnector.hentBrukerstatus(eq(ident), eq(token)) } returns Brukerstatus.IKKE_DAGPENGERBRUKER
+        coEvery { meldepliktService.harMeldeplikt(eq(ident), eq(token)) } returns "false"
 
-        val personregisterService = PersonregisterService(personregisterConnector, rapporteringService)
+        val personregisterService = PersonregisterService(personregisterConnector, meldepliktService)
 
         runBlocking { personregisterService.oppdaterPersonstatus(ident, token) }
 
@@ -63,10 +63,10 @@ class PersonregisterServiceTest {
     @Test
     fun `Skal ikke oppdatere personstatus hvis Unleash returnerer true og Personregister returnerer DAGPENGERBRUKER`() {
         every { unleash.isEnabled(eq("send-dp-til-personregister")) } returns true
-        coEvery { rapporteringService.harMeldeplikt(eq(ident), eq(token)) } returns "true"
-        coEvery { personregisterConnector.hentPersonstatus(eq(ident), eq(token)) } returns Personstatus.DAGPENGERBRUKER
+        coEvery { meldepliktService.harMeldeplikt(eq(ident), eq(token)) } returns "true"
+        coEvery { personregisterConnector.hentBrukerstatus(eq(ident), eq(token)) } returns Brukerstatus.DAGPENGERBRUKER
 
-        val personregisterService = PersonregisterService(personregisterConnector, rapporteringService)
+        val personregisterService = PersonregisterService(personregisterConnector, meldepliktService)
 
         runBlocking { personregisterService.oppdaterPersonstatus(ident, token) }
 
@@ -77,7 +77,7 @@ class PersonregisterServiceTest {
     fun `Skal ikke oppdatere personstatus hvis Unleash returnerer false`() {
         every { unleash.isEnabled(eq("send-dp-til-personregister")) } returns false
 
-        val personregisterService = PersonregisterService(personregisterConnector, rapporteringService)
+        val personregisterService = PersonregisterService(personregisterConnector, meldepliktService)
 
         runBlocking { personregisterService.oppdaterPersonstatus(ident, token) }
 
