@@ -66,11 +66,12 @@ class HttpClientUtils(
         subjectToken: String,
         metrikkNavn: String,
         body: Any?,
-    ): HttpResponse = post(
-        path,
-        subjectToken,
-        metrikkNavn,
-        ContentType.Application.Json,
-        body,
-    )
+    ): HttpResponse =
+        post(
+            path,
+            subjectToken,
+            metrikkNavn,
+            ContentType.Application.Json,
+            body,
+        )
 }
