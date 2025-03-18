@@ -36,6 +36,7 @@ import java.util.concurrent.CompletableFuture
 
 class ArbeidssøkerServiceTest {
     private val ident = "01020312345"
+    private val loginLevel = 3
     private val arbeidsregisterPeriodeId = "68219fd0-98d1-4ae9-8ddd-19bca28de5ee"
     private val recordKeyTokenProvider = {
         "TOKEN"
@@ -87,14 +88,22 @@ class ArbeidssøkerServiceTest {
                 oppslagTokenProvider = oppslagTokenProvider,
             )
 
-        arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
+        arbeidssoekerService.sendBekreftelse(ident, "", loginLevel, rapporteringsperiode)
 
         val bekreftelse = slot.captured.value()
         bekreftelse.periodeId.toString() shouldBe arbeidsregisterPeriodeId
         bekreftelse.bekreftelsesloesning shouldBe Bekreftelsesloesning.DAGPENGER
         val svar = bekreftelse.svar
-        svar.gjelderFra shouldBe rapporteringsperiode.periode.fraOgMed.atStartOfDay().atZone(ZONE_ID).toInstant()
-        svar.gjelderTil shouldBe rapporteringsperiode.periode.tilOgMed.atStartOfDay().atZone(ZONE_ID).toInstant()
+        svar.gjelderFra shouldBe
+            rapporteringsperiode.periode.fraOgMed
+                .atStartOfDay()
+                .atZone(ZONE_ID)
+                .toInstant()
+        svar.gjelderTil shouldBe
+            rapporteringsperiode.periode.tilOgMed
+                .atStartOfDay()
+                .atZone(ZONE_ID)
+                .toInstant()
         svar.harJobbetIDennePerioden shouldBe false
         svar.vilFortsetteSomArbeidssoeker shouldBe true
     }
@@ -124,7 +133,7 @@ class ArbeidssøkerServiceTest {
                 oppslagTokenProvider = oppslagTokenProvider,
             )
 
-        arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
+        arbeidssoekerService.sendBekreftelse(ident, "", loginLevel, rapporteringsperiode)
     }
 
     @Test
@@ -152,7 +161,7 @@ class ArbeidssøkerServiceTest {
                 oppslagTokenProvider = oppslagTokenProvider,
             )
 
-        arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
+        arbeidssoekerService.sendBekreftelse(ident, "", loginLevel, rapporteringsperiode)
     }
 
     @Test
@@ -186,14 +195,22 @@ class ArbeidssøkerServiceTest {
                 oppslagTokenProvider = oppslagTokenProvider,
             )
 
-        arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
+        arbeidssoekerService.sendBekreftelse(ident, "", loginLevel, rapporteringsperiode)
 
         val bekreftelse = slot.captured.value()
         bekreftelse.periodeId.toString() shouldBe arbeidsregisterPeriodeId
         bekreftelse.bekreftelsesloesning shouldBe Bekreftelsesloesning.DAGPENGER
         val svar = bekreftelse.svar
-        svar.gjelderFra shouldBe rapporteringsperiode.periode.fraOgMed.atStartOfDay().atZone(ZONE_ID).toInstant()
-        svar.gjelderTil shouldBe rapporteringsperiode.periode.tilOgMed.atStartOfDay().atZone(ZONE_ID).toInstant()
+        svar.gjelderFra shouldBe
+            rapporteringsperiode.periode.fraOgMed
+                .atStartOfDay()
+                .atZone(ZONE_ID)
+                .toInstant()
+        svar.gjelderTil shouldBe
+            rapporteringsperiode.periode.tilOgMed
+                .atStartOfDay()
+                .atZone(ZONE_ID)
+                .toInstant()
         svar.harJobbetIDennePerioden shouldBe false
         svar.vilFortsetteSomArbeidssoeker shouldBe false
     }
@@ -226,7 +243,7 @@ class ArbeidssøkerServiceTest {
 
         val exception =
             shouldThrow<RuntimeException> {
-                arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
+                arbeidssoekerService.sendBekreftelse(ident, "", loginLevel, rapporteringsperiode)
             }
 
         exception.message shouldBe "java.lang.RuntimeException: Klarte ikke å hente token"
@@ -256,7 +273,7 @@ class ArbeidssøkerServiceTest {
 
         val exception =
             shouldThrow<RuntimeException> {
-                arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
+                arbeidssoekerService.sendBekreftelse(ident, "", loginLevel, rapporteringsperiode)
             }
 
         exception.message shouldBe "java.lang.RuntimeException: Uforventet status 500 ved henting av record key"
@@ -291,7 +308,7 @@ class ArbeidssøkerServiceTest {
 
         val exception =
             shouldThrow<RuntimeException> {
-                arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
+                arbeidssoekerService.sendBekreftelse(ident, "", loginLevel, rapporteringsperiode)
             }
 
         exception.message shouldBe "java.lang.RuntimeException: Klarte ikke å hente token"
@@ -332,7 +349,7 @@ class ArbeidssøkerServiceTest {
 
         val exception =
             shouldThrow<RuntimeException> {
-                arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
+                arbeidssoekerService.sendBekreftelse(ident, "", loginLevel, rapporteringsperiode)
             }
 
         exception.message shouldStartWith "io.ktor.serialization.JsonConvertException: Illegal json parameter found"
@@ -363,7 +380,7 @@ class ArbeidssøkerServiceTest {
             )
 
         shouldNotThrow<RuntimeException> {
-            arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
+            arbeidssoekerService.sendBekreftelse(ident, "", loginLevel, rapporteringsperiode)
         }
     }
 
@@ -396,14 +413,14 @@ class ArbeidssøkerServiceTest {
 
         val exception =
             shouldThrow<Exception> {
-                arbeidssoekerService.sendBekreftelse(ident, "", rapporteringsperiode)
+                arbeidssoekerService.sendBekreftelse(ident, "", loginLevel, rapporteringsperiode)
             }
 
         exception.message shouldBe "java.lang.RuntimeException: Kunne ikke sende til Kafka"
     }
 
-    private fun mockHttpClient(tomPeriodeListe: Boolean = false): HttpClient {
-        return createHttpClient(
+    private fun mockHttpClient(tomPeriodeListe: Boolean = false): HttpClient =
+        createHttpClient(
             MockEngine { request ->
                 respond(
                     content =
@@ -436,5 +453,4 @@ class ArbeidssøkerServiceTest {
                 )
             },
         )
-    }
 }
