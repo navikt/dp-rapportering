@@ -43,6 +43,7 @@ class HttpClientUtils(
         path: String,
         subjectToken: String,
         metrikkNavn: String,
+        contentType: ContentType,
         body: Any?,
     ): HttpResponse {
         val response: HttpResponse
@@ -52,11 +53,24 @@ class HttpClientUtils(
                 response =
                     httpClient.post(URI("$baseUrl$path").toURL()) {
                         bearerAuth(token)
-                        contentType(ContentType.Application.Json)
+                        contentType(contentType)
                         setBody(defaultObjectMapper.writeValueAsString(body))
                     }
             }
         actionTimer.httpTimer(metrikkNavn, response.status, HttpMethod.Post, tidBrukt.inWholeSeconds)
         return response
     }
+
+    suspend fun post(
+        path: String,
+        subjectToken: String,
+        metrikkNavn: String,
+        body: Any?,
+    ): HttpResponse = post(
+        path,
+        subjectToken,
+        metrikkNavn,
+        ContentType.Application.Json,
+        body,
+    )
 }

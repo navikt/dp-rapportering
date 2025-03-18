@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.connector
 
 import io.ktor.client.HttpClient
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -69,6 +70,7 @@ class PersonregisterConnector(
                         "/personstatus",
                         subjectToken,
                         "personregister-oppdaterPersonstatus",
+                        ContentType.Text.Plain,
                         datoFra.format(DateTimeFormatter.ISO_LOCAL_DATE),
                     ).also {
                         logger.info { "Kall til personregister for å sende personstatus ga status ${it.status}" }
