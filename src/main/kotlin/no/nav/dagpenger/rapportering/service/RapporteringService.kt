@@ -404,7 +404,7 @@ class RapporteringService(
                     }
 
                     sendPeriodeDataTilRnR(ident, periodeTilInnsending)
-                    arbeidssøkerService.sendBekreftelse(ident, token, periodeTilInnsending)
+                    arbeidssøkerService.sendBekreftelse(ident, token, loginLevel, periodeTilInnsending)
                 } else {
                     // Oppdaterer perioden slik at den kan sendes inn på nytt
                     rapporteringRepository.settKanSendes(

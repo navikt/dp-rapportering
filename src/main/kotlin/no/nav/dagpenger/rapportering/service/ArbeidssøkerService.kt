@@ -54,6 +54,7 @@ class ArbeidssøkerService(
     fun sendBekreftelse(
         ident: String,
         token: String,
+        loginLevel: Int,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
         if (!unleash.isEnabled("send-arbeidssoekerstatus")) {
@@ -80,12 +81,18 @@ class ArbeidssøkerService(
                 Svar(
                     Metadata(
                         Instant.now().atZone(ZONE_ID).toInstant(),
-                        Bruker(BrukerType.SLUTTBRUKER, ident),
+                        Bruker(BrukerType.SLUTTBRUKER, ident, "tokenx:Level$loginLevel"),
                         Bekreftelsesloesning.DAGPENGER.name,
                         "Bruker sendte inn dagpengermeldekort",
                     ),
-                    rapporteringsperiode.periode.fraOgMed.atStartOfDay().atZone(ZONE_ID).toInstant(),
-                    rapporteringsperiode.periode.tilOgMed.atStartOfDay().atZone(ZONE_ID).toInstant(),
+                    rapporteringsperiode.periode.fraOgMed
+                        .atStartOfDay()
+                        .atZone(ZONE_ID)
+                        .toInstant(),
+                    rapporteringsperiode.periode.tilOgMed
+                        .atStartOfDay()
+                        .atZone(ZONE_ID)
+                        .toInstant(),
                     rapporteringsperiode.arbeidet(),
                     rapporteringsperiode.registrertArbeidssoker == true,
                 ),
