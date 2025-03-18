@@ -25,6 +25,7 @@ import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.connector.createMockClient
 import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
 import no.nav.paw.bekreftelse.melding.v1.vo.Bekreftelsesloesning
+import no.nav.paw.bekreftelse.melding.v1.vo.BrukerType
 import org.apache.kafka.clients.producer.Callback
 import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -106,6 +107,14 @@ class ArbeidssøkerServiceTest {
                 .toInstant()
         svar.harJobbetIDennePerioden shouldBe false
         svar.vilFortsetteSomArbeidssoeker shouldBe true
+
+        svar.sendtInnAv.kilde shouldBe Bekreftelsesloesning.DAGPENGER.name
+        svar.sendtInnAv.aarsak shouldBe "Bruker sendte inn dagpengermeldekort"
+
+        val bruker = svar.sendtInnAv.utfoertAv
+        bruker.type shouldBe BrukerType.SLUTTBRUKER
+        bruker.id shouldBe ident
+        bruker.sikkerhetsnivaa shouldBe "tokenx:Level$loginLevel"
     }
 
     @Test
@@ -213,6 +222,14 @@ class ArbeidssøkerServiceTest {
                 .toInstant()
         svar.harJobbetIDennePerioden shouldBe false
         svar.vilFortsetteSomArbeidssoeker shouldBe false
+
+        svar.sendtInnAv.kilde shouldBe Bekreftelsesloesning.DAGPENGER.name
+        svar.sendtInnAv.aarsak shouldBe "Bruker sendte inn dagpengermeldekort"
+
+        val bruker = svar.sendtInnAv.utfoertAv
+        bruker.type shouldBe BrukerType.SLUTTBRUKER
+        bruker.id shouldBe ident
+        bruker.sikkerhetsnivaa shouldBe "tokenx:Level$loginLevel"
     }
 
     @Test
