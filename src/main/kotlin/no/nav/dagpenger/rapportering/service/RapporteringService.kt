@@ -6,7 +6,6 @@ import io.ktor.server.plugins.BadRequestException
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
-import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
@@ -39,7 +38,7 @@ import kotlin.random.nextLong
 private val logger = KotlinLogging.logger {}
 
 class RapporteringService(
-    private val meldepliktConnector: MeldepliktConnector,
+    private val meldepliktService: MeldepliktService,
     private val rapporteringRepository: RapporteringRepository,
     private val innsendingtidspunktRepository: InnsendingtidspunktRepository,
     private val journalfoeringService: JournalfoeringService,
@@ -49,7 +48,7 @@ class RapporteringService(
     suspend fun harMeldeplikt(
         ident: String,
         token: String,
-    ): String = meldepliktConnector.harMeldeplikt(ident, token)
+    ): String = meldepliktService.harMeldeplikt(ident, token)
 
     suspend fun hentPeriode(
         rapporteringId: Long,
@@ -101,7 +100,7 @@ class RapporteringService(
         ident: String,
         token: String,
     ): List<Rapporteringsperiode>? =
-        meldepliktConnector
+        meldepliktService
             .hentRapporteringsperioder(ident, token)
             ?.toRapporteringsperioder()
             .justerInnsendingstidspunkt()
@@ -191,7 +190,7 @@ class RapporteringService(
         ident: String,
         token: String,
     ): List<Rapporteringsperiode>? =
-        meldepliktConnector
+        meldepliktService
             .hentInnsendteRapporteringsperioder(ident, token)
             .toRapporteringsperioder()
             .kobleRapporteringsperioder()
@@ -349,7 +348,7 @@ class RapporteringService(
                 )
             } else {
                 val endringId =
-                    meldepliktConnector
+                    meldepliktService
                         .hentEndringId(rapporteringsperiode.originalId, token)
                         .toLong()
                 // Oppretter nye ID for aktiviteter slik at vi kan lagre både original og midlertidig periode
@@ -370,13 +369,13 @@ class RapporteringService(
             }
         }
 
-        return meldepliktConnector
+        return meldepliktService
             .sendinnRapporteringsperiode(periodeTilInnsending.toAdapterRapporteringsperiode(), token)
             .also { response ->
                 if (response.status == "OK") {
                     logger.info("Journalføring rapporteringsperiode ${periodeTilInnsending.id}")
 
-                    val person = meldepliktConnector.hentPerson(ident, token)
+                    val person = meldepliktService.hentPerson(ident, token)
                     val navn = person?.fornavn + " " + person?.etternavn
 
                     journalfoeringService.journalfoer(ident, navn, loginLevel, headers, periodeTilInnsending)
@@ -405,7 +404,7 @@ class RapporteringService(
                     }
 
                     sendPeriodeDataTilRnR(ident, periodeTilInnsending)
-                    arbeidssøkerService.sendBekreftelse(ident, periodeTilInnsending)
+                    arbeidssøkerService.sendBekreftelse(ident, token, periodeTilInnsending)
                 } else {
                     // Oppdaterer perioden slik at den kan sendes inn på nytt
                     rapporteringRepository.settKanSendes(

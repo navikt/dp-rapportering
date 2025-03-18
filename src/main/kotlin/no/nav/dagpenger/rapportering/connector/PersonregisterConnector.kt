@@ -25,7 +25,7 @@ class PersonregisterConnector(
     suspend fun hentPersonstatus(
         ident: String,
         subjectToken: String,
-    ): Personstatus =
+    ): Personstatus? =
         withContext(Dispatchers.IO) {
             val result =
                 httpClientUtils
@@ -39,15 +39,22 @@ class PersonregisterConnector(
                     }
 
             if (result.status == HttpStatusCode.NotFound) {
-                Personstatus.IKKE_DAGPENGERBRUKER
+                null
             } else {
-                val response =
-                    result
-                        .bodyAsText()
-                        .let { defaultObjectMapper.readValue(it, PersonstatusResponse::class.java) }
-
-                response.status
+                result
+                    .bodyAsText()
+                    .let { defaultObjectMapper.readValue(it, Personstatus::class.java) }
             }
+        }
+
+    suspend fun hentBrukerstatus(
+        ident: String,
+        subjectToken: String,
+    ): Brukerstatus =
+        withContext(Dispatchers.IO) {
+            val personstatus = hentPersonstatus(ident, subjectToken)
+
+            personstatus?.status ?: Brukerstatus.IKKE_DAGPENGERBRUKER
         }
 
     suspend fun oppdaterPersonstatus(
@@ -74,12 +81,13 @@ class PersonregisterConnector(
         }
 }
 
-data class PersonstatusResponse(
+data class Personstatus(
     val ident: String,
-    val status: Personstatus,
+    val status: Brukerstatus,
+    val overtattBekreftelse: Boolean,
 )
 
-enum class Personstatus {
+enum class Brukerstatus {
     DAGPENGERBRUKER,
     IKKE_DAGPENGERBRUKER,
 }
