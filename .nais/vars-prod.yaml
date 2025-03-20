@@ -26,4 +26,4 @@ ARBEIDSSOKERREGISTER_RECORD_KEY_URL: http://paw-kafka-key-generator.paw/api/v1/r
 ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE: api://prod-gcp.paw.paw-kafka-key-generator/.default
 ARBEIDSSOKERREGISTER_OPPSLAG_URL: http://paw-arbeidssoekerregisteret-api-oppslag.paw/api/v1/veileder/arbeidssoekerperioder
 ARBEIDSSOKERREGISTER_OPPSLAG_SCOPE: api://prod-gcp.paw.paw-arbeidssoekerregisteret-api-oppslag/.default
-BEKREFTELSE_TOPIC: paw.arbeidssoker-bekreftelse-teamdagpenger
+BEKREFTELSE_TOPIC: paw.arbeidssoker-bekreftelse-teamdagpenger-v1
