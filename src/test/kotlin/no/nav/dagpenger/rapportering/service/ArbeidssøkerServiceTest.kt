@@ -102,6 +102,7 @@ class ArbeidssøkerServiceTest {
                 .toInstant()
         svar.gjelderTil shouldBe
             rapporteringsperiode.periode.tilOgMed
+                .plusDays(1)
                 .atStartOfDay()
                 .atZone(ZONE_ID)
                 .toInstant()
@@ -217,6 +218,7 @@ class ArbeidssøkerServiceTest {
                 .toInstant()
         svar.gjelderTil shouldBe
             rapporteringsperiode.periode.tilOgMed
+                .plusDays(1)
                 .atStartOfDay()
                 .atZone(ZONE_ID)
                 .toInstant()
