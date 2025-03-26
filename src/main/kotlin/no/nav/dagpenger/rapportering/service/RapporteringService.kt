@@ -195,7 +195,7 @@ class RapporteringService(
             .toRapporteringsperioder()
             .kobleRapporteringsperioder()
             .populerMedPerioderFraDatabase(ident)
-            .hentSisteFemPerioderPlussNåværende()
+            .hentSisteTiPerioderPlussNåværende()
             .ifEmpty { null }
 
     private fun List<Rapporteringsperiode>.kobleRapporteringsperioder(): List<Rapporteringsperiode> =
@@ -238,15 +238,15 @@ class RapporteringService(
         return innsendteRapporteringsperioder
     }
 
-    private fun List<Rapporteringsperiode>.hentSisteFemPerioderPlussNåværende(): List<Rapporteringsperiode> {
+    private fun List<Rapporteringsperiode>.hentSisteTiPerioderPlussNåværende(): List<Rapporteringsperiode> {
         val nåværendePeriode = this.filter { it.periode.inneholder(LocalDate.now()) }
-        val sisteFemPerioderSortert =
+        val sisteTiPerioderSortert =
             this
                 .filterNot { it in nåværendePeriode }
                 .groupBy { it.periode.fraOgMed }
                 .toSortedMap(compareByDescending { it })
                 .entries
-                .take(5)
+                .take(10)
                 .associate { it.toPair() }
                 .values
                 .flatten()
@@ -254,7 +254,7 @@ class RapporteringService(
                     compareByDescending<Rapporteringsperiode> { it.periode.fraOgMed }
                         .thenByDescending { it.mottattDato },
                 )
-        return nåværendePeriode + sisteFemPerioderSortert
+        return nåværendePeriode + sisteTiPerioderSortert
     }
 
     suspend fun lagreEllerOppdaterPeriode(

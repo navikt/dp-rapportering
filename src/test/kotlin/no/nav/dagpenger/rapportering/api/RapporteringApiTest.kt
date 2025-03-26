@@ -33,6 +33,8 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylli
 import no.nav.dagpenger.rapportering.utils.desember
 import no.nav.dagpenger.rapportering.utils.februar
 import no.nav.dagpenger.rapportering.utils.januar
+import no.nav.dagpenger.rapportering.utils.november
+import no.nav.dagpenger.rapportering.utils.oktober
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.UUID
@@ -708,6 +710,18 @@ class RapporteringApiTest : ApiTestSetup() {
                     sendteRapporteringsperioderResponse =
                         listOf(
                             adapterRapporteringsperiode(
+                                id = 122L,
+                                fraOgMed = 20.november(2023),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                status = AdapterRapporteringsperiodeStatus.Innsendt,
+                            ),
+                            adapterRapporteringsperiode(
+                                id = 123L,
+                                fraOgMed = 4.desember(2023),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                status = AdapterRapporteringsperiodeStatus.Innsendt,
+                            ),
+                            adapterRapporteringsperiode(
                                 id = 124L,
                                 fraOgMed = 18.desember(2023),
                                 aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
@@ -775,7 +789,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
             response.httpResponse.status shouldBe HttpStatusCode.OK
             with(response.body) {
-                size shouldBe 7
+                size shouldBe 10
                 this[0].id shouldBe 127L
                 this[1].id shouldBe 131L
                 this[2].id shouldBe 130L
@@ -783,6 +797,9 @@ class RapporteringApiTest : ApiTestSetup() {
                 this[4].id shouldBe 128L
                 this[5].id shouldBe 126L
                 this[6].id shouldBe 125L
+                this[7].id shouldBe 124L
+                this[8].id shouldBe 123L
+                this[9].id shouldBe 122L
             }
         }
 
