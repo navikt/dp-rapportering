@@ -34,7 +34,6 @@ import no.nav.dagpenger.rapportering.utils.desember
 import no.nav.dagpenger.rapportering.utils.februar
 import no.nav.dagpenger.rapportering.utils.januar
 import no.nav.dagpenger.rapportering.utils.november
-import no.nav.dagpenger.rapportering.utils.oktober
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.UUID
