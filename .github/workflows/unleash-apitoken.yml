@@ -21,14 +21,12 @@ jobs:
       - name: deploy to dev-gcp
         uses: nais/deploy/actions/deploy@v2
         env:
-          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: dev-gcp
           VAR: unleashEnv=development
           RESOURCE: .nais/unleash-apitoken.yaml
       - name: deploy to prod-gcp
         uses: nais/deploy/actions/deploy@v2
         env:
-          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: prod-gcp
           VAR: unleashEnv=production
           RESOURCE: .nais/unleash-apitoken.yaml
