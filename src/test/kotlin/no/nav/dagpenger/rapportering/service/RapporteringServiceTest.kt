@@ -33,8 +33,11 @@ import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
+import no.nav.dagpenger.rapportering.model.ArbeidssøkerperiodeResponse
+import no.nav.dagpenger.rapportering.model.BrukerResponse
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.MetadataResponse
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.model.Person
@@ -556,6 +559,19 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
+        coEvery { arbeidssøkerService.hentArbeidssøkerperioder(eq(ident)) } returns listOf(
+            ArbeidssøkerperiodeResponse(
+                UUID.randomUUID(),
+                MetadataResponse(
+                    LocalDateTime.now(),
+                    BrukerResponse("", ""),
+                    "Kilde",
+                    "Årsak",
+                    null
+                ),
+                null,
+            ),
+        )
         every { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
         every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
@@ -574,7 +590,7 @@ class RapporteringServiceTest {
         }
         coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
 
-        checkRapid(rapporteringsperiode)
+        checkRapid(rapporteringsperiode, null, false)
     }
 
     @Test
@@ -597,6 +613,19 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
+        coEvery { arbeidssøkerService.hentArbeidssøkerperioder(eq(ident)) } returns listOf(
+            ArbeidssøkerperiodeResponse(
+                UUID.randomUUID(),
+                MetadataResponse(
+                    LocalDateTime.now(),
+                    BrukerResponse("", ""),
+                    "Kilde",
+                    "Årsak",
+                    null
+                ),
+                null,
+            ),
+        )
         every { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
         every { unleash.isEnabled(eq("dp-rapportering-sp5-true")) } returns true
 
@@ -691,6 +720,19 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
+        coEvery { arbeidssøkerService.hentArbeidssøkerperioder(eq(ident)) } returns listOf(
+            ArbeidssøkerperiodeResponse(
+                UUID.randomUUID(),
+                MetadataResponse(
+                    rapporteringsperiode.periode.fraOgMed.atStartOfDay(),
+                    BrukerResponse("", ""),
+                    "Kilde",
+                    "Årsak",
+                    null
+                ),
+                null,
+            ),
+        )
         every { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
         every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
@@ -850,6 +892,7 @@ class RapporteringServiceTest {
     private fun checkRapid(
         rapporteringsperiode: Rapporteringsperiode,
         endringId: String? = null,
+        meldt: Boolean = true,
     ) {
         testRapid.inspektør.size shouldBe 1
 
@@ -879,7 +922,7 @@ class RapporteringServiceTest {
             dag.dato shouldBeEqual rapporteringsperiode.dager[i].dato
             dag.dagIndex shouldBeEqual rapporteringsperiode.dager[i].dagIndex
             dag.aktiviteter shouldBeEqual rapporteringsperiode.dager[i].aktiviteter
-            dag.meldt shouldBe true
+            dag.meldt shouldBe meldt
         }
 
         message["kanSendesFra"].asLocalDate() shouldBe rapporteringsperiode.kanSendesFra

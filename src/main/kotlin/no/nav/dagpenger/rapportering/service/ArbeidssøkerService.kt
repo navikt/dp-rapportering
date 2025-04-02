@@ -153,6 +153,11 @@ class ArbeidssøkerService(
 
     private suspend fun hentSisteArbeidssøkerperiode(ident: String): ArbeidssøkerperiodeResponse? =
         withContext(Dispatchers.IO) {
+            hentArbeidssøkerperioder(ident).firstOrNull()
+        }
+
+    suspend fun hentArbeidssøkerperioder(ident: String): List<ArbeidssøkerperiodeResponse> =
+        withContext(Dispatchers.IO) {
             try {
                 val result =
                     httpClient
@@ -179,9 +184,9 @@ class ArbeidssøkerService(
 
                 val response: List<ArbeidssøkerperiodeResponse> = result.body()
 
-                response.firstOrNull()
+                response
             } catch (e: Exception) {
-                logger.error(e) { "Kunne ikke hente arbeidssøkerperiode" }
+                logger.error(e) { "Kunne ikke hente arbeidssøkerperioder" }
                 throw RuntimeException(e)
             }
         }

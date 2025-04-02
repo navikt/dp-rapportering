@@ -116,7 +116,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
 
             val list = getLogList()
 
-            list.size shouldBe 11
+            list.size shouldBe 12
             list[2].type shouldBe "REST"
             list[2].kallRetning shouldBe "INN"
             list[2].method shouldBe "POST"
@@ -193,23 +193,23 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[6].ident shouldBe ident
             list[6].logginfo shouldBe ""
 
-            list[7].type shouldBe "KAFKA"
-            list[7].kallRetning shouldBe "UT"
-            list[7].method shouldBe "PUBLISH"
-            list[7].operation shouldBe "teamdagpenger.rapid.v1"
-            list[7].status shouldBe 200
-            list[7].request shouldContain "meldekort_innsendt"
-            list[7].response shouldBe ""
-            list[7].ident shouldBe ident
-            list[7].logginfo shouldBe ""
-
-            list[8].type shouldBe "REST"
+            list[8].type shouldBe "KAFKA"
             list[8].kallRetning shouldBe "UT"
-            list[8].method shouldBe "POST"
-            list[8].operation shouldBe "/api/v1/record-key"
+            list[8].method shouldBe "PUBLISH"
+            list[8].operation shouldBe "teamdagpenger.rapid.v1"
             list[8].status shouldBe 200
-            list[8].request shouldStartWith "POST http://arbeidssokerregister_record_key_url:80/api/v1/record-key"
-            list[8].response.trimIndent() shouldBe
+            list[8].request shouldContain "meldekort_innsendt"
+            list[8].response shouldBe ""
+            list[8].ident shouldBe ident
+            list[8].logginfo shouldBe ""
+
+            list[9].type shouldBe "REST"
+            list[9].kallRetning shouldBe "UT"
+            list[9].method shouldBe "POST"
+            list[9].operation shouldBe "/api/v1/record-key"
+            list[9].status shouldBe 200
+            list[9].request shouldStartWith "POST http://arbeidssokerregister_record_key_url:80/api/v1/record-key"
+            list[9].response.trimIndent() shouldBe
                 """
                 HTTP/1.1 200 OK
                 Content-Type: application/json
@@ -217,16 +217,16 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 
                 { "key": 1 }
                 """.trimIndent()
-            list[8].ident shouldBe "" // Det finnes ikke token med ident når vi henter record key
-            list[8].logginfo shouldBe ""
+            list[9].ident shouldBe "" // Det finnes ikke token med ident når vi henter record key
+            list[9].logginfo shouldBe ""
 
-            list[9].type shouldBe "REST"
-            list[9].kallRetning shouldBe "UT"
-            list[9].method shouldBe "POST"
-            list[9].operation shouldBe "/api/v1/arbeidssoekerperioder"
-            list[9].status shouldBe 200
-            list[9].request shouldStartWith "POST http://arbeidssokerregister_oppslag_url:80/api/v1/arbeidssoekerperioder"
-            list[9].response.trimIndent() shouldBe
+            list[10].type shouldBe "REST"
+            list[10].kallRetning shouldBe "UT"
+            list[10].method shouldBe "POST"
+            list[10].operation shouldBe "/api/v1/arbeidssoekerperioder"
+            list[10].status shouldBe 200
+            list[10].request shouldStartWith "POST http://arbeidssokerregister_oppslag_url:80/api/v1/arbeidssoekerperioder"
+            list[10].response.trimIndent() shouldBe
                 """
                 HTTP/1.1 200 OK
                 Content-Type: application/json
@@ -247,18 +247,18 @@ class CallLoggingPluginTest : ApiTestSetup() {
                   }
                 ]
                 """.trimIndent()
-            list[9].ident shouldBe "" // Det finnes ikke token med ident når vi henter record key
-            list[9].logginfo shouldBe ""
-
-            list[10].type shouldBe "KAFKA"
-            list[10].kallRetning shouldBe "UT"
-            list[10].method shouldBe "PUBLISH"
-            list[10].operation shouldBe "teamdagpenger.rapid.v1"
-            list[10].status shouldBe 200
-            list[10].request shouldContain ""
-            list[10].response shouldBe ""
-            list[10].ident shouldBe ident
+            list[10].ident shouldBe "" // Det finnes ikke token med ident når vi henter record key
             list[10].logginfo shouldBe ""
+
+            list[11].type shouldBe "KAFKA"
+            list[11].kallRetning shouldBe "UT"
+            list[11].method shouldBe "PUBLISH"
+            list[11].operation shouldBe "teamdagpenger.rapid.v1"
+            list[11].status shouldBe 200
+            list[11].request shouldContain ""
+            list[11].response shouldBe ""
+            list[11].ident shouldBe ident
+            list[11].logginfo shouldBe ""
         }
 
     private fun getLogList() =
