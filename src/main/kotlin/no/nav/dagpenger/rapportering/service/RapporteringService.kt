@@ -464,7 +464,7 @@ class RapporteringService(
             return
         }
 
-        val arbeidssøkerperioder = arbeidssøkerService.hentArbeidssøkerperioder(ident)
+        val arbeidssøkerperioder = arbeidssøkerService.hentCachedArbeidssøkerperioder(ident)
 
         val periodeData =
             PeriodeData(

@@ -559,7 +559,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.hentArbeidssøkerperioder(eq(ident)) } returns listOf(
+        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns listOf(
             ArbeidssøkerperiodeResponse(
                 UUID.randomUUID(),
                 MetadataResponse(
@@ -613,7 +613,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.hentArbeidssøkerperioder(eq(ident)) } returns listOf(
+        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns listOf(
             ArbeidssøkerperiodeResponse(
                 UUID.randomUUID(),
                 MetadataResponse(
@@ -720,7 +720,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.hentArbeidssøkerperioder(eq(ident)) } returns listOf(
+        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns listOf(
             ArbeidssøkerperiodeResponse(
                 UUID.randomUUID(),
                 MetadataResponse(

@@ -1,5 +1,7 @@
 package no.nav.dagpenger.rapportering.service
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.LoadingCache
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -37,6 +39,7 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import java.net.URI
 import java.time.Instant
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 class ArbeidssøkerService(
     private val kallLoggService: KallLoggService,
@@ -50,6 +53,15 @@ class ArbeidssøkerService(
 ) {
     private val logger = KotlinLogging.logger {}
     private val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
+
+    private val cache: LoadingCache<String, List<ArbeidssøkerperiodeResponse>> = Caffeine.newBuilder()
+        .maximumSize(10000)
+        .expireAfterWrite(1, TimeUnit.MINUTES)
+        .build { ident: String -> runBlocking { hentArbeidssøkerperioder(ident) } }
+
+    fun hentCachedArbeidssøkerperioder(ident: String): List<ArbeidssøkerperiodeResponse> {
+        return cache.get(ident)
+    }
 
     fun sendBekreftelse(
         ident: String,
@@ -66,7 +78,7 @@ class ArbeidssøkerService(
         }
 
         val recordKeyResponse = runBlocking { hentRecordKey(ident) }
-        val arbeidssøkerperiodeResponse = runBlocking { hentSisteArbeidssøkerperiode(ident) }
+        val arbeidssøkerperiodeResponse = cache.get(ident).firstOrNull()
 
         if (arbeidssøkerperiodeResponse == null) {
             logger.info { "Kunne ikke hente arbeidssøkerperiode. Sender ikke sp.5 til PAW" }
@@ -151,12 +163,7 @@ class ArbeidssøkerService(
             }
         }
 
-    private suspend fun hentSisteArbeidssøkerperiode(ident: String): ArbeidssøkerperiodeResponse? =
-        withContext(Dispatchers.IO) {
-            hentArbeidssøkerperioder(ident).firstOrNull()
-        }
-
-    suspend fun hentArbeidssøkerperioder(ident: String): List<ArbeidssøkerperiodeResponse> =
+    private suspend fun hentArbeidssøkerperioder(ident: String): List<ArbeidssøkerperiodeResponse> =
         withContext(Dispatchers.IO) {
             try {
                 val result =
