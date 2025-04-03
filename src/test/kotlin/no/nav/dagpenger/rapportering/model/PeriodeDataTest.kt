@@ -163,6 +163,32 @@ class PeriodeDataTest {
         periodeDager[0].meldt shouldBe false
     }
 
+    @Test
+    fun `meldt = false hvis periode startes senere og avsluttes senere`() {
+        val dager =
+            listOf(
+                Dag(
+                    LocalDate.now(),
+                    emptyList(),
+                    0,
+                ),
+            )
+
+        val perioder =
+            listOf(
+                ArbeidssøkerperiodeResponse(
+                    UUID.randomUUID(),
+                    metadataResponse(LocalDateTime.now().plusDays(1)),
+                    metadataResponse(LocalDateTime.now().plusDays(2)),
+                ),
+            )
+
+        val periodeDager = dager.toPeriodeDager(perioder)
+
+        periodeDager.size shouldBe 1
+        periodeDager[0].meldt shouldBe false
+    }
+
     private fun metadataResponse(tidspunkt: LocalDateTime): MetadataResponse {
         return MetadataResponse(
             tidspunkt,
