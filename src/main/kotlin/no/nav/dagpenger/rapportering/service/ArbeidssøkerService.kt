@@ -56,7 +56,7 @@ class ArbeidssøkerService(
 
     private val cache: LoadingCache<String, List<ArbeidssøkerperiodeResponse>> =
         Caffeine.newBuilder()
-            .maximumSize(10000)
+            .maximumSize(1000)
             .expireAfterWrite(1, TimeUnit.MINUTES)
             .build { ident: String -> runBlocking { hentArbeidssøkerperioder(ident) } }
 
