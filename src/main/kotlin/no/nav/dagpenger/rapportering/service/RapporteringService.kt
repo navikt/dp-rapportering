@@ -456,7 +456,7 @@ class RapporteringService(
             logger.error(e) { "Klarte ikke å slette rapporteringsperiode med id $periodeId" }
         }
 
-    private suspend fun sendPeriodeDataTilRnR(
+    private fun sendPeriodeDataTilRnR(
         ident: String,
         rapporteringsperiode: Rapporteringsperiode,
     ) {

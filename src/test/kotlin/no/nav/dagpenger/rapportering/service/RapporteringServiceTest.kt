@@ -559,19 +559,20 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns listOf(
-            ArbeidssøkerperiodeResponse(
-                UUID.randomUUID(),
-                MetadataResponse(
-                    LocalDateTime.now(),
-                    BrukerResponse("", ""),
-                    "Kilde",
-                    "Årsak",
-                    null
+        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns
+            listOf(
+                ArbeidssøkerperiodeResponse(
+                    UUID.randomUUID(),
+                    MetadataResponse(
+                        LocalDateTime.now(),
+                        BrukerResponse("", ""),
+                        "Kilde",
+                        "Årsak",
+                        null,
+                    ),
+                    null,
                 ),
-                null,
-            ),
-        )
+            )
         every { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
         every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
@@ -613,19 +614,20 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns listOf(
-            ArbeidssøkerperiodeResponse(
-                UUID.randomUUID(),
-                MetadataResponse(
-                    LocalDateTime.now(),
-                    BrukerResponse("", ""),
-                    "Kilde",
-                    "Årsak",
-                    null
+        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns
+            listOf(
+                ArbeidssøkerperiodeResponse(
+                    UUID.randomUUID(),
+                    MetadataResponse(
+                        LocalDateTime.now(),
+                        BrukerResponse("", ""),
+                        "Kilde",
+                        "Årsak",
+                        null,
+                    ),
+                    null,
                 ),
-                null,
-            ),
-        )
+            )
         every { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
         every { unleash.isEnabled(eq("dp-rapportering-sp5-true")) } returns true
 
@@ -720,19 +722,20 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns listOf(
-            ArbeidssøkerperiodeResponse(
-                UUID.randomUUID(),
-                MetadataResponse(
-                    rapporteringsperiode.periode.fraOgMed.atStartOfDay(),
-                    BrukerResponse("", ""),
-                    "Kilde",
-                    "Årsak",
-                    null
+        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns
+            listOf(
+                ArbeidssøkerperiodeResponse(
+                    UUID.randomUUID(),
+                    MetadataResponse(
+                        rapporteringsperiode.periode.fraOgMed.atStartOfDay(),
+                        BrukerResponse("", ""),
+                        "Kilde",
+                        "Årsak",
+                        null,
+                    ),
+                    null,
                 ),
-                null,
-            ),
-        )
+            )
         every { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
         every { unleash.isEnabled(eq("send-periodedata")) } returns true
 

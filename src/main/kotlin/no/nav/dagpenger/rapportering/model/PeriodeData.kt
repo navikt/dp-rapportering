@@ -57,10 +57,10 @@ fun List<Dag>.toPeriodeDager(arbeidssøkerperioder: List<ArbeidssøkerperiodeRes
             aktiviteter = it.aktiviteter,
             dagIndex = it.dagIndex,
             meldt =
-            arbeidssøkerperioder.find { periode ->
-                val fom = periode.startet.tidspunkt
-                !fom.isAfter(it.dato.atStartOfDay()) &&
-                    (periode.avsluttet == null || periode.avsluttet.tidspunkt.isAfter(it.dato.atStartOfDay()))
-            } != null
+                arbeidssøkerperioder.find { periode ->
+                    val fom = periode.startet.tidspunkt
+                    val tom = periode.avsluttet
+                    !fom.isAfter(it.dato.atStartOfDay()) && (tom == null || tom.tidspunkt.isAfter(it.dato.atStartOfDay()))
+                } != null,
         )
     }

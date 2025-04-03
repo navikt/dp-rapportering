@@ -54,10 +54,11 @@ class ArbeidssøkerService(
     private val logger = KotlinLogging.logger {}
     private val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
 
-    private val cache: LoadingCache<String, List<ArbeidssøkerperiodeResponse>> = Caffeine.newBuilder()
-        .maximumSize(10000)
-        .expireAfterWrite(1, TimeUnit.MINUTES)
-        .build { ident: String -> runBlocking { hentArbeidssøkerperioder(ident) } }
+    private val cache: LoadingCache<String, List<ArbeidssøkerperiodeResponse>> =
+        Caffeine.newBuilder()
+            .maximumSize(10000)
+            .expireAfterWrite(1, TimeUnit.MINUTES)
+            .build { ident: String -> runBlocking { hentArbeidssøkerperioder(ident) } }
 
     fun hentCachedArbeidssøkerperioder(ident: String): List<ArbeidssøkerperiodeResponse> {
         return cache.get(ident)

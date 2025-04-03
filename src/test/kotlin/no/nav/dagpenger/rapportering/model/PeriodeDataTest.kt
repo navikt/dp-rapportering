@@ -9,21 +9,23 @@ import java.util.UUID
 class PeriodeDataTest {
     @Test
     fun `meldt = true hvis periode startes tidligere`() {
-        val dager = listOf(
-            Dag(
-                LocalDate.now(),
-                emptyList(),
-                0
-            ),
-        )
+        val dager =
+            listOf(
+                Dag(
+                    LocalDate.now(),
+                    emptyList(),
+                    0,
+                ),
+            )
 
-        val perioder = listOf(
-            ArbeidssøkerperiodeResponse(
-                UUID.randomUUID(),
-                metadataResponse(LocalDateTime.now().minusDays(1)),
-                null,
-            ),
-        )
+        val perioder =
+            listOf(
+                ArbeidssøkerperiodeResponse(
+                    UUID.randomUUID(),
+                    metadataResponse(LocalDateTime.now().minusDays(1)),
+                    null,
+                ),
+            )
 
         val periodeDager = dager.toPeriodeDager(perioder)
 
@@ -33,21 +35,23 @@ class PeriodeDataTest {
 
     @Test
     fun `meldt = true hvis periode startes den dagen`() {
-        val dager = listOf(
-            Dag(
-                LocalDate.now(),
-                emptyList(),
-                0
-            ),
-        )
+        val dager =
+            listOf(
+                Dag(
+                    LocalDate.now(),
+                    emptyList(),
+                    0,
+                ),
+            )
 
-        val perioder = listOf(
-            ArbeidssøkerperiodeResponse(
-                UUID.randomUUID(),
-                metadataResponse(LocalDate.now().atStartOfDay()),
-                null,
-            ),
-        )
+        val perioder =
+            listOf(
+                ArbeidssøkerperiodeResponse(
+                    UUID.randomUUID(),
+                    metadataResponse(LocalDate.now().atStartOfDay()),
+                    null,
+                ),
+            )
 
         val periodeDager = dager.toPeriodeDager(perioder)
 
@@ -57,21 +61,23 @@ class PeriodeDataTest {
 
     @Test
     fun `meldt = false hvis periode startes senere`() {
-        val dager = listOf(
-            Dag(
-                LocalDate.now(),
-                emptyList(),
-                0
-            ),
-        )
+        val dager =
+            listOf(
+                Dag(
+                    LocalDate.now(),
+                    emptyList(),
+                    0,
+                ),
+            )
 
-        val perioder = listOf(
-            ArbeidssøkerperiodeResponse(
-                UUID.randomUUID(),
-                metadataResponse(LocalDateTime.now().plusDays(1)),
-                null,
-            ),
-        )
+        val perioder =
+            listOf(
+                ArbeidssøkerperiodeResponse(
+                    UUID.randomUUID(),
+                    metadataResponse(LocalDateTime.now().plusDays(1)),
+                    null,
+                ),
+            )
 
         val periodeDager = dager.toPeriodeDager(perioder)
 
@@ -81,21 +87,23 @@ class PeriodeDataTest {
 
     @Test
     fun `meldt = true hvis periode startes tidligere og avsluttes den dagen`() {
-        val dager = listOf(
-            Dag(
-                LocalDate.now(),
-                emptyList(),
-                0
-            ),
-        )
+        val dager =
+            listOf(
+                Dag(
+                    LocalDate.now(),
+                    emptyList(),
+                    0,
+                ),
+            )
 
-        val perioder = listOf(
-            ArbeidssøkerperiodeResponse(
-                UUID.randomUUID(),
-                metadataResponse(LocalDateTime.now().minusDays(1)),
-                metadataResponse(LocalDate.now().atTime(23, 59, 59)),
-            ),
-        )
+        val perioder =
+            listOf(
+                ArbeidssøkerperiodeResponse(
+                    UUID.randomUUID(),
+                    metadataResponse(LocalDateTime.now().minusDays(1)),
+                    metadataResponse(LocalDate.now().atTime(23, 59, 59)),
+                ),
+            )
 
         val periodeDager = dager.toPeriodeDager(perioder)
 
@@ -105,21 +113,23 @@ class PeriodeDataTest {
 
     @Test
     fun `meldt = true hvis periode startes tidligere og avsluttes senere`() {
-        val dager = listOf(
-            Dag(
-                LocalDate.now(),
-                emptyList(),
-                0
-            ),
-        )
+        val dager =
+            listOf(
+                Dag(
+                    LocalDate.now(),
+                    emptyList(),
+                    0,
+                ),
+            )
 
-        val perioder = listOf(
-            ArbeidssøkerperiodeResponse(
-                UUID.randomUUID(),
-                metadataResponse(LocalDateTime.now().minusDays(1)),
-                metadataResponse(LocalDateTime.now().plusDays(2)),
-            ),
-        )
+        val perioder =
+            listOf(
+                ArbeidssøkerperiodeResponse(
+                    UUID.randomUUID(),
+                    metadataResponse(LocalDateTime.now().minusDays(1)),
+                    metadataResponse(LocalDateTime.now().plusDays(2)),
+                ),
+            )
 
         val periodeDager = dager.toPeriodeDager(perioder)
 
@@ -129,21 +139,23 @@ class PeriodeDataTest {
 
     @Test
     fun `meldt = false hvis periode startes tidligere og avsluttes tidligere`() {
-        val dager = listOf(
-            Dag(
-                LocalDate.now(),
-                emptyList(),
-                0
-            ),
-        )
+        val dager =
+            listOf(
+                Dag(
+                    LocalDate.now(),
+                    emptyList(),
+                    0,
+                ),
+            )
 
-        val perioder = listOf(
-            ArbeidssøkerperiodeResponse(
-                UUID.randomUUID(),
-                metadataResponse(LocalDateTime.now().minusDays(3)),
-                metadataResponse(LocalDateTime.now().minusDays(2)),
-            ),
-        )
+        val perioder =
+            listOf(
+                ArbeidssøkerperiodeResponse(
+                    UUID.randomUUID(),
+                    metadataResponse(LocalDateTime.now().minusDays(3)),
+                    metadataResponse(LocalDateTime.now().minusDays(2)),
+                ),
+            )
 
         val periodeDager = dager.toPeriodeDager(perioder)
 
@@ -157,7 +169,7 @@ class PeriodeDataTest {
             BrukerResponse("", ""),
             "Kilde",
             "Årsak",
-            null
+            null,
         )
     }
 }
