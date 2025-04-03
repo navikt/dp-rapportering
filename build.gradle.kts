@@ -80,6 +80,8 @@ dependencies {
 
     implementation("io.getunleash:unleash-client-java:10.2.2")
 
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.0")
+
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(libs.rapids.and.rivers.test)
     testImplementation(libs.bundles.postgres.test)

@@ -464,12 +464,14 @@ class RapporteringService(
             return
         }
 
+        val arbeidssøkerperioder = arbeidssøkerService.hentCachedArbeidssøkerperioder(ident)
+
         val periodeData =
             PeriodeData(
                 id = rapporteringsperiode.id,
                 ident = ident,
                 periode = rapporteringsperiode.periode,
-                dager = rapporteringsperiode.dager.toPeriodeDager(),
+                dager = rapporteringsperiode.dager.toPeriodeDager(arbeidssøkerperioder),
                 kanSendesFra = rapporteringsperiode.kanSendesFra,
                 // Nå har vi meldekort kun fra Arena
                 opprettetAv = PeriodeData.OpprettetAv.Arena,
