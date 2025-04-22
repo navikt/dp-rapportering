@@ -38,7 +38,7 @@ class PersonregisterServiceTest {
         every { unleash.isEnabled(eq("send-dp-til-personregister")) } returns true
         coEvery { personregisterConnector.hentBrukerstatus(eq(ident), eq(token)) } returns Brukerstatus.IKKE_DAGPENGERBRUKER
         coEvery { personregisterConnector.oppdaterPersonstatus(eq(ident), eq(token), eq(LocalDate.now())) } just runs
-        coEvery { meldepliktService.harMeldeplikt(eq(ident), eq(token)) } returns "true"
+        coEvery { meldepliktService.harDpMeldeplikt(eq(ident), eq(token)) } returns "true"
 
         val personregisterService = PersonregisterService(personregisterConnector, meldepliktService)
 
@@ -51,7 +51,7 @@ class PersonregisterServiceTest {
     fun `Skal ikke oppdatere personstatus hvis Unleash returnerer true, Personregister returnerer IKKE_DAGPENGERBRUKER og ikke har DP`() {
         every { unleash.isEnabled(eq("send-dp-til-personregister")) } returns true
         coEvery { personregisterConnector.hentBrukerstatus(eq(ident), eq(token)) } returns Brukerstatus.IKKE_DAGPENGERBRUKER
-        coEvery { meldepliktService.harMeldeplikt(eq(ident), eq(token)) } returns "false"
+        coEvery { meldepliktService.harDpMeldeplikt(eq(ident), eq(token)) } returns "false"
 
         val personregisterService = PersonregisterService(personregisterConnector, meldepliktService)
 
@@ -63,7 +63,7 @@ class PersonregisterServiceTest {
     @Test
     fun `Skal ikke oppdatere personstatus hvis Unleash returnerer true og Personregister returnerer DAGPENGERBRUKER`() {
         every { unleash.isEnabled(eq("send-dp-til-personregister")) } returns true
-        coEvery { meldepliktService.harMeldeplikt(eq(ident), eq(token)) } returns "true"
+        coEvery { meldepliktService.harDpMeldeplikt(eq(ident), eq(token)) } returns "true"
         coEvery { personregisterConnector.hentBrukerstatus(eq(ident), eq(token)) } returns Brukerstatus.DAGPENGERBRUKER
 
         val personregisterService = PersonregisterService(personregisterConnector, meldepliktService)

@@ -44,46 +44,46 @@ class RapporteringApiTest : ApiTestSetup() {
     // Sjekk om bruker har DP meldeplikt
 
     @Test
-    fun `harMeldekort uten token gir unauthorized`() =
+    fun `harDpMeldekort uten token gir unauthorized`() =
         setUpTestApplication {
-            with(client.doGet("/harmeldeplikt", null)) {
+            with(client.doGet("/hardpmeldeplikt", null)) {
                 status shouldBe HttpStatusCode.Unauthorized
             }
         }
 
     @Test
-    fun `harMeldeplikt returnerer InternalServerError hvis feil i meldepliktAdapter`() =
+    fun `harDpMeldeplikt returnerer InternalServerError hvis feil i meldepliktAdapter`() =
         setUpTestApplication {
             externalServices {
-                meldepliktAdapter(harMeldepliktResponseStatus = HttpStatusCode.InternalServerError, harMeldepliktResponse = "false")
+                meldepliktAdapter(harDpMeldepliktResponseStatus = HttpStatusCode.InternalServerError, harDpMeldepliktResponse = "false")
             }
 
-            val response = client.doGet("/harmeldeplikt", issueToken(fnr))
+            val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
 
             response.status shouldBe HttpStatusCode.InternalServerError
         }
 
     @Test
-    fun `Kan hente harMeldeplikt true`() =
+    fun `Kan hente harDpMeldeplikt true`() =
         setUpTestApplication {
             externalServices {
-                meldepliktAdapter(harMeldepliktResponse = "true")
+                meldepliktAdapter(harDpMeldepliktResponse = "true")
             }
 
-            val response = client.doGet("/harmeldeplikt", issueToken(fnr))
+            val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
 
             response.status shouldBe HttpStatusCode.OK
             response.bodyAsText() shouldBe "true"
         }
 
     @Test
-    fun `Kan hente harMeldeplikt false`() =
+    fun `Kan hente harDpMeldeplikt false`() =
         setUpTestApplication {
             externalServices {
-                meldepliktAdapter(harMeldepliktResponse = "false")
+                meldepliktAdapter(harDpMeldepliktResponse = "false")
             }
 
-            val response = client.doGet("/harmeldeplikt", issueToken(fnr))
+            val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
 
             response.status shouldBe HttpStatusCode.OK
             response.bodyAsText() shouldBe "false"
@@ -848,14 +848,14 @@ class RapporteringApiTest : ApiTestSetup() {
         sendInnResponseStatus: HttpStatusCode = HttpStatusCode.OK,
         personResponse: String = person(),
         personResponseStatus: HttpStatusCode = HttpStatusCode.OK,
-        harMeldepliktResponse: String = "true",
-        harMeldepliktResponseStatus: HttpStatusCode = HttpStatusCode.OK,
+        harDpMeldepliktResponse: String = "true",
+        harDpMeldepliktResponseStatus: HttpStatusCode = HttpStatusCode.OK,
     ) {
         hosts("https://meldeplikt-adapter") {
             routing {
-                get("/harmeldeplikt") {
+                get("/hardpmeldeplikt") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Text.Plain.toString())
-                    call.respond(harMeldepliktResponseStatus, harMeldepliktResponse)
+                    call.respond(harDpMeldepliktResponseStatus, harDpMeldepliktResponse)
                 }
                 get("/rapporteringsperioder") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())

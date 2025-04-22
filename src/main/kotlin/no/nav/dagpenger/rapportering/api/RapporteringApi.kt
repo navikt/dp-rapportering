@@ -114,13 +114,13 @@ internal fun Application.rapporteringApi(
     }
     routing {
         authenticate("tokenX") {
-            route("/harmeldeplikt") {
+            route("/hardpmeldeplikt") {
                 get {
                     val ident = call.ident()
                     val jwtToken = call.request.jwt()
 
                     rapporteringService
-                        .harMeldeplikt(ident, jwtToken)
+                        .harDpMeldeplikt(ident, jwtToken)
                         .also { call.respond(HttpStatusCode.OK, it) }
                 }
             }
