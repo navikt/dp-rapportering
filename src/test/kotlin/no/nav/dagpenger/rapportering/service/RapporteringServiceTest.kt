@@ -101,20 +101,20 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `harMeldeplikt returnerer det samme som meldepliktConnector returnerer`() {
+    fun `harDpMeldeplikt returnerer det samme som meldepliktConnector returnerer`() {
         // True
-        coEvery { meldepliktService.harMeldeplikt(ident, token) } returns "true"
+        coEvery { meldepliktService.harDpMeldeplikt(ident, token) } returns "true"
 
-        var harMeldeplikt = runBlocking { rapporteringService.harMeldeplikt(ident, token) }
+        var harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
 
-        harMeldeplikt shouldBe "true"
+        harDpMeldeplikt shouldBe "true"
 
         // False
-        coEvery { meldepliktService.harMeldeplikt(ident, token) } returns "false"
+        coEvery { meldepliktService.harDpMeldeplikt(ident, token) } returns "false"
 
-        harMeldeplikt = runBlocking { rapporteringService.harMeldeplikt(ident, token) }
+        harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
 
-        harMeldeplikt shouldBe "false"
+        harDpMeldeplikt shouldBe "false"
     }
 
     @Test

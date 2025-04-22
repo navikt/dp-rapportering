@@ -45,10 +45,10 @@ class RapporteringService(
     private val kallLoggService: KallLoggService,
     private val arbeidssøkerService: ArbeidssøkerService,
 ) {
-    suspend fun harMeldeplikt(
+    suspend fun harDpMeldeplikt(
         ident: String,
         token: String,
-    ): String = meldepliktService.harMeldeplikt(ident, token)
+    ): String = meldepliktService.harDpMeldeplikt(ident, token)
 
     suspend fun hentPeriode(
         rapporteringId: Long,

@@ -35,7 +35,7 @@ class PersonregisterService(
         }
 
         if (brukerstatus == Brukerstatus.IKKE_DAGPENGERBRUKER) {
-            val harDp = meldepliktService.harMeldeplikt(ident, token)
+            val harDp = meldepliktService.harDpMeldeplikt(ident, token)
 
             if (harDp == "true") {
                 // Sender denne brukeren til dp-rapportering-personregister

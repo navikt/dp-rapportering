@@ -11,7 +11,7 @@ servers:
     - url: https://dp-rapportering.intern.nav.no
       description: prod
 paths:
-    /harmeldeplikt:
+    /hardpmeldeplikt:
         get:
             responses:
                 '200':
@@ -25,7 +25,7 @@ paths:
             description: Returnerer "true" hvis bruker har DP-meldeplikt, ellers returnerer "false"
             operationId: get-har-meldeplikt
             tags:
-                - HarMeldeplikt
+                - HarDpMeldeplikt
             security:
                 -   tokenX: [ ]
 

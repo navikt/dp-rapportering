@@ -48,13 +48,13 @@ class MeldepliktConnectorTest {
     )
 
     @Test
-    fun `harMeldeplikt returnerer samme verdi som adapter returnerer`() {
+    fun `harDpMeldeplikt returnerer samme verdi som adapter returnerer`() {
         // True
         var connector = meldepliktConnector("true", 200)
 
         var response =
             runBlocking {
-                connector.harMeldeplikt(ident, subjectToken)
+                connector.harDpMeldeplikt(ident, subjectToken)
             }
 
         response shouldBe "true"
@@ -64,19 +64,19 @@ class MeldepliktConnectorTest {
 
         response =
             runBlocking {
-                connector.harMeldeplikt(ident, subjectToken)
+                connector.harDpMeldeplikt(ident, subjectToken)
             }
 
         response shouldBe "false"
     }
 
     @Test
-    fun `harMeldeplikt kaster Exception ved feil`() {
+    fun `harDpMeldeplikt kaster Exception ved feil`() {
         val connector = meldepliktConnector("", 503)
 
         shouldThrow<Exception> {
             runBlocking {
-                connector.harMeldeplikt(ident, subjectToken)
+                connector.harDpMeldeplikt(ident, subjectToken)
             }
         }
     }
