@@ -1,7 +1,7 @@
 package no.nav.dagpenger.rapportering.service
 
+import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.benmanes.caffeine.cache.LoadingCache
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -53,14 +53,22 @@ class ArbeidssøkerService(
     private val logger = KotlinLogging.logger {}
     private val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
 
-    private val cache: LoadingCache<String, List<ArbeidssøkerperiodeResponse>> =
+    private val cache: Cache<String, List<ArbeidssøkerperiodeResponse>> =
         Caffeine.newBuilder()
             .maximumSize(1000)
             .expireAfterWrite(1, TimeUnit.MINUTES)
-            .build { ident: String -> runBlocking { hentArbeidssøkerperioder(ident) } }
+            .build()
 
-    fun hentCachedArbeidssøkerperioder(ident: String): List<ArbeidssøkerperiodeResponse> {
-        return cache.get(ident)
+    suspend fun hentCachedArbeidssøkerperioder(ident: String): List<ArbeidssøkerperiodeResponse> {
+        var arbeidssøkerperiodeResponse = cache.getIfPresent(ident)
+
+        if (arbeidssøkerperiodeResponse == null) {
+            val response = hentArbeidssøkerperioder(ident)
+            cache.put(ident, response)
+            arbeidssøkerperiodeResponse = response
+        }
+
+        return arbeidssøkerperiodeResponse
     }
 
     suspend fun sendBekreftelse(
@@ -78,16 +86,16 @@ class ArbeidssøkerService(
         }
 
         val recordKeyResponse = hentRecordKey(ident)
-        val arbeidssøkerperiodeResponse = cache.get(ident).firstOrNull()
+        val arbeidssøkerperiode = hentCachedArbeidssøkerperioder(ident).firstOrNull()
 
-        if (arbeidssøkerperiodeResponse == null) {
+        if (arbeidssøkerperiode == null) {
             logger.info { "Kunne ikke hente arbeidssøkerperiode. Sender ikke sp.5 til PAW" }
             return
         }
 
         val arbeidssøkerBekreftelse =
             Bekreftelse(
-                arbeidssøkerperiodeResponse.periodeId,
+                arbeidssøkerperiode.periodeId,
                 Bekreftelsesloesning.DAGPENGER,
                 UUID.randomUUID(),
                 Svar(
