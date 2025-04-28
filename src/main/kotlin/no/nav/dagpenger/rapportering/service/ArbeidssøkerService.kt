@@ -63,7 +63,7 @@ class ArbeidssøkerService(
         return cache.get(ident)
     }
 
-    fun sendBekreftelse(
+    suspend fun sendBekreftelse(
         ident: String,
         token: String,
         loginLevel: Int,
@@ -77,7 +77,7 @@ class ArbeidssøkerService(
             return
         }
 
-        val recordKeyResponse = runBlocking { hentRecordKey(ident) }
+        val recordKeyResponse = hentRecordKey(ident)
         val arbeidssøkerperiodeResponse = cache.get(ident).firstOrNull()
 
         if (arbeidssøkerperiodeResponse == null) {

@@ -573,7 +573,7 @@ class RapporteringServiceTest {
                     null,
                 ),
             )
-        every { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
+        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
         every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
         val innsendingResponse =
@@ -628,7 +628,7 @@ class RapporteringServiceTest {
                     null,
                 ),
             )
-        every { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
+        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
         every { unleash.isEnabled(eq("dp-rapportering-sp5-true")) } returns true
 
         runBlocking {
@@ -736,7 +736,7 @@ class RapporteringServiceTest {
                     null,
                 ),
             )
-        every { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
+        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
         every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
         val innsendingResponse =

@@ -180,7 +180,7 @@ open class ApiTestSetup {
 
             val personregisterService = mockk<PersonregisterService>()
             coEvery { personregisterService.oppdaterPersonstatus(any(), any()) } just runs
-            every { personregisterService.erBekreftelseOvertatt(any(), any()) } returns true
+            coEvery { personregisterService.erBekreftelseOvertatt(any(), any()) } returns true
 
             val arbeidssoekerService =
                 ArbeidssøkerService(

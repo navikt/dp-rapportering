@@ -1,25 +1,19 @@
 package no.nav.dagpenger.rapportering.service
 
-import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.Brukerstatus
 import no.nav.dagpenger.rapportering.connector.PersonregisterConnector
-import no.nav.dagpenger.rapportering.connector.Personstatus
 import java.time.LocalDate
 
 class PersonregisterService(
     private val personregisterConnector: PersonregisterConnector,
     private val meldepliktService: MeldepliktService,
 ) {
-    fun erBekreftelseOvertatt(
+    suspend fun erBekreftelseOvertatt(
         ident: String,
         token: String,
     ): Boolean {
-        var personstatus: Personstatus?
-
-        runBlocking {
-            personstatus = personregisterConnector.hentPersonstatus(ident, token)
-        }
+        val personstatus = personregisterConnector.hentPersonstatus(ident, token)
 
         return personstatus?.overtattBekreftelse ?: false
     }
