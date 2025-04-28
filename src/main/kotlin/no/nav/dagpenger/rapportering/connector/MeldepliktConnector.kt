@@ -16,9 +16,9 @@ import no.nav.dagpenger.rapportering.model.Person
 
 class MeldepliktConnector(
     private val meldepliktUrl: String = Configuration.meldepliktAdapterUrl,
-    private val tokenProvider: (String) -> String? = Configuration.tokenXClient(Configuration.meldepliktAdapterAudience),
-    private val httpClient: HttpClient,
-    private val actionTimer: ActionTimer,
+    tokenProvider: (String) -> String? = Configuration.tokenXClient(Configuration.meldepliktAdapterAudience),
+    httpClient: HttpClient,
+    actionTimer: ActionTimer,
 ) {
     private val logger = KotlinLogging.logger {}
     private val sikkerlogg = KotlinLogging.logger("tjenestekall.MeldepliktConnector")

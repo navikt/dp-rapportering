@@ -11,7 +11,6 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
-import java.net.URI
 import kotlin.time.measureTime
 
 class HttpClientUtils(
@@ -30,7 +29,7 @@ class HttpClientUtils(
         val tidBrukt =
             measureTime {
                 response =
-                    httpClient.get(URI("$baseUrl$path").toURL()) {
+                    httpClient.get("$baseUrl$path") {
                         bearerAuth(token)
                         contentType(ContentType.Application.Json)
                     }
@@ -51,7 +50,7 @@ class HttpClientUtils(
         val tidBrukt =
             measureTime {
                 response =
-                    httpClient.post(URI("$baseUrl$path").toURL()) {
+                    httpClient.post("$baseUrl$path") {
                         bearerAuth(token)
                         contentType(contentType)
                         setBody(defaultObjectMapper.writeValueAsString(body))

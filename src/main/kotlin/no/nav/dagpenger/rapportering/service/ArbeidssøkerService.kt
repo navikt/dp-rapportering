@@ -36,7 +36,6 @@ import no.nav.paw.bekreftelse.melding.v1.vo.Metadata
 import no.nav.paw.bekreftelse.melding.v1.vo.Svar
 import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
-import java.net.URI
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.TimeUnit
@@ -138,7 +137,7 @@ class ArbeidssøkerService(
             try {
                 val result =
                     httpClient
-                        .post(URI(recordKeyUrl).toURL()) {
+                        .post(recordKeyUrl) {
                             bearerAuth(
                                 recordKeyTokenProvider.invoke() ?: throw RuntimeException("Klarte ikke å hente token"),
                             )
@@ -169,7 +168,7 @@ class ArbeidssøkerService(
             try {
                 val result =
                     httpClient
-                        .post(URI(oppslagUrl).toURL()) {
+                        .post(oppslagUrl) {
                             bearerAuth(
                                 oppslagTokenProvider.invoke() ?: throw RuntimeException("Klarte ikke å hente token"),
                             )
