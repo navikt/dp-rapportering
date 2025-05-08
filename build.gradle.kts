@@ -74,7 +74,7 @@ dependencies {
     implementation(libs.bundles.postgres)
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.7.0")
 
-    implementation("io.confluent:kafka-streams-avro-serde:7.9.0")
+    implementation("io.confluent:kafka-streams-avro-serde:7.9.1")
     implementation("org.apache.avro:avro:1.12.0")
     schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:1.25.03.11.31-1")
 
