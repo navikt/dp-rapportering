@@ -78,7 +78,7 @@ dependencies {
     implementation("org.apache.avro:avro:1.12.0")
     schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:1.25.03.11.31-1")
 
-    implementation("io.getunleash:unleash-client-java:10.2.2")
+    implementation("io.getunleash:unleash-client-java:11.0.0")
 
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.1")
 
