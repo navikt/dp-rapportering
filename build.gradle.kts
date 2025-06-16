@@ -4,7 +4,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     alias(libs.plugins.shadow.jar)
     alias(libs.plugins.kotlin)
-    id("io.ktor.plugin") version "3.1.3"
+    id("io.ktor.plugin") version "3.2.0"
     id("org.jlleitschuh.gradle.ktlint") version "12.3.0"
     id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
