@@ -92,6 +92,7 @@ spec:
         - application: dp-arena-meldeplikt-adapter
         - application: dp-behov-pdf-generator
         - application: dp-rapportering-personregister
+        - application: dp-meldekortregister
         - application: paw-kafka-key-generator
           namespace: paw
         - application: paw-arbeidssoekerregisteret-api-oppslag

@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.service
 
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
+import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.Brukerstatus
 import no.nav.dagpenger.rapportering.connector.PersonregisterConnector
 import java.time.LocalDate
@@ -16,6 +17,15 @@ class PersonregisterService(
         val personstatus = personregisterConnector.hentPersonstatus(ident, token)
 
         return personstatus?.overtattBekreftelse ?: false
+    }
+
+    suspend fun hentAnsvarligSystem(
+        ident: String,
+        token: String,
+    ): AnsvarligSystem {
+        val personstatus = personregisterConnector.hentPersonstatus(ident, token)
+
+        return personstatus?.ansvarligSystem ?: AnsvarligSystem.ARENA
     }
 
     suspend fun oppdaterPersonstatus(
