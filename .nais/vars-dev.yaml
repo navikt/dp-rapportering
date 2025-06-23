@@ -21,6 +21,8 @@ MELDEPLIKT_ADAPTER_HOST: dp-arena-meldeplikt-adapter.intern.dev.nav.no
 MELDEPLIKT_ADAPTER_AUDIENCE: dev-gcp:teamdagpenger:dp-arena-meldeplikt-adapter
 PERSONREGISTER_HOST: dp-rapportering-personregister.intern.dev.nav.no
 PERSONREGISTER_AUDIENCE: dev-gcp:teamdagpenger:dp-rapportering-personregister
+MELDEKORTREGISTER_HOST: dp-meldekortregister
+MELDEKORTREGISTER_AUDIENCE: dev-gcp:teamdagpenger:dp-meldekortregister
 PDF_GENERATOR_URL: https://dp-pdf-generator.intern.dev.nav.no
 ARBEIDSSOKERREGISTER_RECORD_KEY_URL: http://paw-kafka-key-generator.paw/api/v1/record-key
 ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE: api://dev-gcp.paw.paw-kafka-key-generator/.default

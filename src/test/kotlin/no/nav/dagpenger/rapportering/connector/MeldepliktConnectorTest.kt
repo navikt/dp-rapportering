@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.connector
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType
@@ -38,8 +39,8 @@ class MeldepliktConnectorTest {
     }
 
     private fun meldepliktConnector(
-        responseBody: String,
-        statusCode: Int,
+        statusCode: HttpStatusCode,
+        responseBody: String = "",
     ) = MeldepliktConnector(
         meldepliktUrl = meldepliktUrl,
         tokenProvider = testTokenProvider,
@@ -50,7 +51,7 @@ class MeldepliktConnectorTest {
     @Test
     fun `harDpMeldeplikt returnerer samme verdi som adapter returnerer`() {
         // True
-        var connector = meldepliktConnector("true", 200)
+        var connector = meldepliktConnector(HttpStatusCode.OK, "true")
 
         var response =
             runBlocking {
@@ -60,7 +61,7 @@ class MeldepliktConnectorTest {
         response shouldBe "true"
 
         // False
-        connector = meldepliktConnector("false", 200)
+        connector = meldepliktConnector(HttpStatusCode.OK, "false")
 
         response =
             runBlocking {
@@ -72,7 +73,7 @@ class MeldepliktConnectorTest {
 
     @Test
     fun `harDpMeldeplikt kaster Exception ved feil`() {
-        val connector = meldepliktConnector("", 503)
+        val connector = meldepliktConnector(HttpStatusCode.ServiceUnavailable)
 
         shouldThrow<Exception> {
             runBlocking {
@@ -83,7 +84,7 @@ class MeldepliktConnectorTest {
 
     @Test
     fun `returnerer null ved henting av rapporteringsperiodeliste uten meldeplikt`() {
-        val connector = meldepliktConnector("", 204)
+        val connector = meldepliktConnector(HttpStatusCode.NoContent)
 
         val response =
             runBlocking {
@@ -95,7 +96,7 @@ class MeldepliktConnectorTest {
 
     @Test
     fun `henter tom rapporteringsperiodeliste gir null`() {
-        val connector = meldepliktConnector("[]", 200)
+        val connector = meldepliktConnector(HttpStatusCode.OK, "[]")
 
         val response =
             runBlocking {
@@ -114,7 +115,7 @@ class MeldepliktConnectorTest {
 
         val rapporteringsperioder = "[$rapporteringsperiode1, $rapporteringsperiode2]"
 
-        val connector = meldepliktConnector(rapporteringsperioder, 200)
+        val connector = meldepliktConnector(HttpStatusCode.OK, rapporteringsperioder)
 
         val response =
             runBlocking {
@@ -157,7 +158,7 @@ class MeldepliktConnectorTest {
     fun `feiler ved ugyldig periode`() {
         val rapporteringsperioder =
             rapporteringsperiodeFor(id = 123L, fraOgMed = 1.januar, tilOgMed = 10.januar)
-        val connector = meldepliktConnector("[$rapporteringsperioder]", 200)
+        val connector = meldepliktConnector(HttpStatusCode.OK, "[$rapporteringsperioder]")
 
         shouldThrow<IllegalArgumentException> {
             runBlocking {
@@ -174,7 +175,7 @@ class MeldepliktConnectorTest {
 
     @Test
     fun `henter tom liste for innsendte rapporteringsperioder gir null`() {
-        val connector = meldepliktConnector("[]", 200)
+        val connector = meldepliktConnector(HttpStatusCode.OK, "[]")
 
         val response =
             runBlocking {
@@ -218,7 +219,7 @@ class MeldepliktConnectorTest {
 
         val rapporteringsperioder = "[$rapporteringsperiode1, $rapporteringsperiode2, $rapporteringsperiode3]"
 
-        val connector = meldepliktConnector(rapporteringsperioder, 200)
+        val connector = meldepliktConnector(HttpStatusCode.OK, rapporteringsperioder)
 
         val response =
             runBlocking {
@@ -294,7 +295,7 @@ class MeldepliktConnectorTest {
     @Test
     fun `henter endringId`() {
         val id = 1806985352L
-        val connector = meldepliktConnector(id.toString(), 200)
+        val connector = meldepliktConnector(HttpStatusCode.OK, id.toString())
 
         val response =
             runBlocking {
@@ -306,7 +307,7 @@ class MeldepliktConnectorTest {
 
     @Test
     fun `henter tom aktivitetsdagerliste`() {
-        val connector = meldepliktConnector("[]", 200)
+        val connector = meldepliktConnector(HttpStatusCode.OK, "[]")
 
         val response =
             runBlocking {
@@ -318,7 +319,7 @@ class MeldepliktConnectorTest {
 
     @Test
     fun `henter aktivitetsdagerliste med 14 elementer`() {
-        val connector = meldepliktConnector(aktivitetsdagerlisteFor(), 200)
+        val connector = meldepliktConnector(HttpStatusCode.OK, aktivitetsdagerlisteFor())
 
         val response =
             runBlocking {
@@ -342,7 +343,7 @@ class MeldepliktConnectorTest {
               "feil": []
             }
             """.trimIndent()
-        val connector = meldepliktConnector(innsendingResponse, 200)
+        val connector = meldepliktConnector(HttpStatusCode.OK, innsendingResponse)
 
         val rapporteringsperiode =
             Rapporteringsperiode(
