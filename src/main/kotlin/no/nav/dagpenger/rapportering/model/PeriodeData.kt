@@ -97,18 +97,3 @@ fun PeriodeData.toRapporteringsperiode(): Rapporteringsperiode {
 }
 
 fun PeriodeDag.toDag(): Dag = Dag(dato = this.dato, aktiviteter = this.aktiviteter, dagIndex = this.dagIndex)
-
-fun List<Dag>.toPeriodeDager(arbeidssøkerperioder: List<ArbeidssøkerperiodeResponse>): List<PeriodeDag> =
-    this.map {
-        PeriodeDag(
-            dato = it.dato,
-            aktiviteter = it.aktiviteter,
-            dagIndex = it.dagIndex,
-            meldt =
-                arbeidssøkerperioder.find { periode ->
-                    val fom = periode.startet.tidspunkt
-                    val tom = periode.avsluttet
-                    !fom.isAfter(it.dato.atStartOfDay()) && (tom == null || tom.tidspunkt.isAfter(it.dato.atStartOfDay()))
-                } != null,
-        )
-    }

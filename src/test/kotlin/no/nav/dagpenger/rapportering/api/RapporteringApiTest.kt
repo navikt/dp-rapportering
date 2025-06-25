@@ -129,6 +129,7 @@ class RapporteringApiTest : ApiTestSetup() {
     fun `returnerer Bad Request og InnsendingResponse når innsending feilet med http status OK`() =
         setUpTestApplication {
             externalServices {
+                arbeidssokerregisterOppslag()
                 meldepliktAdapter(
                     rapporteringsperioderResponse =
                         listOf(

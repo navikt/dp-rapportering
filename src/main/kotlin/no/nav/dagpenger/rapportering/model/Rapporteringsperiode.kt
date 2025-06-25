@@ -6,7 +6,12 @@ import no.nav.dagpenger.rapportering.api.models.DagInnerResponse
 import no.nav.dagpenger.rapportering.api.models.PeriodeResponse
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeResponse
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse
+import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
+import no.nav.dagpenger.rapportering.model.PeriodeData.OpprettetAv
+import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
+import no.nav.dagpenger.rapportering.model.PeriodeData.Type
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 data class Rapporteringsperiode(
     val id: Long,
@@ -85,3 +90,41 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
         originalId = this.originalId?.toString(),
         rapporteringstype = this.rapporteringstype,
     )
+
+fun Rapporteringsperiode.toPeriodeData(
+    ident: String,
+    opprettetAv: OpprettetAv,
+    arbeidssøkerperioder: List<ArbeidssøkerperiodeResponse>,
+    nyStatus: String? = null,
+): PeriodeData =
+    PeriodeData(
+        id = this.id,
+        ident = ident,
+        periode = this.periode,
+        dager = this.dager.toPeriodeDager(arbeidssøkerperioder),
+        kanSendesFra = this.kanSendesFra,
+        opprettetAv = opprettetAv,
+        kilde = Kilde(PeriodeData.Rolle.Bruker, ident),
+        type = if (this.erEndring()) Type.Korrigert else Type.Original,
+        status = nyStatus ?: this.status.name,
+        innsendtTidspunkt = LocalDateTime.now(),
+        korrigeringAv = this.originalId,
+        bruttoBelop = null,
+        begrunnelseEndring = this.begrunnelseEndring,
+        registrertArbeidssoker = this.registrertArbeidssoker,
+    )
+
+fun List<Dag>.toPeriodeDager(arbeidssøkerperioder: List<ArbeidssøkerperiodeResponse>): List<PeriodeDag> =
+    this.map {
+        PeriodeDag(
+            dato = it.dato,
+            aktiviteter = it.aktiviteter,
+            dagIndex = it.dagIndex,
+            meldt =
+                arbeidssøkerperioder.find { periode ->
+                    val fom = periode.startet.tidspunkt
+                    val tom = periode.avsluttet
+                    !fom.isAfter(it.dato.atStartOfDay()) && (tom == null || tom.tidspunkt.isAfter(it.dato.atStartOfDay()))
+                } != null,
+        )
+    }

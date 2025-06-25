@@ -594,7 +594,7 @@ class RapporteringServiceTest {
                 feil = listOf(),
             )
 
-        sendInn(rapporteringsperiode)
+        sendInn(rapporteringsperiode, "Dagpenger")
     }
 
     @Test
@@ -895,7 +895,10 @@ class RapporteringServiceTest {
         slettedePerioder shouldBe 3
     }
 
-    private fun sendInn(rapporteringsperiode: Rapporteringsperiode) {
+    private fun sendInn(
+        rapporteringsperiode: Rapporteringsperiode,
+        ansvarligSystem: String = "Arena",
+    ) {
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
         coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
@@ -937,13 +940,14 @@ class RapporteringServiceTest {
         }
         coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
 
-        checkRapid(rapporteringsperiode, null, false)
+        checkRapid(rapporteringsperiode, null, false, ansvarligSystem)
     }
 
     private fun checkRapid(
         rapporteringsperiode: Rapporteringsperiode,
         endringId: String? = null,
         meldt: Boolean = true,
+        ansvarligSystem: String = "Arena",
     ) {
         testRapid.inspektør.size shouldBe 1
 
@@ -977,7 +981,7 @@ class RapporteringServiceTest {
         }
 
         message["kanSendesFra"].asLocalDate() shouldBe rapporteringsperiode.kanSendesFra
-        message["opprettetAv"].asText() shouldBe "Arena"
+        message["opprettetAv"].asText() shouldBe ansvarligSystem
 
         val kilde = message["kilde"]
         kilde["rolle"].asText() shouldBe "Bruker"

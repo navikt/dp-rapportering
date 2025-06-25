@@ -131,75 +131,10 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[3].type shouldBe "REST"
             list[3].kallRetning shouldBe "UT"
             list[3].method shouldBe "POST"
-            list[3].operation shouldBe "/sendinn"
+            list[3].operation shouldBe "/api/v1/arbeidssoekerperioder"
             list[3].status shouldBe 200
-            list[3].request shouldStartWith "POST https://meldeplikt-adapter:443/sendinn"
-            list[3].request shouldContain adapterRapporteringsperiodeString
+            list[3].request shouldStartWith "POST http://arbeidssokerregister_oppslag_url:80/api/v1/arbeidssoekerperioder"
             list[3].response.trimIndent() shouldBe
-                """
-                HTTP/1.1 200 OK
-                Content-Type: application/json
-                Content-Length: ${sendinnResponse.length}
-                
-                $sendinnResponse
-                """.trimIndent()
-            list[3].ident shouldBe ident
-            list[3].logginfo shouldBe ""
-
-            list[4].type shouldBe "REST"
-            list[4].kallRetning shouldBe "UT"
-            list[4].method shouldBe "GET"
-            list[4].operation shouldBe "/person"
-            list[4].status shouldBe 200
-            list[4].request shouldStartWith "GET https://meldeplikt-adapter:443/person"
-            list[4].response.trimIndent() shouldBe
-                """
-                HTTP/1.1 200 OK
-                Content-Type: application/json
-                Content-Length: ${personResponse.length}
-                
-                $personResponse
-                """.trimIndent()
-            list[4].ident shouldBe ident
-            list[4].logginfo shouldBe ""
-
-            list[5].type shouldBe "REST"
-            list[5].kallRetning shouldBe "UT"
-            list[5].method shouldBe "POST"
-            list[5].operation shouldBe "/convert-html-to-pdf/meldekort"
-            list[5].status shouldBe 200
-            list[5].request shouldStartWith "POST https://pdf-generator:443/convert-html-to-pdf/meldekort"
-            list[5].request shouldContain "Navn: TEST TESTESSEN"
-            list[5].request shouldContain "Fødselsnummer: $ident"
-            list[5].request shouldContain "Meldekort: ${rapporteringsperiode.id}"
-            list[5].response.trimIndent() shouldBe
-                """
-                HTTP/1.1 200 OK
-                Content-Type: application/pdf
-                Content-Length: 3
-                
-                PDF
-                """.trimIndent()
-            list[5].ident shouldBe "" // Det finnes ikke token når vi genererer PDF
-            list[5].logginfo shouldBe ""
-
-            list[6].type shouldBe "KAFKA"
-            list[6].kallRetning shouldBe "UT"
-            list[6].method shouldBe "PUBLISH"
-            list[6].operation shouldBe "teamdagpenger.rapid.v1"
-            list[6].status shouldBe 200
-            list[6].request shouldContain MineBehov.JournalføreRapportering.name
-            list[6].response shouldBe ""
-            list[6].ident shouldBe ident
-            list[6].logginfo shouldBe ""
-
-            list[7].type shouldBe "REST"
-            list[7].kallRetning shouldBe "UT"
-            list[7].method shouldBe "POST"
-            list[7].operation shouldBe "/api/v1/arbeidssoekerperioder"
-            list[7].status shouldBe 200
-            list[7].request shouldStartWith "POST http://arbeidssokerregister_oppslag_url:80/api/v1/arbeidssoekerperioder"
-            list[7].response.trimIndent() shouldBe
                 """
                 HTTP/1.1 200 OK
                 Content-Type: application/json
@@ -220,7 +155,72 @@ class CallLoggingPluginTest : ApiTestSetup() {
                   }
                 ]
                 """.trimIndent()
-            list[7].ident shouldBe "" // Det finnes ikke token med ident når vi henter record key
+            list[3].ident shouldBe "" // Det finnes ikke token med ident når vi henter record key
+            list[3].logginfo shouldBe ""
+
+            list[4].type shouldBe "REST"
+            list[4].kallRetning shouldBe "UT"
+            list[4].method shouldBe "POST"
+            list[4].operation shouldBe "/sendinn"
+            list[4].status shouldBe 200
+            list[4].request shouldStartWith "POST https://meldeplikt-adapter:443/sendinn"
+            list[4].request shouldContain adapterRapporteringsperiodeString
+            list[4].response.trimIndent() shouldBe
+                """
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+                Content-Length: ${sendinnResponse.length}
+                
+                $sendinnResponse
+                """.trimIndent()
+            list[4].ident shouldBe ident
+            list[4].logginfo shouldBe ""
+
+            list[5].type shouldBe "REST"
+            list[5].kallRetning shouldBe "UT"
+            list[5].method shouldBe "GET"
+            list[5].operation shouldBe "/person"
+            list[5].status shouldBe 200
+            list[5].request shouldStartWith "GET https://meldeplikt-adapter:443/person"
+            list[5].response.trimIndent() shouldBe
+                """
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+                Content-Length: ${personResponse.length}
+                
+                $personResponse
+                """.trimIndent()
+            list[5].ident shouldBe ident
+            list[5].logginfo shouldBe ""
+
+            list[6].type shouldBe "REST"
+            list[6].kallRetning shouldBe "UT"
+            list[6].method shouldBe "POST"
+            list[6].operation shouldBe "/convert-html-to-pdf/meldekort"
+            list[6].status shouldBe 200
+            list[6].request shouldStartWith "POST https://pdf-generator:443/convert-html-to-pdf/meldekort"
+            list[6].request shouldContain "Navn: TEST TESTESSEN"
+            list[6].request shouldContain "Fødselsnummer: $ident"
+            list[6].request shouldContain "Meldekort: ${rapporteringsperiode.id}"
+            list[6].response.trimIndent() shouldBe
+                """
+                HTTP/1.1 200 OK
+                Content-Type: application/pdf
+                Content-Length: 3
+                
+                PDF
+                """.trimIndent()
+            list[6].ident shouldBe "" // Det finnes ikke token når vi genererer PDF
+            list[6].logginfo shouldBe ""
+
+            list[7].type shouldBe "KAFKA"
+            list[7].kallRetning shouldBe "UT"
+            list[7].method shouldBe "PUBLISH"
+            list[7].operation shouldBe "teamdagpenger.rapid.v1"
+            list[7].status shouldBe 200
+            list[7].request shouldContain MineBehov.JournalføreRapportering.name
+            list[7].response shouldBe ""
+            list[7].ident shouldBe ident
             list[7].logginfo shouldBe ""
 
             list[8].type shouldBe "KAFKA"

@@ -20,9 +20,8 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
-import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toMap
-import no.nav.dagpenger.rapportering.model.toPeriodeDager
+import no.nav.dagpenger.rapportering.model.toPeriodeData
 import no.nav.dagpenger.rapportering.model.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
@@ -32,7 +31,6 @@ import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
 import no.nav.dagpenger.rapportering.utils.kontrollerAktiviteter
 import no.nav.dagpenger.rapportering.utils.kontrollerRapporteringsperiode
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.random.Random
 import kotlin.random.nextLong
@@ -358,7 +356,7 @@ class RapporteringService(
                     "Endret rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes. Begrunnelse for endring må oppgis",
                 )
             } else {
-                val endringId = hentendringId(ansvarligSystem, rapporteringsperiode.originalId, token)
+                val endringId = hentEndringId(ansvarligSystem, rapporteringsperiode.originalId, token)
 
                 // Oppretter nye ID for aktiviteter slik at vi kan lagre både original og midlertidig periode
                 val dager =
@@ -378,7 +376,12 @@ class RapporteringService(
             }
         }
 
-        return sendinnRapporteringsperiode(ansvarligSystem, periodeTilInnsending, token)
+        val arbeidssøkerperioder = arbeidssøkerService.hentCachedArbeidssøkerperioder(ident)
+        val opprettetAv = if (ansvarligSystem == AnsvarligSystem.ARENA) PeriodeData.OpprettetAv.Arena else PeriodeData.OpprettetAv.Dagpenger
+        // TODO: Vi sender PeriodeData med en ny status Innsendt til Arbeidssøkerregister, men er det greit for dp-meldekortregister?
+        val periodeData = periodeTilInnsending.toPeriodeData(ident, opprettetAv, arbeidssøkerperioder, "Innsendt")
+
+        return sendinnRapporteringsperiode(ansvarligSystem, periodeTilInnsending, periodeData, token)
             .also { response ->
                 if (response.status == "OK") {
                     logger.info("Journalføring rapporteringsperiode ${periodeTilInnsending.id}")
@@ -412,7 +415,7 @@ class RapporteringService(
                         }
                     }
 
-                    sendPeriodeDataTilRnR(ident, periodeTilInnsending)
+                    sendPeriodeDataTilRnR(ident, periodeData)
                     arbeidssøkerService.sendBekreftelse(ident, token, loginLevel, periodeTilInnsending)
                 } else {
                     // Oppdaterer perioden slik at den kan sendes inn på nytt
@@ -465,32 +468,14 @@ class RapporteringService(
             logger.error(e) { "Klarte ikke å slette rapporteringsperiode med id $periodeId" }
         }
 
-    private suspend fun sendPeriodeDataTilRnR(
+    private fun sendPeriodeDataTilRnR(
         ident: String,
-        rapporteringsperiode: Rapporteringsperiode,
+        periodeData: PeriodeData,
     ) {
         if (!unleash.isEnabled("send-periodedata")) {
             return
         }
 
-        val arbeidssøkerperioder = arbeidssøkerService.hentCachedArbeidssøkerperioder(ident)
-
-        val periodeData =
-            PeriodeData(
-                id = rapporteringsperiode.id,
-                ident = ident,
-                periode = rapporteringsperiode.periode,
-                dager = rapporteringsperiode.dager.toPeriodeDager(arbeidssøkerperioder),
-                kanSendesFra = rapporteringsperiode.kanSendesFra,
-                // Nå har vi meldekort kun fra Arena
-                opprettetAv = PeriodeData.OpprettetAv.Arena,
-                // dp-rapportering er kun for brukere
-                kilde = PeriodeData.Kilde(PeriodeData.Rolle.Bruker, ident),
-                type = if (rapporteringsperiode.erEndring()) PeriodeData.Type.Korrigert else PeriodeData.Type.Original,
-                status = "Innsendt",
-                innsendtTidspunkt = LocalDateTime.now(),
-                korrigeringAv = rapporteringsperiode.originalId,
-            )
         val message =
             JsonMessage.newMessage(
                 "meldekort_innsendt",
@@ -514,7 +499,7 @@ class RapporteringService(
         }
     }
 
-    private suspend fun hentendringId(
+    private suspend fun hentEndringId(
         ansvarligSystem: AnsvarligSystem,
         originalId: Long,
         token: String,
@@ -533,6 +518,7 @@ class RapporteringService(
     private suspend fun sendinnRapporteringsperiode(
         ansvarligSystem: AnsvarligSystem,
         periodeTilInnsending: Rapporteringsperiode,
+        periodeData: PeriodeData,
         token: String,
     ): InnsendingResponse {
         return if (ansvarligSystem == AnsvarligSystem.ARENA) {
@@ -540,7 +526,7 @@ class RapporteringService(
                 .sendinnRapporteringsperiode(periodeTilInnsending.toAdapterRapporteringsperiode(), token)
         } else {
             meldekortregisterService
-                .sendinnRapporteringsperiode(periodeTilInnsending, token)
+                .sendinnRapporteringsperiode(periodeData, token)
         }
     }
 }

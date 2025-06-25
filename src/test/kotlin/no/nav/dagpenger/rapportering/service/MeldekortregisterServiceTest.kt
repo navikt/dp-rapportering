@@ -7,7 +7,6 @@ import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.api.objectMapper
 import no.nav.dagpenger.rapportering.connector.createMockClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
-import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.PeriodeData
@@ -15,8 +14,6 @@ import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
 import no.nav.dagpenger.rapportering.model.PeriodeData.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
-import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
-import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -157,37 +154,35 @@ class MeldekortregisterServiceTest {
         val id = 123456789L
         val periode = Periode(LocalDate.now(), LocalDate.now().plusDays(13))
 
-        val rapporteringsperiode =
-            Rapporteringsperiode(
+        val periodeData =
+            PeriodeData(
                 id = id,
-                type = "09",
+                ident = "01020312345",
                 periode = periode,
                 dager =
                     (0..13)
                         .map { i ->
-                            Dag(
+                            PeriodeDag(
                                 dato = LocalDate.now().plusDays(i.toLong()),
                                 aktiviteter = listOf(Aktivitet(UUID.randomUUID(), Aktivitet.AktivitetsType.Utdanning, "")),
                                 dagIndex = i,
                             )
                         },
                 kanSendesFra = LocalDate.now(),
-                sisteFristForTrekk = periode.tilOgMed.plusDays(8),
-                kanSendes = true,
-                kanEndres = true,
+                opprettetAv = OpprettetAv.Dagpenger,
+                kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312345"),
+                type = Type.Korrigert,
+                status = "TilInnsending",
+                innsendtTidspunkt = LocalDateTime.now(),
+                korrigeringAv = 123456788L,
                 bruttoBelop = null,
                 begrunnelseEndring = "Begrunnelse",
-                status = RapporteringsperiodeStatus.TilUtfylling,
-                mottattDato = LocalDate.now(),
                 registrertArbeidssoker = true,
-                originalId = 123456788,
-                rapporteringstype = "type",
-                html = "<html />",
             )
 
         var response =
             runBlocking {
-                meldekortregisterService.sendinnRapporteringsperiode(rapporteringsperiode, token)
+                meldekortregisterService.sendinnRapporteringsperiode(periodeData, token)
             }
 
         response shouldBe InnsendingResponse(id, "OK", emptyList())
@@ -197,7 +192,7 @@ class MeldekortregisterServiceTest {
 
         response =
             runBlocking {
-                meldekortregisterService.sendinnRapporteringsperiode(rapporteringsperiode, token)
+                meldekortregisterService.sendinnRapporteringsperiode(periodeData, token)
             }
 
         response shouldBe InnsendingResponse(id, "FEIL", emptyList())

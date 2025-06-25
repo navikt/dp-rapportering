@@ -13,7 +13,6 @@ import no.nav.dagpenger.rapportering.connector.HttpClientUtils
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.PeriodeData
-import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 
 class MeldekortregisterService(
     meldekortregisterUrl: String = Configuration.meldekortregisterUrl,
@@ -73,7 +72,7 @@ class MeldekortregisterService(
         }
 
     suspend fun sendinnRapporteringsperiode(
-        rapporteringsperiode: Rapporteringsperiode,
+        rapporteringsperiode: PeriodeData,
         token: String,
     ): InnsendingResponse =
         withContext(Dispatchers.IO) {
