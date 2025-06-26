@@ -72,13 +72,13 @@ dependencies {
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
-    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.7.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.8.0")
 
-    implementation("io.confluent:kafka-streams-avro-serde:7.9.1")
+    implementation("io.confluent:kafka-streams-avro-serde:8.0.0")
     implementation("org.apache.avro:avro:1.12.0")
     schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:1.25.03.11.31-1")
 
-    implementation("io.getunleash:unleash-client-java:10.2.2")
+    implementation("io.getunleash:unleash-client-java:11.0.0")
 
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.1")
 
