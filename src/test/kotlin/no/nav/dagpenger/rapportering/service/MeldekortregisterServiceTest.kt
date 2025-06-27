@@ -67,7 +67,7 @@ class MeldekortregisterServiceTest {
         val periodeDataList =
             listOf(
                 PeriodeData(
-                    id = 1,
+                    id = "1",
                     ident = "01020312345",
                     periode = periode1,
                     dager = emptyList(),
@@ -83,7 +83,7 @@ class MeldekortregisterServiceTest {
                     registrertArbeidssoker = null,
                 ),
                 PeriodeData(
-                    id = 2,
+                    id = "2",
                     ident = "01020312346",
                     periode = periode2,
                     dager =
@@ -105,7 +105,7 @@ class MeldekortregisterServiceTest {
                     type = Type.Korrigert,
                     status = "Endret",
                     innsendtTidspunkt = LocalDateTime.now(),
-                    korrigeringAv = 123456789,
+                    korrigeringAv = "123456789",
                     bruttoBelop = 123.0,
                     begrunnelseEndring = "Begrunnelse",
                     registrertArbeidssoker = true,
@@ -140,7 +140,7 @@ class MeldekortregisterServiceTest {
 
         val response =
             runBlocking {
-                meldekortregisterService.hentEndringId(123L, token)
+                meldekortregisterService.hentEndringId("123", token)
             }
 
         response shouldBe "124"
@@ -151,7 +151,7 @@ class MeldekortregisterServiceTest {
         // OK
         var meldekortregisterService = meldekortregisterService(HttpStatusCode.OK)
 
-        val id = 123456789L
+        val id = "123456789"
         val periode = Periode(LocalDate.now(), LocalDate.now().plusDays(13))
 
         val periodeData =
@@ -174,7 +174,7 @@ class MeldekortregisterServiceTest {
                 type = Type.Korrigert,
                 status = "TilInnsending",
                 innsendtTidspunkt = LocalDateTime.now(),
-                korrigeringAv = 123456788L,
+                korrigeringAv = "123456788",
                 bruttoBelop = null,
                 begrunnelseEndring = "Begrunnelse",
                 registrertArbeidssoker = true,

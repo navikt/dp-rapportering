@@ -1,7 +1,7 @@
 package no.nav.dagpenger.rapportering.model
 
 data class InnsendingResponse(
-    val id: Long,
+    val id: String,
     val status: String,
     val feil: List<InnsendingFeil>,
 )

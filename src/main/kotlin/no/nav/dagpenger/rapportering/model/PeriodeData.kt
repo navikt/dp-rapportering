@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 private val logger = KotlinLogging.logger {}
 
 data class PeriodeData(
-    val id: Long,
+    val id: String,
     val ident: String,
     val periode: Periode,
     val dager: List<PeriodeDag>,
@@ -22,7 +22,7 @@ data class PeriodeData(
     val status: String = "Innsendt",
     val innsendtTidspunkt: LocalDateTime?,
     // Refererer til originalt meldekort ved korrigering
-    val korrigeringAv: Long?,
+    val korrigeringAv: String?,
     val bruttoBelop: Double? = null,
     val begrunnelseEndring: String? = null,
     val registrertArbeidssoker: Boolean? = null,

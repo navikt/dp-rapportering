@@ -294,7 +294,7 @@ class MeldepliktConnectorTest {
 
     @Test
     fun `henter endringId`() {
-        val id = 1806985352L
+        val id = "1806985352"
         val connector = meldepliktConnector(HttpStatusCode.OK, id.toString())
 
         val response =
@@ -302,7 +302,7 @@ class MeldepliktConnectorTest {
                 connector.hentEndringId(id, subjectToken)
             }
 
-        response.toLong() shouldBe id
+        response shouldBe id
     }
 
     @Test
@@ -347,7 +347,7 @@ class MeldepliktConnectorTest {
 
         val rapporteringsperiode =
             Rapporteringsperiode(
-                id = 1L,
+                id = "1",
                 type = "05",
                 periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()),
                 dager = emptyList(),
@@ -370,7 +370,7 @@ class MeldepliktConnectorTest {
             }
 
         with(response) {
-            id shouldBe 1L
+            id shouldBe "1"
             status shouldBe "OK"
             feil.size shouldBe 0
         }

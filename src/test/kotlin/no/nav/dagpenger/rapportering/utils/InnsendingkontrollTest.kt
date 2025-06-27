@@ -235,7 +235,7 @@ fun lagRapporteringsperiode(
     registrertArbeidssoker: Boolean? = true,
     dager: List<Dag> = getDager(startDato = LocalDate.now().minusDays(13)),
 ) = Rapporteringsperiode(
-    id = 1,
+    id = "1",
     type = "05",
     periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()),
     dager = dager,

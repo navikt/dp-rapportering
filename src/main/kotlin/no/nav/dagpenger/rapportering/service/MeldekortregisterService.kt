@@ -56,7 +56,7 @@ class MeldekortregisterService(
         }
 
     suspend fun hentEndringId(
-        id: Long,
+        id: String,
         token: String,
     ): String =
         withContext(Dispatchers.IO) {

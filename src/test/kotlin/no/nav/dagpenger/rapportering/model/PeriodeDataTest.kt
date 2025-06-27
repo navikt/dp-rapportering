@@ -214,7 +214,7 @@ class PeriodeDataTest {
         val periodeDataList =
             listOf(
                 PeriodeData(
-                    id = 1,
+                    id = "1",
                     ident = "01020312345",
                     periode = periode1,
                     dager = emptyList(),
@@ -230,7 +230,7 @@ class PeriodeDataTest {
                     registrertArbeidssoker = null,
                 ),
                 PeriodeData(
-                    id = 2,
+                    id = "2",
                     ident = "01020312346",
                     periode = periode2,
                     dager =
@@ -252,7 +252,7 @@ class PeriodeDataTest {
                     type = Type.Korrigert,
                     status = "Endret",
                     innsendtTidspunkt = LocalDateTime.now(),
-                    korrigeringAv = 123456789,
+                    korrigeringAv = "123456789",
                     bruttoBelop = 123.0,
                     begrunnelseEndring = "Begrunnelse",
                     registrertArbeidssoker = true,
@@ -261,7 +261,7 @@ class PeriodeDataTest {
 
         val rapporteringsperioder = periodeDataList.toRapporteringsperioder()
         rapporteringsperioder.size shouldBe 2
-        rapporteringsperioder[0].id shouldBe 1L
+        rapporteringsperioder[0].id shouldBe "1"
         rapporteringsperioder[0].type shouldBe "05"
         rapporteringsperioder[0].periode shouldBe periode1
         rapporteringsperioder[0].dager shouldBe emptyList()
@@ -276,7 +276,7 @@ class PeriodeDataTest {
         rapporteringsperioder[0].originalId shouldBe null
         rapporteringsperioder[0].rapporteringstype shouldBe null
         rapporteringsperioder[0].html shouldBe null
-        rapporteringsperioder[1].id shouldBe 2L
+        rapporteringsperioder[1].id shouldBe "2"
         rapporteringsperioder[1].type shouldBe "09"
         rapporteringsperioder[1].periode shouldBe periode2
         rapporteringsperioder[1].dager.size shouldBe 2
@@ -294,7 +294,7 @@ class PeriodeDataTest {
         rapporteringsperioder[1].status shouldBe RapporteringsperiodeStatus.Endret
         rapporteringsperioder[1].mottattDato shouldBe LocalDate.now()
         rapporteringsperioder[1].registrertArbeidssoker shouldBe true
-        rapporteringsperioder[1].originalId shouldBe 123456789
+        rapporteringsperioder[1].originalId shouldBe "123456789"
         rapporteringsperioder[1].rapporteringstype shouldBe null
         rapporteringsperioder[1].html shouldBe null
     }

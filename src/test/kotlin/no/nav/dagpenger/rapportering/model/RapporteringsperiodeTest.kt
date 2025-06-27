@@ -34,8 +34,8 @@ class RapporteringsperiodeTest {
 
     @Test
     fun `kan konvertere til PeriodeData`() {
-        val id = 123456789L
-        val originalId = 123456788L
+        val id = "123456789"
+        val originalId = "123456788"
         val ident = "01020312345"
         val periode = Periode(LocalDate.now(), LocalDate.now().plusDays(13))
         val aktiviteter = listOf(Aktivitet(UUID.randomUUID(), Aktivitet.AktivitetsType.Utdanning, ""))

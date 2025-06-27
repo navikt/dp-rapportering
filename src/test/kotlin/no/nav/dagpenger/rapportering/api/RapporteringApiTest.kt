@@ -141,7 +141,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         ),
                     sendInnResponse =
                         InnsendingResponse(
-                            id = 123L,
+                            id = "123",
                             status = "FEIL",
                             feil = listOf(InnsendingFeil("kode", listOf("param1", "param2"))),
                         ),
@@ -154,7 +154,7 @@ class RapporteringApiTest : ApiTestSetup() {
             with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(registrertArbeidssoker = true))) {
                 status shouldBe HttpStatusCode.BadRequest
                 val innsendingResponse = defaultObjectMapper.readValue<InnsendingResponse>(bodyAsText())
-                innsendingResponse.id shouldBe 123L
+                innsendingResponse.id shouldBe "123"
                 innsendingResponse.status shouldBe "FEIL"
             }
 
@@ -162,7 +162,7 @@ class RapporteringApiTest : ApiTestSetup() {
             with(client.doGet("/rapporteringsperiode/123", issueToken(fnr))) {
                 status shouldBe HttpStatusCode.OK
                 val periode = defaultObjectMapper.readValue<Rapporteringsperiode>(bodyAsText())
-                periode.id shouldBe 123L
+                periode.id shouldBe "123"
                 periode.status shouldBe TilUtfylling
                 periode.kanSendes shouldBe true
                 periode.mottattDato shouldBe null
@@ -243,7 +243,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 client.doPost(
                     "/rapporteringsperiode",
                     issueToken(fnr),
-                    rapporteringsperiodeFor(id = nyId, status = TilUtfylling, begrunnelseEndring = null, originalId = 125),
+                    rapporteringsperiodeFor(id = nyId, status = TilUtfylling, begrunnelseEndring = null, originalId = "125"),
                 ),
             ) {
                 status shouldBe HttpStatusCode.BadRequest
@@ -262,7 +262,7 @@ class RapporteringApiTest : ApiTestSetup() {
             val response = client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
 
             response.httpResponse.status shouldBe HttpStatusCode.OK
-            response.body.id shouldBe 123L
+            response.body.id shouldBe "123"
         }
 
     @Test
@@ -275,7 +275,7 @@ class RapporteringApiTest : ApiTestSetup() {
             val response = client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/126", issueToken(fnr))
 
             response.httpResponse.status shouldBe HttpStatusCode.OK
-            response.body.id shouldBe 126L
+            response.body.id shouldBe "126"
         }
 
     @Test
@@ -311,7 +311,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 ),
             ) {
                 httpResponse.status shouldBe HttpStatusCode.OK
-                body.id shouldBe 123
+                body.id shouldBe "123"
             }
         }
 
@@ -330,7 +330,7 @@ class RapporteringApiTest : ApiTestSetup() {
             val periodeResponse =
                 client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
             with(periodeResponse.body) {
-                id shouldBe 123L
+                id shouldBe "123"
                 status shouldBe TilUtfylling
                 bruttoBelop shouldBe null
                 registrertArbeidssoker shouldBe null
@@ -367,7 +367,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
             periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
             with(periodeResponse.body) {
-                id shouldBe 123L
+                id shouldBe "123"
                 status shouldBe TilUtfylling
                 bruttoBelop shouldBe null
                 registrertArbeidssoker shouldBe true
@@ -422,7 +422,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
             periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
             with(periodeResponse.body) {
-                id shouldBe 123L
+                id shouldBe "123"
                 status shouldBe TilUtfylling
                 bruttoBelop shouldBe null
                 registrertArbeidssoker shouldBe null
@@ -460,7 +460,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
             periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
             with(periodeResponse.body) {
-                id shouldBe 123L
+                id shouldBe "123"
                 dager.first().aktiviteter.first() shouldBe aktivitet
             }
 
@@ -470,7 +470,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
             periodeResponseAfterDelete.httpResponse.status shouldBe HttpStatusCode.OK
             with(periodeResponseAfterDelete.body) {
-                id shouldBe 123L
+                id shouldBe "123"
                 dager.first().aktiviteter shouldBe emptyList()
             }
         }
@@ -528,7 +528,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
             periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
             with(periodeResponse.body) {
-                id shouldBe 123L
+                id shouldBe "123"
                 rapporteringstype shouldBe "harAktivitet"
             }
         }
@@ -587,7 +587,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 status shouldBe TilUtfylling
                 kanEndres shouldBe false
                 kanSendes shouldBe true
-                originalId shouldBe 125L
+                originalId shouldBe "125"
             }
         }
     }
@@ -620,7 +620,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 client.doPostAndReceive<Rapporteringsperiode>("/rapporteringsperiode/125/endre", issueToken(fnr))
             response.httpResponse.status shouldBe HttpStatusCode.OK
             with(response.body) {
-                id shouldNotBe 125L
+                id shouldNotBe "125"
                 dager.forEach { dag ->
                     dag.aktiviteter.forEach { aktivitet ->
                         aktivitet.type shouldBe AktivitetsType.Arbeid
@@ -630,7 +630,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 status shouldBe TilUtfylling
                 kanEndres shouldBe false
                 kanSendes shouldBe true
-                originalId shouldBe 125L
+                originalId shouldBe "125"
             }
         }
     }
@@ -673,8 +673,8 @@ class RapporteringApiTest : ApiTestSetup() {
             response.httpResponse.status shouldBe HttpStatusCode.OK
             with(response.body) {
                 size shouldBe 2
-                first().id shouldBe 123L
-                last().id shouldBe 124L
+                first().id shouldBe "123"
+                last().id shouldBe "124"
             }
         }
 
@@ -790,16 +790,16 @@ class RapporteringApiTest : ApiTestSetup() {
             response.httpResponse.status shouldBe HttpStatusCode.OK
             with(response.body) {
                 size shouldBe 10
-                this[0].id shouldBe 127L
-                this[1].id shouldBe 131L
-                this[2].id shouldBe 130L
-                this[3].id shouldBe 129L
-                this[4].id shouldBe 128L
-                this[5].id shouldBe 126L
-                this[6].id shouldBe 125L
-                this[7].id shouldBe 124L
-                this[8].id shouldBe 123L
-                this[9].id shouldBe 122L
+                this[0].id shouldBe "127"
+                this[1].id shouldBe "131"
+                this[2].id shouldBe "130"
+                this[3].id shouldBe "129"
+                this[4].id shouldBe "128"
+                this[5].id shouldBe "126"
+                this[6].id shouldBe "125"
+                this[7].id shouldBe "124"
+                this[8].id shouldBe "123"
+                this[9].id shouldBe "122"
             }
         }
 
@@ -845,7 +845,7 @@ class RapporteringApiTest : ApiTestSetup() {
         sendteRapporteringsperioderResponseStatus: HttpStatusCode = HttpStatusCode.OK,
         endreRapporteringsperiodeResponse: Long = 321L,
         endreRapporteringsperiodeResponseStatus: HttpStatusCode = HttpStatusCode.OK,
-        sendInnResponse: InnsendingResponse? = InnsendingResponse(id = 123L, status = "OK", feil = emptyList()),
+        sendInnResponse: InnsendingResponse? = InnsendingResponse(id = "123", status = "OK", feil = emptyList()),
         sendInnResponseStatus: HttpStatusCode = HttpStatusCode.OK,
         personResponse: String = person(),
         personResponseStatus: HttpStatusCode = HttpStatusCode.OK,

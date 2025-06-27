@@ -14,7 +14,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 data class Rapporteringsperiode(
-    val id: Long,
+    val id: String,
     val type: String,
     val periode: Periode,
     val dager: List<Dag>,
@@ -27,7 +27,7 @@ data class Rapporteringsperiode(
     val status: RapporteringsperiodeStatus,
     val mottattDato: LocalDate?,
     val registrertArbeidssoker: Boolean?,
-    val originalId: Long?,
+    val originalId: String?,
     val rapporteringstype: String?,
     val html: String? = null,
 )
