@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter
 
 class PersonregisterConnector(
     personregisterUrl: String = Configuration.personregisterUrl,
-    tokenProvider: (String) -> String? = Configuration.tokenXClient(Configuration.personregisterUrlAudience),
+    tokenProvider: (String) -> String? = Configuration.tokenXClient(Configuration.personregisterAudience),
     httpClient: HttpClient,
     actionTimer: ActionTimer,
 ) {
@@ -87,9 +87,15 @@ data class Personstatus(
     val ident: String,
     val status: Brukerstatus,
     val overtattBekreftelse: Boolean,
+    val ansvarligSystem: AnsvarligSystem?,
 )
 
 enum class Brukerstatus {
     DAGPENGERBRUKER,
     IKKE_DAGPENGERBRUKER,
+}
+
+enum class AnsvarligSystem {
+    ARENA,
+    DP,
 }

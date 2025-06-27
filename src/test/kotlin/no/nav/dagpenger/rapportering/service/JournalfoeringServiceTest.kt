@@ -283,7 +283,7 @@ class JournalfoeringServiceTest {
         val fom = LocalDate.of(2024, 6, 24)
 
         return Rapporteringsperiode(
-            id = 1L,
+            id = "1",
             type = "05",
             periode = Periode(fom, fom.plusDays(13)),
             dager =
@@ -320,7 +320,7 @@ class JournalfoeringServiceTest {
             status = TilUtfylling,
             mottattDato = LocalDate.now(),
             registrertArbeidssoker = true,
-            originalId = if (endring) 123L else null,
+            originalId = if (endring) "123" else null,
             rapporteringstype = null,
             html = html,
         )
@@ -357,7 +357,7 @@ class JournalfoeringServiceTest {
         val to = behov.get("tilleggsopplysninger")
 
         to.get(0).get("first").asText() shouldBe "periodeId"
-        to.get(0).get("second").asLong() shouldBe rapporteringsperiode.id
+        to.get(0).get("second").asText() shouldBe rapporteringsperiode.id
         to.get(1).get("first").asText() shouldBe "kanSendesFra"
         to.get(1).get("second").asText() shouldBe rapporteringsperiode.kanSendesFra.format(DateTimeFormatter.ISO_DATE)
         to.get(2).get("first").asText() shouldBe "userAgent"

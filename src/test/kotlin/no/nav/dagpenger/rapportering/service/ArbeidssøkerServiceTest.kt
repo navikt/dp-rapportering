@@ -297,7 +297,7 @@ class ArbeidssøkerServiceTest {
             ArbeidssøkerService(
                 kallLoggService = kallLoggService,
                 personregisterService = personregisterService,
-                httpClient = createMockClient(500, ""),
+                httpClient = createMockClient(HttpStatusCode.InternalServerError),
                 bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
                 recordKeyTokenProvider = recordKeyTokenProvider,
             )

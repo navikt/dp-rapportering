@@ -169,7 +169,7 @@ internal fun Application.rapporteringApi(
                     get {
                         val ident = call.ident()
                         val jwtToken = call.request.jwt()
-                        val rapporteringId = call.getParameter("id").toLong()
+                        val rapporteringId = call.getParameter("id")
                         val hentOriginal = call.request.header("Hent-Original")?.toBoolean() ?: true
 
                         rapporteringService
@@ -184,7 +184,7 @@ internal fun Application.rapporteringApi(
                         post {
                             val ident = call.ident()
                             val jwtToken = call.request.jwt()
-                            val rapporteringId = call.getParameter("id").toLong()
+                            val rapporteringId = call.getParameter("id")
 
                             rapporteringService
                                 .startUtfylling(rapporteringId, ident, jwtToken)
@@ -195,7 +195,7 @@ internal fun Application.rapporteringApi(
                     route("/arbeidssoker") {
                         post {
                             val ident = call.ident()
-                            val rapporteringId = call.getParameter("id").toLong()
+                            val rapporteringId = call.getParameter("id")
                             val arbeidssokerRequest = call.receive(ArbeidssokerRequest::class)
 
                             rapporteringService.oppdaterRegistrertArbeidssoker(
@@ -209,7 +209,7 @@ internal fun Application.rapporteringApi(
 
                     route("/aktivitet") {
                         post {
-                            val rapporteringId = call.getParameter("id").toLong()
+                            val rapporteringId = call.getParameter("id")
                             val dag = call.receive(Dag::class)
 
                             rapporteringService.lagreEllerOppdaterAktiviteter(rapporteringId, dag)
@@ -220,7 +220,7 @@ internal fun Application.rapporteringApi(
                     route("/aktiviteter") {
                         delete {
                             val ident = call.ident()
-                            val rapporteringId = call.getParameter("id").toLong()
+                            val rapporteringId = call.getParameter("id")
 
                             rapporteringService.resettAktiviteter(rapporteringId, ident)
                             call.respond(HttpStatusCode.NoContent)
@@ -230,7 +230,7 @@ internal fun Application.rapporteringApi(
                     route("/begrunnelse") {
                         post {
                             val ident = call.ident()
-                            val rapporteringId = call.getParameter("id").toLong()
+                            val rapporteringId = call.getParameter("id")
                             val begrunnelse = call.receive(BegrunnelseRequest::class)
 
                             rapporteringService.oppdaterBegrunnelse(rapporteringId, ident, begrunnelse.begrunnelseEndring)
@@ -241,7 +241,7 @@ internal fun Application.rapporteringApi(
                     route("/rapporteringstype") {
                         post {
                             val ident = call.ident()
-                            val rapporteringId = call.getParameter("id").toLong()
+                            val rapporteringId = call.getParameter("id")
                             val rapporteringstype = call.receive(RapporteringstypeRequest::class).rapporteringstype
 
                             if (rapporteringstype.isBlank()) {
@@ -257,7 +257,7 @@ internal fun Application.rapporteringApi(
                         post {
                             val ident = call.ident()
                             val jwtToken = call.request.jwt()
-                            val id = call.getParameter("id").toLong()
+                            val id = call.getParameter("id")
 
                             rapporteringService
                                 .startEndring(id, ident, jwtToken)

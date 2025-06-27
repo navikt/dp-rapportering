@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.connector
 
 import io.kotest.matchers.shouldBe
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
@@ -23,8 +24,8 @@ class PersonregisterConnectorTest {
     }
 
     private fun personregisterConnector(
-        responseBody: String,
-        statusCode: Int,
+        statusCode: HttpStatusCode,
+        responseBody: String = "",
     ) = PersonregisterConnector(
         personregisterUrl = personregisterUrl,
         tokenProvider = testTokenProvider,
@@ -33,8 +34,75 @@ class PersonregisterConnectorTest {
     )
 
     @Test
+    fun `hentPersonstatus returnerer riktig overtattBekreftelse og ansvarligSystem`() {
+        // True, ARENA
+        var connector =
+            personregisterConnector(
+                HttpStatusCode.OK,
+                """
+                {
+                  "ident": "$ident",
+                  "status": "DAGPENGERBRUKER",
+                  "overtattBekreftelse": true,
+                  "ansvarligSystem": "ARENA" 
+                }
+                """.trimIndent(),
+            )
+
+        var response =
+            runBlocking {
+                connector.hentPersonstatus(ident, subjectToken)
+            }
+
+        response?.overtattBekreftelse shouldBe true
+        response?.ansvarligSystem shouldBe AnsvarligSystem.ARENA
+
+        // False, DP
+        connector =
+            personregisterConnector(
+                HttpStatusCode.OK,
+                """
+                {
+                  "ident": "$ident",
+                  "status": "DAGPENGERBRUKER",
+                  "overtattBekreftelse": false,
+                  "ansvarligSystem": "DP" 
+                }
+                """.trimIndent(),
+            )
+
+        response =
+            runBlocking {
+                connector.hentPersonstatus(ident, subjectToken)
+            }
+
+        response?.overtattBekreftelse shouldBe false
+        response?.ansvarligSystem shouldBe AnsvarligSystem.DP
+
+        // Null, Null
+        connector =
+            personregisterConnector(
+                HttpStatusCode.OK,
+                """
+                {
+                  "ident": "$ident",
+                  "status": "DAGPENGERBRUKER"
+                }
+                """.trimIndent(),
+            )
+
+        response =
+            runBlocking {
+                connector.hentPersonstatus(ident, subjectToken)
+            }
+
+        response?.overtattBekreftelse shouldBe false
+        response?.ansvarligSystem shouldBe null
+    }
+
+    @Test
     fun `hentBrukerstatus returnerer IKKE_DAGPENGERBRUKER hvis 404 Not Found`() {
-        val connector = personregisterConnector("", 404)
+        val connector = personregisterConnector(HttpStatusCode.NotFound)
 
         val response =
             runBlocking {
@@ -48,13 +116,13 @@ class PersonregisterConnectorTest {
     fun `hentBrukerstatus returnerer IKKE_DAGPENGERBRUKER hvis IKKE_DAGPENGERBRUKER`() {
         val connector =
             personregisterConnector(
+                HttpStatusCode.OK,
                 """
                 {
                   "ident": "$ident",
                   "status": "IKKE_DAGPENGERBRUKER"
                 }
                 """.trimIndent(),
-                200,
             )
 
         val response =
@@ -69,13 +137,13 @@ class PersonregisterConnectorTest {
     fun `hentBrukerstatus returnerer DAGPENGERBRUKER hvis DAGPENGERBRUKER`() {
         val connector =
             personregisterConnector(
+                HttpStatusCode.OK,
                 """
                 {
                   "ident": "$ident",
                   "status": "DAGPENGERBRUKER"
                 }
                 """.trimIndent(),
-                200,
             )
 
         val response =
@@ -88,7 +156,7 @@ class PersonregisterConnectorTest {
 
     @Test
     fun `oppdaterPersonstatus fungerer`() {
-        val connector = personregisterConnector("", 200)
+        val connector = personregisterConnector(HttpStatusCode.OK)
 
         runBlocking {
             connector.oppdaterPersonstatus(ident, subjectToken, LocalDate.now())

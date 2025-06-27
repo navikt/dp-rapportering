@@ -28,7 +28,7 @@ class MeldepliktService(
             .hentInnsendteRapporteringsperioder(ident, token)
 
     suspend fun hentEndringId(
-        originalId: Long,
+        originalId: String,
         token: String,
     ): String =
         meldepliktConnector

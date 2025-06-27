@@ -22,7 +22,7 @@ class RapporteringRepositoryPostgres(
     private val actionTimer: ActionTimer,
 ) : RapporteringRepository {
     override suspend fun hentRapporteringsperiode(
-        id: Long,
+        id: String,
         ident: String,
     ): Rapporteringsperiode? =
         actionTimer.timedAction("db-hentRapporteringsperiode") {
@@ -46,7 +46,7 @@ class RapporteringRepositoryPostgres(
         }
 
     override suspend fun finnesRapporteringsperiode(
-        id: Long,
+        id: String,
         ident: String,
     ): Boolean =
         actionTimer.timedAction("db-finnesRapporteringsperiode") {
@@ -59,27 +59,27 @@ class RapporteringRepositoryPostgres(
             }.let { it != null }
         }
 
-    override suspend fun hentRapporteringsperiodeIdForInnsendtePerioder(): List<Long> =
+    override suspend fun hentRapporteringsperiodeIdForInnsendtePerioder(): List<String> =
         actionTimer.timedAction("db-hentRapporteringsperiodeIdForInnsendtePerioder") {
             using(sessionOf(dataSource)) { session ->
                 session.run(
                     queryOf(
                         "SELECT id FROM rapporteringsperiode WHERE status = ? AND mottatt_dato <= CURRENT_DATE - INTERVAL '5 days'",
                         RapporteringsperiodeStatus.Innsendt.name,
-                    ).map { it.long("id") }
+                    ).map { it.string("id") }
                         .asList,
                 )
             }
         }
 
-    override suspend fun hentRapporteringsperiodeIdForMidlertidigePerioder(): List<Long> =
+    override suspend fun hentRapporteringsperiodeIdForMidlertidigePerioder(): List<String> =
         actionTimer.timedAction("db-hentRapporteringsperiodeIdForMidlertidigePerioder") {
             using(sessionOf(dataSource)) { session ->
                 session.run(
                     queryOf(
                         "SELECT id FROM rapporteringsperiode WHERE status = ?",
                         RapporteringsperiodeStatus.Midlertidig.name,
-                    ).map { it.long("id") }
+                    ).map { it.string("id") }
                         .asList,
                 )
             }
@@ -89,12 +89,12 @@ class RapporteringRepositoryPostgres(
     // Men vi må samtidig gi nok tid slik at man kan sende meldekort selv om frist for trekk er passert
     // Bruker tas ut av arbeidssøkerregisteret når det har gått mer enn 20 dager siden siste innsendt meldekort
     // Da er det OK å slette meldekort etter 30 dager fra TOM-datoen
-    override suspend fun hentRapporteringsperiodeIdForPerioderEtterSisteFrist(): List<Long> =
+    override suspend fun hentRapporteringsperiodeIdForPerioderEtterSisteFrist(): List<String> =
         actionTimer.timedAction("db-hentRapporteringsperiodeIdForPerioderEtterSisteFrist") {
             using(sessionOf(dataSource)) { session ->
                 session.run(
                     queryOf("SELECT id FROM rapporteringsperiode WHERE tom <= CURRENT_DATE - INTERVAL '30 days'")
-                        .map { it.long("id") }
+                        .map { it.string("id") }
                         .asList,
                 )
             }
@@ -141,7 +141,7 @@ class RapporteringRepositoryPostgres(
         }
 
     // OBS! Denne funksjonen henter dager uten aktiviteter. Aktiviteter må hentes separat.
-    override suspend fun hentDagerUtenAktivitet(rapporteringId: Long): List<Pair<UUID, Dag>> =
+    override suspend fun hentDagerUtenAktivitet(rapporteringId: String): List<Pair<UUID, Dag>> =
         using(sessionOf(dataSource)) { session ->
             session.run(
                 queryOf(
@@ -152,7 +152,7 @@ class RapporteringRepositoryPostgres(
         }
 
     override suspend fun hentDagId(
-        rapporteringId: Long,
+        rapporteringId: String,
         dagIdex: Int,
     ): UUID =
         actionTimer.timedAction("db-hentDagId") {
@@ -182,7 +182,7 @@ class RapporteringRepositoryPostgres(
             }
         }
 
-    override suspend fun hentKanSendes(rapporteringId: Long): Boolean? =
+    override suspend fun hentKanSendes(rapporteringId: String): Boolean? =
         actionTimer.timedAction("db-hentKanSendes") {
             using(sessionOf(dataSource)) { session ->
                 session.run(
@@ -254,7 +254,7 @@ class RapporteringRepositoryPostgres(
         )
 
     private fun TransactionalSession.lagreDager(
-        rapporteringId: Long,
+        rapporteringId: String,
         dager: List<Dag>,
     ): Int =
         this
@@ -271,7 +271,7 @@ class RapporteringRepositoryPostgres(
             ).sum()
 
     override suspend fun slettOgLagreAktiviteter(
-        rapporteringId: Long,
+        rapporteringId: String,
         dagId: UUID,
         dag: Dag,
     ) = actionTimer.timedAction("db-lagreAktiviteter") {
@@ -306,7 +306,7 @@ class RapporteringRepositoryPostgres(
     }
 
     override suspend fun oppdaterRegistrertArbeidssoker(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         registrertArbeidssoker: Boolean,
     ) = actionTimer.timedAction("db-oppdaterRegistrertArbeidssoker") {
@@ -364,7 +364,7 @@ class RapporteringRepositoryPostgres(
     }
 
     override suspend fun oppdaterBegrunnelse(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         begrunnelse: String,
     ) = actionTimer.timedAction("db-oppdaterBegrunnelse") {
@@ -390,7 +390,7 @@ class RapporteringRepositoryPostgres(
     }
 
     override suspend fun settKanSendes(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         kanSendes: Boolean,
     ) = actionTimer.timedAction("db-settKanSendes") {
@@ -416,7 +416,7 @@ class RapporteringRepositoryPostgres(
     }
 
     override suspend fun oppdaterRapporteringstype(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         rapporteringstype: String,
     ) = actionTimer.timedAction("db-oppdaterRapporteringstype") {
@@ -442,7 +442,7 @@ class RapporteringRepositoryPostgres(
     }
 
     override suspend fun oppdaterPeriodeEtterInnsending(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         kanEndres: Boolean,
         kanSendes: Boolean,
@@ -496,7 +496,7 @@ class RapporteringRepositoryPostgres(
             }
         }
 
-    override suspend fun slettRaporteringsperiode(rapporteringId: Long) =
+    override suspend fun slettRaporteringsperiode(rapporteringId: String) =
         actionTimer.timedAction("db-slettRaporteringsperiode") {
             using(sessionOf(dataSource)) { session ->
                 session.transaction { tx ->
@@ -554,7 +554,7 @@ private fun Int.validateRowsAffected(excepted: Int = 1) {
 
 private fun Row.toRapporteringsperiode() =
     Rapporteringsperiode(
-        id = long("id"),
+        id = string("id"),
         type = stringOrNull("type") ?: "09",
         kanSendesFra = localDate("kan_sendes_fra"),
         kanSendes = boolean("kan_sendes"),
@@ -569,7 +569,7 @@ private fun Row.toRapporteringsperiode() =
                 tilOgMed = localDate("tom"),
             ),
         begrunnelseEndring = stringOrNull("begrunnelse_endring"),
-        originalId = longOrNull("original_id"),
+        originalId = stringOrNull("original_id"),
         rapporteringstype = stringOrNull("rapporteringstype"),
         mottattDato = localDateOrNull("mottatt_dato"),
     )

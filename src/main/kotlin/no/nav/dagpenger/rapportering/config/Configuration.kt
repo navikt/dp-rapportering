@@ -70,7 +70,15 @@ internal object Configuration {
         }
     }
 
-    val personregisterUrlAudience by lazy { properties[Key("PERSONREGISTER_AUDIENCE", stringType)] }
+    val personregisterAudience by lazy { properties[Key("PERSONREGISTER_AUDIENCE", stringType)] }
+
+    val meldekortregisterUrl by lazy {
+        properties[Key("MELDEKORTREGISTER_HOST", stringType)].let {
+            "https://$it"
+        }
+    }
+
+    val meldekortregisterAudience by lazy { properties[Key("MELDEKORTREGISTER_AUDIENCE", stringType)] }
 
     val pdfGeneratorUrl by lazy { properties[Key("PDF_GENERATOR_URL", stringType)] }
 

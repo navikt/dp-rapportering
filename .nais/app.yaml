@@ -42,6 +42,10 @@ spec:
       value: {{PERSONREGISTER_HOST}}
     - name: PERSONREGISTER_AUDIENCE
       value: {{PERSONREGISTER_AUDIENCE}}
+    - name: MELDEKORTREGISTER_HOST
+      value: {{MELDEKORTREGISTER_HOST}}
+    - name: MELDEKORTREGISTER_AUDIENCE
+      value: {{MELDEKORTREGISTER_AUDIENCE}}
     - name: PDF_GENERATOR_URL
       value: {{PDF_GENERATOR_URL}}
     - name: GITHUB_SHA
@@ -92,6 +96,7 @@ spec:
         - application: dp-arena-meldeplikt-adapter
         - application: dp-behov-pdf-generator
         - application: dp-rapportering-personregister
+        - application: dp-meldekortregister
         - application: paw-kafka-key-generator
           namespace: paw
         - application: paw-arbeidssoekerregisteret-api-oppslag
