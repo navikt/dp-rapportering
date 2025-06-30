@@ -17,7 +17,7 @@ data class PeriodeData(
     val dager: List<PeriodeDag>,
     val kanSendesFra: LocalDate,
     val opprettetAv: OpprettetAv,
-    val kilde: Kilde,
+    val kilde: Kilde?,
     val type: Type,
     val status: String = "Innsendt",
     val innsendtTidspunkt: LocalDateTime?,
