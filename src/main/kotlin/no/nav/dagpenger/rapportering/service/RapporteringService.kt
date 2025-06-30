@@ -53,7 +53,7 @@ class RapporteringService(
     ): String = meldepliktService.harDpMeldeplikt(ident, token)
 
     suspend fun hentPeriode(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         token: String,
         hentOriginal: Boolean,
@@ -140,7 +140,7 @@ class RapporteringService(
         }
 
     suspend fun startUtfylling(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         token: String,
     ) {
@@ -151,7 +151,7 @@ class RapporteringService(
     }
 
     suspend fun startEndring(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         token: String,
     ): Rapporteringsperiode =
@@ -185,9 +185,10 @@ class RapporteringService(
                 )
             }
 
-    private suspend fun lagMidlertidigEndringId(ident: String): Long {
+    private suspend fun lagMidlertidigEndringId(ident: String): String {
         while (true) {
-            val midlertidigId = Random.nextLong(0L..Long.MAX_VALUE)
+            // Her må vi ha String som kan konverteres til Long fordi midlertidigId går viedere også til Adapteren
+            val midlertidigId = Random.nextLong(0L..Long.MAX_VALUE).toString()
             if (!rapporteringRepository.finnesRapporteringsperiode(midlertidigId, ident)) {
                 return midlertidigId
             }
@@ -284,7 +285,7 @@ class RapporteringService(
     }
 
     suspend fun lagreEllerOppdaterAktiviteter(
-        rapporteringId: Long,
+        rapporteringId: String,
         dag: Dag,
     ) {
         kontrollerAktiviteter(listOf(dag))
@@ -293,7 +294,7 @@ class RapporteringService(
     }
 
     suspend fun resettAktiviteter(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
     ) {
         if (!rapporteringRepository.finnesRapporteringsperiode(rapporteringId, ident)) {
@@ -306,7 +307,7 @@ class RapporteringService(
     }
 
     suspend fun oppdaterRegistrertArbeidssoker(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         registrertArbeidssoker: Boolean,
     ) = rapporteringRepository.oppdaterRegistrertArbeidssoker(
@@ -316,13 +317,13 @@ class RapporteringService(
     )
 
     suspend fun oppdaterBegrunnelse(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         begrunnelse: String,
     ) = rapporteringRepository.oppdaterBegrunnelse(rapporteringId, ident, begrunnelse)
 
     suspend fun oppdaterRapporteringstype(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         rapporteringstype: String,
     ) = rapporteringRepository.oppdaterRapporteringstype(rapporteringId, ident, rapporteringstype)
@@ -461,7 +462,7 @@ class RapporteringService(
         return innsendtePerioder + midlertidigePerioder + foreldredePerioder
     }
 
-    private suspend fun slettRapporteringsperiode(periodeId: Long) =
+    private suspend fun slettRapporteringsperiode(periodeId: String) =
         try {
             rapporteringRepository.slettRaporteringsperiode(periodeId)
         } catch (e: Exception) {
@@ -501,17 +502,15 @@ class RapporteringService(
 
     private suspend fun hentEndringId(
         ansvarligSystem: AnsvarligSystem,
-        originalId: Long,
+        originalId: String,
         token: String,
-    ): Long {
+    ): String {
         return if (ansvarligSystem == AnsvarligSystem.ARENA) {
             meldepliktService
                 .hentEndringId(originalId, token)
-                .toLong()
         } else {
             meldekortregisterService
                 .hentEndringId(originalId, token)
-                .toLong()
         }
     }
 

@@ -8,35 +8,35 @@ import java.util.UUID
 
 interface RapporteringRepository {
     suspend fun hentRapporteringsperiode(
-        id: Long,
+        id: String,
         ident: String,
     ): Rapporteringsperiode?
 
     suspend fun finnesRapporteringsperiode(
-        id: Long,
+        id: String,
         ident: String,
     ): Boolean
 
-    suspend fun hentRapporteringsperiodeIdForInnsendtePerioder(): List<Long>
+    suspend fun hentRapporteringsperiodeIdForInnsendtePerioder(): List<String>
 
-    suspend fun hentRapporteringsperiodeIdForMidlertidigePerioder(): List<Long>
+    suspend fun hentRapporteringsperiodeIdForMidlertidigePerioder(): List<String>
 
-    suspend fun hentRapporteringsperiodeIdForPerioderEtterSisteFrist(): List<Long>
+    suspend fun hentRapporteringsperiodeIdForPerioderEtterSisteFrist(): List<String>
 
     suspend fun hentLagredeRapporteringsperioder(ident: String): List<Rapporteringsperiode>
 
     suspend fun hentAlleLagredeRapporteringsperioder(): List<Rapporteringsperiode>
 
-    suspend fun hentDagerUtenAktivitet(rapporteringId: Long): List<Pair<UUID, Dag>>
+    suspend fun hentDagerUtenAktivitet(rapporteringId: String): List<Pair<UUID, Dag>>
 
     suspend fun hentDagId(
-        rapporteringId: Long,
+        rapporteringId: String,
         dagIdex: Int,
     ): UUID
 
     suspend fun hentAktiviteter(dagId: UUID): List<Aktivitet>
 
-    suspend fun hentKanSendes(rapporteringId: Long): Boolean?
+    suspend fun hentKanSendes(rapporteringId: String): Boolean?
 
     suspend fun lagreRapporteringsperiodeOgDager(
         rapporteringsperiode: Rapporteringsperiode,
@@ -44,13 +44,13 @@ interface RapporteringRepository {
     )
 
     suspend fun slettOgLagreAktiviteter(
-        rapporteringId: Long,
+        rapporteringId: String,
         dagId: UUID,
         dag: Dag,
     )
 
     suspend fun oppdaterRegistrertArbeidssoker(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         registrertArbeidssoker: Boolean,
     )
@@ -61,25 +61,25 @@ interface RapporteringRepository {
     )
 
     suspend fun oppdaterBegrunnelse(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         begrunnelse: String,
     )
 
     suspend fun settKanSendes(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         kanSendes: Boolean,
     )
 
     suspend fun oppdaterRapporteringstype(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         rapporteringstype: String,
     )
 
     suspend fun oppdaterPeriodeEtterInnsending(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         kanEndres: Boolean,
         kanSendes: Boolean,
@@ -89,7 +89,7 @@ interface RapporteringRepository {
 
     suspend fun slettAktiviteter(dagId: UUID): Int
 
-    suspend fun slettRaporteringsperiode(rapporteringId: Long)
+    suspend fun slettRaporteringsperiode(rapporteringId: String)
 
     suspend fun hentAntallRapporteringsperioder(): Int
 }

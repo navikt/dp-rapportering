@@ -93,7 +93,7 @@ data class Response<T>(
 )
 
 fun rapporteringsperiodeFor(
-    id: Long = 123L,
+    id: String = "123",
     type: String = "05",
     fraOgMed: LocalDate = LocalDate.now().minusDays(13),
     tilOgMed: LocalDate = fraOgMed.plusDays(13),
@@ -104,7 +104,7 @@ fun rapporteringsperiodeFor(
     bruttoBelop: String? = null,
     registrertArbeidssoker: Boolean? = null,
     begrunnelseEndring: String? = null,
-    originalId: Long? = null,
+    originalId: String? = null,
     rapporteringstype: String? = null,
     mottattDato: LocalDate? = null,
 ) = Rapporteringsperiode(

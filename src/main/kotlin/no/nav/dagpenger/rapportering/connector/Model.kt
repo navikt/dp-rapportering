@@ -84,7 +84,7 @@ fun List<AdapterRapporteringsperiode>?.toRapporteringsperioder(): List<Rapporter
 
 fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
     Rapporteringsperiode(
-        id = this.id,
+        id = this.id.toString(),
         type = this.type,
         periode = Periode(fraOgMed = this.periode.fraOgMed, tilOgMed = this.periode.tilOgMed),
         dager = this.dager.map { it.toDag() },
@@ -127,7 +127,7 @@ fun List<Rapporteringsperiode>.toAdapterRapporteringsperioder(): List<AdapterRap
 
 fun Rapporteringsperiode.toAdapterRapporteringsperiode(overrideRegistrertArbeidssoker: Boolean = true): AdapterRapporteringsperiode =
     AdapterRapporteringsperiode(
-        id = this.id,
+        id = this.id.toLong(),
         type = this.type,
         periode = AdapterPeriode(fraOgMed = this.periode.fraOgMed, tilOgMed = this.periode.tilOgMed),
         dager = this.dager.map { it.toAdapterDag() },

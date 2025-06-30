@@ -132,7 +132,7 @@ class MeldepliktConnector(
             }
 
     suspend fun hentEndringId(
-        id: Long,
+        id: String,
         subjectToken: String,
     ): String =
         withContext(Dispatchers.IO) {
