@@ -49,7 +49,7 @@ jobs:
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
-          RESOURCE: .nais/app.yaml,.nais/alerts.yaml
+          RESOURCE: .nais/nais.yaml,.nais/alerts.yaml
           VAR: image=${{ needs.build.outputs.image }},githubSha=${{ github.sha }}
           VARS: .nais/vars-dev.yaml
 
@@ -67,6 +67,6 @@ jobs:
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: prod-gcp
-          RESOURCE: .nais/app.yaml,.nais/alerts.yaml
+          RESOURCE: .nais/nais.yaml,.nais/alerts.yaml
           VAR: image=${{ needs.build.outputs.image }},githubSha=${{ github.sha }}
           VARS: .nais/vars-prod.yaml
