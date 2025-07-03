@@ -21,7 +21,7 @@ class MeldekortregisterService(
     actionTimer: ActionTimer,
 ) {
     private val logger = KotlinLogging.logger {}
-    private val sikkerlogg = KotlinLogging.logger("tjenestekall.MeldepliktConnector")
+    private val sikkerlogg = KotlinLogging.logger("tjenestekall.MeldekortregisterService")
     private val httpClientUtils = HttpClientUtils(httpClient, meldekortregisterUrl, tokenProvider, actionTimer)
 
     suspend fun hentRapporteringsperioder(

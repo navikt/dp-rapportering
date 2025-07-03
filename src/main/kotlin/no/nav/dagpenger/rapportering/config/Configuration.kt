@@ -80,6 +80,22 @@ internal object Configuration {
 
     val meldekortregisterAudience by lazy { properties[Key("MELDEKORTREGISTER_AUDIENCE", stringType)] }
 
+    val pdlUrl by lazy {
+        properties[Key("PDL_API_HOST", stringType)].let {
+            "https://$it/graphql"
+        }
+    }
+
+    val pdlApiTokenProvider: () -> String by lazy {
+        {
+            runBlocking {
+                azureAdClient
+                    .clientCredentials(properties[Key("PDL_API_SCOPE", stringType)])
+                    .access_token ?: throw RuntimeException("Failed to get token")
+            }
+        }
+    }
+
     val pdfGeneratorUrl by lazy { properties[Key("PDF_GENERATOR_URL", stringType)] }
 
     val arbeidssokerregisterRecordKeyUrl by lazy {

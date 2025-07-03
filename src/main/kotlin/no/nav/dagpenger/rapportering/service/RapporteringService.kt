@@ -187,7 +187,7 @@ class RapporteringService(
 
     private suspend fun lagMidlertidigEndringId(ident: String): String {
         while (true) {
-            // Her må vi ha String som kan konverteres til Long fordi midlertidigId går viedere også til Adapteren
+            // Her må vi ha String som kan konverteres til Long fordi midlertidigId også går videre til Adapteren
             val midlertidigId = Random.nextLong(0L..Long.MAX_VALUE).toString()
             if (!rapporteringRepository.finnesRapporteringsperiode(midlertidigId, ident)) {
                 return midlertidigId
@@ -379,7 +379,6 @@ class RapporteringService(
 
         val arbeidssøkerperioder = arbeidssøkerService.hentCachedArbeidssøkerperioder(ident)
         val opprettetAv = if (ansvarligSystem == AnsvarligSystem.ARENA) PeriodeData.OpprettetAv.Arena else PeriodeData.OpprettetAv.Dagpenger
-        // TODO: Vi sender PeriodeData med en ny status Innsendt til Arbeidssøkerregister, men er det greit for dp-meldekortregister?
         val periodeData = periodeTilInnsending.toPeriodeData(ident, opprettetAv, arbeidssøkerperioder, "Innsendt")
 
         return sendinnRapporteringsperiode(ansvarligSystem, periodeTilInnsending, periodeData, token)
@@ -387,11 +386,7 @@ class RapporteringService(
                 if (response.status == "OK") {
                     logger.info("Journalføring rapporteringsperiode ${periodeTilInnsending.id}")
 
-                    // TODO: Skal vi hente person fra dp-rapportering-personregister her?
-                    val person = meldepliktService.hentPerson(ident, token)
-                    val navn = person?.fornavn + " " + person?.etternavn
-
-                    journalfoeringService.journalfoer(ident, navn, loginLevel, headers, periodeTilInnsending)
+                    journalfoeringService.journalfoer(ident, loginLevel, headers, periodeTilInnsending)
 
                     rapporteringRepository.oppdaterPeriodeEtterInnsending(
                         rapporteringId = periodeTilInnsending.id,
@@ -403,7 +398,7 @@ class RapporteringService(
                     logger.info { "Oppdaterte rapporteringsperiode ${periodeTilInnsending.id} med status Innsendt" }
                     if (periodeTilInnsending.originalId != null) {
                         rapporteringRepository.oppdaterPeriodeEtterInnsending(
-                            rapporteringId = periodeTilInnsending.originalId!!,
+                            rapporteringId = periodeTilInnsending.originalId,
                             ident = ident,
                             kanEndres = false,
                             kanSendes = false,

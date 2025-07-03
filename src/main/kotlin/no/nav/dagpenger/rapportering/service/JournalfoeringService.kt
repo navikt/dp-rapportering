@@ -37,6 +37,7 @@ import java.util.Locale
 class JournalfoeringService(
     private val journalfoeringRepository: JournalfoeringRepository,
     private val kallLoggService: KallLoggService,
+    private val pdlService: PdlService,
     private val httpClient: HttpClient,
 ) {
     private val logger = KotlinLogging.logger {}
@@ -86,11 +87,12 @@ class JournalfoeringService(
 
     suspend fun journalfoer(
         ident: String,
-        navn: String,
         loginLevel: Int,
         headers: Headers,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
+        val navn = pdlService.hentNavn(ident)
+
         try {
             opprettOgSendBehov(ident, navn, loginLevel, headers, rapporteringsperiode)
         } catch (e: Exception) {

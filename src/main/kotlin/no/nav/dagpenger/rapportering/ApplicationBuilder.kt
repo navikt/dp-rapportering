@@ -38,6 +38,7 @@ import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
 import no.nav.dagpenger.rapportering.service.MeldekortregisterService
 import no.nav.dagpenger.rapportering.service.MeldepliktService
+import no.nav.dagpenger.rapportering.service.PdlService
 import no.nav.dagpenger.rapportering.service.PersonregisterService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.tjenester.RapporteringJournalførtMottak
@@ -76,11 +77,13 @@ class ApplicationBuilder(
     private val kallLoggRepository = KallLoggRepositoryPostgres(dataSource)
 
     private val kallLoggService = KallLoggService(kallLoggRepository)
+    private val pdlService = PdlService()
 
     private val journalfoeringService =
         JournalfoeringService(
             journalfoeringRepository,
             kallLoggService,
+            pdlService,
             httpClient,
         )
 

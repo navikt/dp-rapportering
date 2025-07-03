@@ -60,6 +60,12 @@ spec:
       value: {{ ARBEIDSSOKERREGISTER_OPPSLAG_SCOPE }}
     - name: BEKREFTELSE_TOPIC
       value: {{ BEKREFTELSE_TOPIC }}
+    - name: PDL_API_HOST
+      value: "{{ PDL_API_HOST }}"
+    - name: PDL_AUDIENCE
+      value: "{{ PDL_AUDIENCE }}"
+    - name: PDL_API_SCOPE
+      value: "{{ PDL_API_SCOPE }}"
     - name: JDK_JAVA_OPTIONS # Bytter GC og lar JVMen se at det er flere CPU kjerner
       value: -XX:+UseParallelGC -XX:ActiveProcessorCount=4
   gcp:
@@ -92,6 +98,7 @@ spec:
     outbound:
       external:
         - host: dagpenger-unleash-api.nav.cloud.nais.io
+        - host: "{{ PDL_API_HOST }}"
       rules:
         - application: dp-arena-meldeplikt-adapter
         - application: dp-behov-pdf-generator

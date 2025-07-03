@@ -43,6 +43,7 @@ import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
 import no.nav.dagpenger.rapportering.service.MeldekortregisterService
 import no.nav.dagpenger.rapportering.service.MeldepliktService
+import no.nav.dagpenger.rapportering.service.PdlService
 import no.nav.dagpenger.rapportering.service.PersonregisterService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
@@ -187,6 +188,9 @@ open class ApiTestSetup {
             val meldekortregisterService = mockk<MeldekortregisterService>()
             coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
 
+            val pdlService = mockk<PdlService>()
+            coEvery { pdlService.hentNavn(any()) } returns "Test Testesen"
+
             val arbeidssoekerService =
                 ArbeidssøkerService(
                     kallLoggService = kallLoggService,
@@ -202,6 +206,7 @@ open class ApiTestSetup {
                     JournalfoeringService(
                         journalfoeringRepository,
                         kallLoggService,
+                        pdlService,
                         httpClient,
                     ),
                     kallLoggService,
