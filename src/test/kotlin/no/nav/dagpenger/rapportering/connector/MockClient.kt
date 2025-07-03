@@ -9,14 +9,14 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 
 internal fun createMockClient(
-    statusCode: Int,
-    responseBody: String,
+    statusCode: HttpStatusCode,
+    responseBody: String = "",
 ): HttpClient =
     createHttpClient(
         MockEngine {
             respond(
                 content = responseBody,
-                status = HttpStatusCode.fromValue(statusCode),
+                status = statusCode,
                 headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
             )
         },

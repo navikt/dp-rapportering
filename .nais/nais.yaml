@@ -42,6 +42,10 @@ spec:
       value: {{PERSONREGISTER_HOST}}
     - name: PERSONREGISTER_AUDIENCE
       value: {{PERSONREGISTER_AUDIENCE}}
+    - name: MELDEKORTREGISTER_HOST
+      value: {{MELDEKORTREGISTER_HOST}}
+    - name: MELDEKORTREGISTER_AUDIENCE
+      value: {{MELDEKORTREGISTER_AUDIENCE}}
     - name: PDF_GENERATOR_URL
       value: {{PDF_GENERATOR_URL}}
     - name: GITHUB_SHA
@@ -56,6 +60,12 @@ spec:
       value: {{ ARBEIDSSOKERREGISTER_OPPSLAG_SCOPE }}
     - name: BEKREFTELSE_TOPIC
       value: {{ BEKREFTELSE_TOPIC }}
+    - name: PDL_API_HOST
+      value: "{{ PDL_API_HOST }}"
+    - name: PDL_AUDIENCE
+      value: "{{ PDL_AUDIENCE }}"
+    - name: PDL_API_SCOPE
+      value: "{{ PDL_API_SCOPE }}"
     - name: JDK_JAVA_OPTIONS # Bytter GC og lar JVMen se at det er flere CPU kjerner
       value: -XX:+UseParallelGC -XX:ActiveProcessorCount=4
   gcp:
@@ -88,10 +98,12 @@ spec:
     outbound:
       external:
         - host: dagpenger-unleash-api.nav.cloud.nais.io
+        - host: "{{ PDL_API_HOST }}"
       rules:
         - application: dp-arena-meldeplikt-adapter
         - application: dp-behov-pdf-generator
         - application: dp-rapportering-personregister
+        - application: dp-meldekortregister
         - application: paw-kafka-key-generator
           namespace: paw
         - application: paw-arbeidssoekerregisteret-api-oppslag

@@ -38,7 +38,7 @@ class RapporteringRepositoryPostgresTest {
 
     @Test
     fun `kan hente rapporteringsperiode`() {
-        val id = 6269L
+        val id = "6269"
         val rapporteringsperiode = getRapporteringsperiode(id = id)
 
         withMigratedDb {
@@ -55,7 +55,7 @@ class RapporteringRepositoryPostgresTest {
 
     @Test
     fun `kan hente rapporteringsperiode opprettet manuelt (etterregistrering)`() {
-        val id = 6269L
+        val id = "6269"
         val rapporteringsperiode = getRapporteringsperiode(id = id, type = "09")
 
         withMigratedDb {
@@ -71,7 +71,7 @@ class RapporteringRepositoryPostgresTest {
 
     @Test
     fun `kan hente rapporteringsperiode med riktig id`() {
-        val id = 6269L
+        val id = "6269"
         val rapporteringsperiode = getRapporteringsperiode(id = id)
 
         withMigratedDb {
@@ -85,7 +85,7 @@ class RapporteringRepositoryPostgresTest {
     @Test
     fun `Uthenting av rapporteringsperiode som ikke finnes returnerer null`() {
         withMigratedDb {
-            rapporteringRepositoryPostgres.hentRapporteringsperiode(id = 123L, ident = ident) shouldBe null
+            rapporteringRepositoryPostgres.hentRapporteringsperiode(id = "123", ident = ident) shouldBe null
         }
     }
 
@@ -93,19 +93,19 @@ class RapporteringRepositoryPostgresTest {
     fun `kan hente id for alle rapporteringsperioder som er sendt inn`() {
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
-                rapporteringsperiode = getRapporteringsperiode(1L),
+                rapporteringsperiode = getRapporteringsperiode("1"),
                 ident = ident,
             )
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
-                rapporteringsperiode = getRapporteringsperiode(id = 2L, status = Innsendt),
+                rapporteringsperiode = getRapporteringsperiode(id = "2", status = Innsendt),
                 ident = ident,
             )
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
-                rapporteringsperiode = getRapporteringsperiode(id = 3L, status = Innsendt),
+                rapporteringsperiode = getRapporteringsperiode(id = "3", status = Innsendt),
                 ident = ident,
             )
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
-                rapporteringsperiode = getRapporteringsperiode(id = 4L, status = Midlertidig),
+                rapporteringsperiode = getRapporteringsperiode(id = "4", status = Midlertidig),
                 ident = ident,
             )
 
@@ -115,13 +115,13 @@ class RapporteringRepositoryPostgresTest {
             every { LocalDate.now() } returns date
 
             //
-            rapporteringRepositoryPostgres.oppdaterPeriodeEtterInnsending(3L, ident, false, false, Innsendt, true)
+            rapporteringRepositoryPostgres.oppdaterPeriodeEtterInnsending("3", ident, false, false, Innsendt, true)
 
             unmockkAll()
 
             with(rapporteringRepositoryPostgres.hentRapporteringsperiodeIdForInnsendtePerioder()) {
                 size shouldBe 1
-                get(0) shouldBe 3L
+                get(0) shouldBe "3"
             }
         }
     }
@@ -130,21 +130,21 @@ class RapporteringRepositoryPostgresTest {
     fun `kan hente id for alle midlertidige rapporteringsperioder`() {
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
-                rapporteringsperiode = getRapporteringsperiode(1L),
+                rapporteringsperiode = getRapporteringsperiode("1"),
                 ident = ident,
             )
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
-                rapporteringsperiode = getRapporteringsperiode(id = 2L, status = Innsendt),
+                rapporteringsperiode = getRapporteringsperiode(id = "2", status = Innsendt),
                 ident = ident,
             )
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
-                rapporteringsperiode = getRapporteringsperiode(id = 3L, status = Midlertidig),
+                rapporteringsperiode = getRapporteringsperiode(id = "3", status = Midlertidig),
                 ident = ident,
             )
 
             with(rapporteringRepositoryPostgres.hentRapporteringsperiodeIdForMidlertidigePerioder()) {
                 size shouldBe 1
-                get(0) shouldBe 3L
+                get(0) shouldBe "3"
             }
         }
     }
@@ -154,21 +154,21 @@ class RapporteringRepositoryPostgresTest {
         withMigratedDb {
             val now = LocalDate.now()
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
-                rapporteringsperiode = getRapporteringsperiode(id = 1L, periode = Periode(now.minusDays(13), now)),
+                rapporteringsperiode = getRapporteringsperiode(id = "1", periode = Periode(now.minusDays(13), now)),
                 ident = ident,
             )
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
-                rapporteringsperiode = getRapporteringsperiode(id = 2L, periode = Periode(now.minusDays(43), now.minusDays(30))),
+                rapporteringsperiode = getRapporteringsperiode(id = "2", periode = Periode(now.minusDays(43), now.minusDays(30))),
                 ident = ident,
             )
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
-                rapporteringsperiode = getRapporteringsperiode(id = 3L, periode = Periode(now.minusDays(21), now.minusDays(8))),
+                rapporteringsperiode = getRapporteringsperiode(id = "3", periode = Periode(now.minusDays(21), now.minusDays(8))),
                 ident = ident,
             )
 
             with(rapporteringRepositoryPostgres.hentRapporteringsperiodeIdForPerioderEtterSisteFrist()) {
                 size shouldBe 1
-                first() shouldBe 2L
+                first() shouldBe "2"
             }
         }
     }
@@ -202,7 +202,7 @@ class RapporteringRepositoryPostgresTest {
     @Test
     fun `finnesRapporteringsperiode returnerer false hvis perioden ikke finnes`() {
         withMigratedDb {
-            rapporteringRepositoryPostgres.finnesRapporteringsperiode(123L, "12345678910") shouldBe false
+            rapporteringRepositoryPostgres.finnesRapporteringsperiode("123", "12345678910") shouldBe false
         }
     }
 
@@ -512,7 +512,7 @@ class RapporteringRepositoryPostgresTest {
     @Test
     fun `sletting av rapporteringsperiode som ikke finnes kaster RuntimeException`() {
         withMigratedDb {
-            rapporteringRepositoryPostgres.hentKanSendes(123L) shouldBe null
+            rapporteringRepositoryPostgres.hentKanSendes("123") shouldBe null
         }
     }
 
@@ -541,7 +541,7 @@ class RapporteringRepositoryPostgresTest {
 }
 
 fun getRapporteringsperiode(
-    id: Long = 6269L,
+    id: String = "6269",
     type: String = "05",
     periode: Periode = Periode(fraOgMed = 1.januar, tilOgMed = 14.januar),
     dager: List<Dag> = getDager(),

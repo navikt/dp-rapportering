@@ -110,16 +110,20 @@ class JournalfoeringServiceTest {
 
         val kallLoggService = mockk<KallLoggService>()
 
+        val pdlService = mockk<PdlService>()
+        coEvery { pdlService.hentNavn(any()) } returns navn
+
         val journalfoeringService =
             JournalfoeringService(
                 journalfoeringRepository,
                 kallLoggService,
+                pdlService,
                 createHttpClient(mockPdfGeneratorEngine),
             )
 
         // Prøver å journalføre
         runBlocking {
-            journalfoeringService.journalfoer(ident, navn, loginLevel, headers, rapporteringsperiode)
+            journalfoeringService.journalfoer(ident, loginLevel, headers, rapporteringsperiode)
         }
 
         // Får feil og sjekker at JournalfoeringService lagrer data midlertidig
@@ -169,16 +173,20 @@ class JournalfoeringServiceTest {
         every { kallLoggService.lagreResponse(any(), any(), any()) } just runs
         every { kallLoggService.lagreRequest(any(), any()) } just runs
 
+        val pdlService = mockk<PdlService>()
+        coEvery { pdlService.hentNavn(any()) } returns navn
+
         val journalfoeringService =
             JournalfoeringService(
                 journalfoeringRepository,
                 kallLoggService,
+                pdlService,
                 createHttpClient(mockPdfGeneratorEngine),
             )
 
         // Prøver å journalføre
         runBlocking {
-            journalfoeringService.journalfoer(ident, navn, loginLevel, headers, rapporteringsperiode)
+            journalfoeringService.journalfoer(ident, loginLevel, headers, rapporteringsperiode)
         }
 
         // Får feil og sjekker at JournalfoeringService lagrer data midlertidig
@@ -236,6 +244,9 @@ class JournalfoeringServiceTest {
         every { kallLoggService.lagreKafkaUtKallLogg(any()) } returns 1
         every { kallLoggService.lagreRequest(eq(1), any()) } just runs
 
+        val pdlService = mockk<PdlService>()
+        coEvery { pdlService.hentNavn(any()) } returns navn
+
         // Mock svar fra PDFgenerator
         val pdf =
             if (endring) {
@@ -258,6 +269,7 @@ class JournalfoeringServiceTest {
             JournalfoeringService(
                 journalfoeringRepository,
                 kallLoggService,
+                pdlService,
                 createHttpClient(mockPdfGeneratorEngine),
             )
 
@@ -268,7 +280,7 @@ class JournalfoeringServiceTest {
                 every { getRapidsConnection() } returns rapidsConnection
 
                 // Kjør
-                journalfoeringService.journalfoer(ident, navn, loginLevel, headers, rapporteringsperiode)
+                journalfoeringService.journalfoer(ident, loginLevel, headers, rapporteringsperiode)
             }
 
             // Sjekk
@@ -283,7 +295,7 @@ class JournalfoeringServiceTest {
         val fom = LocalDate.of(2024, 6, 24)
 
         return Rapporteringsperiode(
-            id = 1L,
+            id = "1",
             type = "05",
             periode = Periode(fom, fom.plusDays(13)),
             dager =
@@ -320,7 +332,7 @@ class JournalfoeringServiceTest {
             status = TilUtfylling,
             mottattDato = LocalDate.now(),
             registrertArbeidssoker = true,
-            originalId = if (endring) 123L else null,
+            originalId = if (endring) "123" else null,
             rapporteringstype = null,
             html = html,
         )
@@ -357,7 +369,7 @@ class JournalfoeringServiceTest {
         val to = behov.get("tilleggsopplysninger")
 
         to.get(0).get("first").asText() shouldBe "periodeId"
-        to.get(0).get("second").asLong() shouldBe rapporteringsperiode.id
+        to.get(0).get("second").asText() shouldBe rapporteringsperiode.id
         to.get(1).get("first").asText() shouldBe "kanSendesFra"
         to.get(1).get("second").asText() shouldBe rapporteringsperiode.kanSendesFra.format(DateTimeFormatter.ISO_DATE)
         to.get(2).get("first").asText() shouldBe "userAgent"

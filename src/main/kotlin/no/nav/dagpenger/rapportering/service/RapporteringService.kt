@@ -6,6 +6,7 @@ import io.ktor.server.plugins.BadRequestException
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
+import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
@@ -19,9 +20,9 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
-import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toMap
-import no.nav.dagpenger.rapportering.model.toPeriodeDager
+import no.nav.dagpenger.rapportering.model.toPeriodeData
+import no.nav.dagpenger.rapportering.model.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnKanSendesFra
@@ -30,7 +31,6 @@ import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
 import no.nav.dagpenger.rapportering.utils.kontrollerAktiviteter
 import no.nav.dagpenger.rapportering.utils.kontrollerRapporteringsperiode
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.random.Random
 import kotlin.random.nextLong
@@ -44,6 +44,8 @@ class RapporteringService(
     private val journalfoeringService: JournalfoeringService,
     private val kallLoggService: KallLoggService,
     private val arbeidssøkerService: ArbeidssøkerService,
+    private val personregisterService: PersonregisterService,
+    private val meldekortregisterService: MeldekortregisterService,
 ) {
     suspend fun harDpMeldeplikt(
         ident: String,
@@ -51,7 +53,7 @@ class RapporteringService(
     ): String = meldepliktService.harDpMeldeplikt(ident, token)
 
     suspend fun hentPeriode(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         token: String,
         hentOriginal: Boolean,
@@ -99,10 +101,15 @@ class RapporteringService(
     private suspend fun hentRapporteringsperioder(
         ident: String,
         token: String,
-    ): List<Rapporteringsperiode>? =
-        meldepliktService
-            .hentRapporteringsperioder(ident, token)
-            ?.toRapporteringsperioder()
+    ): List<Rapporteringsperiode>? {
+        val perioder =
+            if (personregisterService.hentAnsvarligSystem(ident, token) == AnsvarligSystem.ARENA) {
+                meldepliktService.hentRapporteringsperioder(ident, token)?.toRapporteringsperioder()
+            } else {
+                meldekortregisterService.hentRapporteringsperioder(ident, token).toRapporteringsperioder()
+            }
+
+        return perioder
             .justerInnsendingstidspunkt()
             ?.filter { periode ->
                 // Filtrerer ut perioder som har en høyere status i databasen enn det vi får fra arena
@@ -112,6 +119,7 @@ class RapporteringService(
                         periodeFraDb.status.ordinal <= periode.status.ordinal
                     } ?: true
             }
+    }
 
     private suspend fun List<Rapporteringsperiode>?.justerInnsendingstidspunkt(): List<Rapporteringsperiode>? =
         this?.map { it.justerInnsendingstidspunkt() }
@@ -132,7 +140,7 @@ class RapporteringService(
         }
 
     suspend fun startUtfylling(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         token: String,
     ) {
@@ -143,7 +151,7 @@ class RapporteringService(
     }
 
     suspend fun startEndring(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         token: String,
     ): Rapporteringsperiode =
@@ -177,9 +185,10 @@ class RapporteringService(
                 )
             }
 
-    private suspend fun lagMidlertidigEndringId(ident: String): Long {
+    private suspend fun lagMidlertidigEndringId(ident: String): String {
         while (true) {
-            val midlertidigId = Random.nextLong(0L..Long.MAX_VALUE)
+            // Her må vi ha String som kan konverteres til Long fordi midlertidigId også går videre til Adapteren
+            val midlertidigId = Random.nextLong(0L..Long.MAX_VALUE).toString()
             if (!rapporteringRepository.finnesRapporteringsperiode(midlertidigId, ident)) {
                 return midlertidigId
             }
@@ -276,7 +285,7 @@ class RapporteringService(
     }
 
     suspend fun lagreEllerOppdaterAktiviteter(
-        rapporteringId: Long,
+        rapporteringId: String,
         dag: Dag,
     ) {
         kontrollerAktiviteter(listOf(dag))
@@ -285,7 +294,7 @@ class RapporteringService(
     }
 
     suspend fun resettAktiviteter(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
     ) {
         if (!rapporteringRepository.finnesRapporteringsperiode(rapporteringId, ident)) {
@@ -298,7 +307,7 @@ class RapporteringService(
     }
 
     suspend fun oppdaterRegistrertArbeidssoker(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         registrertArbeidssoker: Boolean,
     ) = rapporteringRepository.oppdaterRegistrertArbeidssoker(
@@ -308,13 +317,13 @@ class RapporteringService(
     )
 
     suspend fun oppdaterBegrunnelse(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         begrunnelse: String,
     ) = rapporteringRepository.oppdaterBegrunnelse(rapporteringId, ident, begrunnelse)
 
     suspend fun oppdaterRapporteringstype(
-        rapporteringId: Long,
+        rapporteringId: String,
         ident: String,
         rapporteringstype: String,
     ) = rapporteringRepository.oppdaterRapporteringstype(rapporteringId, ident, rapporteringstype)
@@ -340,6 +349,7 @@ class RapporteringService(
         kontrollerRapporteringsperiode(rapporteringsperiode)
 
         var periodeTilInnsending = rapporteringsperiode
+        val ansvarligSystem = personregisterService.hentAnsvarligSystem(ident, token)
 
         if (rapporteringsperiode.status == TilUtfylling && rapporteringsperiode.originalId != null) {
             if (rapporteringsperiode.begrunnelseEndring.isNullOrBlank()) {
@@ -347,10 +357,8 @@ class RapporteringService(
                     "Endret rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes. Begrunnelse for endring må oppgis",
                 )
             } else {
-                val endringId =
-                    meldepliktService
-                        .hentEndringId(rapporteringsperiode.originalId, token)
-                        .toLong()
+                val endringId = hentEndringId(ansvarligSystem, rapporteringsperiode.originalId, token)
+
                 // Oppretter nye ID for aktiviteter slik at vi kan lagre både original og midlertidig periode
                 val dager =
                     rapporteringsperiode
@@ -369,16 +377,16 @@ class RapporteringService(
             }
         }
 
-        return meldepliktService
-            .sendinnRapporteringsperiode(periodeTilInnsending.toAdapterRapporteringsperiode(), token)
+        val arbeidssøkerperioder = arbeidssøkerService.hentCachedArbeidssøkerperioder(ident)
+        val opprettetAv = if (ansvarligSystem == AnsvarligSystem.ARENA) PeriodeData.OpprettetAv.Arena else PeriodeData.OpprettetAv.Dagpenger
+        val periodeData = periodeTilInnsending.toPeriodeData(ident, opprettetAv, arbeidssøkerperioder, "Innsendt")
+
+        return sendinnRapporteringsperiode(ansvarligSystem, periodeTilInnsending, periodeData, token)
             .also { response ->
                 if (response.status == "OK") {
                     logger.info("Journalføring rapporteringsperiode ${periodeTilInnsending.id}")
 
-                    val person = meldepliktService.hentPerson(ident, token)
-                    val navn = person?.fornavn + " " + person?.etternavn
-
-                    journalfoeringService.journalfoer(ident, navn, loginLevel, headers, periodeTilInnsending)
+                    journalfoeringService.journalfoer(ident, loginLevel, headers, periodeTilInnsending)
 
                     rapporteringRepository.oppdaterPeriodeEtterInnsending(
                         rapporteringId = periodeTilInnsending.id,
@@ -390,7 +398,7 @@ class RapporteringService(
                     logger.info { "Oppdaterte rapporteringsperiode ${periodeTilInnsending.id} med status Innsendt" }
                     if (periodeTilInnsending.originalId != null) {
                         rapporteringRepository.oppdaterPeriodeEtterInnsending(
-                            rapporteringId = periodeTilInnsending.originalId!!,
+                            rapporteringId = periodeTilInnsending.originalId,
                             ident = ident,
                             kanEndres = false,
                             kanSendes = false,
@@ -403,7 +411,7 @@ class RapporteringService(
                         }
                     }
 
-                    sendPeriodeDataTilRnR(ident, periodeTilInnsending)
+                    sendPeriodeDataTilRnR(ident, periodeData)
                     arbeidssøkerService.sendBekreftelse(ident, token, loginLevel, periodeTilInnsending)
                 } else {
                     // Oppdaterer perioden slik at den kan sendes inn på nytt
@@ -449,39 +457,21 @@ class RapporteringService(
         return innsendtePerioder + midlertidigePerioder + foreldredePerioder
     }
 
-    private suspend fun slettRapporteringsperiode(periodeId: Long) =
+    private suspend fun slettRapporteringsperiode(periodeId: String) =
         try {
             rapporteringRepository.slettRaporteringsperiode(periodeId)
         } catch (e: Exception) {
             logger.error(e) { "Klarte ikke å slette rapporteringsperiode med id $periodeId" }
         }
 
-    private suspend fun sendPeriodeDataTilRnR(
+    private fun sendPeriodeDataTilRnR(
         ident: String,
-        rapporteringsperiode: Rapporteringsperiode,
+        periodeData: PeriodeData,
     ) {
         if (!unleash.isEnabled("send-periodedata")) {
             return
         }
 
-        val arbeidssøkerperioder = arbeidssøkerService.hentCachedArbeidssøkerperioder(ident)
-
-        val periodeData =
-            PeriodeData(
-                id = rapporteringsperiode.id,
-                ident = ident,
-                periode = rapporteringsperiode.periode,
-                dager = rapporteringsperiode.dager.toPeriodeDager(arbeidssøkerperioder),
-                kanSendesFra = rapporteringsperiode.kanSendesFra,
-                // Nå har vi meldekort kun fra Arena
-                opprettetAv = PeriodeData.OpprettetAv.Arena,
-                // dp-rapportering er kun for brukere
-                kilde = PeriodeData.Kilde(PeriodeData.Rolle.Bruker, ident),
-                type = if (rapporteringsperiode.erEndring()) PeriodeData.Type.Korrigert else PeriodeData.Type.Original,
-                status = "Innsendt",
-                innsendtTidspunkt = LocalDateTime.now(),
-                korrigeringAv = rapporteringsperiode.originalId,
-            )
         val message =
             JsonMessage.newMessage(
                 "meldekort_innsendt",
@@ -502,6 +492,35 @@ class RapporteringService(
             kallLoggService.lagreResponse(kallLoggId, 500, "")
 
             throw Exception(e)
+        }
+    }
+
+    private suspend fun hentEndringId(
+        ansvarligSystem: AnsvarligSystem,
+        originalId: String,
+        token: String,
+    ): String {
+        return if (ansvarligSystem == AnsvarligSystem.ARENA) {
+            meldepliktService
+                .hentEndringId(originalId, token)
+        } else {
+            meldekortregisterService
+                .hentEndringId(originalId, token)
+        }
+    }
+
+    private suspend fun sendinnRapporteringsperiode(
+        ansvarligSystem: AnsvarligSystem,
+        periodeTilInnsending: Rapporteringsperiode,
+        periodeData: PeriodeData,
+        token: String,
+    ): InnsendingResponse {
+        return if (ansvarligSystem == AnsvarligSystem.ARENA) {
+            meldepliktService
+                .sendinnRapporteringsperiode(periodeTilInnsending.toAdapterRapporteringsperiode(), token)
+        } else {
+            meldekortregisterService
+                .sendinnRapporteringsperiode(periodeData, token)
         }
     }
 }

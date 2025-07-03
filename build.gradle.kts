@@ -82,6 +82,8 @@ dependencies {
 
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.1")
 
+    implementation("no.nav.dagpenger:pdl-klient:2025.04.26-14.51.bbf9ece5f5ec")
+
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(libs.rapids.and.rivers.test)
     testImplementation(libs.bundles.postgres.test)

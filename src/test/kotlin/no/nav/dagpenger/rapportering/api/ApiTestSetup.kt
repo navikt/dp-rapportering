@@ -28,6 +28,7 @@ import kotliquery.using
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.konfigurasjon
+import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
@@ -40,7 +41,9 @@ import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
+import no.nav.dagpenger.rapportering.service.MeldekortregisterService
 import no.nav.dagpenger.rapportering.service.MeldepliktService
+import no.nav.dagpenger.rapportering.service.PdlService
 import no.nav.dagpenger.rapportering.service.PersonregisterService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
@@ -182,6 +185,12 @@ open class ApiTestSetup {
             coEvery { personregisterService.oppdaterPersonstatus(any(), any()) } just runs
             coEvery { personregisterService.erBekreftelseOvertatt(any(), any()) } returns true
 
+            val meldekortregisterService = mockk<MeldekortregisterService>()
+            coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
+
+            val pdlService = mockk<PdlService>()
+            coEvery { pdlService.hentNavn(any()) } returns "Test Testesen"
+
             val arbeidssoekerService =
                 ArbeidssøkerService(
                     kallLoggService = kallLoggService,
@@ -197,10 +206,13 @@ open class ApiTestSetup {
                     JournalfoeringService(
                         journalfoeringRepository,
                         kallLoggService,
+                        pdlService,
                         httpClient,
                     ),
                     kallLoggService,
                     arbeidssoekerService,
+                    personregisterService,
+                    meldekortregisterService,
                 )
 
             application {

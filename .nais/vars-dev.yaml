@@ -21,9 +21,14 @@ MELDEPLIKT_ADAPTER_HOST: dp-arena-meldeplikt-adapter.intern.dev.nav.no
 MELDEPLIKT_ADAPTER_AUDIENCE: dev-gcp:teamdagpenger:dp-arena-meldeplikt-adapter
 PERSONREGISTER_HOST: dp-rapportering-personregister.intern.dev.nav.no
 PERSONREGISTER_AUDIENCE: dev-gcp:teamdagpenger:dp-rapportering-personregister
+MELDEKORTREGISTER_HOST: dp-meldekortregister.intern.dev.nav.no
+MELDEKORTREGISTER_AUDIENCE: dev-gcp:teamdagpenger:dp-meldekortregister
 PDF_GENERATOR_URL: https://dp-pdf-generator.intern.dev.nav.no
 ARBEIDSSOKERREGISTER_RECORD_KEY_URL: http://paw-kafka-key-generator.paw/api/v1/record-key
 ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE: api://dev-gcp.paw.paw-kafka-key-generator/.default
 ARBEIDSSOKERREGISTER_OPPSLAG_URL: http://paw-arbeidssoekerregisteret-api-oppslag.paw/api/v1/veileder/arbeidssoekerperioder
 ARBEIDSSOKERREGISTER_OPPSLAG_SCOPE: api://dev-gcp.paw.paw-arbeidssoekerregisteret-api-oppslag/.default
 BEKREFTELSE_TOPIC: paw.arbeidssoker-bekreftelse-teamdagpenger-v1
+PDL_API_HOST: pdl-api.dev-fss-pub.nais.io
+PDL_AUDIENCE: dev-fss:pdl:pdl-api
+PDL_API_SCOPE: api://dev-fss.pdl.pdl-api/.default

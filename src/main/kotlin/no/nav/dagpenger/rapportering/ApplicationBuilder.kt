@@ -36,7 +36,9 @@ import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
+import no.nav.dagpenger.rapportering.service.MeldekortregisterService
 import no.nav.dagpenger.rapportering.service.MeldepliktService
+import no.nav.dagpenger.rapportering.service.PdlService
 import no.nav.dagpenger.rapportering.service.PersonregisterService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.tjenester.RapporteringJournalførtMottak
@@ -75,11 +77,13 @@ class ApplicationBuilder(
     private val kallLoggRepository = KallLoggRepositoryPostgres(dataSource)
 
     private val kallLoggService = KallLoggService(kallLoggRepository)
+    private val pdlService = PdlService()
 
     private val journalfoeringService =
         JournalfoeringService(
             journalfoeringRepository,
             kallLoggService,
+            pdlService,
             httpClient,
         )
 
@@ -93,6 +97,7 @@ class ApplicationBuilder(
         )
 
     private val meldepliktService = MeldepliktService(meldepliktConnector)
+    private val meldekortregisterService = MeldekortregisterService(httpClient = httpClient, actionTimer = actionTimer)
     private val personregisterService = PersonregisterService(personregisterConnector, meldepliktService)
     private val arbeidssøkerService = ArbeidssøkerService(kallLoggService, personregisterService, httpClient, bekreftelseKafkaProdusent)
 
@@ -104,6 +109,8 @@ class ApplicationBuilder(
             journalfoeringService,
             kallLoggService,
             arbeidssøkerService,
+            personregisterService,
+            meldekortregisterService,
         )
 
     init {
