@@ -54,7 +54,8 @@ class ArbeidssøkerService(
     private val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
 
     private val cache: Cache<String, List<ArbeidssøkerperiodeResponse>> =
-        Caffeine.newBuilder()
+        Caffeine
+            .newBuilder()
             .maximumSize(1000)
             .expireAfterWrite(1, TimeUnit.MINUTES)
             .build()

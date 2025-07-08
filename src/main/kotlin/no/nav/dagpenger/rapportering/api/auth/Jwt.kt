@@ -39,7 +39,13 @@ internal fun ApplicationRequest.jwt(): String =
 internal fun ApplicationCall.optionalIdent(): String? =
     requireNotNull(this.authentication.principal<JWTPrincipal>()).payload.claims["pid"]?.asString()
 
-internal fun ApplicationCall.issuer() = issuerFromString(this.authentication.principal<JWTPrincipal>()?.payload?.issuer)
+internal fun ApplicationCall.issuer() =
+    issuerFromString(
+        this.authentication
+            .principal<JWTPrincipal>()
+            ?.payload
+            ?.issuer,
+    )
 
 internal fun ApplicationCall.loginLevel(): Int {
     val jwt = requireNotNull(this.authentication.principal<JWTPrincipal>()) { "Ikke autentisert" }

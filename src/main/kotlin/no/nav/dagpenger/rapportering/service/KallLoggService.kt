@@ -11,8 +11,8 @@ import java.time.LocalDateTime
 class KallLoggService(
     private val kallLoggRepository: KallLoggRepository,
 ) {
-    fun lagreKafkaUtKallLogg(ident: String): Long {
-        return kallLoggRepository.lagreKallLogg(
+    fun lagreKafkaUtKallLogg(ident: String): Long =
+        kallLoggRepository.lagreKallLogg(
             KallLogg(
                 korrelasjonId = getCallId(),
                 tidspunkt = LocalDateTime.now(),
@@ -28,7 +28,6 @@ class KallLoggService(
                 logginfo = "",
             ),
         )
-    }
 
     fun lagreRequest(
         kallLoggId: Long,

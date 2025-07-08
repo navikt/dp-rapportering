@@ -2,7 +2,10 @@ package no.nav.dagpenger.rapportering.model
 
 import java.time.LocalDate
 
-data class Periode(val fraOgMed: LocalDate, val tilOgMed: LocalDate) {
+data class Periode(
+    val fraOgMed: LocalDate,
+    val tilOgMed: LocalDate,
+) {
     init {
 
         require(tilOgMed.minusDays(13) == fraOgMed) {
@@ -13,7 +16,5 @@ data class Periode(val fraOgMed: LocalDate, val tilOgMed: LocalDate) {
         }
     }
 
-    fun inneholder(dato: LocalDate): Boolean {
-        return !dato.isBefore(fraOgMed) && !dato.isAfter(tilOgMed)
-    }
+    fun inneholder(dato: LocalDate): Boolean = !dato.isBefore(fraOgMed) && !dato.isAfter(tilOgMed)
 }

@@ -499,28 +499,26 @@ class RapporteringService(
         ansvarligSystem: AnsvarligSystem,
         originalId: String,
         token: String,
-    ): String {
-        return if (ansvarligSystem == AnsvarligSystem.ARENA) {
+    ): String =
+        if (ansvarligSystem == AnsvarligSystem.ARENA) {
             meldepliktService
                 .hentEndringId(originalId, token)
         } else {
             meldekortregisterService
                 .hentEndringId(originalId, token)
         }
-    }
 
     private suspend fun sendinnRapporteringsperiode(
         ansvarligSystem: AnsvarligSystem,
         periodeTilInnsending: Rapporteringsperiode,
         periodeData: PeriodeData,
         token: String,
-    ): InnsendingResponse {
-        return if (ansvarligSystem == AnsvarligSystem.ARENA) {
+    ): InnsendingResponse =
+        if (ansvarligSystem == AnsvarligSystem.ARENA) {
             meldepliktService
                 .sendinnRapporteringsperiode(periodeTilInnsending.toAdapterRapporteringsperiode(), token)
         } else {
             meldekortregisterService
                 .sendinnRapporteringsperiode(periodeData, token)
         }
-    }
 }

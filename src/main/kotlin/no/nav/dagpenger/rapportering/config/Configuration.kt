@@ -147,7 +147,8 @@ internal object Configuration {
     val bekreftelseTopic by lazy { properties[Key("BEKREFTELSE_TOPIC", stringType)] }
 
     private val unleashConfig by lazy {
-        UnleashConfig.builder()
+        UnleashConfig
+            .builder()
             .fetchTogglesInterval(5)
             .appName(properties.getOrElse(Key("NAIS_APP_NAME", stringType), UUID.randomUUID().toString()))
             .instanceId(properties.getOrElse(Key("NAIS_CLIENT_ID", stringType), UUID.randomUUID().toString()))

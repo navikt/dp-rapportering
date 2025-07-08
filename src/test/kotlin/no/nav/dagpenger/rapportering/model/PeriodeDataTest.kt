@@ -299,13 +299,12 @@ class PeriodeDataTest {
         rapporteringsperioder[1].html shouldBe null
     }
 
-    private fun metadataResponse(tidspunkt: LocalDateTime): MetadataResponse {
-        return MetadataResponse(
+    private fun metadataResponse(tidspunkt: LocalDateTime): MetadataResponse =
+        MetadataResponse(
             tidspunkt,
             BrukerResponse("", ""),
             "Kilde",
             "Årsak",
             null,
         )
-    }
 }
