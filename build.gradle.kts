@@ -80,7 +80,7 @@ dependencies {
 
     implementation("io.getunleash:unleash-client-java:11.0.2")
 
-    implementation("com.github.ben-manes.caffeine:caffeine:3.2.1")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
 
     implementation("no.nav.dagpenger:pdl-klient:2025.04.26-14.51.bbf9ece5f5ec")
 
