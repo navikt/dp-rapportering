@@ -4,7 +4,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     alias(libs.plugins.shadow.jar)
     alias(libs.plugins.kotlin)
-    id("io.ktor.plugin") version "3.2.1"
+    id("io.ktor.plugin") version "3.2.2"
     id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
     id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
@@ -80,7 +80,7 @@ dependencies {
 
     implementation("io.getunleash:unleash-client-java:11.0.2")
 
-    implementation("com.github.ben-manes.caffeine:caffeine:3.2.1")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
 
     implementation("no.nav.dagpenger:pdl-klient:2025.04.26-14.51.bbf9ece5f5ec")
 
