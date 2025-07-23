@@ -170,7 +170,8 @@ open class ApiTestSetup {
             val rapporteringRepository = RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
-            val kallLoggService = KallLoggService(KallLoggRepositoryPostgres(PostgresDataSourceBuilder.dataSource))
+            val kallLoggRepository = KallLoggRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
+            val kallLoggService = KallLoggService(kallLoggRepository)
 
             val topicPartition = TopicPartition("test-topic", 1)
             val recordMetadata = RecordMetadata(topicPartition, 1L, 2, 3L, 4, 5)
@@ -216,7 +217,7 @@ open class ApiTestSetup {
                 )
 
             application {
-                konfigurasjon(meterRegistry)
+                konfigurasjon(meterRegistry, kallLoggRepository)
                 internalApi(meterRegistry)
                 rapporteringApi(rapporteringService, personregisterService, meldepliktMetrikker)
             }

@@ -28,10 +28,7 @@ import no.nav.dagpenger.rapportering.api.auth.AuthFactory.azureAd
 import no.nav.dagpenger.rapportering.api.auth.AuthFactory.tokenX
 import no.nav.dagpenger.rapportering.config.Configuration.MDC_CORRELATION_ID
 import no.nav.dagpenger.rapportering.config.Configuration.NO_LOG_PATHS
-import no.nav.dagpenger.rapportering.config.Configuration.config
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
-import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
-import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.runMigration
 import no.nav.dagpenger.rapportering.utils.IncomingCallLoggingPlugin
 import no.nav.dagpenger.rapportering.utils.generateCallId
@@ -39,7 +36,7 @@ import org.slf4j.event.Level
 
 fun Application.konfigurasjon(
     prometheusMeterRegistry: PrometheusMeterRegistry,
-    kallLoggRepository: KallLoggRepository = KallLoggRepositoryPostgres(dataSource),
+    kallLoggRepository: KallLoggRepository,
     auth: AuthenticationConfig.() -> Unit = {
         jwt("tokenX") { tokenX() }
         jwt("azureAd") { azureAd() }
