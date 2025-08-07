@@ -1,8 +1,8 @@
 package no.nav.dagpenger.rapportering.utils
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.replaceResponse
 import io.ktor.client.plugins.HttpSend
-import io.ktor.client.plugins.observer.wrapWithContent
 import io.ktor.client.plugins.plugin
 import io.ktor.client.request.HttpRequest
 import io.ktor.client.statement.HttpResponse
@@ -81,7 +81,9 @@ class OutgoingCallLoggingPlugin(
             }
 
             // Response content can be read only once. Wrap the call with the content we have read
-            originalCall.wrapWithContent(ByteReadChannel(responseBody))
+            originalCall.replaceResponse(response.headers) {
+                ByteReadChannel(responseBody)
+            }
         }
     }
 

@@ -140,6 +140,7 @@ paths:
                     description: Bad Request
             summary: Start utfylling av rapporteringsperiode
             description: Lagrer rapporteringsperioden i databasen så den er klar til utfylling
+            operationId: post-start-rapporteringsperiode
             tags:
                 - Rapporteringsperiode
             security:
@@ -162,6 +163,7 @@ paths:
                     description: Bad Request
             summary: Oppdater registrert arbeidssøker
             description: Oppdatering av om om bruker vil fortsette å stå registrert som arbeidssøker i neste periode
+            operationId: post-arbeidssoker-rapporteringsperiode
             tags:
                 - Rapporteringsperiode
             security:

@@ -23,7 +23,7 @@ object PeriodeUtils {
             false
         } else if (status == TilUtfylling) {
             val naa = LocalDate.now()
-            kanSendesFra.isBefore(naa) || kanSendesFra == naa
+            kanSendesFra.isBefore(naa) || kanSendesFra.isEqual(naa)
         } else {
             false
         }
