@@ -42,7 +42,7 @@ fun List<Rapporteringsperiode>.toResponse(): List<RapporteringsperiodeResponse> 
 
 fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
     RapporteringsperiodeResponse(
-        id = this.id.toString(),
+        id = this.id,
         type = this.type,
         periode =
             PeriodeResponse(
@@ -87,7 +87,7 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
             },
         mottattDato = this.mottattDato,
         registrertArbeidssoker = this.registrertArbeidssoker,
-        originalId = this.originalId?.toString(),
+        originalId = this.originalId,
         rapporteringstype = this.rapporteringstype,
     )
 
@@ -124,7 +124,8 @@ fun List<Dag>.toPeriodeDager(arbeidssøkerperioder: List<ArbeidssøkerperiodeRes
                 arbeidssøkerperioder.find { periode ->
                     val fom = periode.startet.tidspunkt
                     val tom = periode.avsluttet
-                    !fom.isAfter(it.dato.atStartOfDay()) && (tom == null || tom.tidspunkt.isAfter(it.dato.atStartOfDay()))
+                    !fom.toLocalDate().isAfter(it.dato) &&
+                        (tom == null || !tom.tidspunkt.toLocalDate().isBefore(it.dato))
                 } != null,
         )
     }

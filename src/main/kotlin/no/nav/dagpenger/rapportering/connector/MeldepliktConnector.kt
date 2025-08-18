@@ -68,10 +68,8 @@ class MeldepliktConnector(
                                 it,
                                 object : TypeReference<List<AdapterRapporteringsperiode>>() {},
                             )
-                        if (perioder.isEmpty()) {
+                        perioder.ifEmpty {
                             null
-                        } else {
-                            perioder
                         }
                     }
             }
@@ -111,10 +109,8 @@ class MeldepliktConnector(
                             it,
                             object : TypeReference<List<AdapterRapporteringsperiode>>() {},
                         )
-                    if (perioder.isEmpty()) {
+                    perioder.ifEmpty {
                         null
-                    } else {
-                        perioder
                     }
                 }.also {
                     logger.info { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }

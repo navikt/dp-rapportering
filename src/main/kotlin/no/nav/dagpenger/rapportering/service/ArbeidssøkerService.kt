@@ -13,7 +13,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.config.Configuration
@@ -125,7 +124,7 @@ class ArbeidssøkerService(
 
         try {
             val record = ProducerRecord(bekreftelseTopic, recordKeyResponse.key, arbeidssøkerBekreftelse)
-            val metadata = runBlocking { bekreftelseKafkaProdusent.sendDeferred(record).await() }
+            val metadata = bekreftelseKafkaProdusent.sendDeferred(record).await()
             sikkerlogg.info {
                 "Sendt arbeidssøkerstatus for ident = $ident til Team PAW. " +
                     "Metadata: topic=${metadata.topic()} (partition=${metadata.partition()}, offset=${metadata.offset()})"

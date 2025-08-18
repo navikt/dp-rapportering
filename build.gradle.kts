@@ -94,7 +94,3 @@ dependencies {
     testImplementation(libs.ktor.client.mock)
     testImplementation("de.redsix:pdfcompare:1.2.3")
 }
-
-tasks.named("generateAvroProtocol", GenerateAvroProtocolTask::class.java) {
-    source(zipTree(schema.singleFile))
-}
