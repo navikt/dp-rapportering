@@ -4,7 +4,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     alias(libs.plugins.shadow.jar)
     alias(libs.plugins.kotlin)
-    id("io.ktor.plugin") version "3.2.2"
+    id("io.ktor.plugin") version "3.2.3"
     id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
     id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
@@ -73,16 +73,13 @@ dependencies {
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.8.0")
+    implementation("io.getunleash:unleash-client-java:11.1.0")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
+    implementation("no.nav.dagpenger:pdl-klient:2025.07.23-08.30.31e64aee9725")
 
     implementation("io.confluent:kafka-streams-avro-serde:8.0.0")
     implementation("org.apache.avro:avro:1.12.0")
     schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:1.25.03.11.31-1")
-
-    implementation("io.getunleash:unleash-client-java:11.0.2")
-
-    implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
-
-    implementation("no.nav.dagpenger:pdl-klient:2025.07.23-08.30.31e64aee9725")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(libs.rapids.and.rivers.test)
@@ -93,4 +90,13 @@ dependencies {
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.mock)
     testImplementation("de.redsix:pdfcompare:1.2.3")
+}
+
+tasks {
+    named("runKtlintCheckOverTestSourceSet") {
+        dependsOn("generateTestAvroJava")
+    }
+    named("generateAvroProtocol", GenerateAvroProtocolTask::class.java) {
+        source(zipTree(schema.singleFile))
+    }
 }

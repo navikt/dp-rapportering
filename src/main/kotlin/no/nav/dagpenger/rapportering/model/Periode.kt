@@ -8,7 +8,7 @@ data class Periode(
 ) {
     init {
 
-        require(tilOgMed.minusDays(13) == fraOgMed) {
+        require(tilOgMed.minusDays(13).isEqual(fraOgMed)) {
             "Perioden må være 14 dager lang"
         }
         require(fraOgMed.isBefore(tilOgMed)) {
