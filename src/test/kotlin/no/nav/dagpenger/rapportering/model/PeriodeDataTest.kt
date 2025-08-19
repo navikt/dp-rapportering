@@ -228,6 +228,7 @@ class PeriodeDataTest {
                     bruttoBelop = null,
                     begrunnelseEndring = null,
                     registrertArbeidssoker = null,
+                    meldedato = null,
                 ),
                 PeriodeData(
                     id = "2",
@@ -256,6 +257,7 @@ class PeriodeDataTest {
                     bruttoBelop = 123.0,
                     begrunnelseEndring = "Begrunnelse",
                     registrertArbeidssoker = true,
+                    meldedato = LocalDate.now(),
                 ),
             )
 
