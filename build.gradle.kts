@@ -67,7 +67,7 @@ dependencies {
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.client)
     implementation(libs.jackson.annotation)
-    implementation("no.nav.dagpenger:oauth2-klient:2025.07.23-08.30.31e64aee9725")
+    implementation("no.nav.dagpenger:oauth2-klient:2025.08.20-08.53.9250ac7fbd99")
     implementation("io.ktor:ktor-server-cio:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
@@ -75,7 +75,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.8.0")
     implementation("io.getunleash:unleash-client-java:11.1.0")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
-    implementation("no.nav.dagpenger:pdl-klient:2025.07.23-08.30.31e64aee9725")
+    implementation("no.nav.dagpenger:pdl-klient:2025.08.20-08.53.9250ac7fbd99")
 
     implementation("io.confluent:kafka-streams-avro-serde:8.0.0")
     implementation("org.apache.avro:avro:1.12.0")
