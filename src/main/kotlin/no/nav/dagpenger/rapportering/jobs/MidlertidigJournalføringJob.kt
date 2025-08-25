@@ -1,9 +1,9 @@
 package no.nav.dagpenger.rapportering.jobs
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import java.util.Timer

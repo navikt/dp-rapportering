@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.utils
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.replaceResponse
 import io.ktor.client.plugins.HttpSend
@@ -19,7 +20,6 @@ import io.ktor.utils.io.writer
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres

@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.api
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.plugins.ResponseException
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.JsonConvertException
@@ -19,7 +20,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.auth.jwt
 import no.nav.dagpenger.rapportering.api.auth.loginLevel

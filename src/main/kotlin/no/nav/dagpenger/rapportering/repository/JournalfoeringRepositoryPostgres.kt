@@ -1,9 +1,9 @@
 package no.nav.dagpenger.rapportering.repository
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
-import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData

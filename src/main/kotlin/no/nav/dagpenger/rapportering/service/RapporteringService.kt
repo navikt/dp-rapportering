@@ -1,9 +1,9 @@
 package no.nav.dagpenger.rapportering.service
 
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.Headers
 import io.ktor.server.plugins.BadRequestException
-import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem

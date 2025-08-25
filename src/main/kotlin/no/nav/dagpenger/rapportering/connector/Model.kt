@@ -1,6 +1,6 @@
 package no.nav.dagpenger.rapportering.connector
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Fravaer

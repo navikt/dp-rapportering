@@ -1,7 +1,7 @@
 package no.nav.dagpenger.rapportering.jobs
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.metrics.DatabaseMetrikker
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository

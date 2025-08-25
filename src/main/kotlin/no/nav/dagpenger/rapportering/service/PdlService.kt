@@ -1,9 +1,9 @@
 package no.nav.dagpenger.rapportering.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import mu.KotlinLogging
 import no.nav.dagpenger.pdl.PersonOppslag
 import no.nav.dagpenger.pdl.createPersonOppslag
 import no.nav.dagpenger.rapportering.config.Configuration.pdlApiTokenProvider

@@ -1,7 +1,7 @@
 package no.nav.dagpenger.rapportering.model
 
 import com.fasterxml.jackson.module.kotlin.convertValue
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn

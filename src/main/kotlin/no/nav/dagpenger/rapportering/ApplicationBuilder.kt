@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering
 
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.server.engine.embeddedServer
@@ -9,7 +10,6 @@ import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.prometheus.metrics.model.registry.PrometheusRegistry
-import mu.KotlinLogging
 import no.nav.dagpenger.rapportering.api.internalApi
 import no.nav.dagpenger.rapportering.api.rapporteringApi
 import no.nav.dagpenger.rapportering.config.Configuration.kafkaSchemaRegistryConfig
