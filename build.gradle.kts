@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.shadow.jar)
     alias(libs.plugins.kotlin)
     id("io.ktor.plugin") version "3.2.3"
-    id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
+    id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
     id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
 
