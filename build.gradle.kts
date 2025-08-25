@@ -33,7 +33,13 @@ tasks {
     }
 
     withType<ShadowJar> {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
         mergeServiceFiles()
+    }
+
+    named("runKtlintCheckOverTestSourceSet") {
+        dependsOn("generateTestAvroJava")
     }
 
     named("generateAvroProtocol", GenerateAvroProtocolTask::class.java) {
@@ -90,13 +96,4 @@ dependencies {
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.mock)
     testImplementation("de.redsix:pdfcompare:1.2.3")
-}
-
-tasks {
-    named("runKtlintCheckOverTestSourceSet") {
-        dependsOn("generateTestAvroJava")
-    }
-    named("generateAvroProtocol", GenerateAvroProtocolTask::class.java) {
-        source(zipTree(schema.singleFile))
-    }
 }
