@@ -106,7 +106,7 @@ spec:
         - application: dp-meldekortregister
         - application: paw-kafka-key-generator
           namespace: paw
-        - application: paw-arbeidssoekerregisteret-api-oppslag
+        - application: paw-arbeidssoekerregisteret-api-oppslag-v2
           namespace: paw
     inbound:
       rules:
