@@ -664,7 +664,7 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `kan sende inn rapporteringsperiode som allerede ble sendt hvi toggle er skrudd på`() {
+    fun `kan sende inn rapporteringsperiode som allerede ble sendt hvis toggle er skrudd på`() {
         val rapporteringsperiode =
             lagRapporteringsperiode(
                 kanSendes = false,
