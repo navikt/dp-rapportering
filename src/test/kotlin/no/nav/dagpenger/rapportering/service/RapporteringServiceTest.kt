@@ -664,7 +664,7 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `kan sende inn rapporteringsperiode som allerede ble sendt hvis toggle er skrudd på`() {
+    fun `kan sende inn rapporteringsperiode der kanSendes er false hvis toggle er skrudd på`() {
         val rapporteringsperiode =
             lagRapporteringsperiode(
                 kanSendes = false,
@@ -697,6 +697,9 @@ class RapporteringServiceTest {
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, any(), false, any(), false) }
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, true, false, Innsendt) }
         coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
+        coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
+        coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
+        coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
         every { unleash.isEnabled(eq("dp-rapportering-tillat-innsending-uavhengig-av-kansendes")) } returns true
 
         shouldNotThrow<BadRequestException> {
