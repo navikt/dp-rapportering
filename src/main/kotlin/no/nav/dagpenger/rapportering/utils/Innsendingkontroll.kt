@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.utils
 
 import io.ktor.server.plugins.BadRequestException
+import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Fravaer
@@ -12,11 +13,15 @@ import kotlin.time.Duration
 
 fun kontrollerRapporteringsperiode(periode: Rapporteringsperiode) {
     if (!periode.kanSendes) {
-        throw BadRequestException("Rapporteringsperiode med id ${periode.id} kan ikke sendes")
+        if (!unleash.isEnabled("dp-rapportering-tillat-innsending-uavhengig-av-kansendes")) {
+            throw BadRequestException("Rapporteringsperiode med id ${periode.id} kan ikke sendes")
+        }
     } else if (periode.kanSendesFra.isAfter(LocalDate.now())) {
-        throw BadRequestException(
-            "Rapporteringsperiode med id ${periode.id} kan ikke sendes før kan sendes fra dato (${periode.kanSendesFra})",
-        )
+        if (!unleash.isEnabled("dp-rapportering-tillat-innsending-uavhengig-av-kansendes")) {
+            throw BadRequestException(
+                "Rapporteringsperiode med id ${periode.id} kan ikke sendes før kan sendes fra dato (${periode.kanSendesFra})",
+            )
+        }
     } else if (periode.registrertArbeidssoker == null) {
         throw BadRequestException("Registrert arbeidssøker kan ikke være null")
     } else {
