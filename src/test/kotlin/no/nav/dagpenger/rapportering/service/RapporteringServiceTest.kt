@@ -1008,6 +1008,11 @@ class RapporteringServiceTest {
         meldt: Boolean = true,
         ansvarligSystem: String = "Arena",
     ) {
+        if (ansvarligSystem != "Arena") {
+            testRapid.inspektør.size shouldBe 0
+            return
+        }
+
         testRapid.inspektør.size shouldBe 1
 
         val message = testRapid.inspektør.message(0)
