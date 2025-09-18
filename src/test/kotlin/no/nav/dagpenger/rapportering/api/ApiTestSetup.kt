@@ -210,6 +210,7 @@ open class ApiTestSetup {
                         pdlService,
                         httpClient,
                     ),
+                    kallLoggService,
                     arbeidssoekerService,
                     personregisterService,
                     meldekortregisterService,

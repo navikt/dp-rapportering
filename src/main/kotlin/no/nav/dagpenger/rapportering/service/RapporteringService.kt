@@ -1,8 +1,10 @@
 package no.nav.dagpenger.rapportering.service
 
+import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.Headers
 import io.ktor.server.plugins.BadRequestException
+import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
@@ -18,6 +20,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.toMap
 import no.nav.dagpenger.rapportering.model.toPeriodeData
 import no.nav.dagpenger.rapportering.model.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
@@ -39,6 +42,7 @@ class RapporteringService(
     private val rapporteringRepository: RapporteringRepository,
     private val innsendingtidspunktRepository: InnsendingtidspunktRepository,
     private val journalfoeringService: JournalfoeringService,
+    private val kallLoggService: KallLoggService,
     private val arbeidssøkerService: ArbeidssøkerService,
     private val personregisterService: PersonregisterService,
     private val meldekortregisterService: MeldekortregisterService,
@@ -383,7 +387,7 @@ class RapporteringService(
         return sendinnRapporteringsperiode(ansvarligSystem, periodeTilInnsending, periodeData, token)
             .also { response ->
                 if (response.status == "OK") {
-                    logger.info { "Journalføring rapporteringsperiode ${periodeTilInnsending.id}" }
+                    logger.info("Journalføring rapporteringsperiode ${periodeTilInnsending.id}")
 
                     journalfoeringService.journalfoer(ident, loginLevel, headers, periodeTilInnsending)
 
@@ -410,6 +414,7 @@ class RapporteringService(
                         }
                     }
 
+                    sendPeriodeDataTilRnR(ident, periodeData, ansvarligSystem)
                     arbeidssøkerService.sendBekreftelse(ident, token, loginLevel, periodeTilInnsending)
                 } else {
                     // Oppdaterer perioden slik at den kan sendes inn på nytt
@@ -461,6 +466,38 @@ class RapporteringService(
         } catch (e: Exception) {
             logger.error(e) { "Klarte ikke å slette rapporteringsperiode med id $periodeId" }
         }
+
+    private fun sendPeriodeDataTilRnR(
+        ident: String,
+        periodeData: PeriodeData,
+        ansvarligSystem: AnsvarligSystem,
+    ) {
+        if (!unleash.isEnabled("send-periodedata") || ansvarligSystem != AnsvarligSystem.ARENA) {
+            return
+        }
+
+        val message =
+            JsonMessage.newMessage(
+                "meldekort_innsendt",
+                periodeData.toMap(),
+            )
+
+        val kallLoggId = kallLoggService.lagreKafkaUtKallLogg(ident)
+
+        try {
+            kallLoggService.lagreRequest(kallLoggId, message.toJson())
+
+            getRapidsConnection().publish(ident, message.toJson())
+
+            kallLoggService.lagreResponse(kallLoggId, 200, "")
+        } catch (e: Exception) {
+            logger.error("Kunne ikke sende periode til RnR", e)
+
+            kallLoggService.lagreResponse(kallLoggId, 500, "")
+
+            throw Exception(e)
+        }
+    }
 
     private suspend fun hentEndringId(
         ansvarligSystem: AnsvarligSystem,

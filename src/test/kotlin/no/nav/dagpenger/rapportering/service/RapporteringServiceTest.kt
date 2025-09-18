@@ -1,8 +1,13 @@
 package no.nav.dagpenger.rapportering.service
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectReader
+import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDate
+import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
 import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.date.shouldBeBefore
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -22,6 +27,7 @@ import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
+import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
@@ -65,6 +71,7 @@ class RapporteringServiceTest {
     private val rapporteringRepository = mockk<RapporteringRepository>()
     private val innsendingtidspunktRepository = mockk<InnsendingtidspunktRepository>()
     private val journalfoeringService = mockk<JournalfoeringService>()
+    private val kallLoggService = mockk<KallLoggService>()
     private val arbeidssøkerService = mockk<ArbeidssøkerService>()
     private val personregisterService = mockk<PersonregisterService>()
     private val meldekortregisterService = mockk<MeldekortregisterService>()
@@ -75,6 +82,7 @@ class RapporteringServiceTest {
             rapporteringRepository,
             innsendingtidspunktRepository,
             journalfoeringService,
+            kallLoggService,
             arbeidssøkerService,
             personregisterService,
             meldekortregisterService,
@@ -285,8 +293,7 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
         coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
 
-        val rapporteringsperioder =
-            runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
+        val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
         rapporteringsperioder[0].id shouldBe "1"
         rapporteringsperioder[1].id shouldBe "2"
@@ -302,8 +309,7 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
         coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
 
-        val rapporteringsperioder =
-            runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
+        val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
         rapporteringsperioder[0].id shouldBe "3"
         rapporteringsperioder[1].id shouldBe "2"
@@ -319,20 +325,13 @@ class RapporteringServiceTest {
             lagRapporteringsperiode(
                 id = "1",
                 periode = Periode(fraOgMed = 1.januar, tilOgMed = 14.januar),
-            ).copy(
-                dager =
-                    getDager(
-                        startDato = 1.januar,
-                        aktivitet = Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
-                    ),
-            )
+            ).copy(dager = getDager(startDato = 1.januar, aktivitet = Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null)))
         coEvery { rapporteringRepository.hentRapporteringsperiode("2", ident) } returns null
         coEvery { rapporteringRepository.hentRapporteringsperiode("3", ident) } returns null
         coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
         coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
 
-        val rapporteringsperioder =
-            runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
+        val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
         // Rapporteringsperiode med ID = 1 oppdateres siden meldepliktConnector returnerer data med høyere status (Innsendt)
         coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
@@ -418,13 +417,7 @@ class RapporteringServiceTest {
 
         runBlocking { rapporteringService.oppdaterRapporteringstype("1", "12345678910", "harIngenAktivitet") }
 
-        coVerify(exactly = 1) {
-            rapporteringRepository.oppdaterRapporteringstype(
-                "1",
-                "12345678910",
-                "harIngenAktivitet",
-            )
-        }
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringstype("1", "12345678910", "harIngenAktivitet") }
     }
 
     @Test
@@ -434,12 +427,7 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(ident) } returns emptyList()
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
-        coEvery {
-            rapporteringRepository.finnesRapporteringsperiode(
-                any(),
-                any(),
-            )
-        } returns true andThen true andThen false
+        coEvery { rapporteringRepository.finnesRapporteringsperiode(any(), any()) } returns true andThen true andThen false
 
         val response = runBlocking { rapporteringService.startEndring("123", ident, token) }
 
@@ -453,9 +441,7 @@ class RapporteringServiceTest {
     @Test
     fun `kan ikke endre rapporteringsperiode som ikke kan endres`() {
         coEvery { meldepliktService.hentInnsendteRapporteringsperioder(any(), any()) } returns
-            listOf(
-                rapporteringsperiodeListe.first().copy(id = "123", kanEndres = false).toAdapterRapporteringsperiode(),
-            )
+            listOf(rapporteringsperiodeListe.first().copy(id = "123", kanEndres = false).toAdapterRapporteringsperiode())
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
         shouldThrow<IllegalArgumentException> {
@@ -483,8 +469,7 @@ class RapporteringServiceTest {
                 .toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
-        val innsendteRapporteringsperioder =
-            runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
+        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
         innsendteRapporteringsperioder.size shouldBe 3
         innsendteRapporteringsperioder[0].id shouldBe "3"
@@ -505,8 +490,7 @@ class RapporteringServiceTest {
                 lagRapporteringsperiode("5", Periode(15.januar, 28.januar)),
             )
 
-        val innsendteRapporteringsperioder =
-            runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
+        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
         innsendteRapporteringsperioder.size shouldBe 4
         innsendteRapporteringsperioder[0].id shouldBe "3"
@@ -524,22 +508,11 @@ class RapporteringServiceTest {
         coEvery { meldepliktService.hentInnsendteRapporteringsperioder(any(), any()) } returns perioderFraArena
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns
             listOf(
-                lagRapporteringsperiode(
-                    "1",
-                    Periode(1.januar, 14.januar),
-                    status = Ferdig,
-                    registrertArbeidssoker = true,
-                ),
-                lagRapporteringsperiode(
-                    "2",
-                    Periode(15.januar, 28.januar),
-                    status = Innsendt,
-                    registrertArbeidssoker = true,
-                ),
+                lagRapporteringsperiode("1", Periode(1.januar, 14.januar), status = Ferdig, registrertArbeidssoker = true),
+                lagRapporteringsperiode("2", Periode(15.januar, 28.januar), status = Innsendt, registrertArbeidssoker = true),
             )
 
-        val innsendteRapporteringsperioder =
-            runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
+        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
         // Perioden med ID = 3 finnes ikke i databasen og skal ikke endres
         // Perioden med ID = 2 har lavere status (Innsendt) i databasen enn i Arena (Ferdig) og skal ikke endres
@@ -586,8 +559,7 @@ class RapporteringServiceTest {
                 lagRapporteringsperiode("5", Periode(15.januar, 28.januar)),
             )
 
-        val innsendteRapporteringsperioder =
-            runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
+        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
         println("Perioder: $innsendteRapporteringsperioder")
 
@@ -626,7 +598,7 @@ class RapporteringServiceTest {
                 feil = listOf(),
             )
 
-        sendInn(rapporteringsperiode)
+        sendInn(rapporteringsperiode, "Dagpenger")
     }
 
     @Test
@@ -636,25 +608,8 @@ class RapporteringServiceTest {
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
         coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
-        coJustRun {
-            rapporteringRepository.oppdaterPeriodeEtterInnsending(
-                rapporteringsperiode.id,
-                ident,
-                any(),
-                false,
-                any(),
-                false,
-            )
-        }
-        coJustRun {
-            rapporteringRepository.oppdaterPeriodeEtterInnsending(
-                rapporteringsperiode.id,
-                ident,
-                true,
-                false,
-                Innsendt,
-            )
-        }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, any(), false, any(), false) }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, true, false, Innsendt) }
         coEvery { meldepliktService.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
         val sendtPeriode = slot<AdapterRapporteringsperiode>()
         coEvery { meldepliktService.sendinnRapporteringsperiode(capture(sendtPeriode), token) } returns
@@ -663,6 +618,9 @@ class RapporteringServiceTest {
                 status = "OK",
                 feil = listOf(),
             )
+        coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
+        coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
+        coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
         coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns
             listOf(
                 ArbeidssøkerperiodeResponse(
@@ -736,26 +694,12 @@ class RapporteringServiceTest {
                 feil = listOf(),
             )
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
-        coJustRun {
-            rapporteringRepository.oppdaterPeriodeEtterInnsending(
-                rapporteringsperiode.id,
-                ident,
-                any(),
-                false,
-                any(),
-                false,
-            )
-        }
-        coJustRun {
-            rapporteringRepository.oppdaterPeriodeEtterInnsending(
-                rapporteringsperiode.id,
-                ident,
-                true,
-                false,
-                Innsendt,
-            )
-        }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, any(), false, any(), false) }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, true, false, Innsendt) }
         coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
+        coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
+        coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
+        coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
         every { unleash.isEnabled(eq("dp-rapportering-tillat-innsending-uavhengig-av-kansendes")) } returns true
 
         shouldNotThrow<BadRequestException> {
@@ -837,6 +781,9 @@ class RapporteringServiceTest {
                 status = "OK",
                 feil = listOf(),
             )
+        coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
+        coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
+        coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
         coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns
             listOf(
                 ArbeidssøkerperiodeResponse(
@@ -890,6 +837,8 @@ class RapporteringServiceTest {
                 aktivitet.timer shouldBe rapporteringsperiode.dager[dagIndex].aktiviteter[index].timer
             }
         }
+
+        checkRapid(rapporteringsperiode, endringId)
     }
 
     @Test
@@ -900,9 +849,7 @@ class RapporteringServiceTest {
         shouldThrow<BadRequestException> {
             runBlocking {
                 rapporteringService.sendRapporteringsperiode(
-                    rapporteringsperiodeListe
-                        .first()
-                        .copy(status = TilUtfylling, begrunnelseEndring = null, originalId = "125"),
+                    rapporteringsperiodeListe.first().copy(status = TilUtfylling, begrunnelseEndring = null, originalId = "125"),
                     token,
                     ident,
                     loginLevel,
@@ -924,12 +871,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `lagreEllerOppdaterPeriode oppdaterer perioden hvis den finnes i databasen fra før`() {
-        coEvery {
-            rapporteringRepository.hentRapporteringsperiode(
-                any(),
-                any(),
-            )
-        } returns rapporteringsperiodeListe.first()
+        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns rapporteringsperiodeListe.first()
         coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
 
         runBlocking { rapporteringService.lagreEllerOppdaterPeriode(rapporteringsperiodeListe.first(), ident) }
@@ -1012,30 +954,19 @@ class RapporteringServiceTest {
         slettedePerioder shouldBe 3
     }
 
-    private fun sendInn(rapporteringsperiode: Rapporteringsperiode) {
+    private fun sendInn(
+        rapporteringsperiode: Rapporteringsperiode,
+        ansvarligSystem: String = "Arena",
+    ) {
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
         coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
-        coJustRun {
-            rapporteringRepository.oppdaterPeriodeEtterInnsending(
-                rapporteringsperiode.id,
-                ident,
-                any(),
-                false,
-                any(),
-                false,
-            )
-        }
-        coJustRun {
-            rapporteringRepository.oppdaterPeriodeEtterInnsending(
-                rapporteringsperiode.id,
-                ident,
-                true,
-                false,
-                Innsendt,
-            )
-        }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, any(), false, any(), false) }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, true, false, Innsendt) }
         coEvery { meldepliktService.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
+        coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
+        coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
+        coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
         coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns
             listOf(
                 ArbeidssøkerperiodeResponse(
@@ -1066,15 +997,64 @@ class RapporteringServiceTest {
                 journalfoeringService.journalfoer(any(), any(), any(), any())
             }
         }
-        coVerify(exactly = 1) {
-            rapporteringRepository.oppdaterPeriodeEtterInnsending(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-            )
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
+
+        checkRapid(rapporteringsperiode, null, false, ansvarligSystem)
+    }
+
+    private fun checkRapid(
+        rapporteringsperiode: Rapporteringsperiode,
+        endringId: String? = null,
+        meldt: Boolean = true,
+        ansvarligSystem: String = "Arena",
+    ) {
+        if (ansvarligSystem != "Arena") {
+            testRapid.inspektør.size shouldBe 0
+            return
         }
+
+        testRapid.inspektør.size shouldBe 1
+
+        val message = testRapid.inspektør.message(0)
+
+        if (endringId == null) {
+            message["@event_name"].asText() shouldBe "meldekort_innsendt"
+            message["id"].asText() shouldBe rapporteringsperiode.id
+            message["type"].asText() shouldBe "Original"
+            message["korrigeringAv"].isNull shouldBe true
+        } else {
+            message["@event_name"].asText() shouldBe "meldekort_innsendt"
+            message["id"].asText() shouldBe endringId
+            message["type"].asText() shouldBe "Korrigert"
+            message["korrigeringAv"].asText() shouldBe rapporteringsperiode.id
+        }
+
+        message["ident"].asText() shouldBe ident
+
+        val periode = message["periode"]
+        periode["fraOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.fraOgMed
+        periode["tilOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.tilOgMed
+
+        val reader: ObjectReader = defaultObjectMapper.readerFor(object : TypeReference<List<PeriodeDag>>() {})
+        val dager: List<PeriodeDag> = reader.readValue(message["dager"])
+        dager.forEachIndexed { i, dag ->
+            dag.dato shouldBeEqual rapporteringsperiode.dager[i].dato
+            dag.dagIndex shouldBeEqual rapporteringsperiode.dager[i].dagIndex
+            dag.aktiviteter shouldBeEqual rapporteringsperiode.dager[i].aktiviteter
+            dag.meldt shouldBe meldt
+        }
+
+        message["kanSendesFra"].asLocalDate() shouldBe rapporteringsperiode.kanSendesFra
+        message["opprettetAv"].asText() shouldBe ansvarligSystem
+
+        val kilde = message["kilde"]
+        kilde["rolle"].asText() shouldBe "Bruker"
+        kilde["ident"].asText() shouldBe ident
+
+        message["status"].asText() shouldBe "Innsendt"
+        val innsendtTidspunkt = message["innsendtTidspunkt"].asLocalDateTime()
+        innsendtTidspunkt.toLocalDate() shouldBe LocalDate.now()
+        innsendtTidspunkt shouldBeBefore LocalDateTime.now()
     }
 }
 
