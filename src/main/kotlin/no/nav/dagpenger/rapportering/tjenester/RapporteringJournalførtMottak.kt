@@ -74,7 +74,7 @@ internal class RapporteringJournalførtMottak(
             sikkerlogg.info { "Fått løsning for JournalføreRapportering for $periodeId. Packet: ${packet.toJson()}" }
 
             runBlocking {
-                journalfoeringRepository.lagreJournalpostData(journalpostId, 0L, periodeId.toLong())
+                journalfoeringRepository.lagreJournalpostData(journalpostId, 0L, periodeId)
                 kallLoggRepository.lagreResponse(kallLoggId, 200, packet.toJson())
             }
         }

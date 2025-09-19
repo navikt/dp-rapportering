@@ -237,7 +237,7 @@ class JournalfoeringServiceTest {
         justRun { rapidsConnection.publish(eq(ident), capture(message)) }
 
         val journalfoeringRepository = mockk<JournalfoeringRepository>()
-        coEvery { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq(1)) } just runs
+        coEvery { journalfoeringRepository.lagreJournalpostData(eq(2), eq(3), eq("1")) } just runs
         coEvery { journalfoeringRepository.hentMidlertidigLagretData() } returns emptyList()
 
         val kallLoggService = mockk<KallLoggService>()

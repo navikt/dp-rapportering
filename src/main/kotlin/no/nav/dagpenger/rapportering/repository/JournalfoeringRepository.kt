@@ -6,7 +6,7 @@ interface JournalfoeringRepository {
     suspend fun lagreJournalpostData(
         journalpostId: Long,
         dokumentInfoId: Long,
-        rapporteringsperiodeId: Long,
+        rapporteringsperiodeId: String,
     )
 
     suspend fun lagreDataMidlertidig(midlertidigLagretData: MidlertidigLagretData)

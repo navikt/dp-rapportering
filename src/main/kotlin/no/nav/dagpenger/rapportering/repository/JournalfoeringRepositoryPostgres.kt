@@ -19,7 +19,7 @@ class JournalfoeringRepositoryPostgres(
     override suspend fun lagreJournalpostData(
         journalpostId: Long,
         dokumentInfoId: Long,
-        rapporteringsperiodeId: Long,
+        rapporteringsperiodeId: String,
     ) = actionTimer.timedAction("db-lagreJournalpostData") {
         using(sessionOf(dataSource)) { session ->
             session
