@@ -36,6 +36,7 @@ import kotlin.random.Random
 import kotlin.random.nextLong
 
 private val logger = KotlinLogging.logger {}
+private val sikkerLogger = KotlinLogging.logger("tjenestekall.RapporteringSerivice")
 
 class RapporteringService(
     private val meldepliktService: MeldepliktService,
@@ -486,6 +487,7 @@ class RapporteringService(
 
         try {
             kallLoggService.lagreRequest(kallLoggId, message.toJson())
+            sikkerLogger.info { "Sender meldekort til RnR: ${message.toJson()}" }
 
             getRapidsConnection().publish(ident, message.toJson())
 
