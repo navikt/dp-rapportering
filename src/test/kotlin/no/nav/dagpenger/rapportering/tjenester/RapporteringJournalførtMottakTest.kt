@@ -35,7 +35,7 @@ class RapporteringJournalførtMottakTest {
         testRapid.sendTestMessage(løstBehovJSON)
 
         coVerify(exactly = 1) {
-            mockJournalfoeringRepository.lagreJournalpostData(eq(123456), eq(0), eq(1234567890))
+            mockJournalfoeringRepository.lagreJournalpostData(eq(123456), eq(0), eq("1234567890"))
             mockKallLoggRepository.lagreResponse(eq(12345), eq(200), any())
         }
 
