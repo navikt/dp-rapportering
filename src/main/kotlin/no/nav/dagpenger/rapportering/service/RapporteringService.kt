@@ -415,7 +415,7 @@ class RapporteringService(
                         }
                     }
 
-                    sendPeriodeDataTilRnR(ident, periodeData, ansvarligSystem)
+                    sendPeriodeDataTilRnR(ident, periodeData)
                     arbeidssøkerService.sendBekreftelse(ident, token, loginLevel, periodeTilInnsending)
                 } else {
                     // Oppdaterer perioden slik at den kan sendes inn på nytt
@@ -471,9 +471,8 @@ class RapporteringService(
     private fun sendPeriodeDataTilRnR(
         ident: String,
         periodeData: PeriodeData,
-        ansvarligSystem: AnsvarligSystem,
     ) {
-        if (!unleash.isEnabled("send-periodedata") || ansvarligSystem != AnsvarligSystem.ARENA) {
+        if (!unleash.isEnabled("send-periodedata")) {
             return
         }
 
