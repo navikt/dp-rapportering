@@ -132,7 +132,7 @@ class ArbeidssøkerService(
 
             kallLoggService.lagreResponse(kallLoggId, 200, "")
         } catch (e: Exception) {
-            logger.error("Kunne ikke sende arbeidssøkerstatus til Kafka", e)
+            logger.error(e) { "Kunne ikke sende arbeidssøkerstatus til Kafka" }
 
             kallLoggService.lagreResponse(kallLoggId, 500, "")
 

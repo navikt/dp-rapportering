@@ -160,7 +160,7 @@ internal fun Application.rapporteringApi(
                         }
                     } catch (e: Exception) {
                         meldepliktMetrikker.innsendteMeldekortFeil.increment()
-                        logger.error("Feil ved innsending: $e")
+                        logger.error(e) { "Feil ved innsending" }
                         throw e
                     }
                 }

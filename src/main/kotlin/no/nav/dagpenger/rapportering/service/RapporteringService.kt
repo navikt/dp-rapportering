@@ -394,7 +394,7 @@ class RapporteringService(
         return sendinnRapporteringsperiode(ansvarligSystem, periodeTilInnsending, periodeData, token)
             .also { response ->
                 if (response.status == "OK") {
-                    logger.info("Journalføring rapporteringsperiode ${periodeTilInnsending.id}")
+                    logger.info { "Journalføring rapporteringsperiode ${periodeTilInnsending.id}" }
 
                     journalfoeringService.journalfoer(ident, loginLevel, headers, periodeTilInnsending)
 
@@ -499,7 +499,7 @@ class RapporteringService(
 
             kallLoggService.lagreResponse(kallLoggId, 200, "")
         } catch (e: Exception) {
-            logger.error("Kunne ikke sende periode til RnR", e)
+            logger.error(e) { "Kunne ikke sende periode til RnR" }
 
             kallLoggService.lagreResponse(kallLoggId, 500, "")
 

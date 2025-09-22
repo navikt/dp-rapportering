@@ -83,7 +83,7 @@ val IncomingCallLoggingPlugin: ApplicationPlugin<ICDLPConfig> =
                     )
                 call.attributes.put(kallLoggIdAttr, kallLoggId)
             } catch (e: Exception) {
-                logger.error("Kunne ikke lagre kall logg", e)
+                logger.error(e) { "Kunne ikke lagre kall logg" }
             }
         }
 

@@ -77,7 +77,7 @@ class OutgoingCallLoggingPlugin(
                     ),
                 )
             } catch (e: Exception) {
-                logger.error("Kunne ikke lagre kall logg", e)
+                logger.error(e) { "Kunne ikke lagre kall logg" }
             }
 
             // Response content can be read only once. Wrap the call with the content we have read

@@ -58,7 +58,8 @@ class JournalfoeringService(
             val midlertidigLagretData = triple.second
             val retries = triple.third
 
-            val rapporteringsperiode = defaultObjectMapper.readValue<Rapporteringsperiode>(midlertidigLagretData.rapporteringsperiode)
+            val rapporteringsperiode =
+                defaultObjectMapper.readValue<Rapporteringsperiode>(midlertidigLagretData.rapporteringsperiode)
 
             try {
                 // Journalfør
@@ -75,10 +76,7 @@ class JournalfoeringService(
             } catch (e: Exception) {
                 // Kan ikke journalføre igjen. Oppdater teller
                 journalfoeringRepository.oppdaterMidlertidigLagretData(id, retries + 1)
-                logger.warn(
-                    "Kan ikke journalføre periode ${rapporteringsperiode.id}, retries $retries",
-                    e,
-                )
+                logger.warn(e) { "Kan ikke journalføre periode ${rapporteringsperiode.id}, retries $retries" }
             }
         }
 
@@ -96,7 +94,7 @@ class JournalfoeringService(
         try {
             opprettOgSendBehov(ident, navn, loginLevel, headers, rapporteringsperiode)
         } catch (e: Exception) {
-            logger.warn("Feil ved journalføring", e)
+            logger.warn(e) { "Feil ved journalføring" }
             lagreDataMidlertidig(ident, navn, loginLevel, headers, rapporteringsperiode)
         }
     }
@@ -131,7 +129,7 @@ class JournalfoeringService(
         // Kall dp-behov-pdf-generator
         val sak = "meldekort" // Vi bruker "meldekort" istedenfor saksnummer
 
-        logger.info("Oppretter PDF for rapporteringsperiode ${rapporteringsperiode.id}")
+        logger.info { "Oppretter PDF for rapporteringsperiode ${rapporteringsperiode.id}" }
         val pdfGeneratorResponse =
             httpClient.post(Configuration.pdfGeneratorUrl + "/convert-html-to-pdf/" + sak) {
                 accept(ContentType.Application.Pdf)
@@ -145,7 +143,7 @@ class JournalfoeringService(
 
         val pdf: ByteArray = pdfGeneratorResponse.body()
 
-        logger.info("Oppretter journalpost for rapporteringsperiode ${rapporteringsperiode.id}")
+        logger.info { "Oppretter journalpost for rapporteringsperiode ${rapporteringsperiode.id}" }
 
         var brevkode = "NAV 00-10.02"
         if (rapporteringsperiode.erEndring()) {
@@ -184,7 +182,7 @@ class JournalfoeringService(
             // Lagrer request (Behov)
             kallLoggService.lagreRequest(kallLoggId, behov.toJson())
         } catch (e: Exception) {
-            logger.error("Kunne ikke sende melding til Kafka", e)
+            logger.error(e) { "Kunne ikke sende melding til Kafka" }
 
             kallLoggService.lagreResponse(kallLoggId, 500, "")
 
@@ -247,7 +245,7 @@ class JournalfoeringService(
         headers: Headers,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
-        logger.info("Mellomlagrer data for rapporteringsperiode ${rapporteringsperiode.id}")
+        logger.info { "Mellomlagrer data for rapporteringsperiode ${rapporteringsperiode.id}" }
         journalfoeringRepository.lagreDataMidlertidig(
             MidlertidigLagretData(
                 ident,

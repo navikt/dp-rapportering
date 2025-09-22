@@ -61,7 +61,7 @@ internal object PostgresDataSourceBuilder {
                             pc.execute()
                         }
                     } catch (e: Exception) {
-                        logger.warn("Feil med partisjoner", e)
+                        logger.warn(e) { "Feil med partisjoner" }
                     }
                 }
             }
