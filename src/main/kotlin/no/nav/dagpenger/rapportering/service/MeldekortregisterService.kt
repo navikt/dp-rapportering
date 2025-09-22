@@ -12,6 +12,7 @@ import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.HttpClientUtils
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.KorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.model.PeriodeData
 
 class MeldekortregisterService(
@@ -84,6 +85,31 @@ class MeldekortregisterService(
                     .also {
                         logger.info { "Kall til meldekortregister for å sende periode ga status ${it.status}" }
                         sikkerlogg.info { "Kall til meldekortregister for å sende periode $id ga status ${it.status}" }
+                    }
+
+            val status =
+                if (result.status == HttpStatusCode.OK) {
+                    "OK"
+                } else {
+                    "FEIL"
+                }
+
+            InnsendingResponse(id, status, emptyList())
+        }
+
+    suspend fun sendKorrigertMeldekort(
+        korrigertMeldekort: KorrigerMeldekortHendelse,
+        token: String,
+    ): InnsendingResponse =
+        withContext(Dispatchers.IO) {
+            val id = korrigertMeldekort.originalMeldekortId
+
+            val result =
+                httpClientUtils
+                    .post("/meldekort/$id/korriger", token, "meldekortregister-korrigerMeldekort", korrigertMeldekort)
+                    .also {
+                        logger.info { "Kall til meldekortregister for å sende korrigert meldekort ga status ${it.status}" }
+                        sikkerlogg.info { "Kall til meldekortregister for å sende korrigert meldekort $id ga status ${it.status}" }
                     }
 
             val status =
