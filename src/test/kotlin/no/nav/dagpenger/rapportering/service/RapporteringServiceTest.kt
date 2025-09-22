@@ -605,7 +605,7 @@ class RapporteringServiceTest {
     fun `kan override registrertArbeidssoker i rapporteringsperiode`() {
         val rapporteringsperiode = rapporteringsperiodeListe.first().copy(registrertArbeidssoker = false)
 
-        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
+        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
         coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, any(), false, any(), false) }
@@ -693,7 +693,7 @@ class RapporteringServiceTest {
                 status = "OK",
                 feil = listOf(),
             )
-        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
+        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, any(), false, any(), false) }
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, true, false, Innsendt) }
         coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
@@ -762,7 +762,7 @@ class RapporteringServiceTest {
                 originalId = originalPeriode.id,
                 registrertArbeidssoker = true,
             )
-        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
+        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
         coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
@@ -811,7 +811,7 @@ class RapporteringServiceTest {
 
         verify(exactly = 1) {
             runBlocking {
-                journalfoeringService.journalfoer(any(), any(), any(), any())
+                journalfoeringService.journalfoer(any(), any(), any(), any(), any())
             }
         }
         coVerify(exactly = 1) {
@@ -958,7 +958,7 @@ class RapporteringServiceTest {
         rapporteringsperiode: Rapporteringsperiode,
         ansvarligSystem: String = "Arena",
     ) {
-        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
+        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
         coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, any(), false, any(), false) }
@@ -994,7 +994,7 @@ class RapporteringServiceTest {
 
         verify(exactly = 1) {
             runBlocking {
-                journalfoeringService.journalfoer(any(), any(), any(), any())
+                journalfoeringService.journalfoer(any(), any(), any(), any(), any())
             }
         }
         coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }

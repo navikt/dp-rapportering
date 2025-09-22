@@ -8,9 +8,11 @@ import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.util.UUID
 
 class PersonregisterConnectorTest {
-    private val testTokenProvider: (token: String) -> String = { _ -> "testToken" }
+    private val testTokenXProvider: (token: String) -> String = { _ -> "testToken" }
+    private val testAzureTokenProvider: () -> String = { "testToken" }
     private val personregisterUrl = "http://personregisterUrl"
     private val subjectToken = "gylidg_token"
     private val ident = "12345678903"
@@ -28,7 +30,8 @@ class PersonregisterConnectorTest {
         responseBody: String = "",
     ) = PersonregisterConnector(
         personregisterUrl = personregisterUrl,
-        tokenProvider = testTokenProvider,
+        tokenXProvider = testTokenXProvider,
+        azureTokenProvider = testAzureTokenProvider,
         httpClient = createMockClient(statusCode, responseBody),
         actionTimer = actionTimer,
     )
@@ -161,5 +164,27 @@ class PersonregisterConnectorTest {
         runBlocking {
             connector.oppdaterPersonstatus(ident, subjectToken, LocalDate.now())
         }
+    }
+
+    @Test
+    fun `hentSisteSakId returnerer sakId`() {
+        val sakId = UUID.randomUUID().toString()
+
+        val connector =
+            personregisterConnector(
+                HttpStatusCode.OK,
+                """
+                {
+                  "sakId": "$sakId"
+                }
+                """.trimIndent(),
+            )
+
+        val response =
+            runBlocking {
+                connector.hentSisteSakId(ident)
+            }
+
+        response shouldBe sakId
     }
 }

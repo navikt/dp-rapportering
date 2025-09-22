@@ -79,14 +79,6 @@ class ApplicationBuilder(
     private val kallLoggService = KallLoggService(kallLoggRepository)
     private val pdlService = PdlService()
 
-    private val journalfoeringService =
-        JournalfoeringService(
-            journalfoeringRepository,
-            kallLoggService,
-            pdlService,
-            httpClient,
-        )
-
     private val kafkaKonfigurasjon = KafkaKonfigurasjon(kafkaServerKonfigurasjon, kafkaSchemaRegistryConfig)
     private val kafkaFactory = KafkaFactory(kafkaKonfigurasjon)
     private val bekreftelseKafkaProdusent =
@@ -100,6 +92,15 @@ class ApplicationBuilder(
     private val meldekortregisterService = MeldekortregisterService(httpClient = httpClient, actionTimer = actionTimer)
     private val personregisterService = PersonregisterService(personregisterConnector, meldepliktService)
     private val arbeidssøkerService = ArbeidssøkerService(kallLoggService, personregisterService, httpClient, bekreftelseKafkaProdusent)
+
+    private val journalfoeringService =
+        JournalfoeringService(
+            journalfoeringRepository,
+            kallLoggService,
+            pdlService,
+            personregisterService,
+            httpClient,
+        )
 
     private val rapporteringService =
         RapporteringService(
