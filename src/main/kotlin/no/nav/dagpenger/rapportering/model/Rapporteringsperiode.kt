@@ -129,3 +129,17 @@ fun List<Dag>.toPeriodeDager(arbeidssøkerperioder: List<ArbeidssøkerperiodeRes
                 } != null,
         )
     }
+
+fun PeriodeData.toKorrigerMeldekortHendelse(): KorrigerMeldekortHendelse =
+    KorrigerMeldekortHendelse(
+        ident = ident,
+        originalMeldekortId =
+            korrigeringAv
+                ?: throw IllegalStateException("korrigeringAv kan ikke være null ved opprettelse av KorrigerMeldekortHendelse"),
+        periode = periode,
+        dager = dager,
+        kilde = kilde ?: throw IllegalStateException("kilde kan ikke være null ved opprettelse av KorrigerMeldekortHendelse"),
+        begrunnelse =
+            begrunnelseEndring
+                ?: throw IllegalStateException("begrunnelseEndring kan ikke være null ved opprettelse av KorrigerMeldekortHendelse"),
+    )

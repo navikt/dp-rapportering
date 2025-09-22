@@ -14,6 +14,7 @@ import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
 import no.nav.dagpenger.rapportering.model.PeriodeData.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
+import no.nav.dagpenger.rapportering.model.toKorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -196,5 +197,57 @@ class MeldekortregisterServiceTest {
             }
 
         response shouldBe InnsendingResponse(id, "FEIL", emptyList())
+    }
+
+    @Test
+    fun `kan sende inn korrigering av meldekort`() {
+        // OK
+        var meldekortregisterService = meldekortregisterService(HttpStatusCode.OK)
+
+        val originalId = "123456789"
+        val periode = Periode(LocalDate.now(), LocalDate.now().plusDays(13))
+
+        val korrigertMeldekortHendelse =
+            PeriodeData(
+                id = "123456788",
+                ident = "01020312345",
+                periode = periode,
+                dager =
+                    (0..13)
+                        .map { i ->
+                            PeriodeDag(
+                                dato = LocalDate.now().plusDays(i.toLong()),
+                                aktiviteter = listOf(Aktivitet(UUID.randomUUID(), Aktivitet.AktivitetsType.Utdanning, "")),
+                                dagIndex = i,
+                            )
+                        },
+                kanSendesFra = LocalDate.now(),
+                opprettetAv = OpprettetAv.Dagpenger,
+                kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312345"),
+                type = Type.Korrigert,
+                status = "TilInnsending",
+                innsendtTidspunkt = LocalDateTime.now(),
+                korrigeringAv = originalId,
+                bruttoBelop = null,
+                begrunnelseEndring = "Begrunnelse",
+                registrertArbeidssoker = true,
+            ).toKorrigerMeldekortHendelse()
+
+        var response =
+            runBlocking {
+                meldekortregisterService.sendKorrigertMeldekort(korrigertMeldekortHendelse, token)
+            }
+
+        response shouldBe InnsendingResponse(originalId, "OK", emptyList())
+
+        // Feil
+        meldekortregisterService = meldekortregisterService(HttpStatusCode.InternalServerError)
+
+        response =
+            runBlocking {
+                meldekortregisterService.sendKorrigertMeldekort(korrigertMeldekortHendelse, token)
+            }
+
+        response shouldBe InnsendingResponse(originalId, "FEIL", emptyList())
     }
 }

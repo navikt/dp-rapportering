@@ -20,6 +20,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.toKorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.model.toMap
 import no.nav.dagpenger.rapportering.model.toPeriodeData
 import no.nav.dagpenger.rapportering.model.toRapporteringsperioder
@@ -375,7 +376,12 @@ class RapporteringService(
                             )
                         }
 
-                periodeTilInnsending = rapporteringsperiode.copy(id = endringId, dager = dager)
+                periodeTilInnsending =
+                    if (endringId != null) {
+                        rapporteringsperiode.copy(id = endringId, dager = dager)
+                    } else {
+                        rapporteringsperiode.copy(dager = dager)
+                    }
                 rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Midlertidig)
                 rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending, ident)
             }
@@ -505,13 +511,12 @@ class RapporteringService(
         ansvarligSystem: AnsvarligSystem,
         originalId: String,
         token: String,
-    ): String =
+    ): String? =
         if (ansvarligSystem == AnsvarligSystem.ARENA) {
             meldepliktService
                 .hentEndringId(originalId, token)
         } else {
-            meldekortregisterService
-                .hentEndringId(originalId, token)
+            null
         }
 
     private suspend fun sendinnRapporteringsperiode(
@@ -524,7 +529,11 @@ class RapporteringService(
             meldepliktService
                 .sendinnRapporteringsperiode(periodeTilInnsending.toAdapterRapporteringsperiode(), token)
         } else {
-            meldekortregisterService
-                .sendinnRapporteringsperiode(periodeData, token)
+            if (periodeData.type == PeriodeData.Type.Korrigert) {
+                meldekortregisterService.sendKorrigertMeldekort(periodeData.toKorrigerMeldekortHendelse(), token)
+            } else {
+                meldekortregisterService
+                    .sendinnRapporteringsperiode(periodeData, token)
+            }
         }
 }
