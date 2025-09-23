@@ -396,7 +396,7 @@ class RapporteringService(
                 if (response.status == "OK") {
                     logger.info { "Journalføring rapporteringsperiode ${periodeTilInnsending.id}" }
 
-                    journalfoeringService.journalfoer(ident, loginLevel, headers, periodeTilInnsending)
+                    journalfoeringService.journalfoer(ident, loginLevel, headers, periodeTilInnsending, ansvarligSystem)
 
                     rapporteringRepository.oppdaterPeriodeEtterInnsending(
                         rapporteringId = periodeTilInnsending.id,

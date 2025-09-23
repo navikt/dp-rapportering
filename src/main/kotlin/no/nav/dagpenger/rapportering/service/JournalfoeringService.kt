@@ -22,6 +22,7 @@ import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConne
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.properties
+import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.model.Leader
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 import no.nav.dagpenger.rapportering.model.MineBehov
@@ -38,6 +39,7 @@ class JournalfoeringService(
     private val journalfoeringRepository: JournalfoeringRepository,
     private val kallLoggService: KallLoggService,
     private val pdlService: PdlService,
+    private val personregisterService: PersonregisterService,
     private val httpClient: HttpClient,
 ) {
     private val logger = KotlinLogging.logger {}
@@ -69,6 +71,7 @@ class JournalfoeringService(
                     midlertidigLagretData.loginLevel,
                     HeadersImpl(midlertidigLagretData.headers),
                     rapporteringsperiode,
+                    midlertidigLagretData.ansvarligSystem,
                 )
 
                 // Slette midlertidig lagret data
@@ -88,11 +91,12 @@ class JournalfoeringService(
         loginLevel: Int,
         headers: Headers,
         rapporteringsperiode: Rapporteringsperiode,
+        ansvarligSystem: AnsvarligSystem,
     ) {
         val navn = pdlService.hentNavn(ident)
 
         try {
-            opprettOgSendBehov(ident, navn, loginLevel, headers, rapporteringsperiode)
+            opprettOgSendBehov(ident, navn, loginLevel, headers, rapporteringsperiode, ansvarligSystem)
         } catch (e: Exception) {
             logger.warn(e) { "Feil ved journalføring" }
             lagreDataMidlertidig(ident, navn, loginLevel, headers, rapporteringsperiode)
@@ -105,6 +109,7 @@ class JournalfoeringService(
         loginLevel: Int,
         headers: Headers,
         rapporteringsperiode: Rapporteringsperiode,
+        ansvarligSystem: AnsvarligSystem,
     ) {
         // Opprett HTML
         // Erstatt plassholdere med data
@@ -127,11 +132,14 @@ class JournalfoeringService(
         val json = defaultObjectMapper.writeValueAsString(rapporteringsperiode)
 
         // Kall dp-behov-pdf-generator
-        val sak = "meldekort" // Vi bruker "meldekort" istedenfor saksnummer
+        var sakId = "meldekort" // Vi bruker "meldekort" istedenfor sakId med Arena-meldekort
+        if (ansvarligSystem == AnsvarligSystem.DP) {
+            sakId = personregisterService.hentSisteSakId(ident) ?: throw Exception("Kunne ikke hente sakId ved journalføring")
+        }
 
         logger.info { "Oppretter PDF for rapporteringsperiode ${rapporteringsperiode.id}" }
         val pdfGeneratorResponse =
-            httpClient.post(Configuration.pdfGeneratorUrl + "/convert-html-to-pdf/" + sak) {
+            httpClient.post(Configuration.pdfGeneratorUrl + "/convert-html-to-pdf/" + sakId) {
                 accept(ContentType.Application.Pdf)
                 contentType(ContentType.Text.Plain)
                 setBody(htmlMal)
@@ -150,22 +158,38 @@ class JournalfoeringService(
             brevkode = "NAV 00-10.03"
         }
 
+        val tittel = getTittle(rapporteringsperiode)
         val tilleggsopplysninger = getTilleggsopplysninger(loginLevel, headers, rapporteringsperiode)
 
         // Oppretter kallLogg for å få kallLoggId slik at vi kan sende den med Behov
         val kallLoggId = kallLoggService.lagreKafkaUtKallLogg(ident)
 
-        val behovNavn = MineBehov.JournalføreRapportering.name
-        val behovParams =
+        var behovNavn = MineBehov.JournalføreRapportering.name
+        var behovParams =
             mapOf(
                 "periodeId" to rapporteringsperiode.id,
                 "brevkode" to brevkode,
-                "tittel" to getTittle(rapporteringsperiode),
+                "tittel" to tittel,
                 "json" to json,
                 "pdf" to pdf,
                 "tilleggsopplysninger" to tilleggsopplysninger,
                 "kallLoggId" to kallLoggId,
             )
+
+        if (ansvarligSystem == AnsvarligSystem.DP) {
+            behovNavn = MineBehov.JournalføreMeldekort.name
+            behovParams =
+                mapOf(
+                    "meldekortId" to rapporteringsperiode.id,
+                    "sakId" to sakId,
+                    "brevkode" to brevkode,
+                    "tittel" to tittel,
+                    "json" to json,
+                    "pdf" to pdf,
+                    "tilleggsopplysninger" to tilleggsopplysninger,
+                    "kallLoggId" to kallLoggId,
+                )
+        }
 
         val behov =
             JsonMessage.newNeed(
