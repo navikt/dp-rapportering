@@ -115,6 +115,9 @@ spec:
         - application: tokenx-token-generator
           namespace: aura
           cluster: dev-gcp
+        - application: azure-token-generator
+          namespace: nais
+          cluster: dev-gcp
 
   liveness:
     path: /isAlive
