@@ -133,6 +133,22 @@ class JournalfoeringRepositoryPostgres(
             }
         }
 
+    override suspend fun hentJournalpostId(rapporteringsperiodeId: String): List<String> =
+        actionTimer.timedAction("db-hentJournalpostId") {
+            using(sessionOf(dataSource)) { session ->
+                session.run(
+                    queryOf(
+                        "SELECT journalpost_id " +
+                            "FROM opprettede_journalposter " +
+                            "WHERE rapportering_id = ?",
+                        rapporteringsperiodeId,
+                    ).map {
+                        it.string(1)
+                    }.asList,
+                )
+            }
+        }
+
     private fun Int.validateRowsAffected(excepted: Int = 1) {
         if (this != excepted) throw RuntimeException("Expected $excepted but got $this")
     }

@@ -125,7 +125,12 @@ class ApplicationBuilder(
                 ) { engine, _: RapidsConnection ->
                     engine.application.konfigurasjon(meterRegistry, kallLoggRepository)
                     engine.application.internalApi(meterRegistry)
-                    engine.application.rapporteringApi(rapporteringService, personregisterService, meldepliktMetrikker)
+                    engine.application.rapporteringApi(
+                        rapporteringService,
+                        personregisterService,
+                        journalfoeringService,
+                        meldepliktMetrikker,
+                    )
                 }
         rapidsConnection.register(this)
         RapporteringJournalførtMottak(rapidsConnection, journalfoeringRepository, kallLoggRepository)
