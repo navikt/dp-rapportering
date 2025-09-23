@@ -853,7 +853,7 @@ class RapporteringServiceTest {
                 registrertArbeidssoker = true,
             )
         coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.DP
-        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any()) } returns mockk()
+        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), AnsvarligSystem.DP) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
         coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
         coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
@@ -898,7 +898,7 @@ class RapporteringServiceTest {
 
         verify(exactly = 1) {
             runBlocking {
-                journalfoeringService.journalfoer(any(), any(), any(), any())
+                journalfoeringService.journalfoer(any(), any(), any(), any(), AnsvarligSystem.DP)
             }
         }
         coVerify(exactly = 1) {
