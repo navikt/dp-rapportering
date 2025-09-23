@@ -841,7 +841,6 @@ class RapporteringServiceTest {
         checkRapid(rapporteringsperiode, endringId)
     }
 
-    @Suppress("ktlint:standard:no-consecutive-comments")
     @Test
     fun `kan sende inn endret rapporteringsperiode med begrunnelse når ansvarlig system er DP`() {
         val endringId = "4"
@@ -925,9 +924,6 @@ class RapporteringServiceTest {
                 aktivitet.timer shouldBe rapporteringsperiode.dager[dagIndex].aktiviteter[index].timer
             }
         }
-
-        val perioder = runBlocking { rapporteringRepository.hentLagredeRapporteringsperioder(ident) }
-        println("Perioder: $perioder")
 
         checkRapid(rapporteringsperiode, endringId, ansvarligSystem = "DP")
     }
