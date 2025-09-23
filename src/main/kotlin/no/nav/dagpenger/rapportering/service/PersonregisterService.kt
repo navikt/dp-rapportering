@@ -47,4 +47,6 @@ class PersonregisterService(
             }
         }
     }
+
+    suspend fun hentSisteSakId(ident: String) = personregisterConnector.hentSisteSakId(ident)
 }

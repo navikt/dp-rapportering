@@ -32,6 +32,7 @@ import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
@@ -88,6 +89,11 @@ class JournalfoeringServiceTest {
     }
 
     @Test
+    fun `Kan opprette og sende journalpost med AnsvarligSystem = DP`() {
+        test(false, AnsvarligSystem.DP)
+    }
+
+    @Test
     fun `Kan lagre data midlertidig ved feil ved generering av PDF`() {
         setProperties()
 
@@ -113,17 +119,26 @@ class JournalfoeringServiceTest {
         val pdlService = mockk<PdlService>()
         coEvery { pdlService.hentNavn(any()) } returns navn
 
+        val personregisterService = mockk<PersonregisterService>()
+
         val journalfoeringService =
             JournalfoeringService(
                 journalfoeringRepository,
                 kallLoggService,
                 pdlService,
+                personregisterService,
                 createHttpClient(mockPdfGeneratorEngine),
             )
 
         // Prøver å journalføre
         runBlocking {
-            journalfoeringService.journalfoer(ident, loginLevel, headers, rapporteringsperiode)
+            journalfoeringService.journalfoer(
+                ident,
+                loginLevel,
+                headers,
+                rapporteringsperiode,
+                AnsvarligSystem.ARENA,
+            )
         }
 
         // Får feil og sjekker at JournalfoeringService lagrer data midlertidig
@@ -176,17 +191,26 @@ class JournalfoeringServiceTest {
         val pdlService = mockk<PdlService>()
         coEvery { pdlService.hentNavn(any()) } returns navn
 
+        val personregisterService = mockk<PersonregisterService>()
+
         val journalfoeringService =
             JournalfoeringService(
                 journalfoeringRepository,
                 kallLoggService,
                 pdlService,
+                personregisterService,
                 createHttpClient(mockPdfGeneratorEngine),
             )
 
         // Prøver å journalføre
         runBlocking {
-            journalfoeringService.journalfoer(ident, loginLevel, headers, rapporteringsperiode)
+            journalfoeringService.journalfoer(
+                ident,
+                loginLevel,
+                headers,
+                rapporteringsperiode,
+                AnsvarligSystem.ARENA,
+            )
         }
 
         // Får feil og sjekker at JournalfoeringService lagrer data midlertidig
@@ -216,7 +240,7 @@ class JournalfoeringServiceTest {
 
         // Sjekk
         coVerify(exactly = 1) { journalfoeringRepository.sletteMidlertidigLagretData("1") }
-        checkMessage(false, message.captured, rapporteringsperiode)
+        checkMessage(false, message.captured, rapporteringsperiode, AnsvarligSystem.ARENA)
     }
 
     private fun setProperties() {
@@ -228,7 +252,10 @@ class JournalfoeringServiceTest {
         System.setProperty("GITHUB_SHA", backendGithubSha)
     }
 
-    private fun test(endring: Boolean = false) {
+    private fun test(
+        endring: Boolean = false,
+        ansvarligSystem: AnsvarligSystem = AnsvarligSystem.ARENA,
+    ) {
         setProperties()
 
         // Mock
@@ -246,6 +273,9 @@ class JournalfoeringServiceTest {
 
         val pdlService = mockk<PdlService>()
         coEvery { pdlService.hentNavn(any()) } returns navn
+
+        val personregisterService = mockk<PersonregisterService>()
+        coEvery { personregisterService.hentSisteSakId(eq(ident)) } returns "saKId1"
 
         // Mock svar fra PDFgenerator
         val pdf =
@@ -270,6 +300,7 @@ class JournalfoeringServiceTest {
                 journalfoeringRepository,
                 kallLoggService,
                 pdlService,
+                personregisterService,
                 createHttpClient(mockPdfGeneratorEngine),
             )
 
@@ -280,11 +311,17 @@ class JournalfoeringServiceTest {
                 every { getRapidsConnection() } returns rapidsConnection
 
                 // Kjør
-                journalfoeringService.journalfoer(ident, loginLevel, headers, rapporteringsperiode)
+                journalfoeringService.journalfoer(
+                    ident,
+                    loginLevel,
+                    headers,
+                    rapporteringsperiode,
+                    ansvarligSystem,
+                )
             }
 
             // Sjekk
-            checkMessage(endring, message.captured, rapporteringsperiode)
+            checkMessage(endring, message.captured, rapporteringsperiode, ansvarligSystem)
         }
     }
 
@@ -342,7 +379,15 @@ class JournalfoeringServiceTest {
         endring: Boolean,
         message: String,
         rapporteringsperiode: Rapporteringsperiode,
+        ansvarligSystem: AnsvarligSystem,
     ) {
+        val behovNavn =
+            if (ansvarligSystem == AnsvarligSystem.ARENA) {
+                MineBehov.JournalføreRapportering.name
+            } else {
+                MineBehov.JournalføreMeldekort.name
+            }
+
         val jsonNode = objectMapper.readTree(message)
 
         jsonNode.get("@event_name").asText() shouldBe "behov"
@@ -351,10 +396,16 @@ class JournalfoeringServiceTest {
             .asIterable()
             .iterator()
             .next()
-            .asText() shouldBe MineBehov.JournalføreRapportering.name
+            .asText() shouldBe behovNavn
 
-        val behov = jsonNode.get(MineBehov.JournalføreRapportering.name)
-        behov.get("periodeId").asInt() shouldBe 1
+        val behov = jsonNode.get(behovNavn)
+
+        if (ansvarligSystem == AnsvarligSystem.ARENA) {
+            behov.get("periodeId").asInt() shouldBe 1
+        } else {
+            behov.get("meldekortId").asInt() shouldBe 1
+        }
+
         if (endring) {
             behov.get("brevkode").asText() shouldBe "NAV 00-10.03"
             behov.get("tittel").asText() shouldBe "Korrigert meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av Nav"
