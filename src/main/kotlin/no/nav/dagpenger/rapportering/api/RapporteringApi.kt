@@ -29,6 +29,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toResponse
+import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.PersonregisterService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.getCallId
@@ -39,6 +40,7 @@ private val logger = KotlinLogging.logger {}
 internal fun Application.rapporteringApi(
     rapporteringService: RapporteringService,
     personregisterService: PersonregisterService,
+    journalfoeringService: JournalfoeringService,
     meldepliktMetrikker: MeldepliktMetrikker,
 ) {
     install(StatusPages) {
@@ -112,6 +114,21 @@ internal fun Application.rapporteringApi(
             }
         }
     }
+
+    routing {
+        authenticate("azureAd") {
+            route("/hentJournalpostId/{id}") {
+                get {
+                    val rapporteringsperiodeId = call.getParameter("id")
+
+                    journalfoeringService
+                        .hentJournalpostId(rapporteringsperiodeId)
+                        .also { call.respond(HttpStatusCode.OK, it) }
+                }
+            }
+        }
+    }
+
     routing {
         authenticate("tokenX") {
             route("/hardpmeldeplikt") {

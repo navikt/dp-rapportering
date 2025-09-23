@@ -243,6 +243,39 @@ class JournalfoeringServiceTest {
         checkMessage(false, message.captured, rapporteringsperiode, AnsvarligSystem.ARENA)
     }
 
+    @Test
+    fun `Kan hente journalpostId`() {
+        setProperties()
+
+        val rapporteringsperiodeId = UUID.randomUUID().toString()
+        val journalpostId = UUID.randomUUID().toString()
+
+        // Mock
+        val journalfoeringRepository = mockk<JournalfoeringRepository>()
+        coEvery { journalfoeringRepository.hentJournalpostId(eq(rapporteringsperiodeId)) } returns listOf(journalpostId)
+
+        val kallLoggService = mockk<KallLoggService>()
+        val pdlService = mockk<PdlService>()
+        val personregisterService = mockk<PersonregisterService>()
+
+        val journalfoeringService =
+            JournalfoeringService(
+                journalfoeringRepository,
+                kallLoggService,
+                pdlService,
+                personregisterService,
+                createHttpClient(MockEngine { _ -> respond("", HttpStatusCode.OK) }),
+            )
+
+        val hentetJournalposter =
+            runBlocking {
+                journalfoeringService.hentJournalpostId(rapporteringsperiodeId)
+            }
+
+        hentetJournalposter.size shouldBe 1
+        hentetJournalposter[0] shouldBe journalpostId
+    }
+
     private fun setProperties() {
         System.setProperty(
             "DB_JDBC_URL",

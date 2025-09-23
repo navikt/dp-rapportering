@@ -63,9 +63,12 @@ import org.junit.jupiter.api.BeforeAll
 import java.util.concurrent.CompletableFuture
 
 open class ApiTestSetup {
+    lateinit var journalfoeringRepository: JournalfoeringRepositoryPostgres
+
     companion object {
         const val TOKENX_ISSUER_ID = "tokenx"
         const val AZURE_ISSUER_ID = "azure"
+        const val AZURE_APP_CLIENT_ID = "test_client_id"
         const val REQUIRED_AUDIENCE = "tokenx"
         val TEST_PRIVATE_JWK =
             """
@@ -123,10 +126,11 @@ open class ApiTestSetup {
             System.setProperty("TOKEN_X_PRIVATE_JWK", TEST_PRIVATE_JWK)
             System.setProperty("token-x.well-known-url", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
             System.setProperty("TOKEN_X_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(TOKENX_ISSUER_ID).toString())
+            System.setProperty("azure-app.client-id", AZURE_APP_CLIENT_ID)
+            System.setProperty("AZURE_APP_CLIENT_ID", AZURE_APP_CLIENT_ID)
+            System.setProperty("AZURE_APP_CLIENT_SECRET", TEST_PRIVATE_JWK)
             System.setProperty("azure-app.well-known-url", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
             System.setProperty("AZURE_APP_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
-            System.setProperty("AZURE_APP_CLIENT_ID", AZURE_ISSUER_ID)
-            System.setProperty("AZURE_APP_CLIENT_SECRET", TEST_PRIVATE_JWK)
             System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_URL", "http://arbeidssokerregister_record_key_url/api/v1/record-key")
             System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE", "api://test.scope.arbeidssokerregister_record_key/.default")
             System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_URL", "http://arbeidssokerregister_oppslag_url/api/v1/arbeidssoekerperioder")
@@ -169,7 +173,7 @@ open class ApiTestSetup {
             val meldepliktService = MeldepliktService(meldepliktConnector)
             val rapporteringRepository = RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
-            val journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
+            journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val kallLoggRepository = KallLoggRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
             val kallLoggService = KallLoggService(kallLoggRepository)
 
@@ -192,6 +196,15 @@ open class ApiTestSetup {
             val pdlService = mockk<PdlService>()
             coEvery { pdlService.hentNavn(any()) } returns "Test Testesen"
 
+            val journalfoeringService =
+                JournalfoeringService(
+                    journalfoeringRepository,
+                    kallLoggService,
+                    pdlService,
+                    personregisterService,
+                    httpClient,
+                )
+
             val arbeidssoekerService =
                 ArbeidssøkerService(
                     kallLoggService = kallLoggService,
@@ -204,13 +217,7 @@ open class ApiTestSetup {
                     meldepliktService,
                     rapporteringRepository,
                     innsendingtidspunktRepository,
-                    JournalfoeringService(
-                        journalfoeringRepository,
-                        kallLoggService,
-                        pdlService,
-                        personregisterService,
-                        httpClient,
-                    ),
+                    journalfoeringService,
                     kallLoggService,
                     arbeidssoekerService,
                     personregisterService,
@@ -220,7 +227,7 @@ open class ApiTestSetup {
             application {
                 konfigurasjon(meterRegistry, kallLoggRepository)
                 internalApi(meterRegistry)
-                rapporteringApi(rapporteringService, personregisterService, meldepliktMetrikker)
+                rapporteringApi(rapporteringService, personregisterService, journalfoeringService, meldepliktMetrikker)
             }
 
             block()
@@ -257,6 +264,14 @@ open class ApiTestSetup {
                     audience = listOf(REQUIRED_AUDIENCE),
                     claims = mapOf("pid" to ident, "acr" to "Level4"),
                 ),
+            ).serialize()
+
+    fun issueAzureAdToken(claims: Map<String, Any>): String =
+        mockOAuth2Server
+            .issueToken(
+                audience = AZURE_APP_CLIENT_ID,
+                issuerId = AZURE_ISSUER_ID,
+                claims = claims,
             ).serialize()
 
     fun ExternalServicesBuilder.pdfGenerator() {

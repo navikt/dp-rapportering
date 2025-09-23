@@ -23,4 +23,6 @@ interface JournalfoeringRepository {
     suspend fun hentAntallJournalposter(): Int
 
     suspend fun hentAntallMidlertidigLagretData(): Int
+
+    suspend fun hentJournalpostId(rapporteringsperiodeId: String): List<String>
 }

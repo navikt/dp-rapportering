@@ -45,8 +45,28 @@ import java.util.UUID
 class RapporteringApiTest : ApiTestSetup() {
     private val fnr = "12345678910"
 
-    // Sjekk om bruker har DP meldeplikt
+    @Test
+    fun `hentJournalpostId uten token gir unauthorized`() =
+        setUpTestApplication {
+            with(client.doGet("/hentJournalpostId/1", null)) {
+                status shouldBe HttpStatusCode.Unauthorized
+            }
+        }
 
+    @Test
+    fun `hentJournalpostId returnerer liste med id`() =
+        setUpTestApplication {
+            val journalpostId = 1234567890L
+            val rapporteringsperiodeId = UUID.randomUUID().toString()
+            journalfoeringRepository.lagreJournalpostData(journalpostId, 0L, rapporteringsperiodeId)
+
+            with(client.doGet("/hentJournalpostId/$rapporteringsperiodeId", issueAzureAdToken(emptyMap()))) {
+                status shouldBe HttpStatusCode.OK
+                bodyAsText() shouldBe """[ "$journalpostId" ]"""
+            }
+        }
+
+    // Sjekk om bruker har DP meldeplikt
     @Test
     fun `harDpMeldekort uten token gir unauthorized`() =
         setUpTestApplication {

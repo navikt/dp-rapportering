@@ -11,6 +11,27 @@ servers:
     - url: https://dp-rapportering.intern.nav.no
       description: prod
 paths:
+    /hentJournalpostId/{periodeId}:
+        get:
+            responses:
+                '200':
+                    content:
+                        text/plain:
+                            schema:
+                                type: array
+                                items:
+                                    type: integer
+                    description: OK
+            summary: Henter en liste med journalspostId
+            description: Henter en liste med journalspostId som tilhører angitt rapporteringsperiode
+            operationId: get-hent-journalspostId
+            tags:
+                - HentJournalpostId
+            security:
+                -   azureAd: [ ]
+        parameters:
+            - $ref: '#/components/parameters/periodeId'
+
     /hardpmeldeplikt:
         get:
             responses:
@@ -471,6 +492,7 @@ components:
                     type: string
                     format: uri
                     description: Hvor feilen oppstod
+
     securitySchemes:
         tokenX:
             type: http
@@ -482,6 +504,13 @@ components:
                 
                 For å teste APIet kan du lage et gyldig OBO-token ved å bruke wonderwalled:
                 - [dev-gcp](https://wonderwalled-idporten.intern.dev.nav.no/api/obo?aud=dev-gcp:teamdagpenger:dp-rapportering)
+        azureAd:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+            description: |
+                Bruker Azure AD til autentisering
+
     headers: { }
     responses: { }
     parameters:
