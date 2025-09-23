@@ -112,6 +112,7 @@ spec:
       rules:
         - application: dp-saksbehandling-frontend
         - application: dp-rapportering-frontend
+        - application: dp-meldekortregister
         - application: tokenx-token-generator
           namespace: aura
           cluster: dev-gcp
