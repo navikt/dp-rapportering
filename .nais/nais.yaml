@@ -129,10 +129,10 @@ spec:
     max: 4
   resources:
     limits:
-      memory: 512Mi
+      memory: 1024Mi
     requests:
-      cpu: 150m
-      memory: 256Mi
+      cpu: 198m
+      memory: 512Mi
 
   observability:
     logging:
