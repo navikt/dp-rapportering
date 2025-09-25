@@ -248,7 +248,7 @@ class JournalfoeringServiceTest {
         setProperties()
 
         val rapporteringsperiodeId = UUID.randomUUID().toString()
-        val journalpostId = UUID.randomUUID().toString()
+        val journalpostId = 1234567890L
 
         // Mock
         val journalfoeringRepository = mockk<JournalfoeringRepository>()

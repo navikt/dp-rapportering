@@ -133,7 +133,7 @@ class JournalfoeringRepositoryPostgres(
             }
         }
 
-    override suspend fun hentJournalpostId(rapporteringsperiodeId: String): List<String> =
+    override suspend fun hentJournalpostId(rapporteringsperiodeId: String): List<Long> =
         actionTimer.timedAction("db-hentJournalpostId") {
             using(sessionOf(dataSource)) { session ->
                 session.run(
@@ -143,7 +143,7 @@ class JournalfoeringRepositoryPostgres(
                             "WHERE rapportering_id = ?",
                         rapporteringsperiodeId,
                     ).map {
-                        it.string(1)
+                        it.long(1)
                     }.asList,
                 )
             }

@@ -103,7 +103,7 @@ class JournalfoeringService(
         }
     }
 
-    suspend fun hentJournalpostId(rapporteringsperiodeId: String): List<String> =
+    suspend fun hentJournalpostId(rapporteringsperiodeId: String): List<Long> =
         journalfoeringRepository.hentJournalpostId(rapporteringsperiodeId)
 
     private suspend fun opprettOgSendBehov(

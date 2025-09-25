@@ -62,7 +62,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
             with(client.doGet("/hentJournalpostId/$rapporteringsperiodeId", issueAzureAdToken(emptyMap()))) {
                 status shouldBe HttpStatusCode.OK
-                bodyAsText() shouldBe """[ "$journalpostId" ]"""
+                bodyAsText() shouldBe """[ $journalpostId ]"""
             }
         }
 
