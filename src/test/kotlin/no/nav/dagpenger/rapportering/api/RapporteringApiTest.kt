@@ -14,7 +14,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.ExternalServicesBuilder
-import io.mockk.every
 import io.mockk.mockkObject
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
@@ -146,28 +145,8 @@ class RapporteringApiTest : ApiTestSetup() {
         setUpTestApplication {
             mockkObject(ApplicationBuilder.Companion)
             mockkObject(unleash)
-            every { unleash.isEnabled("dp-rapportering-tillat-innsending-uavhengig-av-kansendes") } returns false
             with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(kanSendes = false))) {
                 status shouldBe HttpStatusCode.BadRequest
-            }
-        }
-
-    @Test
-    fun `sender inn hvis perioden ikke kan sendes når toggle er true`() =
-        setUpTestApplication {
-            externalServices {
-                arbeidssokerregisterOppslag()
-                meldepliktAdapter()
-            }
-            mockkObject(ApplicationBuilder.Companion)
-            mockkObject(unleash)
-            every { unleash.isEnabled("dp-rapportering-tillat-innsending-uavhengig-av-kansendes") } returns true
-
-            // Lagrer perioden i databasen
-            client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
-
-            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(kanSendes = false))) {
-                status shouldBe HttpStatusCode.OK
             }
         }
 

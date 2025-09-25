@@ -337,11 +337,9 @@ class RapporteringService(
         loginLevel: Int,
         headers: Headers,
     ): InnsendingResponse {
-        if (!unleash.isEnabled("dp-rapportering-tillat-innsending-uavhengig-av-kansendes")) {
-            val kanSendes = rapporteringRepository.hentKanSendes(rapporteringsperiode.id)
-            if (kanSendes == null || !kanSendes) {
-                throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
-            }
+        val kanSendes = rapporteringRepository.hentKanSendes(rapporteringsperiode.id)
+        if (kanSendes == null || !kanSendes) {
+            throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
         }
 
         // Oppdaterer perioden slik at den ikke kan sendes inn på nytt

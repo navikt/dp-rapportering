@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectReader
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDate
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
-import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.date.shouldBeBefore
 import io.kotest.matchers.equals.shouldBeEqual
@@ -654,58 +653,6 @@ class RapporteringServiceTest {
             runBlocking {
                 rapporteringService.sendRapporteringsperiode(
                     rapporteringsperiodeListe.first().copy(kanSendes = true),
-                    token,
-                    ident,
-                    loginLevel,
-                    headers,
-                )
-            }
-        }
-    }
-
-    @Test
-    fun `kan sende inn rapporteringsperiode der kanSendes er false hvis toggle er skrudd på`() {
-        val rapporteringsperiode =
-            lagRapporteringsperiode(
-                kanSendes = false,
-                registrertArbeidssoker = true,
-            )
-
-        coEvery { rapporteringRepository.hentKanSendes(any()) } returns false
-        coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
-        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns
-            listOf(
-                ArbeidssøkerperiodeResponse(
-                    UUID.randomUUID(),
-                    MetadataResponse(
-                        LocalDateTime.now(),
-                        BrukerResponse("", ""),
-                        "Kilde",
-                        "Årsak",
-                        null,
-                    ),
-                    null,
-                ),
-            )
-        coEvery { meldepliktService.sendinnRapporteringsperiode(any(), token) } returns
-            InnsendingResponse(
-                id = rapporteringsperiode.id,
-                status = "OK",
-                feil = listOf(),
-            )
-        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
-        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, any(), false, any(), false) }
-        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, true, false, Innsendt) }
-        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
-        coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
-        coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
-        coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        every { unleash.isEnabled(eq("dp-rapportering-tillat-innsending-uavhengig-av-kansendes")) } returns true
-
-        shouldNotThrow<BadRequestException> {
-            runBlocking {
-                rapporteringService.sendRapporteringsperiode(
-                    rapporteringsperiode,
                     token,
                     ident,
                     loginLevel,
