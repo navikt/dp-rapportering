@@ -12,7 +12,7 @@ spec:
           rules:
               - alert: Minneforbruk
                 expr: |
-                    sum (container_memory_working_set_bytes{container=~"dp-rapportering"}) 
+                    max(sum (container_memory_working_set_bytes{container=~"dp-rapportering"}) by (pod))
                     < (
                     sum(kube_pod_container_resource_limits{resource="memory", container=~"dp-rapportering"}) / 
                     count(kube_pod_container_resource_limits{resource="memory", container=~"dp-rapportering"}) 
@@ -20,7 +20,7 @@ spec:
                     )
                 for: 5m
                 annotations:
-                    description: 'Minneforbruket til applikasjonen dp-rapportering nærmer seg limit'
+                    description: 'Minst 1 av podene til applikasjonen dp-rapportering nærmer seg memory limit'
                     consequence: 'Applikasjonen kan bli terminert'
                     action: 'Sjekk Grafana for detaljer'
                 labels:
@@ -28,13 +28,13 @@ spec:
                     severity: warning
               - alert: CPU-forbruk
                 expr: |
-                    sum(irate(container_cpu_usage_seconds_total{container=~"dp-rapportering"}[1m])) /
+                    max(sum(irate(container_cpu_usage_seconds_total{container=~"dp-rapportering"}[1m])) by (pod)) /
                     sum(machine_cpu_cores) * 100
                     >
                     60
                 for: 5m
                 annotations:
-                    description: 'CPU-forbruk til applikasjonen dp-rapportering er for høy'
+                    description: 'CPU-forbruk til minst 1 av podene til applikasjonen dp-rapportering er for høy'
                     consequence: 'Applikasjonen kan bli terminert'
                     action: 'Sjekk Grafana for detaljer'
                 labels:
