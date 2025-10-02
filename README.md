@@ -1,22 +1,28 @@
 # dp-rapportering
-## Formål
-> Levere endepunkter som gjør det mulig å hente, fylle ut, sende inn og endre rapporteringsperioder. 
-Endepunktene benyttes av [**`dp-rapportering-frontend`**][dp-rapportering-frontend] som eksponerer funksjonalitetene til bruker.
 
-## Funksjonalitet
-- Henter og sender rapporteringsperioder via [**`dp-arena-meldeplikt-adapter`**][dp-arena-meldeplikt-adapter] som 
-konverterer meldekort til rapporteringsperioder og motsatt.
-- Mellomlagrer rapporteringsperioder som er til utfylling. 
-- Slettejobb kjører hver natt:
-  - Mellomlagrede rapporteringsperioder som er sendt inn blir slettet 5 dager etter innsending. 
-  - Mellomlagrede rapporteringsperioder som er forbi siste frist for innsending (og ikke er sendt inn) blir slettet 30 dager etter siste dag i perioden.
-  - Midlertidige rapporteringsperioder som blir opprettet i forbinnelse med endring/korrigering blir slettet hver natt.
-- Jornalfører innsendte rapporteringsperioder i dokarkiv.
-- Kall-logg for alle innkommende og utgående kall lagres i 90 dager.
+## Formål
+> Backend-tjeneste for håndtering av rapporteringsperioder/meldekort knyttet til dagpenger. 
+> Applikasjonen tilbyr API-endepunkter for å hente, fylle ut, sende inn, endre og journalføre rapporteringsperioder. 
+> Tjenesten benyttes av [dp-rapportering-frontend][dp-rapportering-frontend].
+
+## Hovedfunksjonalitet
+- Tilbyr REST API for rapporteringsperioder (henting, utfylling, innsending, endring/korrigering).
+- Integrerer med [dp-arena-meldeplikt-adapter][dp-arena-meldeplikt-adapter] for å hente meldekort fra Arena.
+- Integrerer med personregisteret for uthenting av personstatus og ansvarlig system. 
+  - Om ansvarlig system er "Arena", hentes/sendes rapporteringsperioder fra/til dp-arena-meldeplikt-adapter. 
+  - Om ansvarlig system er "DP" hentes/sendes rapporteringsperioder fra/til meldekortregisteret.
+- Mellomlagrer rapporteringsperioder under utfylling.
+- Kjører automatiske slettejobber:
+  - Sletter innsendte rapporteringsperioder 5 dager etter innsending.
+  - Sletter ikke-innsendte rapporteringsperioder 30 dager etter siste frist.
+  - Sletter midlertidige perioder opprettet ved endring/korrigering hver natt.
+- Journalfører innsendte rapporteringsperioder i dokarkiv.
+- Logger alle innkommende og utgående kall i 90 dager.
+- Samler og eksponerer metrikker for rapportering og systemstatus.
 
 ## Mer dokumentasjon
 - OpenAPI: https://navikt.github.io/dp-rapportering/
-- Rapportering i dagpenger-dokumentasjon: https://dagpenger-dokumentasjon.ansatt.nav.no/innbyggerflate/losninger/rapportering/backend
+- Dagpenger rapportering backend-dokumentasjon: https://dagpenger-dokumentasjon.ansatt.nav.no/innbyggerflate/losninger/rapportering/backend
 
 [dp-rapportering-frontend]: https://github.com/navikt/dp-rapportering-frontend
 [dp-arena-meldeplikt-adapter]: https://github.com/navikt/dp-arena-meldeplikt-adapter
