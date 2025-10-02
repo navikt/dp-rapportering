@@ -5,6 +5,7 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.api.objectMapper
+import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.createMockClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
@@ -201,8 +202,13 @@ class MeldekortregisterServiceTest {
 
     @Test
     fun `kan sende inn korrigering av meldekort`() {
+        val nyMeldekortId = UUID.randomUUID().toString()
         // OK
-        var meldekortregisterService = meldekortregisterService(HttpStatusCode.OK)
+        var meldekortregisterService =
+            meldekortregisterService(
+                statusCode = HttpStatusCode.OK,
+                responseBody = defaultObjectMapper.writeValueAsString(MeldekortIdResponse(nyMeldekortId)),
+            )
 
         val originalId = "123456789"
         val periode = Periode(LocalDate.now(), LocalDate.now().plusDays(13))
@@ -238,7 +244,7 @@ class MeldekortregisterServiceTest {
                 meldekortregisterService.sendKorrigertMeldekort(korrigertMeldekortHendelse, token)
             }
 
-        response shouldBe InnsendingResponse(originalId, "OK", emptyList())
+        response shouldBe InnsendingResponse(nyMeldekortId, "OK", emptyList())
 
         // Feil
         meldekortregisterService = meldekortregisterService(HttpStatusCode.InternalServerError)

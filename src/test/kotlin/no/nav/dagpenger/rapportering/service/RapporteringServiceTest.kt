@@ -789,6 +789,93 @@ class RapporteringServiceTest {
     }
 
     @Test
+    fun `kan sende inn endret rapporteringsperiode med begrunnelse når ansvarlig system er DP`() {
+        val endringId = "4"
+        val originalPeriode = rapporteringsperiodeListe.first()
+        val rapporteringsperiode =
+            originalPeriode.copy(
+                status = TilUtfylling,
+                begrunnelseEndring = "Endring",
+                originalId = originalPeriode.id,
+                registrertArbeidssoker = true,
+            )
+        coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.DP
+        coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), AnsvarligSystem.DP) } returns mockk()
+        coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
+        coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
+        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any(), false) }
+        coJustRun { rapporteringRepository.slettRaporteringsperiode(any()) }
+        val periode = slot<Rapporteringsperiode>()
+        coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(capture(periode), ident) }
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
+        coEvery { meldekortregisterService.sendKorrigertMeldekort(any(), token) } returns
+            InnsendingResponse(
+                id = endringId,
+                status = "OK",
+                feil = listOf(),
+            )
+        coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
+        coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
+        coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
+        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns
+            listOf(
+                ArbeidssøkerperiodeResponse(
+                    UUID.randomUUID(),
+                    MetadataResponse(
+                        rapporteringsperiode.periode.fraOgMed.atStartOfDay(),
+                        BrukerResponse("", ""),
+                        "Kilde",
+                        "Årsak",
+                        null,
+                    ),
+                    null,
+                ),
+            )
+        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
+        every { unleash.isEnabled(eq("send-periodedata")) } returns true
+
+        val innsendingResponse =
+            runBlocking {
+                rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, loginLevel, headers)
+            }
+
+        innsendingResponse.id shouldBe endringId
+        innsendingResponse.status shouldBe "OK"
+
+        verify(exactly = 1) {
+            runBlocking {
+                journalfoeringService.journalfoer(any(), any(), any(), any(), AnsvarligSystem.DP)
+            }
+        }
+        coVerify(exactly = 1) {
+            rapporteringRepository
+                .oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Midlertidig)
+        }
+        coVerify(exactly = 1) {
+            rapporteringRepository
+                .oppdaterPeriodeEtterInnsending(endringId, ident, false, false, Innsendt)
+        }
+        coVerify(exactly = 1) {
+            rapporteringRepository
+                .oppdaterPeriodeEtterInnsending(originalPeriode.id, ident, false, false, Innsendt, false)
+        }
+        coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), ident) }
+        periode.captured.id shouldBe endringId
+        periode.captured.dager.forEachIndexed { dagIndex, dag ->
+            dag.dato shouldBe rapporteringsperiode.dager[dagIndex].dato
+            dag.dagIndex shouldBe rapporteringsperiode.dager[dagIndex].dagIndex
+            dag.aktiviteter.forEachIndexed { index, aktivitet ->
+                aktivitet.id shouldNotBe rapporteringsperiode.dager[dagIndex].aktiviteter[index].id
+                aktivitet.type shouldBe rapporteringsperiode.dager[dagIndex].aktiviteter[index].type
+                aktivitet.timer shouldBe rapporteringsperiode.dager[dagIndex].aktiviteter[index].timer
+            }
+        }
+
+        checkRapid(rapporteringsperiode, endringId, ansvarligSystem = "DP")
+    }
+
+    @Test
     fun `kan ikke sende inn endret rapporteringsperiode uten begrunnelse`() {
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
         coJustRun { rapporteringRepository.settKanSendes(any(), any(), false) }

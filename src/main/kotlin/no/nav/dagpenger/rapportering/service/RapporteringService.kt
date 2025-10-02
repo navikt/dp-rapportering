@@ -381,7 +381,9 @@ class RapporteringService(
                         rapporteringsperiode.copy(dager = dager)
                     }
                 rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Midlertidig)
-                rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending, ident)
+                if (endringId != null) {
+                    rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending, ident)
+                }
             }
         }
 
@@ -389,48 +391,68 @@ class RapporteringService(
         val opprettetAv = if (ansvarligSystem == AnsvarligSystem.ARENA) PeriodeData.OpprettetAv.Arena else PeriodeData.OpprettetAv.Dagpenger
         val periodeData = periodeTilInnsending.toPeriodeData(ident, opprettetAv, arbeidssøkerperioder, "Innsendt")
 
-        return sendinnRapporteringsperiode(ansvarligSystem, periodeTilInnsending, periodeData, token)
-            .also { response ->
-                if (response.status == "OK") {
-                    logger.info { "Journalføring rapporteringsperiode ${periodeTilInnsending.id}" }
+        val response =
+            sendinnRapporteringsperiode(ansvarligSystem, periodeTilInnsending, periodeData, token)
+                .also { response ->
+                    if (response.status == "OK") {
+                        logger.info { "Journalføring rapporteringsperiode ${periodeTilInnsending.id}" }
 
-                    journalfoeringService.journalfoer(ident, loginLevel, headers, periodeTilInnsending, ansvarligSystem)
+                        journalfoeringService.journalfoer(ident, loginLevel, headers, periodeTilInnsending, ansvarligSystem)
 
-                    rapporteringRepository.oppdaterPeriodeEtterInnsending(
-                        rapporteringId = periodeTilInnsending.id,
-                        ident = ident,
-                        kanEndres = periodeTilInnsending.begrunnelseEndring == null && periodeTilInnsending.originalId == null,
-                        kanSendes = false,
-                        status = Innsendt,
-                    )
-                    logger.info { "Oppdaterte rapporteringsperiode ${periodeTilInnsending.id} med status Innsendt" }
-                    if (periodeTilInnsending.originalId != null) {
-                        rapporteringRepository.oppdaterPeriodeEtterInnsending(
-                            rapporteringId = periodeTilInnsending.originalId,
-                            ident = ident,
-                            kanEndres = false,
-                            kanSendes = false,
-                            status = Innsendt,
-                            oppdaterMottattDato = false,
-                        )
-                        logger.info {
-                            "Oppdaterte original rapporteringsperiode ${periodeTilInnsending.originalId} " +
-                                "med kanEndres og kanSendes til false"
+                        if (periodeTilInnsending.id != periodeTilInnsending.originalId) {
+                            rapporteringRepository.oppdaterPeriodeEtterInnsending(
+                                rapporteringId = periodeTilInnsending.id,
+                                ident = ident,
+                                kanEndres = periodeTilInnsending.begrunnelseEndring == null && periodeTilInnsending.originalId == null,
+                                kanSendes = false,
+                                status = Innsendt,
+                            )
                         }
-                    }
+                        logger.info { "Oppdaterte rapporteringsperiode ${periodeTilInnsending.id} med status Innsendt" }
+                        if (periodeTilInnsending.originalId != null) {
+                            rapporteringRepository.oppdaterPeriodeEtterInnsending(
+                                rapporteringId = periodeTilInnsending.originalId,
+                                ident = ident,
+                                kanEndres = false,
+                                kanSendes = false,
+                                status = Innsendt,
+                                oppdaterMottattDato = false,
+                            )
+                            logger.info {
+                                "Oppdaterte original rapporteringsperiode ${periodeTilInnsending.originalId} " +
+                                    "med kanEndres og kanSendes til false"
+                            }
+                        }
 
-                    sendPeriodeDataTilRnR(ident, periodeData, ansvarligSystem)
-                    arbeidssøkerService.sendBekreftelse(ident, token, loginLevel, periodeTilInnsending)
-                } else {
-                    // Oppdaterer perioden slik at den kan sendes inn på nytt
-                    rapporteringRepository.settKanSendes(
-                        rapporteringId = periodeTilInnsending.id,
-                        ident = ident,
-                        kanSendes = periodeTilInnsending.kanSendes,
-                    )
-                    logger.warn { "Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}: $response" }
+                        sendPeriodeDataTilRnR(ident, periodeData, ansvarligSystem)
+                        arbeidssøkerService.sendBekreftelse(ident, token, loginLevel, periodeTilInnsending)
+                    } else {
+                        // Oppdaterer perioden slik at den kan sendes inn på nytt
+                        rapporteringRepository.settKanSendes(
+                            rapporteringId = periodeTilInnsending.id,
+                            ident = ident,
+                            kanSendes = periodeTilInnsending.kanSendes,
+                        )
+                        logger.warn { "Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}: $response" }
+                    }
                 }
-            }
+
+        // Må sette riktig id på det korrigerte meldekortet hvis ansvarlig system er DP etter innsending
+        if (response.status == "OK" && ansvarligSystem == AnsvarligSystem.DP && periodeData.type == PeriodeData.Type.Korrigert) {
+            rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending.copy(id = response.id), ident)
+            rapporteringRepository.oppdaterPeriodeEtterInnsending(
+                rapporteringId = response.id,
+                ident = ident,
+                kanEndres = false,
+                kanSendes = false,
+                status = Innsendt,
+            )
+            logger.info { "Oppdaterte korrigert rapporteringsperiode ${periodeTilInnsending.id} til ny id ${response.id}" }
+        } else if (response.status != "OK" && ansvarligSystem == AnsvarligSystem.DP && periodeData.type == PeriodeData.Type.Korrigert) {
+            logger.error { "Mangler korrigertMeldekortId i responsen fra meldekortregisteret" }
+        }
+
+        return response
     }
 
     suspend fun slettMellomlagredeRapporteringsperioder(): Int {
