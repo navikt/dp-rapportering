@@ -450,7 +450,7 @@ class RapporteringService(
                 status = Innsendt,
             )
             logger.info { "Oppdaterte korrigert rapporteringsperiode ${periodeTilInnsending.id} til ny id ${response.id}" }
-        } else {
+        } else if (response.status != "OK" && ansvarligSystem == AnsvarligSystem.DP && periodeData.type == PeriodeData.Type.Korrigert) {
             logger.error { "Mangler korrigertMeldekortId i responsen fra meldekortregisteret" }
         }
 

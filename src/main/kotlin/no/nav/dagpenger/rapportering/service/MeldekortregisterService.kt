@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.service
 import com.fasterxml.jackson.core.type.TypeReference
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
@@ -119,6 +120,10 @@ class MeldekortregisterService(
                     "FEIL"
                 }
 
-            InnsendingResponse(id, status, emptyList())
+            InnsendingResponse(if (status == "OK") result.body<MeldekortIdResponse>().id else id, status, emptyList())
         }
 }
+
+data class MeldekortIdResponse(
+    val id: String,
+)
