@@ -57,7 +57,6 @@ import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.februar
 import no.nav.dagpenger.rapportering.utils.januar
-import no.nav.dagpenger.rapportering.utils.lagRapporteringsperiode
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -559,8 +558,6 @@ class RapporteringServiceTest {
             )
 
         val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
-
-        println("Perioder: $innsendteRapporteringsperioder")
 
         innsendteRapporteringsperioder.size shouldBe 5
         innsendteRapporteringsperioder[0].id shouldBe "10"

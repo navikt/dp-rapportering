@@ -395,6 +395,14 @@ class RapporteringService(
             sendinnRapporteringsperiode(ansvarligSystem, periodeTilInnsending, periodeData, token)
                 .also { response ->
                     if (response.status == "OK") {
+                        if (ansvarligSystem == AnsvarligSystem.DP && periodeData.type == PeriodeData.Type.Korrigert) {
+                            logger.info {
+                                "Korrigering til meldekortregister. Setter riktg id i periode til innsending og lagrer denne i databasen: ${response.id}"
+                            }
+                            periodeTilInnsending = periodeTilInnsending.copy(id = response.id)
+                            rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending, ident)
+                        }
+
                         logger.info { "Journalføring rapporteringsperiode ${periodeTilInnsending.id}" }
 
                         journalfoeringService.journalfoer(ident, loginLevel, headers, periodeTilInnsending, ansvarligSystem)
@@ -436,21 +444,6 @@ class RapporteringService(
                         logger.warn { "Feil ved innsending av rapporteringsperiode ${periodeTilInnsending.id}: $response" }
                     }
                 }
-
-        // Må sette riktig id på det korrigerte meldekortet hvis ansvarlig system er DP etter innsending
-        if (response.status == "OK" && ansvarligSystem == AnsvarligSystem.DP && periodeData.type == PeriodeData.Type.Korrigert) {
-            rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending.copy(id = response.id), ident)
-            rapporteringRepository.oppdaterPeriodeEtterInnsending(
-                rapporteringId = response.id,
-                ident = ident,
-                kanEndres = false,
-                kanSendes = false,
-                status = Innsendt,
-            )
-            logger.info { "Oppdaterte korrigert rapporteringsperiode ${periodeTilInnsending.id} til ny id ${response.id}" }
-        } else if (response.status != "OK" && ansvarligSystem == AnsvarligSystem.DP && periodeData.type == PeriodeData.Type.Korrigert) {
-            logger.error { "Mangler korrigertMeldekortId i responsen fra meldekortregisteret" }
-        }
 
         return response
     }
