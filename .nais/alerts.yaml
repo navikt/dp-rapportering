@@ -12,7 +12,7 @@ spec:
           rules:
               - alert: Minneforbruk
                 expr: |
-                    max(sum (container_memory_working_set_bytes{container=~"dp-rapportering"}) by (pod))
+                    sum (container_memory_working_set_bytes{container=~"dp-rapportering"})
                     < (
                     sum(kube_pod_container_resource_limits{resource="memory", container=~"dp-rapportering"}) / 
                     count(kube_pod_container_resource_limits{resource="memory", container=~"dp-rapportering"}) 
@@ -28,7 +28,7 @@ spec:
                     severity: warning
               - alert: CPU-forbruk
                 expr: |
-                    max(sum(irate(container_cpu_usage_seconds_total{container=~"dp-rapportering"}[1m])) by (pod)) /
+                    sum(irate(container_cpu_usage_seconds_total{container=~"dp-rapportering"}[1m])) /
                     sum(machine_cpu_cores) * 100
                     >
                     60
