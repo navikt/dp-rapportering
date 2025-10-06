@@ -29,11 +29,13 @@ class MeldekortregisterService(
     suspend fun hentRapporteringsperioder(
         ident: String,
         token: String,
+        meldekortStatus: MeldekortStatus?,
     ): List<PeriodeData>? =
         withContext(Dispatchers.IO) {
+            val queryParam = meldekortStatus?.let { "?status=${it.name}" } ?: ""
             val result =
                 httpClientUtils
-                    .get("/meldekort", token, "meldekortregister-hentMeldekort")
+                    .get("/meldekort$queryParam", token, "meldekortregister-hentMeldekort")
                     .also {
                         logger.info { "Kall til meldekortregister for å hente perioder ga status ${it.status}" }
                         sikkerlogg.info { "Kall til meldekortregister for å hente perioder for ident $ident ga status ${it.status}" }
@@ -127,3 +129,8 @@ class MeldekortregisterService(
 data class MeldekortIdResponse(
     val id: String,
 )
+
+enum class MeldekortStatus {
+    TilUtfylling,
+    Innsendt,
+}

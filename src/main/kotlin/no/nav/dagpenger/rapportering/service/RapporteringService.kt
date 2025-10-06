@@ -108,7 +108,12 @@ class RapporteringService(
             if (personregisterService.hentAnsvarligSystem(ident, token) == AnsvarligSystem.ARENA) {
                 meldepliktService.hentRapporteringsperioder(ident, token)?.toRapporteringsperioder()
             } else {
-                meldekortregisterService.hentRapporteringsperioder(ident, token).toRapporteringsperioder()
+                meldekortregisterService
+                    .hentRapporteringsperioder(
+                        ident,
+                        token,
+                        MeldekortStatus.TilUtfylling,
+                    ).toRapporteringsperioder()
             }
 
         return perioder
@@ -201,13 +206,25 @@ class RapporteringService(
         ident: String,
         token: String,
     ): List<Rapporteringsperiode>? =
-        meldepliktService
-            .hentInnsendteRapporteringsperioder(ident, token)
-            .toRapporteringsperioder()
-            .kobleRapporteringsperioder()
-            .populerMedPerioderFraDatabase(ident)
-            .hentSisteTiPerioderPlussNåværende()
-            .ifEmpty { null }
+        if (personregisterService.hentAnsvarligSystem(ident, token) == AnsvarligSystem.ARENA) {
+            meldepliktService
+                .hentInnsendteRapporteringsperioder(ident, token)
+                .toRapporteringsperioder()
+                .kobleRapporteringsperioder()
+                .populerMedPerioderFraDatabase(ident)
+                .hentSisteTiPerioderPlussNåværende()
+                .ifEmpty { null }
+        } else {
+            meldekortregisterService
+                .hentRapporteringsperioder(
+                    ident,
+                    token,
+                    MeldekortStatus.Innsendt,
+                ).toRapporteringsperioder()
+                .populerMedPerioderFraDatabase(ident)
+                .hentSisteTiPerioderPlussNåværende()
+                .ifEmpty { null }
+        }
 
     private fun List<Rapporteringsperiode>.kobleRapporteringsperioder(): List<Rapporteringsperiode> =
         this

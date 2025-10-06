@@ -120,7 +120,7 @@ class MeldekortregisterServiceTest {
 
         var response =
             runBlocking {
-                meldekortregisterService.hentRapporteringsperioder(ident, token)
+                meldekortregisterService.hentRapporteringsperioder(ident, token, MeldekortStatus.TilUtfylling)
             }
 
         response shouldBe periodeDataList
@@ -130,7 +130,7 @@ class MeldekortregisterServiceTest {
 
         response =
             runBlocking {
-                meldekortregisterService.hentRapporteringsperioder(ident, token)
+                meldekortregisterService.hentRapporteringsperioder(ident, token, MeldekortStatus.TilUtfylling)
             }
 
         response shouldBe null
