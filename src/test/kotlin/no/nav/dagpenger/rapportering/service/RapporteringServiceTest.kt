@@ -466,7 +466,6 @@ class RapporteringServiceTest {
 
         val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
-        println(innsendteRapporteringsperioder)
         innsendteRapporteringsperioder.size shouldBe 3
         innsendteRapporteringsperioder[0].id shouldBe "1"
         innsendteRapporteringsperioder[1].id shouldBe "2"
