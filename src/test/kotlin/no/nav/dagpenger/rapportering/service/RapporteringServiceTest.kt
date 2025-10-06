@@ -302,7 +302,7 @@ class RapporteringServiceTest {
     @Test
     fun `hent alle rapporteringsperioder kan hente perioder fra dp-meldekortregister`() {
         coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.DP
-        coEvery { meldekortregisterService.hentRapporteringsperioder(any(), any()) } returns
+        coEvery { meldekortregisterService.hentRapporteringsperioder(any(), any(), MeldekortStatus.TilUtfylling) } returns
             meldekortregisterRapporteringsperiodeListe
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
         coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
@@ -455,6 +455,22 @@ class RapporteringServiceTest {
         shouldThrow<RuntimeException> {
             runBlocking { rapporteringService.startEndring("123", ident, token) }
         }
+    }
+
+    @Test
+    fun `kan hente innsendte rapporteringsperioder fra dp-meldekortregister`() {
+        coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.DP
+        coEvery { meldekortregisterService.hentRapporteringsperioder(any(), any(), MeldekortStatus.Innsendt) } returns
+            meldekortregisterRapporteringsperiodeListe
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
+
+        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
+
+        println(innsendteRapporteringsperioder)
+        innsendteRapporteringsperioder.size shouldBe 3
+        innsendteRapporteringsperioder[0].id shouldBe "1"
+        innsendteRapporteringsperioder[1].id shouldBe "2"
+        innsendteRapporteringsperioder[2].id shouldBe "3"
     }
 
     @Test
