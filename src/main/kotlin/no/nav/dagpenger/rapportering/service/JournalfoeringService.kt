@@ -8,7 +8,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.accept
-import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -17,19 +16,16 @@ import io.ktor.http.HeadersImpl
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.util.toMap
-import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.properties
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
-import no.nav.dagpenger.rapportering.model.Leader
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
-import java.net.InetAddress
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
@@ -122,7 +118,7 @@ class JournalfoeringService(
                 .readText()
                 .replace("%NAVN%", navn)
                 .replace("%IDENT%", ident)
-                .replace("%RAPPORTERINGSPERIODE_ID%", rapporteringsperiode.id.toString())
+                .replace("%RAPPORTERINGSPERIODE_ID%", rapporteringsperiode.id)
                 .replace("%TITTEL%", getTittle(rapporteringsperiode))
                 .replace("%MOTTATT%", LocalDateTime.now().format(dateTimeFormatter))
                 .replace(
@@ -241,7 +237,7 @@ class JournalfoeringService(
             // Verdi - maksimum 100 tegn
             Pair(
                 "periodeId",
-                rapporteringsperiode.id.toString(),
+                rapporteringsperiode.id,
             ),
             Pair(
                 "kanSendesFra",
@@ -282,23 +278,5 @@ class JournalfoeringService(
                 defaultObjectMapper.writeValueAsString(rapporteringsperiode),
             ),
         )
-    }
-
-    private fun isLeader(): Boolean {
-        var leader = ""
-        val hostname = InetAddress.getLocalHost().hostName
-
-        try {
-            val electorUrl = System.getenv("ELECTOR_GET_URL")
-            runBlocking {
-                val leaderJson: Leader = httpClient.get(electorUrl).body()
-                leader = leaderJson.name
-            }
-        } catch (e: Exception) {
-            logger.error(e) { "Kunne ikke sjekke leader" }
-            return true // Det er bedre å få flere pod'er til å starte jobben enn ingen
-        }
-
-        return hostname == leader
     }
 }
