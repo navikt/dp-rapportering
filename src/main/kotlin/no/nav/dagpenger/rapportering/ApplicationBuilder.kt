@@ -90,7 +90,7 @@ class ApplicationBuilder(
 
     private val meldepliktService = MeldepliktService(meldepliktConnector)
     private val meldekortregisterService = MeldekortregisterService(httpClient = httpClient, actionTimer = actionTimer)
-    private val personregisterService = PersonregisterService(personregisterConnector, meldepliktService)
+    private val personregisterService = PersonregisterService(personregisterConnector)
     private val arbeidssøkerService = ArbeidssøkerService(kallLoggService, personregisterService, httpClient, bekreftelseKafkaProdusent)
 
     private val journalfoeringService =
@@ -127,7 +127,6 @@ class ApplicationBuilder(
                     engine.application.internalApi(meterRegistry)
                     engine.application.rapporteringApi(
                         rapporteringService,
-                        personregisterService,
                         journalfoeringService,
                         meldepliktMetrikker,
                     )
