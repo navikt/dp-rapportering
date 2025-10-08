@@ -30,7 +30,6 @@ import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
-import no.nav.dagpenger.rapportering.service.PersonregisterService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.getCallId
 import java.net.URI
@@ -39,7 +38,6 @@ private val logger = KotlinLogging.logger {}
 
 internal fun Application.rapporteringApi(
     rapporteringService: RapporteringService,
-    personregisterService: PersonregisterService,
     journalfoeringService: JournalfoeringService,
     meldepliktMetrikker: MeldepliktMetrikker,
 ) {
@@ -287,8 +285,6 @@ internal fun Application.rapporteringApi(
                 get {
                     val ident = call.ident()
                     val jwtToken = call.request.jwt()
-
-                    personregisterService.oppdaterPersonstatus(ident, jwtToken)
 
                     rapporteringService
                         .hentOgOppdaterRapporteringsperioder(ident, jwtToken)

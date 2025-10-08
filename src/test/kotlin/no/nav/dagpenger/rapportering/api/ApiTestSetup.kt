@@ -17,10 +17,8 @@ import io.ktor.server.testing.ExternalServicesBuilder
 import io.ktor.server.testing.testApplication
 import io.mockk.coEvery
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.runs
 import io.mockk.slot
 import kotliquery.queryOf
 import kotliquery.sessionOf
@@ -187,7 +185,6 @@ open class ApiTestSetup {
             }
 
             val personregisterService = mockk<PersonregisterService>()
-            coEvery { personregisterService.oppdaterPersonstatus(any(), any()) } just runs
             coEvery { personregisterService.erBekreftelseOvertatt(any(), any()) } returns true
 
             val meldekortregisterService = mockk<MeldekortregisterService>()
@@ -227,7 +224,7 @@ open class ApiTestSetup {
             application {
                 konfigurasjon(meterRegistry, kallLoggRepository)
                 internalApi(meterRegistry)
-                rapporteringApi(rapporteringService, personregisterService, journalfoeringService, meldepliktMetrikker)
+                rapporteringApi(rapporteringService, journalfoeringService, meldepliktMetrikker)
             }
 
             block()
