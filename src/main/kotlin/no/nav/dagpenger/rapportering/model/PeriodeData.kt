@@ -24,7 +24,7 @@ data class PeriodeData(
     // Refererer til originalt meldekort ved korrigering
     val originalMeldekortId: String?,
     val bruttoBelop: Double? = null,
-    val begrunnelse: String? = null, // x
+    val begrunnelse: String? = null,
     val registrertArbeidssoker: Boolean? = null,
     val meldedato: LocalDate? = innsendtTidspunkt?.toLocalDate(),
 ) {
