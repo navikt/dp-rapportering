@@ -141,5 +141,5 @@ fun PeriodeData.toKorrigerMeldekortHendelse(): KorrigerMeldekortHendelse =
         kilde = kilde ?: throw IllegalStateException("kilde kan ikke være null ved opprettelse av KorrigerMeldekortHendelse"),
         begrunnelse =
             begrunnelse
-                ?: throw IllegalStateException("begrunnelseEndring kan ikke være null ved opprettelse av KorrigerMeldekortHendelse"),
+                ?: throw IllegalStateException("begrunnelse kan ikke være null ved opprettelse av KorrigerMeldekortHendelse"),
     )
