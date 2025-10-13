@@ -22,9 +22,9 @@ data class PeriodeData(
     val status: String = "Innsendt",
     val innsendtTidspunkt: LocalDateTime?,
     // Refererer til originalt meldekort ved korrigering
-    val korrigeringAv: String?,
+    val originalMeldekortId: String?,
     val bruttoBelop: Double? = null,
-    val begrunnelseEndring: String? = null,
+    val begrunnelse: String? = null,
     val registrertArbeidssoker: Boolean? = null,
     val meldedato: LocalDate? = innsendtTidspunkt?.toLocalDate(),
 ) {
@@ -86,13 +86,13 @@ fun PeriodeData.toRapporteringsperiode(): Rapporteringsperiode {
         dager = this.dager.map { it.toDag() },
         kanSendesFra = this.kanSendesFra,
         kanSendes = kanSendesInn(this.kanSendesFra, status, true),
-        kanEndres = this.korrigeringAv == null,
+        kanEndres = this.originalMeldekortId == null,
         bruttoBelop = this.bruttoBelop,
         status = status,
         mottattDato = this.innsendtTidspunkt?.toLocalDate(),
-        begrunnelseEndring = if (this.begrunnelseEndring.isNullOrBlank()) null else this.begrunnelseEndring,
+        begrunnelseEndring = if (this.begrunnelse.isNullOrBlank()) null else this.begrunnelse,
         registrertArbeidssoker = this.registrertArbeidssoker,
-        originalId = this.korrigeringAv,
+        originalId = this.originalMeldekortId,
         rapporteringstype = null,
     )
 }

@@ -86,9 +86,9 @@ class RapporteringsperiodeTest {
         periodeData.type shouldBe Type.Korrigert
         periodeData.status shouldBe "TilUtfylling"
         periodeData.innsendtTidspunkt?.truncatedTo(ChronoUnit.MINUTES) shouldBe LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)
-        periodeData.korrigeringAv shouldBe originalId
+        periodeData.originalMeldekortId shouldBe originalId
         periodeData.bruttoBelop shouldBe null
-        periodeData.begrunnelseEndring shouldBe "Begrunnelse"
+        periodeData.begrunnelse shouldBe "Begrunnelse"
         periodeData.registrertArbeidssoker shouldBe true
         periodeData.meldedato shouldBe LocalDate.now()
     }
