@@ -108,9 +108,9 @@ fun Rapporteringsperiode.toPeriodeData(
         type = if (this.erEndring()) Type.Korrigert else Type.Original,
         status = nyStatus ?: this.status.name,
         innsendtTidspunkt = LocalDateTime.now(),
-        korrigeringAv = this.originalId,
+        originalMeldekortId = this.originalId,
         bruttoBelop = null,
-        begrunnelseEndring = this.begrunnelseEndring,
+        begrunnelse = this.begrunnelseEndring,
         registrertArbeidssoker = this.registrertArbeidssoker,
     )
 
@@ -134,12 +134,12 @@ fun PeriodeData.toKorrigerMeldekortHendelse(): KorrigerMeldekortHendelse =
     KorrigerMeldekortHendelse(
         ident = ident,
         originalMeldekortId =
-            korrigeringAv
+            originalMeldekortId
                 ?: throw IllegalStateException("korrigeringAv kan ikke være null ved opprettelse av KorrigerMeldekortHendelse"),
         periode = periode,
         dager = dager,
         kilde = kilde ?: throw IllegalStateException("kilde kan ikke være null ved opprettelse av KorrigerMeldekortHendelse"),
         begrunnelse =
-            begrunnelseEndring
+            begrunnelse
                 ?: throw IllegalStateException("begrunnelseEndring kan ikke være null ved opprettelse av KorrigerMeldekortHendelse"),
     )

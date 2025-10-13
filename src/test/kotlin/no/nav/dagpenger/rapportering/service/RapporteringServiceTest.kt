@@ -1067,12 +1067,12 @@ class RapporteringServiceTest {
             message["@event_name"].asText() shouldBe "meldekort_innsendt"
             message["id"].asText() shouldBe rapporteringsperiode.id
             message["type"].asText() shouldBe "Original"
-            message["korrigeringAv"].isNull shouldBe true
+            message["originalMeldekortId"].isNull shouldBe true
         } else {
             message["@event_name"].asText() shouldBe "meldekort_innsendt"
             message["id"].asText() shouldBe endringId
             message["type"].asText() shouldBe "Korrigert"
-            message["korrigeringAv"].asText() shouldBe rapporteringsperiode.id
+            message["originalMeldekortId"].asText() shouldBe rapporteringsperiode.id
         }
 
         message["ident"].asText() shouldBe ident
@@ -1192,7 +1192,7 @@ fun lagPeriodeData(
     type = Type.Original,
     status = "TilUtfylling",
     innsendtTidspunkt = null,
-    korrigeringAv = null,
+    originalMeldekortId = null,
 )
 
 private fun getDager(

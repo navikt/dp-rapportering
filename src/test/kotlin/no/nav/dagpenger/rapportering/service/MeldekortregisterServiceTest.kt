@@ -79,9 +79,9 @@ class MeldekortregisterServiceTest {
                     type = Type.Original,
                     status = "TilUtfylling",
                     innsendtTidspunkt = null,
-                    korrigeringAv = null,
+                    originalMeldekortId = null,
                     bruttoBelop = null,
-                    begrunnelseEndring = null,
+                    begrunnelse = null,
                     registrertArbeidssoker = null,
                 ),
                 PeriodeData(
@@ -107,9 +107,9 @@ class MeldekortregisterServiceTest {
                     type = Type.Korrigert,
                     status = "Endret",
                     innsendtTidspunkt = LocalDateTime.now(),
-                    korrigeringAv = "123456789",
+                    originalMeldekortId = "123456789",
                     bruttoBelop = 123.0,
-                    begrunnelseEndring = "Begrunnelse",
+                    begrunnelse = "Begrunnelse",
                     registrertArbeidssoker = true,
                 ),
             )
@@ -176,9 +176,9 @@ class MeldekortregisterServiceTest {
                 type = Type.Korrigert,
                 status = "TilInnsending",
                 innsendtTidspunkt = LocalDateTime.now(),
-                korrigeringAv = "123456788",
+                originalMeldekortId = "123456788",
                 bruttoBelop = null,
-                begrunnelseEndring = "Begrunnelse",
+                begrunnelse = "Begrunnelse",
                 registrertArbeidssoker = true,
             )
 
@@ -233,9 +233,9 @@ class MeldekortregisterServiceTest {
                 type = Type.Korrigert,
                 status = "TilInnsending",
                 innsendtTidspunkt = LocalDateTime.now(),
-                korrigeringAv = originalId,
+                originalMeldekortId = originalId,
                 bruttoBelop = null,
-                begrunnelseEndring = "Begrunnelse",
+                begrunnelse = "Begrunnelse",
                 registrertArbeidssoker = true,
             ).toKorrigerMeldekortHendelse()
 
