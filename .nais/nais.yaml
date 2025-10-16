@@ -70,20 +70,22 @@ spec:
       value: -XX:+UseParallelGC -XX:ActiveProcessorCount=4
   gcp:
       sqlInstances:
-          - type: POSTGRES_15
-            highAvailability: true
-            diskAutoresize: true
-            pointInTimeRecovery: false
-            autoBackupHour: 3
-            tier: {{gcp.sql.tier}}
-            databases:
-                - name: rapportering
-                  envVarPrefix: DB
-            flags:
-                - name: cloudsql.enable_pgaudit
-                  value: "true"
-                - name: pgaudit.log
-                  value: 'write'
+        - type: POSTGRES_15
+          highAvailability: true
+          diskAutoresize: true
+          pointInTimeRecovery: false
+          autoBackupHour: 3
+          tier: {{gcp.sql.tier}}
+          databases:
+            - name: rapportering
+              envVarPrefix: DB
+          flags:
+            - name: "cloudsql.enable_pgaudit"
+              value: "on"
+            - name: "pgaudit.log"
+              value: "write,ddl,role"
+            - name: "pgaudit.log_parameter"
+              value: "on"
   azure:
     application:
       enabled: true
