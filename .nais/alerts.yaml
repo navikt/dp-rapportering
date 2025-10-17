@@ -12,12 +12,12 @@ spec:
           rules:
               - alert: Minneforbruk
                 expr: |
-                    sum (container_memory_working_set_bytes{container=~"dp-rapportering"})
-                    < (
-                    sum(kube_pod_container_resource_limits{resource="memory", container=~"dp-rapportering"}) / 
-                    count(kube_pod_container_resource_limits{resource="memory", container=~"dp-rapportering"}) 
-                    * 0.90
-                    )
+                    (
+                      sum(container_memory_working_set_bytes{container=~"dp-rapportering"}) by (pod)
+                      /
+                      sum(kube_pod_container_resource_limits{resource="memory", container=~"dp-rapportering"}) by (pod)
+                    ) * 100
+                    > 90
                 for: 5m
                 annotations:
                     description: 'Minst 1 av podene til applikasjonen dp-rapportering nærmer seg memory limit'
