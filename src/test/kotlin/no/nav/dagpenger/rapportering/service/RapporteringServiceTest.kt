@@ -116,19 +116,8 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `harDpMeldeplikt returnerer true hvis meldepliktConnector returnerer true`() {
+    fun `harDpMeldeplikt sjekker personregisterService`() {
         // True
-        coEvery { meldepliktService.harDpMeldeplikt(ident, token) } returns "true"
-
-        val harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
-
-        harDpMeldeplikt shouldBe true
-    }
-
-    @Test
-    fun `harDpMeldeplikt sjekker personregisterService hvis meldepliktConnector returnerer false`() {
-        // True
-        coEvery { meldepliktService.harDpMeldeplikt(ident, token) } returns "false"
         coEvery { personregisterService.hentPersonstatus(ident, token) } returns
             Personstatus(
                 ident,
@@ -142,7 +131,6 @@ class RapporteringServiceTest {
         harDpMeldeplikt shouldBe true
 
         // False
-        coEvery { meldepliktService.harDpMeldeplikt(ident, token) } returns "false"
         coEvery { personregisterService.hentPersonstatus(ident, token) } returns
             Personstatus(
                 ident,
