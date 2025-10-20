@@ -62,6 +62,7 @@ import java.util.concurrent.CompletableFuture
 
 open class ApiTestSetup {
     lateinit var journalfoeringRepository: JournalfoeringRepositoryPostgres
+    val personregisterService = mockk<PersonregisterService>()
 
     companion object {
         const val TOKENX_ISSUER_ID = "tokenx"
@@ -184,11 +185,10 @@ open class ApiTestSetup {
                 CompletableFuture.completedFuture(recordMetadata)
             }
 
-            val personregisterService = mockk<PersonregisterService>()
             coEvery { personregisterService.erBekreftelseOvertatt(any(), any()) } returns true
+            coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
 
             val meldekortregisterService = mockk<MeldekortregisterService>()
-            coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
 
             val pdlService = mockk<PdlService>()
             coEvery { pdlService.hentNavn(any()) } returns "Test Testesen"
