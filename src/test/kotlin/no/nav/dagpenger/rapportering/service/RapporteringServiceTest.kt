@@ -30,6 +30,8 @@ import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
+import no.nav.dagpenger.rapportering.connector.Brukerstatus
+import no.nav.dagpenger.rapportering.connector.Personstatus
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
@@ -114,20 +116,44 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `harDpMeldeplikt returnerer det samme som meldepliktConnector returnerer`() {
+    fun `harDpMeldeplikt returnerer true hvis meldepliktConnector returnerer true`() {
         // True
         coEvery { meldepliktService.harDpMeldeplikt(ident, token) } returns "true"
 
+        val harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
+
+        harDpMeldeplikt shouldBe true
+    }
+
+    @Test
+    fun `harDpMeldeplikt sjekker personregisterService hvis meldepliktConnector returnerer false`() {
+        // True
+        coEvery { meldepliktService.harDpMeldeplikt(ident, token) } returns "false"
+        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
+            Personstatus(
+                ident,
+                Brukerstatus.DAGPENGERBRUKER,
+                true,
+                AnsvarligSystem.DP,
+            )
+
         var harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
 
-        harDpMeldeplikt shouldBe "true"
+        harDpMeldeplikt shouldBe true
 
         // False
         coEvery { meldepliktService.harDpMeldeplikt(ident, token) } returns "false"
+        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
+            Personstatus(
+                ident,
+                Brukerstatus.IKKE_DAGPENGERBRUKER,
+                true,
+                AnsvarligSystem.DP,
+            )
 
         harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
 
-        harDpMeldeplikt shouldBe "false"
+        harDpMeldeplikt shouldBe false
     }
 
     @Test

@@ -14,6 +14,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.ExternalServicesBuilder
+import io.mockk.coEvery
 import io.mockk.mockkObject
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
@@ -24,6 +25,9 @@ import no.nav.dagpenger.rapportering.connector.AdapterDag
 import no.nav.dagpenger.rapportering.connector.AdapterPeriode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
+import no.nav.dagpenger.rapportering.connector.Brukerstatus
+import no.nav.dagpenger.rapportering.connector.Personstatus
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
@@ -87,7 +91,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    fun `Kan hente harDpMeldeplikt true`() =
+    fun `Returnerer harDpMeldeplikt = true hvis meldepliktAdapter returnerer true`() =
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter(harDpMeldepliktResponse = "true")
@@ -100,11 +104,40 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    fun `Kan hente harDpMeldeplikt false`() =
+    fun `Returnerer harDpMeldeplikt = true hvis meldepliktAdapter returnerer false og personregister returnerer true`() =
         setUpTestApplication {
             externalServices {
                 meldepliktAdapter(harDpMeldepliktResponse = "false")
             }
+
+            coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
+                Personstatus(
+                    fnr,
+                    Brukerstatus.DAGPENGERBRUKER,
+                    true,
+                    AnsvarligSystem.DP,
+                )
+
+            val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
+
+            response.status shouldBe HttpStatusCode.OK
+            response.bodyAsText() shouldBe "true"
+        }
+
+    @Test
+    fun `Returnerer harDpMeldeplikt = false hvis meldepliktAdapter returnerer false og personregister returnerer false`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter(harDpMeldepliktResponse = "false")
+            }
+
+            coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
+                Personstatus(
+                    fnr,
+                    Brukerstatus.IKKE_DAGPENGERBRUKER,
+                    true,
+                    AnsvarligSystem.DP,
+                )
 
             val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
 
