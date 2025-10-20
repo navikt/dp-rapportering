@@ -7,6 +7,7 @@ import io.ktor.server.plugins.BadRequestException
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
+import no.nav.dagpenger.rapportering.connector.Brukerstatus
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
@@ -52,7 +53,14 @@ class RapporteringService(
     suspend fun harDpMeldeplikt(
         ident: String,
         token: String,
-    ): String = meldepliktService.harDpMeldeplikt(ident, token)
+    ): Boolean =
+        if (meldepliktService.harDpMeldeplikt(ident, token) == "true") {
+            true
+        } else {
+            val personstatus = personregisterService.hentPersonstatus(ident, token)
+
+            personstatus?.status == Brukerstatus.DAGPENGERBRUKER
+        }
 
     suspend fun hentPeriode(
         rapporteringId: String,

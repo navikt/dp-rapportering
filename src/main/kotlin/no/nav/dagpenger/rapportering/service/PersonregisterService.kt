@@ -19,10 +19,15 @@ class PersonregisterService(
         ident: String,
         token: String,
     ): AnsvarligSystem {
-        val personstatus = personregisterConnector.hentPersonstatus(ident, token)
+        val personstatus = hentPersonstatus(ident, token)
 
         return personstatus?.ansvarligSystem ?: AnsvarligSystem.ARENA
     }
+
+    suspend fun hentPersonstatus(
+        ident: String,
+        token: String,
+    ) = personregisterConnector.hentPersonstatus(ident, token)
 
     suspend fun hentSisteSakId(ident: String) = personregisterConnector.hentSisteSakId(ident)
 }
