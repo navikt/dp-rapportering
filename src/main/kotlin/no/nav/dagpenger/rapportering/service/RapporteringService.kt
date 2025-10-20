@@ -53,14 +53,11 @@ class RapporteringService(
     suspend fun harDpMeldeplikt(
         ident: String,
         token: String,
-    ): Boolean =
-        if (meldepliktService.harDpMeldeplikt(ident, token) == "true") {
-            true
-        } else {
-            val personstatus = personregisterService.hentPersonstatus(ident, token)
+    ): Boolean {
+        val personstatus = personregisterService.hentPersonstatus(ident, token)
 
-            personstatus?.status == Brukerstatus.DAGPENGERBRUKER
-        }
+        return personstatus?.status == Brukerstatus.DAGPENGERBRUKER
+    }
 
     suspend fun hentPeriode(
         rapporteringId: String,

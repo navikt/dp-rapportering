@@ -49,40 +49,6 @@ class MeldepliktConnectorTest {
     )
 
     @Test
-    fun `harDpMeldeplikt returnerer samme verdi som adapter returnerer`() {
-        // True
-        var connector = meldepliktConnector(HttpStatusCode.OK, "true")
-
-        var response =
-            runBlocking {
-                connector.harDpMeldeplikt(ident, subjectToken)
-            }
-
-        response shouldBe "true"
-
-        // False
-        connector = meldepliktConnector(HttpStatusCode.OK, "false")
-
-        response =
-            runBlocking {
-                connector.harDpMeldeplikt(ident, subjectToken)
-            }
-
-        response shouldBe "false"
-    }
-
-    @Test
-    fun `harDpMeldeplikt kaster Exception ved feil`() {
-        val connector = meldepliktConnector(HttpStatusCode.ServiceUnavailable)
-
-        shouldThrow<Exception> {
-            runBlocking {
-                connector.harDpMeldeplikt(ident, subjectToken)
-            }
-        }
-    }
-
-    @Test
     fun `returnerer null ved henting av rapporteringsperiodeliste uten meldeplikt`() {
         val connector = meldepliktConnector(HttpStatusCode.NoContent)
 

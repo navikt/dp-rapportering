@@ -24,26 +24,6 @@ class MeldepliktConnector(
     private val sikkerlogg = KotlinLogging.logger("tjenestekall.MeldepliktConnector")
     private val httpClientUtils = HttpClientUtils(httpClient, meldepliktUrl, tokenProvider, actionTimer)
 
-    suspend fun harDpMeldeplikt(
-        ident: String,
-        subjectToken: String,
-    ): String =
-        withContext(Dispatchers.IO) {
-            val result =
-                httpClientUtils
-                    .get("/hardpmeldeplikt", subjectToken, "adapter-harDpMeldeplikt")
-                    .also {
-                        logger.info { "Kall til meldeplikt-adapter for å hente DP meldeplikt ga status ${it.status}" }
-                        sikkerlogg.info { "Kall til meldeplikt-adapter for å hente DP meldeplikt for $ident ga status ${it.status}" }
-                    }
-
-            if (result.status == HttpStatusCode.OK) {
-                result.bodyAsText()
-            } else {
-                throw Exception("Uforventet HTTP status ${result.status.value} ved henting av DP meldeplikt")
-            }
-        }
-
     suspend fun hentRapporteringsperioder(
         ident: String,
         subjectToken: String,

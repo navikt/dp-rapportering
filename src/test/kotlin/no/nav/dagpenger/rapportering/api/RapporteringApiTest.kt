@@ -79,37 +79,8 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    fun `harDpMeldeplikt returnerer InternalServerError hvis feil i meldepliktAdapter`() =
+    fun `Returnerer harDpMeldeplikt = true hvis personregister returnerer true`() =
         setUpTestApplication {
-            externalServices {
-                meldepliktAdapter(harDpMeldepliktResponseStatus = HttpStatusCode.InternalServerError, harDpMeldepliktResponse = "false")
-            }
-
-            val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
-
-            response.status shouldBe HttpStatusCode.InternalServerError
-        }
-
-    @Test
-    fun `Returnerer harDpMeldeplikt = true hvis meldepliktAdapter returnerer true`() =
-        setUpTestApplication {
-            externalServices {
-                meldepliktAdapter(harDpMeldepliktResponse = "true")
-            }
-
-            val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
-
-            response.status shouldBe HttpStatusCode.OK
-            response.bodyAsText() shouldBe "true"
-        }
-
-    @Test
-    fun `Returnerer harDpMeldeplikt = true hvis meldepliktAdapter returnerer false og personregister returnerer true`() =
-        setUpTestApplication {
-            externalServices {
-                meldepliktAdapter(harDpMeldepliktResponse = "false")
-            }
-
             coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
                 Personstatus(
                     fnr,
@@ -125,12 +96,8 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    fun `Returnerer harDpMeldeplikt = false hvis meldepliktAdapter returnerer false og personregister returnerer false`() =
+    fun `Returnerer harDpMeldeplikt = false hvis personregister returnerer false`() =
         setUpTestApplication {
-            externalServices {
-                meldepliktAdapter(harDpMeldepliktResponse = "false")
-            }
-
             coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
                 Personstatus(
                     fnr,
@@ -907,15 +874,9 @@ class RapporteringApiTest : ApiTestSetup() {
         sendInnResponseStatus: HttpStatusCode = HttpStatusCode.OK,
         personResponse: String = person(),
         personResponseStatus: HttpStatusCode = HttpStatusCode.OK,
-        harDpMeldepliktResponse: String = "true",
-        harDpMeldepliktResponseStatus: HttpStatusCode = HttpStatusCode.OK,
     ) {
         hosts("https://meldeplikt-adapter") {
             routing {
-                get("/hardpmeldeplikt") {
-                    call.response.header(HttpHeaders.ContentType, ContentType.Text.Plain.toString())
-                    call.respond(harDpMeldepliktResponseStatus, harDpMeldepliktResponse)
-                }
                 get("/rapporteringsperioder") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond(
