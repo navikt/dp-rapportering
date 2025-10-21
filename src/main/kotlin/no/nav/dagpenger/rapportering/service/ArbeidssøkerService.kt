@@ -72,9 +72,9 @@ class ArbeidssøkerService(
         }
 
         return if (kunSistePeriode) {
-            listOfNotNull(
-                arbeidssøkerperiodeResponse.maxByOrNull { it.startet.tidspunkt },
-            )
+            arbeidssøkerperiodeResponse
+                .maxByOrNull { it.startet.tidspunkt }
+                ?.let { listOf(it) } ?: emptyList()
         } else {
             arbeidssøkerperiodeResponse
         }
