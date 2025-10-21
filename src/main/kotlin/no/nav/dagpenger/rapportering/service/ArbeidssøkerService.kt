@@ -59,7 +59,10 @@ class ArbeidssøkerService(
             .expireAfterWrite(1, TimeUnit.MINUTES)
             .build()
 
-    suspend fun hentCachedArbeidssøkerperioder(ident: String): List<ArbeidssøkerperiodeResponse> {
+    suspend fun hentCachedArbeidssøkerperioder(
+        ident: String,
+        kunSistePeriode: Boolean = true,
+    ): List<ArbeidssøkerperiodeResponse> {
         var arbeidssøkerperiodeResponse = cache.getIfPresent(ident)
 
         if (arbeidssøkerperiodeResponse == null) {
@@ -68,7 +71,13 @@ class ArbeidssøkerService(
             arbeidssøkerperiodeResponse = response
         }
 
-        return arbeidssøkerperiodeResponse
+        return if (kunSistePeriode) {
+            arbeidssøkerperiodeResponse
+                .maxByOrNull { it.startet.tidspunkt }
+                ?.let { listOf(it) } ?: emptyList()
+        } else {
+            arbeidssøkerperiodeResponse
+        }
     }
 
     suspend fun sendBekreftelse(
@@ -181,7 +190,7 @@ class ArbeidssøkerService(
                                 oppslagTokenProvider.invoke() ?: throw RuntimeException("Klarte ikke å hente token"),
                             )
                             contentType(ContentType.Application.Json)
-                            parameter("siste", true)
+                            parameter("siste", false)
                             setBody(defaultObjectMapper.writeValueAsString(ArbeidssøkerperiodeRequestBody(ident)))
                         }.also {
                             sikkerlogg.info {
