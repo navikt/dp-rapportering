@@ -115,6 +115,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
             client.doPost(path, issueToken(ident), rapporteringsperiode)
 
             val list = getLogList()
+            println(list)
 
             list.size shouldBe 10
             list[2].type shouldBe "REST"

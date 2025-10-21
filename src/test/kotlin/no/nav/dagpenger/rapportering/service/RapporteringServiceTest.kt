@@ -608,7 +608,7 @@ class RapporteringServiceTest {
                 feil = listOf(),
             )
 
-        sendInn(rapporteringsperiode)
+        sendInn(rapporteringsperiode, hentKunSisteArbeidssøkerperiode = false)
     }
 
     @Test
@@ -623,7 +623,7 @@ class RapporteringServiceTest {
                 feil = listOf(),
             )
 
-        sendInn(rapporteringsperiode, "Dagpenger")
+        sendInn(rapporteringsperiode, "Dagpenger", hentKunSisteArbeidssøkerperiode = false)
     }
 
     @Test
@@ -646,7 +646,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns
+        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident), false) } returns
             listOf(
                 ArbeidssøkerperiodeResponse(
                     UUID.randomUUID(),
@@ -757,7 +757,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns
+        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident), false) } returns
             listOf(
                 ArbeidssøkerperiodeResponse(
                     UUID.randomUUID(),
@@ -844,7 +844,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns
+        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident), false) } returns
             listOf(
                 ArbeidssøkerperiodeResponse(
                     UUID.randomUUID(),
@@ -1017,6 +1017,7 @@ class RapporteringServiceTest {
     private fun sendInn(
         rapporteringsperiode: Rapporteringsperiode,
         ansvarligSystem: String = "Arena",
+        hentKunSisteArbeidssøkerperiode: Boolean = true,
     ) {
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
@@ -1027,7 +1028,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident)) } returns
+        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident), hentKunSisteArbeidssøkerperiode) } returns
             listOf(
                 ArbeidssøkerperiodeResponse(
                     UUID.randomUUID(),
