@@ -44,7 +44,7 @@ class RapporteringsperiodeTest {
         val rapporteringsperiode =
             Rapporteringsperiode(
                 id = id,
-                type = "09",
+                type = "10",
                 periode = periode,
                 dager =
                     (0..13)

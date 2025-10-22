@@ -279,7 +279,7 @@ class PeriodeDataTest {
         rapporteringsperioder[0].rapporteringstype shouldBe null
         rapporteringsperioder[0].html shouldBe null
         rapporteringsperioder[1].id shouldBe "2"
-        rapporteringsperioder[1].type shouldBe "09"
+        rapporteringsperioder[1].type shouldBe "10"
         rapporteringsperioder[1].periode shouldBe periode2
         rapporteringsperioder[1].dager.size shouldBe 2
         rapporteringsperioder[1].dager[0].dagIndex shouldBe 0
