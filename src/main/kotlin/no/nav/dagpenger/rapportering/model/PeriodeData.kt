@@ -81,7 +81,7 @@ fun PeriodeData.toRapporteringsperiode(): Rapporteringsperiode {
 
     return Rapporteringsperiode(
         id = this.id,
-        type = if (this.type == PeriodeData.Type.Original) "05" else "09",
+        type = if (this.type == PeriodeData.Type.Original) "05" else "10",
         periode = Periode(fraOgMed = this.periode.fraOgMed, tilOgMed = this.periode.tilOgMed),
         dager = this.dager.map { it.toDag() },
         kanSendesFra = this.kanSendesFra,
