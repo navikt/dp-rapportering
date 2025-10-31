@@ -29,7 +29,7 @@ data class ScheduledTask(
 class TaskExecutor(
     private val scheduledTasks: List<ScheduledTask>,
 ) {
-    val executorService: ScheduledExecutorService = Executors.newScheduledThreadPool(scheduledTasks.size)
+    private val executorService: ScheduledExecutorService = Executors.newScheduledThreadPool(scheduledTasks.size)
 
     fun startExecution() {
         scheduledTasks.forEach { scheduledTask -> startExecution(scheduledTask) }
