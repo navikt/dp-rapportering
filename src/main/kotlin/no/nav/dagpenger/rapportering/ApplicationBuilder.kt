@@ -20,7 +20,9 @@ import no.nav.dagpenger.rapportering.connector.PersonregisterConnector
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.jobs.MidlertidigJournalføringJob
 import no.nav.dagpenger.rapportering.jobs.RapporterDatabaseMetrikkerJob
+import no.nav.dagpenger.rapportering.jobs.ScheduledTask
 import no.nav.dagpenger.rapportering.jobs.SlettRapporteringsperioderJob
+import no.nav.dagpenger.rapportering.jobs.TaskExecutor
 import no.nav.dagpenger.rapportering.kafka.BekreftelseAvroSerializer
 import no.nav.dagpenger.rapportering.kafka.KafkaFactory
 import no.nav.dagpenger.rapportering.kafka.KafkaKonfigurasjon
@@ -64,10 +66,6 @@ class ApplicationBuilder(
     private val databaseMetrikker = DatabaseMetrikker(meterRegistry)
     private val actionTimer = ActionTimer(meterRegistry)
 
-    private val slettRapporteringsperioderJob = SlettRapporteringsperioderJob(meterRegistry, httpClient)
-    private val rapporterDatabaseMetrikker = RapporterDatabaseMetrikkerJob(databaseMetrikker)
-    private val midlertidigJournalføringJob = MidlertidigJournalføringJob(httpClient, meterRegistry)
-
     private val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
     private val personregisterConnector = PersonregisterConnector(httpClient = httpClient, actionTimer = actionTimer)
 
@@ -91,7 +89,8 @@ class ApplicationBuilder(
     private val meldepliktService = MeldepliktService(meldepliktConnector)
     private val meldekortregisterService = MeldekortregisterService(httpClient = httpClient, actionTimer = actionTimer)
     private val personregisterService = PersonregisterService(personregisterConnector)
-    private val arbeidssøkerService = ArbeidssøkerService(kallLoggService, personregisterService, httpClient, bekreftelseKafkaProdusent)
+    private val arbeidssøkerService =
+        ArbeidssøkerService(kallLoggService, personregisterService, httpClient, bekreftelseKafkaProdusent)
 
     private val journalfoeringService =
         JournalfoeringService(
@@ -112,6 +111,17 @@ class ApplicationBuilder(
             arbeidssøkerService,
             personregisterService,
             meldekortregisterService,
+        )
+
+    private val rapporterDatabaseMetrikkerJob = RapporterDatabaseMetrikkerJob(databaseMetrikker)
+    private val midlertidigJournalføringJob = MidlertidigJournalføringJob(httpClient, meterRegistry)
+    private val slettRapporteringsperioderJob =
+        SlettRapporteringsperioderJob(meterRegistry, httpClient, rapporteringService)
+    private val taskExecutor =
+        TaskExecutor(
+            listOf(
+                ScheduledTask(slettRapporteringsperioderJob, 0, 50),
+            ),
         )
 
     init {
@@ -143,12 +153,8 @@ class ApplicationBuilder(
         logger.info { "Starter dp-rapportering" }
 
         preparePartitions().also { logger.info { "Startet jobb for behandling av partisjoner" } }
-        slettRapporteringsperioderJob
-            .start(rapporteringService)
-            .also {
-                logger.info { "Startet jobb for sletting av rapporteringsperioder" }
-            }
-        rapporterDatabaseMetrikker
+
+        rapporterDatabaseMetrikkerJob
             .start(rapporteringRepository, journalfoeringRepository)
             .also {
                 logger.info { "Startet jobb for rapportering av metrikker" }
@@ -158,5 +164,7 @@ class ApplicationBuilder(
             .also {
                 logger.info { "Startet jobb for midlertidig journalføring" }
             }
+
+        taskExecutor.startExecution()
     }
 }

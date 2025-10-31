@@ -6,55 +6,38 @@ import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
 import no.nav.dagpenger.rapportering.service.RapporteringService
-import java.time.LocalTime
-import java.time.ZonedDateTime
-import kotlin.concurrent.fixedRateTimer
-import kotlin.time.Duration.Companion.days
 import kotlin.time.measureTime
 
 internal class SlettRapporteringsperioderJob(
     meterRegistry: MeterRegistry,
     private val httpClient: HttpClient,
-) {
+    private val rapporteringService: RapporteringService,
+) : Task {
     private val logger = KotlinLogging.logger { }
     private val metrikker: JobbkjoringMetrikker = JobbkjoringMetrikker(meterRegistry, this::class.simpleName!!)
 
-    private val tidspunktForKjoring = LocalTime.of(0, 50)
-    private val naa = ZonedDateTime.now()
-    private val tidspunktForNesteKjoring = naa.with(tidspunktForKjoring).plusDays(1)
-    private val millisekunderTilNesteKjoring =
-        tidspunktForNesteKjoring.toInstant().toEpochMilli() -
-            naa.toInstant().toEpochMilli() // differansen i millisekunder mellom de to tidspunktene
+    override fun execute() {
+        try {
+            if (!isLeader(httpClient, logger)) {
+                logger.info { "Pod er ikke leader, så jobb for å slette mellomlagrede rapporteringsperioder startes ikke" }
+                return
+            }
 
-    internal fun start(rapporeringService: RapporteringService) {
-        logger.info { "Tidspunkt for neste kjøring: $tidspunktForNesteKjoring" }
-        fixedRateTimer(
-            name = "Slett mellomlagrede rapporteringsperioder",
-            daemon = true,
-            // Har nåværende tidspunkt passert 'tidspunktForNesteKjoring' starter vi timeren umiddelbart
-            initialDelay = millisekunderTilNesteKjoring.coerceAtLeast(0),
-            period = 1.days.inWholeMilliseconds,
-            action = {
-                try {
-                    if (!isLeader(httpClient, logger)) {
-                        return@fixedRateTimer
-                    }
+            logger.info { "Starter jobb for å slette mellomlagrede rapporteringsperioder" }
 
-                    var rowsAffected: Int
-                    logger.info { "Starter jobb for å slette mellomlagrede rapporteringsperioder" }
-                    val tidBrukt =
-                        measureTime {
-                            rowsAffected = runBlocking { rapporeringService.slettMellomlagredeRapporteringsperioder() }
-                        }
-                    logger.info {
-                        "Jobb for å slette mellomlagrede rapporteringsperioder ferdig. Brukte ${tidBrukt.inWholeSeconds} sekund(er)."
-                    }
-                    metrikker.jobbFullfort(tidBrukt, rowsAffected)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Slettejobb feilet" }
-                    metrikker.jobbFeilet()
+            var rowsAffected: Int
+            val tidBrukt =
+                measureTime {
+                    rowsAffected = runBlocking { rapporteringService.slettMellomlagredeRapporteringsperioder() }
                 }
-            },
-        )
+
+            logger.info {
+                "Jobb for å slette mellomlagrede rapporteringsperioder ferdig. Brukte ${tidBrukt.inWholeSeconds} sekund(er)."
+            }
+            metrikker.jobbFullfort(tidBrukt, rowsAffected)
+        } catch (e: Exception) {
+            logger.warn(e) { "Slettejobb feilet" }
+            metrikker.jobbFeilet()
+        }
     }
 }
