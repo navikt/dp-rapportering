@@ -4,7 +4,6 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import kotliquery.queryOf
 import kotliquery.sessionOf
-import kotliquery.using
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
@@ -49,7 +48,7 @@ class InnsendingtidspunktRepositoryPostgresTest {
         periodeKode: String,
         verdi: Int,
     ) {
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session.run(
                 queryOf(
                     "INSERT INTO INNSENDINGTIDSPUNKT (PERIODE_KODE, VERDI) VALUES (?, ?)",

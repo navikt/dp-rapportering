@@ -15,7 +15,6 @@ import io.mockk.every
 import io.mockk.mockkObject
 import kotliquery.queryOf
 import kotliquery.sessionOf
-import kotliquery.using
 import no.nav.dagpenger.rapportering.api.ApiTestSetup
 import no.nav.dagpenger.rapportering.api.doGet
 import no.nav.dagpenger.rapportering.api.doPost
@@ -245,7 +244,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
         }
 
     private fun getLogList() =
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session.run(
                 queryOf(
                     "SELECT * FROM kall_logg ORDER BY tidspunkt",
