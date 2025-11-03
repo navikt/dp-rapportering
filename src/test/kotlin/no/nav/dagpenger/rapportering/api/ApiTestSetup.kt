@@ -22,7 +22,6 @@ import io.mockk.mockkObject
 import io.mockk.slot
 import kotliquery.queryOf
 import kotliquery.sessionOf
-import kotliquery.using
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.konfigurasjon
@@ -119,7 +118,10 @@ open class ApiTestSetup {
             System.setProperty("PERSONREGISTER_HOST", "personregister")
             System.setProperty("PERSONREGISTER_AUDIENCE", "personregister_audience")
             System.setProperty("PDF_GENERATOR_URL", "https://pdf-generator")
-            System.setProperty("DB_JDBC_URL", "${database.jdbcUrl}&user=${database.username}&password=${database.password}")
+            System.setProperty(
+                "DB_JDBC_URL",
+                "${database.jdbcUrl}&user=${database.username}&password=${database.password}",
+            )
             System.setProperty("token-x.client-id", TOKENX_ISSUER_ID)
             System.setProperty("TOKEN_X_CLIENT_ID", TOKENX_ISSUER_ID)
             System.setProperty("TOKEN_X_PRIVATE_JWK", TEST_PRIVATE_JWK)
@@ -130,10 +132,22 @@ open class ApiTestSetup {
             System.setProperty("AZURE_APP_CLIENT_SECRET", TEST_PRIVATE_JWK)
             System.setProperty("azure-app.well-known-url", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
             System.setProperty("AZURE_APP_WELL_KNOWN_URL", mockOAuth2Server.wellKnownUrl(AZURE_ISSUER_ID).toString())
-            System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_URL", "http://arbeidssokerregister_record_key_url/api/v1/record-key")
-            System.setProperty("ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE", "api://test.scope.arbeidssokerregister_record_key/.default")
-            System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_URL", "http://arbeidssokerregister_oppslag_url/api/v1/arbeidssoekerperioder")
-            System.setProperty("ARBEIDSSOKERREGISTER_OPPSLAG_SCOPE", "api://test.scope.arbeidssokerregister_oppslag/.default")
+            System.setProperty(
+                "ARBEIDSSOKERREGISTER_RECORD_KEY_URL",
+                "http://arbeidssokerregister_record_key_url/api/v1/record-key",
+            )
+            System.setProperty(
+                "ARBEIDSSOKERREGISTER_RECORD_KEY_SCOPE",
+                "api://test.scope.arbeidssokerregister_record_key/.default",
+            )
+            System.setProperty(
+                "ARBEIDSSOKERREGISTER_OPPSLAG_URL",
+                "http://arbeidssokerregister_oppslag_url/api/v1/arbeidssoekerperioder",
+            )
+            System.setProperty(
+                "ARBEIDSSOKERREGISTER_OPPSLAG_SCOPE",
+                "api://test.scope.arbeidssokerregister_oppslag/.default",
+            )
             System.setProperty("KAFKA_SCHEMA_REGISTRY", "KAFKA_SCHEMA_REGISTRY")
             System.setProperty("KAFKA_SCHEMA_REGISTRY_USER", "KAFKA_SCHEMA_REGISTRY_USER")
             System.setProperty("KAFKA_SCHEMA_REGISTRY_PASSWORD", "KAFKA_SCHEMA_REGISTRY_PASSWORD")
@@ -170,9 +184,12 @@ open class ApiTestSetup {
 
             val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
             val meldepliktService = MeldepliktService(meldepliktConnector)
-            val rapporteringRepository = RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
-            val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
-            journalfoeringRepository = JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
+            val rapporteringRepository =
+                RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
+            val innsendingtidspunktRepository =
+                InnsendingtidspunktRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
+            journalfoeringRepository =
+                JournalfoeringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val kallLoggRepository = KallLoggRepositoryPostgres(PostgresDataSourceBuilder.dataSource)
             val kallLoggService = KallLoggService(kallLoggRepository)
 
@@ -242,7 +259,7 @@ open class ApiTestSetup {
 
     private fun clean() {
         println("Cleaning database")
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session.run(
                 queryOf(
                     "TRUNCATE TABLE aktivitet, dag, midlertidig_lagrede_journalposter, " +

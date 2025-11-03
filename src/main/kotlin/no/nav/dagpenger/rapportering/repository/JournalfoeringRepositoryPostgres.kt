@@ -3,7 +3,6 @@ package no.nav.dagpenger.rapportering.repository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotliquery.queryOf
 import kotliquery.sessionOf
-import kotliquery.using
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
@@ -21,7 +20,7 @@ class JournalfoeringRepositoryPostgres(
         dokumentInfoId: Long,
         rapporteringsperiodeId: String,
     ) = actionTimer.timedAction("db-lagreJournalpostData") {
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session
                 .run(
                     queryOf(
@@ -47,7 +46,7 @@ class JournalfoeringRepositoryPostgres(
 
     override suspend fun lagreDataMidlertidig(midlertidigLagretData: MidlertidigLagretData) =
         actionTimer.timedAction("db-lagreDataMidlertidig") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session
                     .run(
                         queryOf(
@@ -63,7 +62,7 @@ class JournalfoeringRepositoryPostgres(
 
     override suspend fun hentMidlertidigLagretData(): List<Triple<String, MidlertidigLagretData, Int>> =
         actionTimer.timedAction("db-hentMidlertidigLagretData") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session.run(
                     queryOf(
                         "SELECT id, journalpost, retries FROM midlertidig_lagrede_journalposter FOR UPDATE SKIP LOCKED",
@@ -80,7 +79,7 @@ class JournalfoeringRepositoryPostgres(
 
     override suspend fun sletteMidlertidigLagretData(id: String) =
         actionTimer.timedAction("db-sletteMidlertidigLagretData") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session
                     .run(
                         queryOf(
@@ -95,7 +94,7 @@ class JournalfoeringRepositoryPostgres(
         id: String,
         retries: Int,
     ) = actionTimer.timedAction("db-oppdaterMidlertidigLagretData") {
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session
                 .run(
                     queryOf(
@@ -109,7 +108,7 @@ class JournalfoeringRepositoryPostgres(
 
     override suspend fun hentAntallJournalposter(): Int =
         actionTimer.timedAction("db-hentAntallJournalposter") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session.run(
                     queryOf(
                         "SELECT COUNT(*) FROM opprettede_journalposter",
@@ -122,7 +121,7 @@ class JournalfoeringRepositoryPostgres(
 
     override suspend fun hentAntallMidlertidigLagretData(): Int =
         actionTimer.timedAction("db-hentAntallMidlertidigLagretData") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session.run(
                     queryOf(
                         "SELECT COUNT(*) FROM midlertidig_lagrede_journalposter",
@@ -135,7 +134,7 @@ class JournalfoeringRepositoryPostgres(
 
     override suspend fun hentJournalpostId(rapporteringsperiodeId: String): List<Long> =
         actionTimer.timedAction("db-hentJournalpostId") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session.run(
                     queryOf(
                         "SELECT journalpost_id " +

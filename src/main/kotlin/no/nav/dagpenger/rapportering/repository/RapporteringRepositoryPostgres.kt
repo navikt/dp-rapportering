@@ -5,7 +5,6 @@ import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 import kotliquery.sessionOf
-import kotliquery.using
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
@@ -26,23 +25,24 @@ class RapporteringRepositoryPostgres(
         ident: String,
     ): Rapporteringsperiode? =
         actionTimer.timedAction("db-hentRapporteringsperiode") {
-            using(sessionOf(dataSource)) { session ->
-                session.run(
-                    queryOf(
-                        "SELECT * FROM rapporteringsperiode WHERE id = ? AND ident = ?",
-                        id,
-                        ident,
-                    ).map { it.toRapporteringsperiode() }
-                        .asSingle,
-                )
-            }?.let {
-                it.copy(
-                    dager =
-                        hentDagerUtenAktivitet(it.id).map { dagPair ->
-                            dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
-                        },
-                )
-            }
+            sessionOf(dataSource)
+                .use { session ->
+                    session.run(
+                        queryOf(
+                            "SELECT * FROM rapporteringsperiode WHERE id = ? AND ident = ?",
+                            id,
+                            ident,
+                        ).map { it.toRapporteringsperiode() }
+                            .asSingle,
+                    )
+                }?.let {
+                    it.copy(
+                        dager =
+                            hentDagerUtenAktivitet(it.id).map { dagPair ->
+                                dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
+                            },
+                    )
+                }
         }
 
     override suspend fun finnesRapporteringsperiode(
@@ -50,18 +50,19 @@ class RapporteringRepositoryPostgres(
         ident: String,
     ): Boolean =
         actionTimer.timedAction("db-finnesRapporteringsperiode") {
-            using(sessionOf(dataSource)) { session ->
-                session.run(
-                    queryOf("SELECT * FROM rapporteringsperiode WHERE id = ? AND ident = ?", id, ident)
-                        .map { it.toRapporteringsperiode() }
-                        .asSingle,
-                )
-            }.let { it != null }
+            sessionOf(dataSource)
+                .use { session ->
+                    session.run(
+                        queryOf("SELECT * FROM rapporteringsperiode WHERE id = ? AND ident = ?", id, ident)
+                            .map { it.toRapporteringsperiode() }
+                            .asSingle,
+                    )
+                }.let { it != null }
         }
 
     override suspend fun hentRapporteringsperiodeIdForInnsendtePerioder(): List<String> =
         actionTimer.timedAction("db-hentRapporteringsperiodeIdForInnsendtePerioder") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session.run(
                     queryOf(
                         "SELECT id FROM rapporteringsperiode WHERE status = ? AND mottatt_dato <= CURRENT_DATE - INTERVAL '5 days'",
@@ -74,7 +75,7 @@ class RapporteringRepositoryPostgres(
 
     override suspend fun hentRapporteringsperiodeIdForMidlertidigePerioder(): List<String> =
         actionTimer.timedAction("db-hentRapporteringsperiodeIdForMidlertidigePerioder") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session.run(
                     queryOf(
                         "SELECT id FROM rapporteringsperiode WHERE status = ?",
@@ -91,7 +92,7 @@ class RapporteringRepositoryPostgres(
     // Da er det OK å slette meldekort etter 30 dager fra TOM-datoen
     override suspend fun hentRapporteringsperiodeIdForPerioderEtterSisteFrist(): List<String> =
         actionTimer.timedAction("db-hentRapporteringsperiodeIdForPerioderEtterSisteFrist") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session.run(
                     queryOf("SELECT id FROM rapporteringsperiode WHERE tom <= CURRENT_DATE - INTERVAL '30 days'")
                         .map { it.string("id") }
@@ -102,47 +103,49 @@ class RapporteringRepositoryPostgres(
 
     override suspend fun hentLagredeRapporteringsperioder(ident: String): List<Rapporteringsperiode> =
         actionTimer.timedAction("db-hentRapporteringsperioder") {
-            using(sessionOf(dataSource)) { session ->
-                session.run(
-                    queryOf("SELECT * FROM rapporteringsperiode where ident = ?", ident)
-                        .map { it.toRapporteringsperiode() }
-                        .asList,
-                )
-            }.map { rapporteringsperiode ->
-                val dager = hentDagerUtenAktivitet(rapporteringsperiode.id)
-                rapporteringsperiode
-                    .copy(
-                        dager =
-                            dager.map { dagPair ->
-                                dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
-                            },
+            sessionOf(dataSource)
+                .use { session ->
+                    session.run(
+                        queryOf("SELECT * FROM rapporteringsperiode where ident = ?", ident)
+                            .map { it.toRapporteringsperiode() }
+                            .asList,
                     )
-            }
+                }.map { rapporteringsperiode ->
+                    val dager = hentDagerUtenAktivitet(rapporteringsperiode.id)
+                    rapporteringsperiode
+                        .copy(
+                            dager =
+                                dager.map { dagPair ->
+                                    dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
+                                },
+                        )
+                }
         }
 
     override suspend fun hentAlleLagredeRapporteringsperioder(): List<Rapporteringsperiode> =
         actionTimer.timedAction("db-hentAlleRapporteringsperioder") {
-            using(sessionOf(dataSource)) { session ->
-                session.run(
-                    queryOf("SELECT * FROM rapporteringsperiode")
-                        .map { it.toRapporteringsperiode() }
-                        .asList,
-                )
-            }.map { rapporteringsperiode ->
-                val dager = hentDagerUtenAktivitet(rapporteringsperiode.id)
-                rapporteringsperiode
-                    .copy(
-                        dager =
-                            dager.map { dagPair ->
-                                dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
-                            },
+            sessionOf(dataSource)
+                .use { session ->
+                    session.run(
+                        queryOf("SELECT * FROM rapporteringsperiode")
+                            .map { it.toRapporteringsperiode() }
+                            .asList,
                     )
-            }
+                }.map { rapporteringsperiode ->
+                    val dager = hentDagerUtenAktivitet(rapporteringsperiode.id)
+                    rapporteringsperiode
+                        .copy(
+                            dager =
+                                dager.map { dagPair ->
+                                    dagPair.second.copy(aktiviteter = hentAktiviteter(dagPair.first))
+                                },
+                        )
+                }
         }
 
     // OBS! Denne funksjonen henter dager uten aktiviteter. Aktiviteter må hentes separat.
     override suspend fun hentDagerUtenAktivitet(rapporteringId: String): List<Pair<UUID, Dag>> =
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session.run(
                 queryOf(
                     "SELECT * FROM dag WHERE rapportering_id = ?",
@@ -156,7 +159,7 @@ class RapporteringRepositoryPostgres(
         dagIdex: Int,
     ): UUID =
         actionTimer.timedAction("db-hentDagId") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session.transaction { tx ->
                     tx.run(
                         queryOf(
@@ -172,7 +175,7 @@ class RapporteringRepositoryPostgres(
 
     override suspend fun hentAktiviteter(dagId: UUID): List<Aktivitet> =
         actionTimer.timedAction("db-hentAktiviteter") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session.run(
                     queryOf(
                         "SELECT * FROM aktivitet WHERE dag_id = ?",
@@ -184,7 +187,7 @@ class RapporteringRepositoryPostgres(
 
     override suspend fun hentKanSendes(rapporteringId: String): Boolean? =
         actionTimer.timedAction("db-hentKanSendes") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session.run(
                     queryOf(
                         "SELECT kan_sendes FROM rapporteringsperiode WHERE id = ?",
@@ -199,14 +202,16 @@ class RapporteringRepositoryPostgres(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
     ) = actionTimer.timedAction("db-lagreRapporteringsperiodeOgDager") {
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session.transaction { tx ->
                 // Vi skal få 1 når INSERT i lagreRapporteringsperiode går som normalt
                 // Vi skal få 0 når INSERT i lagreRapporteringsperiode får CONFLICT
                 // Men siden vi har ON CONFLICT DO NOTHING, skal vi ikke få feil og skal bare svare OK
                 // lagreRapporteringsperiode skal kaste exception når noe annet er galt
                 if (tx.lagreRapporteringsperiode(rapporteringsperiode, ident) == 1) {
-                    tx.lagreDager(rapporteringsperiode.id, rapporteringsperiode.dager).validateRowsAffected(excepted = 14)
+                    tx
+                        .lagreDager(rapporteringsperiode.id, rapporteringsperiode.dager)
+                        .validateRowsAffected(excepted = 14)
                 }
             }
         }
@@ -275,7 +280,7 @@ class RapporteringRepositoryPostgres(
         dagId: UUID,
         dag: Dag,
     ) = actionTimer.timedAction("db-lagreAktiviteter") {
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session.transaction { tx ->
                 tx
                     .run(
@@ -310,7 +315,7 @@ class RapporteringRepositoryPostgres(
         ident: String,
         registrertArbeidssoker: Boolean,
     ) = actionTimer.timedAction("db-oppdaterRegistrertArbeidssoker") {
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session.transaction { tx ->
                 tx
                     .run(
@@ -335,7 +340,7 @@ class RapporteringRepositoryPostgres(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
     ) = actionTimer.timedAction("db-oppdaterRapporteringsperiodeFraArena") {
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session.transaction { tx ->
                 tx
                     .run(
@@ -368,7 +373,7 @@ class RapporteringRepositoryPostgres(
         ident: String,
         begrunnelse: String,
     ) = actionTimer.timedAction("db-oppdaterBegrunnelse") {
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session.transaction { tx ->
                 tx
                     .run(
@@ -394,7 +399,7 @@ class RapporteringRepositoryPostgres(
         ident: String,
         kanSendes: Boolean,
     ) = actionTimer.timedAction("db-settKanSendes") {
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session.transaction { tx ->
                 tx
                     .run(
@@ -420,7 +425,7 @@ class RapporteringRepositoryPostgres(
         ident: String,
         rapporteringstype: String,
     ) = actionTimer.timedAction("db-oppdaterRapporteringstype") {
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session.transaction { tx ->
                 tx
                     .run(
@@ -449,7 +454,7 @@ class RapporteringRepositoryPostgres(
         status: RapporteringsperiodeStatus,
         oppdaterMottattDato: Boolean,
     ) = actionTimer.timedAction("db-oppdaterPeriodeEtterInnsending") {
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session.transaction { tx ->
                 tx
                     .run(
@@ -483,7 +488,7 @@ class RapporteringRepositoryPostgres(
 
     override suspend fun slettAktiviteter(dagId: UUID) =
         actionTimer.timedAction("db-slettAktiviteter") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session.transaction { tx ->
                     tx
                         .run(
@@ -498,7 +503,7 @@ class RapporteringRepositoryPostgres(
 
     override suspend fun slettRaporteringsperiode(rapporteringId: String) =
         actionTimer.timedAction("db-slettRaporteringsperiode") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session.transaction { tx ->
                     tx.run(
                         // Sjekker at rapporteringsperioden finnes
@@ -538,7 +543,7 @@ class RapporteringRepositoryPostgres(
 
     override suspend fun hentAntallRapporteringsperioder(): Int =
         actionTimer.timedAction("db-hentAntallRapporteringsperioder") {
-            using(sessionOf(dataSource)) { session ->
+            sessionOf(dataSource).use { session ->
                 session.run(
                     queryOf("SELECT COUNT(*) FROM rapporteringsperiode")
                         .map { it.int(1) }

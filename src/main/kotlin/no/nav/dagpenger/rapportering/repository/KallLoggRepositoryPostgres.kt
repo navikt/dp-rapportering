@@ -2,7 +2,6 @@ package no.nav.dagpenger.rapportering.repository
 
 import kotliquery.queryOf
 import kotliquery.sessionOf
-import kotliquery.using
 import no.nav.dagpenger.rapportering.model.KallLogg
 import java.time.Instant
 import javax.sql.DataSource
@@ -11,7 +10,7 @@ class KallLoggRepositoryPostgres(
     private val dataSource: DataSource,
 ) : KallLoggRepository {
     override fun lagreKallLogg(kallLogg: KallLogg): Long =
-        using(sessionOf(dataSource, true)) { session ->
+        sessionOf(dataSource, true).use { session ->
             session
                 .run(
                     queryOf(
@@ -39,7 +38,7 @@ class KallLoggRepositoryPostgres(
         kallLoggId: Long,
         request: String,
     ) {
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session
                 .run(
                     queryOf(
@@ -59,7 +58,7 @@ class KallLoggRepositoryPostgres(
         status: Int,
         response: String,
     ) {
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session
                 .run(
                     queryOf(
@@ -76,7 +75,7 @@ class KallLoggRepositoryPostgres(
     }
 
     override fun hentKallLoggFelterListeByKorrelasjonId(korrelasjonId: String): List<KallLogg> =
-        using(sessionOf(dataSource)) { session ->
+        sessionOf(dataSource).use { session ->
             session.run(
                 queryOf(
                     "SELECT " +
