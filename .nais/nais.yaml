@@ -116,7 +116,7 @@ spec:
         - application: dp-rapportering-frontend
         - application: dp-meldekortregister
         - application: tokenx-token-generator
-          namespace: aura
+          namespace: nais
           cluster: dev-gcp
         - application: azure-token-generator
           namespace: nais
