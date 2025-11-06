@@ -15,6 +15,10 @@ interface Task {
     fun execute()
 }
 
+fun interface TimeProvider {
+    fun now(): LocalDateTime
+}
+
 data class ScheduledTask(
     val task: Task,
     val hour: Int,
@@ -28,6 +32,8 @@ data class ScheduledTask(
 
 class TaskExecutor(
     private val scheduledTasks: List<ScheduledTask>,
+    private val timeZoneId: ZoneId = ZoneId.systemDefault(),
+    private val timeProvider: TimeProvider = TimeProvider { LocalDateTime.now() },
 ) {
     private val executorService: ScheduledExecutorService = Executors.newScheduledThreadPool(scheduledTasks.size)
 
@@ -53,9 +59,8 @@ class TaskExecutor(
         hour: Int,
         minute: Int,
     ): Long {
-        val localNow = LocalDateTime.now()
-        val currentZone = ZoneId.systemDefault()
-        val zonedNow = ZonedDateTime.of(localNow, currentZone)
+        val localNow = timeProvider.now()
+        val zonedNow = ZonedDateTime.of(localNow, timeZoneId)
         var zonedNextTarget =
             zonedNow
                 .withHour(hour)

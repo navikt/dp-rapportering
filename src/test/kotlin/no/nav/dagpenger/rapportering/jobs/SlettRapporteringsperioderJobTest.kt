@@ -3,9 +3,7 @@ package no.nav.dagpenger.rapportering.jobs
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
@@ -14,8 +12,8 @@ import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.ZonedDateTime
 
 class SlettRapporteringsperioderJobTest {
     companion object {
@@ -38,17 +36,17 @@ class SlettRapporteringsperioderJobTest {
                 rapporteringService = rapporteringService,
             )
 
+        val mockedTime = LocalTime.of(1, 59, 57)
+        val mockTimeProvider = TimeProvider { LocalDateTime.now().with(mockedTime) }
+
         val taskExecutor =
             TaskExecutor(
-                listOf(
-                    ScheduledTask(slettRapporteringsperioderJob, 2, 0),
-                ),
+                scheduledTasks =
+                    listOf(
+                        ScheduledTask(slettRapporteringsperioderJob, 2, 0),
+                    ),
+                timeProvider = mockTimeProvider,
             )
-
-        val mockedTime = LocalTime.of(1, 59, 57)
-        val mockedDateTime = ZonedDateTime.now().with(mockedTime)
-        mockkStatic(ZonedDateTime::class)
-        every { ZonedDateTime.of(any(), any()) } returns mockedDateTime
 
         taskExecutor.startExecution()
 
