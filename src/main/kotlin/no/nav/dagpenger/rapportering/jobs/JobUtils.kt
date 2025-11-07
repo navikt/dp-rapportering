@@ -5,27 +5,30 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import kotlinx.coroutines.runBlocking
-import no.nav.dagpenger.rapportering.model.Leader
-import java.net.InetAddress
 
 fun isLeader(
     httpClient: HttpClient,
     logger: KLogger,
 ): Boolean {
-    val hostname: String = InetAddress.getLocalHost().hostName
+    return try {
+        val electorUrl = System.getenv("ELECTOR_GET_URL")
+        val hostname = System.getenv("HOSTNAME")
 
-    val leader: String =
-        try {
-            val electorUrl = System.getenv("ELECTOR_GET_URL")
-
-            runBlocking {
-                val leaderJson: Leader = httpClient.get(electorUrl).body()
-                leaderJson.name
-            }
-        } catch (e: Exception) {
-            logger.error(e) { "Kunne ikke sjekke leader" }
+        if (hostname == null || electorUrl == null || hostname.isEmpty() || electorUrl.isEmpty()) {
+            logger.error { "Kunne ikke sjekke leader HOSTNAME og/eller ELECTOR_GET_URL er ikke definert" }
             return true // Det er bedre å få flere pod'er til å starte jobben enn ingen
         }
 
-    return hostname == leader
+        hostname ==
+            runBlocking {
+                httpClient.get(electorUrl).body<Leader>().name
+            }
+    } catch (e: Exception) {
+        logger.error(e) { "Kunne ikke sjekke leader" }
+        true // Det er bedre å få flere pod'er til å starte jobben enn ingen
+    }
 }
+
+private data class Leader(
+    val name: String,
+)

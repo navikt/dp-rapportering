@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
-import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 private const val NAMESPACE = "dp_rapportering"
 
@@ -141,10 +141,9 @@ class ActionTimer(
         navn: String,
         block: suspend () -> T,
     ): T {
-        val blockResult: T
-        val tidBrukt =
-            measureTime {
-                blockResult = block()
+        val (blockResult, tidBrukt) =
+            measureTimedValue {
+                block()
             }
         Timer
             .builder("${NAMESPACE}_timer")
