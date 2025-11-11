@@ -70,6 +70,6 @@ class TaskExecutor(
         if (zonedNow > zonedNextTarget) zonedNextTarget = zonedNextTarget.plusDays(1)
 
         val duration = Duration.between(zonedNow, zonedNextTarget)
-        return duration.seconds
+        return duration.seconds + 1
     }
 }

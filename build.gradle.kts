@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.shadow.jar)
     alias(libs.plugins.kotlin)
     id("io.ktor.plugin") version "3.3.2"
-    id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
+    id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
     id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
 
@@ -95,5 +95,5 @@ dependencies {
     testImplementation(libs.mock.oauth2.server)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.mock)
-    testImplementation("de.redsix:pdfcompare:1.2.5")
+    testImplementation("de.redsix:pdfcompare:1.2.6")
 }
