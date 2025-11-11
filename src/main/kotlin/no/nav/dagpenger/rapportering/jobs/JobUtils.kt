@@ -14,7 +14,7 @@ fun isLeader(
         val electorUrl = System.getenv("ELECTOR_GET_URL")
         val hostname = System.getenv("HOSTNAME")
 
-        if (hostname == null || electorUrl == null || hostname.isEmpty() || electorUrl.isEmpty()) {
+        if (hostname.isNullOrEmpty() || electorUrl.isNullOrEmpty()) {
             logger.error { "Kunne ikke sjekke leader HOSTNAME og/eller ELECTOR_GET_URL er ikke definert" }
             return true // Det er bedre å få flere pod'er til å starte jobben enn ingen
         }
