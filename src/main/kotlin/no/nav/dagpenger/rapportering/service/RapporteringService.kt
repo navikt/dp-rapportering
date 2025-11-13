@@ -56,6 +56,11 @@ class RapporteringService(
     ): Boolean {
         val personstatus = personregisterService.hentPersonstatus(ident, token)
 
+        // Vi må sjekke at bruker ikke har meldekort med status TilUtfylling i dp-løsningen selv om hen er IKKE_DAGPENGERBRUKER
+        if (personstatus?.status == Brukerstatus.IKKE_DAGPENGERBRUKER) {
+            val meldekort = meldekortregisterService.hentRapporteringsperioder(ident, token, MeldekortStatus.TilUtfylling)
+            if (!meldekort.isNullOrEmpty()) return true
+        }
         return personstatus?.status == Brukerstatus.DAGPENGERBRUKER
     }
 

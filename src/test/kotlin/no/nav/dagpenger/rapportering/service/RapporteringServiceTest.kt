@@ -116,7 +116,10 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `harDpMeldeplikt sjekker personregisterService`() {
+    fun `harDpMeldeplikt sjekker personstatus (bruker har ikke meldekort TilUtfylling)`() {
+        coEvery { meldekortregisterService.hentRapporteringsperioder(ident, token, MeldekortStatus.TilUtfylling) } returns
+            emptyList()
+
         // True
         coEvery { personregisterService.hentPersonstatus(ident, token) } returns
             Personstatus(
@@ -142,6 +145,38 @@ class RapporteringServiceTest {
         harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
 
         harDpMeldeplikt shouldBe false
+    }
+
+    @Test
+    fun `harDpMeldeplikt sjekker personstatus (bruker har meldekort TilUtfylling)`() {
+        coEvery { meldekortregisterService.hentRapporteringsperioder(ident, token, MeldekortStatus.TilUtfylling) } returns
+            meldekortregisterRapporteringsperiodeListe
+
+        // True
+        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
+            Personstatus(
+                ident,
+                Brukerstatus.DAGPENGERBRUKER,
+                true,
+                AnsvarligSystem.DP,
+            )
+
+        var harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
+
+        harDpMeldeplikt shouldBe true
+
+        // Bruker har status IKKE_DAGPENGERBRUKER har meldekort til utfylling, da returnerer vi true
+        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
+            Personstatus(
+                ident,
+                Brukerstatus.IKKE_DAGPENGERBRUKER,
+                true,
+                AnsvarligSystem.DP,
+            )
+
+        harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
+
+        harDpMeldeplikt shouldBe true
     }
 
     @Test
