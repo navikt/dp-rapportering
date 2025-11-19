@@ -14,6 +14,7 @@ import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -85,7 +86,7 @@ fun List<AdapterRapporteringsperiode>?.toRapporteringsperioder(): List<Rapporter
 fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
     Rapporteringsperiode(
         id = this.id.toString(),
-        type = this.type,
+        type = type.toKortType(),
         periode = Periode(fraOgMed = this.periode.fraOgMed, tilOgMed = this.periode.tilOgMed),
         dager = this.dager.map { it.toDag() },
         kanSendesFra = this.kanSendesFra,
@@ -128,7 +129,7 @@ fun List<Rapporteringsperiode>.toAdapterRapporteringsperioder(): List<AdapterRap
 fun Rapporteringsperiode.toAdapterRapporteringsperiode(overrideRegistrertArbeidssoker: Boolean = true): AdapterRapporteringsperiode =
     AdapterRapporteringsperiode(
         id = this.id.toLong(),
-        type = this.type,
+        type = type.toAdapterKortType(),
         periode = AdapterPeriode(fraOgMed = this.periode.fraOgMed, tilOgMed = this.periode.tilOgMed),
         dager = this.dager.map { it.toAdapterDag() },
         kanSendesFra = this.kanSendesFra,
@@ -170,3 +171,20 @@ fun Aktivitet.toAdapterAktivitet(): AdapterAktivitet =
             },
         timer = this.timer?.let { Duration.parseIsoString(this.timer).toDouble(HOURS) },
     )
+
+fun String.toKortType(): KortType =
+    when (this) {
+        "05" -> KortType.Ordinaert
+        "09" -> KortType.Etterregistrert
+        "10" -> KortType.Korrigert
+        else -> {
+            KortType.Ordinaert
+        }
+    }
+
+fun KortType.toAdapterKortType(): String =
+    when (this) {
+        KortType.Ordinaert -> "05"
+        KortType.Etterregistrert -> "09"
+        KortType.Korrigert -> "10"
+    }

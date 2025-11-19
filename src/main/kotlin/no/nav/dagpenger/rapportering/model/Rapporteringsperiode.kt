@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 
 data class Rapporteringsperiode(
     val id: String,
-    val type: String,
+    val type: KortType,
     val periode: Periode,
     val dager: List<Dag>,
     val kanSendesFra: LocalDate,
@@ -32,6 +32,12 @@ data class Rapporteringsperiode(
     val html: String? = null,
 )
 
+enum class KortType {
+    Ordinaert,
+    Etterregistrert,
+    Korrigert,
+}
+
 fun Rapporteringsperiode.erEndring(): Boolean = this.status == RapporteringsperiodeStatus.TilUtfylling && this.originalId != null
 
 fun Rapporteringsperiode.arbeidet(): Boolean =
@@ -43,7 +49,7 @@ fun List<Rapporteringsperiode>.toResponse(): List<RapporteringsperiodeResponse> 
 fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
     RapporteringsperiodeResponse(
         id = this.id,
-        type = this.type,
+        type = RapporteringsperiodeResponse.Type.valueOf(type.name),
         periode =
             PeriodeResponse(
                 fraOgMed = this.periode.fraOgMed,
@@ -105,7 +111,7 @@ fun Rapporteringsperiode.toPeriodeData(
         kanSendesFra = this.kanSendesFra,
         opprettetAv = opprettetAv,
         kilde = Kilde(PeriodeData.Rolle.Bruker, ident),
-        type = if (this.erEndring()) Type.Korrigert else Type.Original,
+        type = if (this.erEndring()) Type.Korrigert else Type.valueOf(this.type.name),
         status = nyStatus ?: this.status.name,
         innsendtTidspunkt = LocalDateTime.now(),
         originalMeldekortId = this.originalId,

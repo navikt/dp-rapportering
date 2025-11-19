@@ -4,6 +4,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import no.nav.dagpenger.rapportering.connector.toKortType
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
@@ -555,7 +556,7 @@ fun getRapporteringsperiode(
     mottattDato: LocalDate? = null,
 ) = Rapporteringsperiode(
     id = id,
-    type = type,
+    type = type.toKortType(),
     periode = periode,
     dager = dager,
     kanSendesFra = kanSendesFra,

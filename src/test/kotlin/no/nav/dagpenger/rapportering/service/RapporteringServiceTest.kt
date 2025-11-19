@@ -40,6 +40,7 @@ import no.nav.dagpenger.rapportering.model.ArbeidssøkerperiodeResponse
 import no.nav.dagpenger.rapportering.model.BrukerResponse
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.MetadataResponse
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.PeriodeData
@@ -1081,7 +1082,7 @@ class RapporteringServiceTest {
         if (endringId == null) {
             message["@event_name"].asText() shouldBe "meldekort_innsendt"
             message["id"].asText() shouldBe rapporteringsperiode.id
-            message["type"].asText() shouldBe "Original"
+            message["type"].asText() shouldBe "Ordinaert"
             message["originalMeldekortId"].isNull shouldBe true
         } else {
             message["@event_name"].asText() shouldBe "meldekort_innsendt"
@@ -1178,7 +1179,7 @@ fun lagRapporteringsperiode(
     registrertArbeidssoker: Boolean? = null,
 ) = Rapporteringsperiode(
     id = id,
-    type = "05",
+    type = KortType.Ordinaert,
     periode = periode,
     dager = getDager(startDato = periode.fraOgMed),
     kanSendesFra = periode.tilOgMed.minusDays(1),
@@ -1204,7 +1205,7 @@ fun lagPeriodeData(
     kanSendesFra = LocalDate.now(),
     opprettetAv = OpprettetAv.Dagpenger,
     kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312345"),
-    type = Type.Original,
+    type = Type.Ordinaert,
     status = "TilUtfylling",
     innsendtTidspunkt = null,
     originalMeldekortId = null,

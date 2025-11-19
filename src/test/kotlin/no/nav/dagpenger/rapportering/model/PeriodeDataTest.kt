@@ -221,7 +221,7 @@ class PeriodeDataTest {
                     kanSendesFra = LocalDate.now(),
                     opprettetAv = OpprettetAv.Dagpenger,
                     kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312345"),
-                    type = Type.Original,
+                    type = Type.Ordinaert,
                     status = "TilUtfylling",
                     innsendtTidspunkt = null,
                     originalMeldekortId = null,
@@ -264,7 +264,7 @@ class PeriodeDataTest {
         val rapporteringsperioder = periodeDataList.toRapporteringsperioder()
         rapporteringsperioder.size shouldBe 2
         rapporteringsperioder[0].id shouldBe "1"
-        rapporteringsperioder[0].type shouldBe "05"
+        rapporteringsperioder[0].type shouldBe KortType.Ordinaert
         rapporteringsperioder[0].periode shouldBe periode1
         rapporteringsperioder[0].dager shouldBe emptyList()
         rapporteringsperioder[0].kanSendesFra shouldBe LocalDate.now()
@@ -279,7 +279,7 @@ class PeriodeDataTest {
         rapporteringsperioder[0].rapporteringstype shouldBe null
         rapporteringsperioder[0].html shouldBe null
         rapporteringsperioder[1].id shouldBe "2"
-        rapporteringsperioder[1].type shouldBe "10"
+        rapporteringsperioder[1].type shouldBe KortType.Korrigert
         rapporteringsperioder[1].periode shouldBe periode2
         rapporteringsperioder[1].dager.size shouldBe 2
         rapporteringsperioder[1].dager[0].dagIndex shouldBe 0

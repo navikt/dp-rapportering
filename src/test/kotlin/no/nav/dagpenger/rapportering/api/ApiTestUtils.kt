@@ -12,6 +12,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.connector.toKortType
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Periode
@@ -109,7 +110,7 @@ fun rapporteringsperiodeFor(
     mottattDato: LocalDate? = null,
 ) = Rapporteringsperiode(
     id = id,
-    type = type,
+    type = type.toKortType(),
     periode = Periode(fraOgMed = fraOgMed, tilOgMed = tilOgMed),
     dager =
         (0..13).map {

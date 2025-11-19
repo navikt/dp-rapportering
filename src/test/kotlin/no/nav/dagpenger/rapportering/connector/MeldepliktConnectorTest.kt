@@ -9,6 +9,7 @@ import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
+import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -314,7 +315,7 @@ class MeldepliktConnectorTest {
         val rapporteringsperiode =
             Rapporteringsperiode(
                 id = "1",
-                type = "05",
+                type = KortType.Ordinaert,
                 periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()),
                 dager = emptyList(),
                 kanSendesFra = LocalDate.now(),
