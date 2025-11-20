@@ -76,7 +76,7 @@ class MeldekortregisterServiceTest {
                     kanSendesFra = LocalDate.now(),
                     opprettetAv = OpprettetAv.Dagpenger,
                     kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312345"),
-                    type = Type.Original,
+                    type = Type.Ordinaert,
                     status = "TilUtfylling",
                     innsendtTidspunkt = null,
                     originalMeldekortId = null,

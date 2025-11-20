@@ -8,6 +8,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Fravaer
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
@@ -236,7 +237,7 @@ fun lagRapporteringsperiode(
     dager: List<Dag> = getDager(startDato = LocalDate.now().minusDays(13)),
 ) = Rapporteringsperiode(
     id = "1",
-    type = "05",
+    type = KortType.Ordinaert,
     periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()),
     dager = dager,
     kanSendesFra = kanSendesFra,

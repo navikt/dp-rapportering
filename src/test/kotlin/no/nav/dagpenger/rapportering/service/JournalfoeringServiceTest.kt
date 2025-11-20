@@ -36,6 +36,7 @@ import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Periode
@@ -366,7 +367,7 @@ class JournalfoeringServiceTest {
 
         return Rapporteringsperiode(
             id = "1",
-            type = "05",
+            type = KortType.Ordinaert,
             periode = Periode(fom, fom.plusDays(13)),
             dager =
                 listOf(

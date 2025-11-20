@@ -9,6 +9,7 @@ import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -237,7 +238,7 @@ class RapporteringRepositoryPostgres(
                 """.trimIndent(),
                 mapOf(
                     "id" to rapporteringsperiode.id,
-                    "type" to rapporteringsperiode.type,
+                    "type" to rapporteringsperiode.type.code,
                     "ident" to ident,
                     "kan_sendes" to rapporteringsperiode.kanSendes,
                     "kan_sendes_fra" to rapporteringsperiode.kanSendesFra,
@@ -245,7 +246,7 @@ class RapporteringRepositoryPostgres(
                     "brutto_belop" to rapporteringsperiode.bruttoBelop,
                     "status" to rapporteringsperiode.status.name,
                     "registrert_arbeidssoker" to
-                        if (rapporteringsperiode.type == "09") {
+                        if (rapporteringsperiode.type == KortType.Etterregistrert) {
                             true
                         } else {
                             rapporteringsperiode.registrertArbeidssoker
@@ -560,7 +561,7 @@ private fun Int.validateRowsAffected(excepted: Int = 1) {
 private fun Row.toRapporteringsperiode() =
     Rapporteringsperiode(
         id = string("id"),
-        type = stringOrNull("type") ?: "09",
+        type = KortType.fromCode(stringOrNull("type") ?: "09"),
         kanSendesFra = localDate("kan_sendes_fra"),
         kanSendes = boolean("kan_sendes"),
         kanEndres = boolean("kan_endres"),

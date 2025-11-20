@@ -8,6 +8,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -555,7 +556,7 @@ fun getRapporteringsperiode(
     mottattDato: LocalDate? = null,
 ) = Rapporteringsperiode(
     id = id,
-    type = type,
+    type = KortType.fromCode(type),
     periode = periode,
     dager = dager,
     kanSendesFra = kanSendesFra,

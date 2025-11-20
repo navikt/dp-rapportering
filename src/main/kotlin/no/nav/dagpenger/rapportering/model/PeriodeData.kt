@@ -44,7 +44,8 @@ data class PeriodeData(
     }
 
     enum class Type {
-        Original,
+        Ordinaert,
+        Etterregistrert,
         Korrigert,
     }
 
@@ -81,7 +82,7 @@ fun PeriodeData.toRapporteringsperiode(): Rapporteringsperiode {
 
     return Rapporteringsperiode(
         id = this.id,
-        type = if (this.type == PeriodeData.Type.Original) "05" else "10",
+        type = KortType.valueOf(type.name),
         periode = Periode(fraOgMed = this.periode.fraOgMed, tilOgMed = this.periode.tilOgMed),
         dager = this.dager.map { it.toDag() },
         kanSendesFra = this.kanSendesFra,

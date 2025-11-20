@@ -44,7 +44,7 @@ class RapporteringsperiodeTest {
         val rapporteringsperiode =
             Rapporteringsperiode(
                 id = id,
-                type = "10",
+                type = KortType.Korrigert,
                 periode = periode,
                 dager =
                     (0..13)
