@@ -5,8 +5,6 @@ import kotliquery.Row
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
 import kotliquery.sessionOf
-import no.nav.dagpenger.rapportering.connector.toAdapterKortType
-import no.nav.dagpenger.rapportering.connector.toKortType
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
@@ -240,7 +238,7 @@ class RapporteringRepositoryPostgres(
                 """.trimIndent(),
                 mapOf(
                     "id" to rapporteringsperiode.id,
-                    "type" to rapporteringsperiode.type.toAdapterKortType(),
+                    "type" to rapporteringsperiode.type.code,
                     "ident" to ident,
                     "kan_sendes" to rapporteringsperiode.kanSendes,
                     "kan_sendes_fra" to rapporteringsperiode.kanSendesFra,
@@ -563,7 +561,7 @@ private fun Int.validateRowsAffected(excepted: Int = 1) {
 private fun Row.toRapporteringsperiode() =
     Rapporteringsperiode(
         id = string("id"),
-        type = (stringOrNull("type") ?: "09").toKortType(),
+        type = KortType.fromCode(stringOrNull("type") ?: "09"),
         kanSendesFra = localDate("kan_sendes_fra"),
         kanSendes = boolean("kan_sendes"),
         kanEndres = boolean("kan_endres"),

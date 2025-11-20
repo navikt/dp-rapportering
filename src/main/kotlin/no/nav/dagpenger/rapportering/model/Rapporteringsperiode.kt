@@ -32,10 +32,17 @@ data class Rapporteringsperiode(
     val html: String? = null,
 )
 
-enum class KortType {
-    Ordinaert,
-    Etterregistrert,
-    Korrigert,
+enum class KortType(
+    val code: String,
+) {
+    Ordinaert("05"),
+    Etterregistrert("09"),
+    Korrigert("10"),
+    ;
+
+    companion object {
+        fun fromCode(code: String): KortType = entries.firstOrNull { it.code == code } ?: Ordinaert
+    }
 }
 
 fun Rapporteringsperiode.erEndring(): Boolean = this.status == RapporteringsperiodeStatus.TilUtfylling && this.originalId != null

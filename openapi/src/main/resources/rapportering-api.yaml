@@ -431,7 +431,7 @@ components:
                     type: string
                 type:
                     type: string
-                    enum: [ Korrigert, Ordinaert, Etterregistrert ]
+                    enum: [ Ordinaert, Etterregistrert, Korrigert ]
                 periode:
                     $ref: '#/components/schemas/periode'
                 dager:
