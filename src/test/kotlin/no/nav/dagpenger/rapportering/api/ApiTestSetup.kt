@@ -232,7 +232,6 @@ open class ApiTestSetup {
                     rapporteringRepository,
                     innsendingtidspunktRepository,
                     journalfoeringService,
-                    kallLoggService,
                     arbeidssoekerService,
                     personregisterService,
                     meldekortregisterService,

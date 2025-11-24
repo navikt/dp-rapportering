@@ -83,7 +83,6 @@ class RapporteringServiceTest {
             rapporteringRepository,
             innsendingtidspunktRepository,
             journalfoeringService,
-            kallLoggService,
             arbeidssøkerService,
             personregisterService,
             meldekortregisterService,
@@ -812,7 +811,6 @@ class RapporteringServiceTest {
             }
         }
 
-        checkRapid(rapporteringsperiode, endringId)
     }
 
     @Test
@@ -1061,7 +1059,6 @@ class RapporteringServiceTest {
         }
         coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
 
-        checkRapid(rapporteringsperiode, null, false, ansvarligSystem)
     }
 
     private fun checkRapid(

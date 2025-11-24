@@ -107,7 +107,6 @@ class ApplicationBuilder(
             rapporteringRepository,
             innsendingtidspunktRepository,
             journalfoeringService,
-            kallLoggService,
             arbeidssøkerService,
             personregisterService,
             meldekortregisterService,
