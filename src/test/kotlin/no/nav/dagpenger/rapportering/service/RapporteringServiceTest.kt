@@ -810,7 +810,6 @@ class RapporteringServiceTest {
                 aktivitet.timer shouldBe rapporteringsperiode.dager[dagIndex].aktiviteter[index].timer
             }
         }
-
     }
 
     @Test
@@ -1058,7 +1057,6 @@ class RapporteringServiceTest {
             }
         }
         coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
-
     }
 
     private fun checkRapid(
