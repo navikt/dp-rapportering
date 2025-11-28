@@ -78,7 +78,7 @@ dependencies {
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
-    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.8.2")
     implementation("io.getunleash:unleash-client-java:11.1.1")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
     implementation("no.nav.dagpenger:pdl-klient:2025.08.20-08.53.9250ac7fbd99")
