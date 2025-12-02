@@ -33,10 +33,12 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingFeil
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.service.lagPeriodeData
 import no.nav.dagpenger.rapportering.utils.desember
 import no.nav.dagpenger.rapportering.utils.februar
 import no.nav.dagpenger.rapportering.utils.januar
@@ -96,8 +98,30 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    fun `Returnerer harDpMeldeplikt = false hvis personregister returnerer false`() =
+    fun `Returnerer harDpMeldeplikt = true hvis personregister returnerer false men det finnes meldekort til utfylling`() =
         setUpTestApplication {
+            coEvery { meldekortregisterService.hentRapporteringsperioder(any(), any(), any()) } returns
+                listOf(
+                    lagPeriodeData("1", Periode(LocalDate.now(), LocalDate.now().plusDays(13))),
+                )
+            coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
+                Personstatus(
+                    fnr,
+                    Brukerstatus.IKKE_DAGPENGERBRUKER,
+                    true,
+                    AnsvarligSystem.DP,
+                )
+
+            val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
+
+            response.status shouldBe HttpStatusCode.OK
+            response.bodyAsText() shouldBe "true"
+        }
+
+    @Test
+    fun `Returnerer harDpMeldeplikt = false hvis personregister returnerer false og det ikke finnes meldekort til utfylling`() =
+        setUpTestApplication {
+            coEvery { meldekortregisterService.hentRapporteringsperioder(any(), any(), any()) } returns emptyList()
             coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
                 Personstatus(
                     fnr,
