@@ -4,8 +4,6 @@ import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.connector.createMockClient
 import no.nav.dagpenger.rapportering.service.RapporteringService
@@ -36,7 +34,7 @@ class SlettRapporteringsperioderJobTest {
                 rapporteringService = rapporteringService,
             )
 
-        val mockedTime = LocalTime.of(1, 59, 57)
+        val mockedTime = LocalTime.of(1, 59, 58)
         val mockTimeProvider = TimeProvider { LocalDateTime.now().with(mockedTime) }
 
         val taskExecutor =
@@ -50,20 +48,10 @@ class SlettRapporteringsperioderJobTest {
 
         taskExecutor.startExecution()
 
-        // Venter på taskExecutor
-        runBlocking {
-            delay(4000)
-        }
+        // slettMellomlagredeRapporteringsperioder må kalles én gang etter et par sekunder
+        coVerify(exactly = 1, timeout = 10000) { rapporteringService.slettMellomlagredeRapporteringsperioder() }
 
-        // slettMellomlagredeRapporteringsperioder må kalles én gang etter 4 sekunder
-        coVerify(exactly = 1) { rapporteringService.slettMellomlagredeRapporteringsperioder() }
-
-        // Venter på taskExecutor
-        runBlocking {
-            delay(4000)
-        }
-
-        // slettMellomlagredeRapporteringsperioder må kalles én gang til etter 4 sekunder fordi vi har mocked ZonedDateTime
-        coVerify(exactly = 2) { rapporteringService.slettMellomlagredeRapporteringsperioder() }
+        // slettMellomlagredeRapporteringsperioder må kalles én gang til etter et par sekunder fordi vi har mocked ZonedDateTime
+        coVerify(exactly = 2, timeout = 10000) { rapporteringService.slettMellomlagredeRapporteringsperioder() }
     }
 }
