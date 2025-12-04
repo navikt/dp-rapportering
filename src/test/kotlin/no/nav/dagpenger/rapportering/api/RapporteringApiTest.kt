@@ -79,7 +79,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    fun `Returnerer harDpMeldeplikt = true hvis personregister returnerer true`() =
+    fun `Returnerer harDpMeldeplikt = true hvis ansvarlig system er DP`() =
         setUpTestApplication {
             coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
                 Personstatus(
@@ -96,7 +96,7 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
-    fun `Returnerer harDpMeldeplikt = false hvis personregister returnerer false`() =
+    fun `Returnerer harDpMeldeplikt = true hvis ansvarlig system er DP selv om IKKE_DAGPENGERBRUKER`() =
         setUpTestApplication {
             coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
                 Personstatus(
@@ -104,6 +104,40 @@ class RapporteringApiTest : ApiTestSetup() {
                     Brukerstatus.IKKE_DAGPENGERBRUKER,
                     true,
                     AnsvarligSystem.DP,
+                )
+
+            val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
+
+            response.status shouldBe HttpStatusCode.OK
+            response.bodyAsText() shouldBe "true"
+        }
+
+    @Test
+    fun `Returnerer harDpMeldeplikt = true hvis ansvarlig system er Arena men DAGPENGERBRUKER`() =
+        setUpTestApplication {
+            coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
+                Personstatus(
+                    fnr,
+                    Brukerstatus.DAGPENGERBRUKER,
+                    true,
+                    AnsvarligSystem.ARENA,
+                )
+
+            val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
+
+            response.status shouldBe HttpStatusCode.OK
+            response.bodyAsText() shouldBe "true"
+        }
+
+    @Test
+    fun `Returnerer harDpMeldeplikt = false hvis ansvarlig system er Arena og IKKE_DAGPENGERBRUKER`() =
+        setUpTestApplication {
+            coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
+                Personstatus(
+                    fnr,
+                    Brukerstatus.IKKE_DAGPENGERBRUKER,
+                    true,
+                    AnsvarligSystem.ARENA,
                 )
 
             val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))

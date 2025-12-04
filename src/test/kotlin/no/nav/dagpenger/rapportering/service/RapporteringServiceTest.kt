@@ -117,7 +117,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `harDpMeldeplikt sjekker personregisterService`() {
-        // True
+        // Ansvarlig system DP gir TRUE
         coEvery { personregisterService.hentPersonstatus(ident, token) } returns
             Personstatus(
                 ident,
@@ -130,13 +130,39 @@ class RapporteringServiceTest {
 
         harDpMeldeplikt shouldBe true
 
-        // False
+        // Ansvarlig system DP gir TRUE selv om IKKE_DAGPENGERBRUKER
         coEvery { personregisterService.hentPersonstatus(ident, token) } returns
             Personstatus(
                 ident,
                 Brukerstatus.IKKE_DAGPENGERBRUKER,
                 true,
                 AnsvarligSystem.DP,
+            )
+
+        harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
+
+        harDpMeldeplikt shouldBe true
+
+        // Ansvarlig system ARENA men DAGPENGERBRUKER gir TRUE
+        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
+            Personstatus(
+                ident,
+                Brukerstatus.DAGPENGERBRUKER,
+                true,
+                AnsvarligSystem.ARENA,
+            )
+
+        harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
+
+        harDpMeldeplikt shouldBe true
+
+        // Ansvarlig system ARENA og IKKE_DAGPENGERBRUKER gir FALSE
+        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
+            Personstatus(
+                ident,
+                Brukerstatus.IKKE_DAGPENGERBRUKER,
+                true,
+                AnsvarligSystem.ARENA,
             )
 
         harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
