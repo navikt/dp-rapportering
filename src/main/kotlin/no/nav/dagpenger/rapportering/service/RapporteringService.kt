@@ -50,6 +50,10 @@ class RapporteringService(
     ): Boolean {
         val personstatus = personregisterService.hentPersonstatus(ident, token)
 
+        if (personstatus?.ansvarligSystem == AnsvarligSystem.DP) {
+            return true
+        }
+
         return personstatus?.status == Brukerstatus.DAGPENGERBRUKER
     }
 
