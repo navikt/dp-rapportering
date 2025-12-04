@@ -83,7 +83,7 @@ dependencies {
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
     implementation("no.nav.dagpenger:pdl-klient:2025.11.27-14.20.4aa9aa3d3d14")
 
-    implementation("io.confluent:kafka-streams-avro-serde:8.1.0")
+    implementation("io.confluent:kafka-streams-avro-serde:8.1.1")
     implementation("org.apache.avro:avro:1.12.1")
     schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:1.25.03.11.31-1")
 
