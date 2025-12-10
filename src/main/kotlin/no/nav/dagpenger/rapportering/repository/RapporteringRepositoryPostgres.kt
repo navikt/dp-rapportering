@@ -509,7 +509,7 @@ class RapporteringRepositoryPostgres(
                     tx.run(
                         // Sjekker at rapporteringsperioden finnes
                         queryOf("SELECT id FROM rapporteringsperiode WHERE id = ?", rapporteringId)
-                            .map { row -> row.long("id") }
+                            .map { row -> row.string("id") }
                             .asSingle,
                     ) ?: throw RuntimeException("Finner ikke rapporteringsperiode med id: $rapporteringId")
 

@@ -3,7 +3,7 @@ package no.nav.dagpenger.rapportering.repository
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.runBlocking
 import org.flywaydb.core.Flyway
-import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.postgresql.PostgreSQLContainer
 import javax.sql.DataSource
 
 internal object Postgres {
