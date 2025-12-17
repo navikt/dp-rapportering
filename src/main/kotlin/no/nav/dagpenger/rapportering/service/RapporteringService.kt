@@ -145,7 +145,7 @@ class RapporteringService(
                 )
             it.copy(
                 kanSendesFra = kanSendesFra,
-                kanSendes = kanSendesInn(kanSendesFra, it.status, it.kanSendes),
+                kanSendes = kanSendesInn(kanSendesFra, it.status, true),
             )
         }
 
@@ -216,7 +216,10 @@ class RapporteringService(
                 .kobleRapporteringsperioder()
                 .populerMedPerioderFraDatabase(ident)
                 .hentSisteTiPerioderPlussNåværende()
-                .ifEmpty { null }
+                .sortedWith(
+                    compareByDescending<Rapporteringsperiode> { it.periode.fraOgMed }
+                        .thenByDescending { it.originalId },
+                ).ifEmpty { null }
         } else {
             meldekortregisterService
                 .hentRapporteringsperioder(
@@ -226,7 +229,10 @@ class RapporteringService(
                 ).toRapporteringsperioder()
                 .populerMedPerioderFraDatabase(ident)
                 .hentSisteTiPerioderPlussNåværende()
-                .ifEmpty { null }
+                .sortedWith(
+                    compareByDescending<Rapporteringsperiode> { it.periode.fraOgMed }
+                        .thenByDescending { it.originalId },
+                ).ifEmpty { null }
         }
 
     private fun List<Rapporteringsperiode>.kobleRapporteringsperioder(): List<Rapporteringsperiode> =

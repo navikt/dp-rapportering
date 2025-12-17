@@ -58,7 +58,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidi
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
-import no.nav.dagpenger.rapportering.utils.februar
+import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
@@ -182,12 +182,12 @@ class RapporteringServiceTest {
 
         with(gjeldendePeriode!!) {
             id shouldBe "2"
-            periode.fraOgMed shouldBe 15.januar
-            periode.tilOgMed shouldBe 28.januar
+            periode.fraOgMed shouldBe fom2
+            periode.tilOgMed shouldBe fom2.plusDays(13)
             dager.size shouldBe 14
             dager.first().aktiviteter shouldBe emptyList()
-            kanSendesFra shouldBe 27.januar
-            sisteFristForTrekk shouldBe 5.februar
+            kanSendesFra shouldBe fom2.plusDays(12)
+            sisteFristForTrekk shouldBe fom2.plusDays(21)
             kanSendes shouldBe true
             kanEndres shouldBe false
             bruttoBelop shouldBe null
@@ -207,12 +207,12 @@ class RapporteringServiceTest {
 
         with(gjeldendePeriode!!) {
             id shouldBe "2"
-            periode.fraOgMed shouldBe 15.januar
-            periode.tilOgMed shouldBe 28.januar
+            periode.fraOgMed shouldBe fom2
+            periode.tilOgMed shouldBe fom2.plusDays(13)
             dager.size shouldBe 14
             dager.first().aktiviteter shouldBe emptyList()
-            kanSendesFra shouldBe 27.januar
-            sisteFristForTrekk shouldBe 5.februar
+            kanSendesFra shouldBe fom2.plusDays(12)
+            sisteFristForTrekk shouldBe fom2.plusDays(21)
             kanSendes shouldBe true
             kanEndres shouldBe false
             bruttoBelop shouldBe null
@@ -246,12 +246,12 @@ class RapporteringServiceTest {
 
         with(gjeldendePeriode!!) {
             id shouldBe "2"
-            periode.fraOgMed shouldBe 15.januar
-            periode.tilOgMed shouldBe 28.januar
+            periode.fraOgMed shouldBe fom2
+            periode.tilOgMed shouldBe fom2.plusDays(13)
             dager.size shouldBe 14
             dager shouldBe rapporteringsperiodeFraDb.dager
-            kanSendesFra shouldBe 27.januar
-            sisteFristForTrekk shouldBe 5.februar
+            kanSendesFra shouldBe fom2.plusDays(12)
+            sisteFristForTrekk shouldBe fom2.plusDays(21)
             kanSendes shouldBe true
             kanEndres shouldBe false
             bruttoBelop shouldBe null
@@ -273,12 +273,12 @@ class RapporteringServiceTest {
 
         with(gjeldendePeriode!!) {
             id shouldBe "2"
-            periode.fraOgMed shouldBe 15.januar
-            periode.tilOgMed shouldBe 28.januar
+            periode.fraOgMed shouldBe fom2
+            periode.tilOgMed shouldBe fom2.plusDays(13)
             dager.size shouldBe 14
             dager.first().aktiviteter shouldBe emptyList()
-            kanSendesFra shouldBe 26.januar
-            sisteFristForTrekk shouldBe 5.februar
+            kanSendesFra shouldBe fom2.plusDays(12)
+            sisteFristForTrekk shouldBe fom2.plusDays(21)
             kanSendes shouldBe true
             kanEndres shouldBe false
             bruttoBelop shouldBe null
@@ -310,12 +310,12 @@ class RapporteringServiceTest {
 
         with(gjeldendePeriode!!) {
             id shouldBe "2"
-            periode.fraOgMed shouldBe 15.januar
-            periode.tilOgMed shouldBe 28.januar
+            periode.fraOgMed shouldBe fom2
+            periode.tilOgMed shouldBe fom2.plusDays(13)
             dager.size shouldBe 14
             dager shouldBe rapporteringsperiodeFraDb.dager
-            kanSendesFra shouldBe 27.januar
-            sisteFristForTrekk shouldBe 5.februar
+            kanSendesFra shouldBe fom2.plusDays(12)
+            sisteFristForTrekk shouldBe fom2.plusDays(21)
             kanSendes shouldBe true
             kanEndres shouldBe false
             bruttoBelop shouldBe null
@@ -333,10 +333,41 @@ class RapporteringServiceTest {
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
-        rapporteringsperioder[0].id shouldBe "1"
-        rapporteringsperioder[1].id shouldBe "2"
-        rapporteringsperioder[2].id shouldBe "3"
         rapporteringsperioder.size shouldBe 3
+        rapporteringsperioder[0].id shouldBe "1"
+        rapporteringsperioder[0].status shouldBe Innsendt
+        rapporteringsperioder[0].kanSendes shouldBe false
+        rapporteringsperioder[1].id shouldBe "2"
+        rapporteringsperioder[1].status shouldBe TilUtfylling
+        rapporteringsperioder[1].kanSendes shouldBe true
+        rapporteringsperioder[2].id shouldBe "3"
+        rapporteringsperioder[2].status shouldBe TilUtfylling
+        rapporteringsperioder[2].kanSendes shouldBe false
+    }
+
+    @Test
+    fun `hent alle rapporteringsperioder returnerer perioder med justerte kanSendes og kanSendesFra`() {
+        coEvery { meldepliktService.hentRapporteringsperioder(any(), any()) } returns
+            rapporteringsperiodeListe.toAdapterRapporteringsperioder()
+        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
+        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(finnPeriodeKode(fom3)) } returns -14
+
+        val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
+
+        rapporteringsperioder.size shouldBe 3
+        rapporteringsperioder[0].id shouldBe "1"
+        rapporteringsperioder[0].status shouldBe Innsendt
+        rapporteringsperioder[0].kanSendes shouldBe false
+        rapporteringsperioder[0].kanSendesFra shouldBe fom1.plusDays(12)
+        rapporteringsperioder[1].id shouldBe "2"
+        rapporteringsperioder[1].status shouldBe TilUtfylling
+        rapporteringsperioder[1].kanSendes shouldBe true
+        rapporteringsperioder[1].kanSendesFra shouldBe fom2.plusDays(12)
+        rapporteringsperioder[2].id shouldBe "3"
+        rapporteringsperioder[2].status shouldBe TilUtfylling
+        rapporteringsperioder[2].kanSendes shouldBe true
+        rapporteringsperioder[0].kanSendesFra shouldBe fom3.minusDays(16)
     }
 
     @Test
@@ -561,8 +592,8 @@ class RapporteringServiceTest {
         coEvery { meldepliktService.hentInnsendteRapporteringsperioder(any(), any()) } returns perioderFraArena
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns
             listOf(
-                lagRapporteringsperiode("1", Periode(1.januar, 14.januar), status = Ferdig, registrertArbeidssoker = true),
-                lagRapporteringsperiode("2", Periode(15.januar, 28.januar), status = Innsendt, registrertArbeidssoker = true),
+                lagRapporteringsperiode("1", Periode(fom1, fom1.plusDays(13)), status = Ferdig, registrertArbeidssoker = true),
+                lagRapporteringsperiode("2", Periode(fom2, fom2.plusDays(13)), status = Innsendt, registrertArbeidssoker = true),
             )
 
         val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
@@ -625,7 +656,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan sende inn rapporteringsperiode`() {
-        val rapporteringsperiode = rapporteringsperiodeListe.first().copy(registrertArbeidssoker = true)
+        val rapporteringsperiode = rapporteringsperiodeListe.last().copy(registrertArbeidssoker = true)
 
         coEvery { meldepliktService.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
@@ -639,7 +670,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan sende inn rapporteringsperiode til dp-meldekortregister`() {
-        val rapporteringsperiode = rapporteringsperiodeListe.first().copy(registrertArbeidssoker = true)
+        val rapporteringsperiode = rapporteringsperiodeListe.last().copy(registrertArbeidssoker = true)
 
         coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.DP
         coEvery { meldekortregisterService.sendinnRapporteringsperiode(any(), token) } returns
@@ -654,7 +685,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan override registrertArbeidssoker i rapporteringsperiode`() {
-        val rapporteringsperiode = rapporteringsperiodeListe.first().copy(registrertArbeidssoker = false)
+        val rapporteringsperiode = rapporteringsperiodeListe.last().copy(registrertArbeidssoker = false)
 
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
@@ -753,7 +784,7 @@ class RapporteringServiceTest {
     @Test
     fun `kan sende inn endret rapporteringsperiode med begrunnelse`() {
         val endringId = "4"
-        val originalPeriode = rapporteringsperiodeListe.first()
+        val originalPeriode = rapporteringsperiodeListe.last()
         val rapporteringsperiode =
             originalPeriode.copy(
                 status = TilUtfylling,
@@ -841,7 +872,7 @@ class RapporteringServiceTest {
     @Test
     fun `kan sende inn endret rapporteringsperiode med begrunnelse når ansvarlig system er DP`() {
         val endringId = "4"
-        val originalPeriode = rapporteringsperiodeListe.first()
+        val originalPeriode = rapporteringsperiodeListe.last()
         val rapporteringsperiode =
             originalPeriode.copy(
                 status = TilUtfylling,
@@ -1141,20 +1172,23 @@ class RapporteringServiceTest {
     }
 }
 
+val fom1 = LocalDate.now().minusDays(27)
+val fom2 = LocalDate.now().minusDays(13)
+val fom3 = LocalDate.now().plusDays(1)
 val rapporteringsperiodeListe =
     listOf(
         lagRapporteringsperiode(
             id = "3",
-            periode = Periode(fraOgMed = 29.januar, tilOgMed = 11.februar),
+            periode = Periode(fraOgMed = fom3, tilOgMed = fom3.plusDays(13)),
         ),
         lagRapporteringsperiode(
             id = "1",
-            periode = Periode(fraOgMed = 1.januar, tilOgMed = 14.januar),
+            periode = Periode(fraOgMed = fom1, fom1.plusDays(13)),
             status = Innsendt,
         ),
         lagRapporteringsperiode(
             id = "2",
-            periode = Periode(fraOgMed = 15.januar, tilOgMed = 28.januar),
+            periode = Periode(fraOgMed = fom2, tilOgMed = fom2.plusDays(13)),
         ),
     )
 
@@ -1204,7 +1238,7 @@ fun lagRapporteringsperiode(
     periode = periode,
     dager = getDager(startDato = periode.fraOgMed),
     kanSendesFra = periode.tilOgMed.minusDays(1),
-    kanSendes = true,
+    kanSendes = periode.tilOgMed.minusDays(1) <= LocalDate.now(),
     kanEndres = false,
     bruttoBelop = null,
     status = status,
