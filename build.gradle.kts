@@ -85,7 +85,7 @@ dependencies {
 
     implementation("io.confluent:kafka-streams-avro-serde:8.1.1")
     implementation("org.apache.avro:avro:1.12.1")
-    schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:1.25.03.11.31-1")
+    schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:1.25.03.26.32-1")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(libs.rapids.and.rivers.test)
