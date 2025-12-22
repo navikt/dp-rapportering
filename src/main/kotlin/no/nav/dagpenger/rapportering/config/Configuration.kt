@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.fasterxml.jackson.module.kotlin.KotlinFeature
+import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.github.navikt.tbd_libs.naisful.NaisEndpoints
 import com.natpryce.konfig.ConfigurationMap
 import com.natpryce.konfig.ConfigurationProperties
 import com.natpryce.konfig.EnvironmentVariables
@@ -26,9 +28,12 @@ import java.util.UUID
 internal object Configuration {
     const val APP_NAME = "dp-rapportering"
 
-    const val MDC_CORRELATION_ID = "correlationId"
-
-    val NO_LOG_PATHS = setOf("/metrics", "/isAlive", "/isReady")
+    val NO_LOG_PATHS =
+        setOf(
+            NaisEndpoints.Default.metricsEndpoint,
+            NaisEndpoints.Default.isreadyEndpoint,
+            NaisEndpoints.Default.isaliveEndpoint,
+        )
 
     val ZONE_ID = ZoneId.of("Europe/Oslo")
 
@@ -202,9 +207,19 @@ internal object Configuration {
     }
 
     val defaultObjectMapper: ObjectMapper =
-        ObjectMapper()
-            .registerKotlinModule()
-            .registerModule(JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        ObjectMapper().apply {
+            registerModule(JavaTimeModule())
+            registerModule(
+                KotlinModule
+                    .Builder()
+                    .configure(KotlinFeature.NullToEmptyCollection, true)
+                    .configure(KotlinFeature.NullToEmptyMap, true)
+                    .configure(KotlinFeature.NullIsSameAsDefault, true)
+                    .configure(KotlinFeature.SingletonSupport, true)
+                    .configure(KotlinFeature.StrictNullChecks, false)
+                    .build(),
+            )
+            disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        }
 }
