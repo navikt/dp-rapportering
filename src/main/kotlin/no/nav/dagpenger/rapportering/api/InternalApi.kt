@@ -8,10 +8,10 @@ import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 
 fun Application.internalApi(prometheusMeterRegistry: PrometheusMeterRegistry) {
     routing {
-        get("/isAlive") {
+        get("/isalive") {
             call.respondText("Alive")
         }
-        get("/isReady") {
+        get("/isready") {
             call.respondText("Ready")
         }
         get("/metrics") {

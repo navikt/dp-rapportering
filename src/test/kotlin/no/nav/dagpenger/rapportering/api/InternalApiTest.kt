@@ -9,7 +9,7 @@ class InternalApiTest : ApiTestSetup() {
     @Test
     fun `isAlive svarer OK`() =
         setUpTestApplication {
-            with(client.get("/isAlive")) {
+            with(client.get("/isalive")) {
                 status shouldBe HttpStatusCode.OK
             }
         }
@@ -17,7 +17,7 @@ class InternalApiTest : ApiTestSetup() {
     @Test
     fun `isReady svarer OK`() =
         setUpTestApplication {
-            with(client.get("/isReady")) {
+            with(client.get("/isready")) {
                 status shouldBe HttpStatusCode.OK
             }
         }

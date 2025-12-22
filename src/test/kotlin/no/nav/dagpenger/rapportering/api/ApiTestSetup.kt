@@ -3,11 +3,14 @@ package no.nav.dagpenger.rapportering.api
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.serialization.jackson.JacksonConverter
 import io.ktor.serialization.jackson.jackson
+import io.ktor.server.application.install
 import io.ktor.server.config.MapApplicationConfig
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.post
@@ -24,7 +27,9 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
-import no.nav.dagpenger.rapportering.config.konfigurasjon
+import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.config.pluginConfiguration
+import no.nav.dagpenger.rapportering.config.statusPagesConfig
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
@@ -58,6 +63,7 @@ import org.apache.kafka.common.TopicPartition
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import java.util.concurrent.CompletableFuture
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
 open class ApiTestSetup {
     lateinit var journalfoeringRepository: JournalfoeringRepositoryPostgres
@@ -174,7 +180,7 @@ open class ApiTestSetup {
                     install("OutgoingCallInterceptor") {
                         OutgoingCallLoggingPlugin().intercept(this)
                     }
-                    install(ContentNegotiation) {
+                    install(ClientContentNegotiation) {
                         jackson {
                             registerModule(JavaTimeModule())
                             configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -238,7 +244,13 @@ open class ApiTestSetup {
                 )
 
             application {
-                konfigurasjon(meterRegistry, kallLoggRepository)
+                install(ContentNegotiation) {
+                    register(ContentType.Application.Json, JacksonConverter(defaultObjectMapper))
+                }
+                install(StatusPages) {
+                    statusPagesConfig(meldepliktMetrikker)
+                }
+                pluginConfiguration(kallLoggRepository)
                 internalApi(meterRegistry)
                 rapporteringApi(rapporteringService, journalfoeringService, meldepliktMetrikker)
             }
