@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.utils
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.http.HttpHeaders
 import io.ktor.http.content.OutputStreamContent
 import io.ktor.http.content.TextContent
 import io.ktor.server.application.ApplicationPlugin
@@ -21,7 +22,6 @@ import io.ktor.utils.io.writer
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
-import no.nav.dagpenger.rapportering.config.Configuration.MDC_CORRELATION_ID
 import no.nav.dagpenger.rapportering.config.Configuration.NO_LOG_PATHS
 import no.nav.dagpenger.rapportering.model.KallLogg
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
@@ -129,11 +129,11 @@ class ICDLPConfig {
 }
 
 fun getCallId(): String {
-    var korrelasjonId = MDC.get(MDC_CORRELATION_ID)
+    var korrelasjonId = MDC.get(HttpHeaders.XRequestId)
 
     if (korrelasjonId == null || korrelasjonId.isBlank()) {
         korrelasjonId = generateCallId()
-        MDC.put(MDC_CORRELATION_ID, korrelasjonId)
+        MDC.put(HttpHeaders.XRequestId, korrelasjonId)
     }
 
     // DB has max 54 signs in the korrelasjon_id field, so we must not have more otherwise we will get SQL error

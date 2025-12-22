@@ -1,10 +1,12 @@
 package no.nav.dagpenger.rapportering
 
+import com.github.navikt.tbd_libs.naisful.naisApp
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
-import io.ktor.server.engine.embeddedServer
+import io.ktor.http.HttpHeaders
+import io.ktor.server.application.ApplicationStopped
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics
 import io.micrometer.prometheusmetrics.PrometheusConfig
@@ -12,9 +14,12 @@ import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.prometheus.metrics.model.registry.PrometheusRegistry
 import no.nav.dagpenger.rapportering.api.internalApi
 import no.nav.dagpenger.rapportering.api.rapporteringApi
+import no.nav.dagpenger.rapportering.config.Configuration.config
+import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.kafkaSchemaRegistryConfig
 import no.nav.dagpenger.rapportering.config.Configuration.kafkaServerKonfigurasjon
-import no.nav.dagpenger.rapportering.config.konfigurasjon
+import no.nav.dagpenger.rapportering.config.pluginConfiguration
+import no.nav.dagpenger.rapportering.config.statusPagesConfig
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.connector.PersonregisterConnector
 import no.nav.dagpenger.rapportering.connector.createHttpClient
@@ -47,7 +52,7 @@ import no.nav.dagpenger.rapportering.tjenester.RapporteringJournalførtMottak
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
 import org.apache.kafka.common.serialization.LongSerializer
-import io.ktor.server.cio.CIO as CIOEngine
+import org.slf4j.LoggerFactory
 
 class ApplicationBuilder(
     configuration: Map<String, String>,
@@ -130,15 +135,37 @@ class ApplicationBuilder(
             RapidApplication
                 .create(
                     env = configuration,
-                    builder = { this.withKtor(embeddedServer(CIOEngine, port = 8080, module = {})) },
-                ) { engine, _: RapidsConnection ->
-                    engine.application.konfigurasjon(meterRegistry, kallLoggRepository)
-                    engine.application.internalApi(meterRegistry)
-                    engine.application.rapporteringApi(
-                        rapporteringService,
-                        journalfoeringService,
-                        meldepliktMetrikker,
-                    )
+                    builder = {
+                        withKtor { preStopHook, rapid ->
+                            naisApp(
+                                meterRegistry = meterRegistry,
+                                objectMapper = defaultObjectMapper,
+                                applicationLogger = LoggerFactory.getLogger("ApplicationLogger"),
+                                callLogger = LoggerFactory.getLogger("CallLogger"),
+                                callIdHeaderName = HttpHeaders.XRequestId,
+                                preStopHook = preStopHook::handlePreStopRequest,
+                                aliveCheck = rapid::isReady,
+                                readyCheck = rapid::isReady,
+                                statusPagesConfig = { statusPagesConfig(meldepliktMetrikker) },
+                            ) {
+                                monitor.subscribe(ApplicationStopped) {
+                                    logger.info { "Forsøker å lukke datasource..." }
+                                    dataSource.close()
+                                    logger.info { "Lukket datasource" }
+                                }
+
+                                pluginConfiguration(kallLoggRepository)
+                                internalApi(meterRegistry)
+                                rapporteringApi(
+                                    rapporteringService,
+                                    journalfoeringService,
+                                    meldepliktMetrikker,
+                                )
+                            }
+                        }
+                    },
+                ) { _, _ ->
+                    logger.info { "Starter rapid with config: $config" }
                 }
         rapidsConnection.register(this)
         RapporteringJournalførtMottak(rapidsConnection, journalfoeringRepository, kallLoggRepository)
