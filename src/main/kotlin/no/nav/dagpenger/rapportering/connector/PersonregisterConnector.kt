@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
+import no.nav.dagpenger.rapportering.utils.Sikkerlogg
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -26,7 +27,6 @@ class PersonregisterConnector(
     actionTimer: ActionTimer,
 ) {
     private val logger = KotlinLogging.logger {}
-    private val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
     private val httpClientUtils = HttpClientUtils(httpClient, personregisterUrl, tokenXProvider, actionTimer)
 
     suspend fun hentPersonstatus(
@@ -42,7 +42,7 @@ class PersonregisterConnector(
                         "personregister-hentPersonstatus",
                     ).also {
                         logger.info { "Kall til personregister for å hente personstatus ga status ${it.status}" }
-                        sikkerlogg.info { "Kall til personregister for å hente personstatus for $ident ga status ${it.status}" }
+                        Sikkerlogg.info { "Kall til personregister for å hente personstatus for $ident ga status ${it.status}" }
                     }
 
             if (result.status == HttpStatusCode.NotFound) {
@@ -80,7 +80,7 @@ class PersonregisterConnector(
                         datoFra.format(DateTimeFormatter.ISO_LOCAL_DATE),
                     ).also {
                         logger.info { "Kall til personregister for å oppdatere personstatus ga status ${it.status}" }
-                        sikkerlogg.info { "Kall til personregister for å oppdatere personstatus for $ident ga status ${it.status}" }
+                        Sikkerlogg.info { "Kall til personregister for å oppdatere personstatus for $ident ga status ${it.status}" }
                     }
             } catch (e: Exception) {
                 logger.error(e) { "Feil ved sending av data til personregister" }
@@ -92,7 +92,7 @@ class PersonregisterConnector(
         withContext(Dispatchers.IO) {
             try {
                 logger.info { "Henter siste sakId fra personregister" }
-                sikkerlogg.info { "Henter siste sakId fra personregister for ident $ident" }
+                Sikkerlogg.info { "Henter siste sakId fra personregister for ident $ident" }
 
                 val response =
                     httpClient
@@ -103,7 +103,7 @@ class PersonregisterConnector(
                             contentType(ContentType.Application.Json)
                             setBody(defaultObjectMapper.writeValueAsString(IdentBody(ident)))
                         }.also {
-                            sikkerlogg.info {
+                            Sikkerlogg.info {
                                 "Kall til personregister for å hente siste sakId for $ident ga status ${it.status}"
                             }
                         }
@@ -111,7 +111,7 @@ class PersonregisterConnector(
                 if (response.status != HttpStatusCode.OK) {
                     val body = response.bodyAsText()
                     logger.error { "Klarte ikke å hente siste sakId fra personregister, status: ${response.status}, melding: $body" }
-                    sikkerlogg.error { "Klarte ikke å hente siste sakId for ident $ident, status: ${response.status}, melding: $body" }
+                    Sikkerlogg.error { "Klarte ikke å hente siste sakId for ident $ident, status: ${response.status}, melding: $body" }
                     return@withContext null
                 }
 
@@ -120,7 +120,7 @@ class PersonregisterConnector(
                     .sakId
                     .also {
                         logger.info { "Hentet siste sakId fra personregister" }
-                        sikkerlogg.info { "Hentet siste sakId $it for ident $ident fra personregister" }
+                        Sikkerlogg.info { "Hentet siste sakId $it for ident $ident fra personregister" }
                     }
             } catch (e: Exception) {
                 logger.error(e) { "Kunne ikke hente siste sakId" }

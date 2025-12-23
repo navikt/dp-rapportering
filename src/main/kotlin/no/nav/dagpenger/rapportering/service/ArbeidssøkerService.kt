@@ -27,6 +27,7 @@ import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RecordKeyRequestBody
 import no.nav.dagpenger.rapportering.model.RecordKeyResponse
 import no.nav.dagpenger.rapportering.model.arbeidet
+import no.nav.dagpenger.rapportering.utils.Sikkerlogg
 import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
 import no.nav.paw.bekreftelse.melding.v1.vo.Bekreftelsesloesning
 import no.nav.paw.bekreftelse.melding.v1.vo.Bruker
@@ -50,7 +51,6 @@ class ArbeidssøkerService(
     private val oppslagTokenProvider: () -> String? = Configuration.arbeidssokerregisterOppslagTokenProvider,
 ) {
     private val logger = KotlinLogging.logger {}
-    private val sikkerlogg = KotlinLogging.logger("tjenestekall.HentRapporteringperioder")
 
     private val cache: Cache<String, List<ArbeidssøkerperiodeResponse>> =
         Caffeine
@@ -134,7 +134,7 @@ class ArbeidssøkerService(
         try {
             val record = ProducerRecord(bekreftelseTopic, recordKeyResponse.key, arbeidssøkerBekreftelse)
             val metadata = bekreftelseKafkaProdusent.sendDeferred(record).await()
-            sikkerlogg.info {
+            Sikkerlogg.info {
                 "Sendt arbeidssøkerstatus for ident = $ident til Team PAW. " +
                     "Metadata: topic=${metadata.topic()} (partition=${metadata.partition()}, offset=${metadata.offset()})"
             }
@@ -161,14 +161,14 @@ class ArbeidssøkerService(
                             contentType(ContentType.Application.Json)
                             setBody(defaultObjectMapper.writeValueAsString(RecordKeyRequestBody(ident)))
                         }.also {
-                            sikkerlogg.info {
+                            Sikkerlogg.info {
                                 "Kall til arbeidssøkerregister for å hente record key for $ident ga status ${it.status}"
                             }
                         }
 
                 if (result.status != HttpStatusCode.OK) {
                     val body = result.bodyAsText()
-                    sikkerlogg.warn {
+                    Sikkerlogg.warn {
                         "Uforventet status ${result.status.value} ved henting av record key for $ident. Response: $body"
                     }
                     throw RuntimeException("Uforventet status ${result.status.value} ved henting av record key")
@@ -193,14 +193,14 @@ class ArbeidssøkerService(
                             parameter("siste", false)
                             setBody(defaultObjectMapper.writeValueAsString(ArbeidssøkerperiodeRequestBody(ident)))
                         }.also {
-                            sikkerlogg.info {
+                            Sikkerlogg.info {
                                 "Kall til arbeidssøkerregister for å hente arbeidssøkerperiode for $ident ga status ${it.status}"
                             }
                         }
 
                 if (result.status != HttpStatusCode.OK) {
                     val body = result.bodyAsText()
-                    sikkerlogg.warn {
+                    Sikkerlogg.warn {
                         "Uforventet status ${result.status.value} ved henting av arbeidssøkerperiode for $ident. Response: $body"
                     }
                     throw RuntimeException("Uforventet status ${result.status.value} ved henting av arbeidssøkerperiode")

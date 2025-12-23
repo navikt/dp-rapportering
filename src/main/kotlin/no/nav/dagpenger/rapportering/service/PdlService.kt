@@ -8,13 +8,13 @@ import no.nav.dagpenger.pdl.PersonOppslag
 import no.nav.dagpenger.pdl.createPersonOppslag
 import no.nav.dagpenger.rapportering.config.Configuration.pdlApiTokenProvider
 import no.nav.dagpenger.rapportering.config.Configuration.pdlUrl
+import no.nav.dagpenger.rapportering.utils.Sikkerlogg
 
 class PdlService(
     val personOppslag: PersonOppslag = createPersonOppslag(pdlUrl),
     val tokenProvider: () -> String? = pdlApiTokenProvider,
 ) {
     private val logger = KotlinLogging.logger {}
-    private val sikkerlogg = KotlinLogging.logger("tjenestekall.Pdl")
 
     suspend fun hentNavn(ident: String): String =
         withContext(Dispatchers.IO) {
@@ -35,7 +35,7 @@ class PdlService(
                 person.fornavn + " " + mellomnavn + person.etternavn
             } catch (e: Exception) {
                 logger.error(e) { "Feil ved henting av person fra PDL" }
-                sikkerlogg.error(e) { "Feil ved henting av person fra PDL for ident $ident" }
+                Sikkerlogg.error(e) { "Feil ved henting av person fra PDL for ident $ident" }
                 ""
             }
         }

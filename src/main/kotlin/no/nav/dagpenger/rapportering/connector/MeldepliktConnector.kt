@@ -13,6 +13,7 @@ import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Person
+import no.nav.dagpenger.rapportering.utils.Sikkerlogg
 
 class MeldepliktConnector(
     private val meldepliktUrl: String = Configuration.meldepliktAdapterUrl,
@@ -21,7 +22,6 @@ class MeldepliktConnector(
     actionTimer: ActionTimer,
 ) {
     private val logger = KotlinLogging.logger {}
-    private val sikkerlogg = KotlinLogging.logger("tjenestekall.MeldepliktConnector")
     private val httpClientUtils = HttpClientUtils(httpClient, meldepliktUrl, tokenProvider, actionTimer)
 
     suspend fun hentRapporteringsperioder(
@@ -34,7 +34,7 @@ class MeldepliktConnector(
                     .get("/rapporteringsperioder", subjectToken, "adapter-hentRapporteringsperioder")
                     .also {
                         logger.info { "Kall til meldeplikt-adapter for å hente perioder ga status ${it.status}" }
-                        sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident ga status ${it.status}" }
+                        Sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident ga status ${it.status}" }
                     }
 
             if (result.status == HttpStatusCode.NoContent) {
@@ -65,7 +65,7 @@ class MeldepliktConnector(
                     .get("/person", subjectToken, "adapter-hentPerson")
                     .also {
                         logger.info { "Kall til meldeplikt-adapter for å hente person ga status ${it.status}" }
-                        sikkerlogg.info { "Kall til meldeplikt-adapter for å hente person $ident ga status ${it.status}" }
+                        Sikkerlogg.info { "Kall til meldeplikt-adapter for å hente person $ident ga status ${it.status}" }
                     }
 
             if (result.status == HttpStatusCode.NoContent) {
@@ -94,7 +94,7 @@ class MeldepliktConnector(
                     }
                 }.also {
                     logger.info { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }
-                    sikkerlogg.info { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident gikk OK" }
+                    Sikkerlogg.info { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident gikk OK" }
                 }
         }
 
