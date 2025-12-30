@@ -102,6 +102,8 @@ spec:
         - host: dagpenger-unleash-api.nav.cloud.nais.io
         - host: "{{ PDL_API_HOST }}"
       rules:
+        - application: logging
+          namespace: nais-system
         - application: dp-arena-meldeplikt-adapter
         - application: dp-behov-pdf-generator
         - application: dp-rapportering-personregister
@@ -146,5 +148,3 @@ spec:
   prometheus:
     enabled: true
     path: /metrics
-  secureLogs:
-    enabled: true

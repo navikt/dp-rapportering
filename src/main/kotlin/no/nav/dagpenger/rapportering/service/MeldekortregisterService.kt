@@ -15,6 +15,7 @@ import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.KorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.model.PeriodeData
+import no.nav.dagpenger.rapportering.utils.Sikkerlogg
 
 class MeldekortregisterService(
     meldekortregisterUrl: String = Configuration.meldekortregisterUrl,
@@ -23,7 +24,6 @@ class MeldekortregisterService(
     actionTimer: ActionTimer,
 ) {
     private val logger = KotlinLogging.logger {}
-    private val sikkerlogg = KotlinLogging.logger("tjenestekall.MeldekortregisterService")
     private val httpClientUtils = HttpClientUtils(httpClient, meldekortregisterUrl, tokenProvider, actionTimer)
 
     suspend fun hentRapporteringsperioder(
@@ -38,7 +38,7 @@ class MeldekortregisterService(
                     .get("/meldekort$queryParam", token, "meldekortregister-hentMeldekort")
                     .also {
                         logger.info { "Kall til meldekortregister for å hente perioder ga status ${it.status}" }
-                        sikkerlogg.info { "Kall til meldekortregister for å hente perioder for ident $ident ga status ${it.status}" }
+                        Sikkerlogg.info { "Kall til meldekortregister for å hente perioder for ident $ident ga status ${it.status}" }
                     }
 
             if (result.status == HttpStatusCode.NoContent) {
@@ -69,7 +69,7 @@ class MeldekortregisterService(
                     .get("/endrerapporteringsperiode/$id", token, "meldekortregister-hentEndringId")
                     .also {
                         logger.info { "Kall til meldekortregister for å hente endringId ga status ${it.status}" }
-                        sikkerlogg.info { "Kall til meldekortregister for å hente endringId for periode $id ga status ${it.status}" }
+                        Sikkerlogg.info { "Kall til meldekortregister for å hente endringId for periode $id ga status ${it.status}" }
                     }
 
             result.bodyAsText()
@@ -87,7 +87,7 @@ class MeldekortregisterService(
                     .post("/meldekort", token, "meldekortregister-sendInnMeldekort", rapporteringsperiode)
                     .also {
                         logger.info { "Kall til meldekortregister for å sende periode ga status ${it.status}" }
-                        sikkerlogg.info { "Kall til meldekortregister for å sende periode $id ga status ${it.status}" }
+                        Sikkerlogg.info { "Kall til meldekortregister for å sende periode $id ga status ${it.status}" }
                     }
 
             val status =
@@ -112,7 +112,7 @@ class MeldekortregisterService(
                     .post("/meldekort/$id/korriger", token, "meldekortregister-korrigerMeldekort", korrigertMeldekort)
                     .also {
                         logger.info { "Kall til meldekortregister for å sende korrigert meldekort ga status ${it.status}" }
-                        sikkerlogg.info { "Kall til meldekortregister for å sende korrigert meldekort $id ga status ${it.status}" }
+                        Sikkerlogg.info { "Kall til meldekortregister for å sende korrigert meldekort $id ga status ${it.status}" }
                     }
 
             val status =

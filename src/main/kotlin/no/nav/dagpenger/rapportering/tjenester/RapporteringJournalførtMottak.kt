@@ -13,6 +13,7 @@ import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
+import no.nav.dagpenger.rapportering.utils.Sikkerlogg
 
 internal class RapporteringJournalførtMottak(
     rapidsConnection: RapidsConnection,
@@ -20,7 +21,6 @@ internal class RapporteringJournalførtMottak(
     private val kallLoggRepository: KallLoggRepository,
 ) : River.PacketListener {
     private val logger = KotlinLogging.logger {}
-    private val sikkerlogg = KotlinLogging.logger("tjenestekall.RapporteringJournalførtMottak")
 
     private val behov = MineBehov.JournalføreRapportering.name
 
@@ -71,7 +71,7 @@ internal class RapporteringJournalførtMottak(
             }
 
             logger.info { "Fått løsning for JournalføreRapportering for $periodeId" }
-            sikkerlogg.info { "Fått løsning for JournalføreRapportering for $periodeId. Packet: ${packet.toJson()}" }
+            Sikkerlogg.info { "Fått løsning for JournalføreRapportering for $periodeId. Packet: ${packet.toJson()}" }
 
             runBlocking {
                 journalfoeringRepository.lagreJournalpostData(journalpostId, 0L, periodeId)
