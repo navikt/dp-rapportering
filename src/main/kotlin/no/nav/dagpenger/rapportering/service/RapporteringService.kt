@@ -56,7 +56,17 @@ class RapporteringService(
     ): Boolean {
         val personstatus = personregisterService.hentPersonstatus(ident, token)
 
-        return personstatus?.status == Brukerstatus.DAGPENGERBRUKER
+        return when (personstatus?.status) {
+            Brukerstatus.IKKE_DAGPENGERBRUKER -> {
+                val meldekort = meldekortregisterService.hentRapporteringsperioder(
+                    ident, token, MeldekortStatus.TilUtfylling
+                )
+                !meldekort.isNullOrEmpty()
+            }
+
+            Brukerstatus.DAGPENGERBRUKER -> true
+            else -> false
+        }
     }
 
     suspend fun hentPeriode(
