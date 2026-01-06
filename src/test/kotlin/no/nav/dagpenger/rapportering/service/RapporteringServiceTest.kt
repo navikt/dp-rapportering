@@ -165,7 +165,7 @@ class RapporteringServiceTest {
 
         harDpMeldeplikt shouldBe true
 
-        // Bruker har status IKKE_DAGPENGERBRUKER har meldekort til utfylling, da returnerer vi true
+        // Bruker har status IKKE_DAGPENGERBRUKER og har meldekort til utfylling, da returnerer vi true
         coEvery { personregisterService.hentPersonstatus(ident, token) } returns
             Personstatus(
                 ident,

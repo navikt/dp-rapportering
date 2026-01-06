@@ -136,6 +136,41 @@ class RapporteringApiTest : ApiTestSetup() {
             response.bodyAsText() shouldBe "false"
         }
 
+    // Sjekk om bruker har Arena meldeplikt
+    @Test
+    fun `harMeldeplikt uten token gir unauthorized`() =
+        setUpTestApplication {
+            with(client.doGet("/harmeldeplikt", null)) {
+                status shouldBe HttpStatusCode.Unauthorized
+            }
+        }
+
+    @Test
+    fun `harMeldeplikt returnerer true hvis bruker har meldeplikt i Arena`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
+            }
+
+            val response = client.doGet("/harmeldeplikt", issueToken(fnr))
+
+            response.status shouldBe HttpStatusCode.OK
+            response.bodyAsText() shouldBe "true"
+        }
+
+    @Test
+    fun `harMeldeplikt returnerer false hvis bruker ikke har meldeplikt i Arena`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter(harMeldeplikt = false)
+            }
+
+            val response = client.doGet("/harmeldeplikt", issueToken(fnr))
+
+            response.status shouldBe HttpStatusCode.OK
+            response.bodyAsText() shouldBe "false"
+        }
+
     // Sende rapporteringsperiode
 
     @Test
@@ -898,40 +933,48 @@ class RapporteringApiTest : ApiTestSetup() {
         sendInnResponseStatus: HttpStatusCode = HttpStatusCode.OK,
         personResponse: String = person(),
         personResponseStatus: HttpStatusCode = HttpStatusCode.OK,
+        harMeldeplikt: Boolean = true,
     ) {
         hosts("https://meldeplikt-adapter") {
             routing {
+                get("/harmeldeplikt") {
+                    call.response.header(HttpHeaders.ContentType, ContentType.Text.Plain.toString())
+                    call.respond(
+                        HttpStatusCode.OK,
+                        harMeldeplikt.toString(),
+                    )
+                }
                 get("/rapporteringsperioder") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond(
-                        status = rapporteringsperioderResponseStatus,
+                        rapporteringsperioderResponseStatus,
                         defaultObjectMapper.writeValueAsString(rapporteringsperioderResponse),
                     )
                 }
                 get("/sendterapporteringsperioder") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond(
-                        status = sendteRapporteringsperioderResponseStatus,
+                        sendteRapporteringsperioderResponseStatus,
                         defaultObjectMapper.writeValueAsString(sendteRapporteringsperioderResponse),
                     )
                 }
                 get("/endrerapporteringsperiode/{id}") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond(
-                        status = endreRapporteringsperiodeResponseStatus,
+                        endreRapporteringsperiodeResponseStatus,
                         defaultObjectMapper.writeValueAsString(endreRapporteringsperiodeResponse),
                     )
                 }
                 post("/sendinn") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond(
-                        status = sendInnResponseStatus,
+                        sendInnResponseStatus,
                         defaultObjectMapper.writeValueAsString(sendInnResponse),
                     )
                 }
                 get("/person") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    call.respond(status = personResponseStatus, personResponse)
+                    call.respond(personResponseStatus, personResponse)
                 }
             }
         }

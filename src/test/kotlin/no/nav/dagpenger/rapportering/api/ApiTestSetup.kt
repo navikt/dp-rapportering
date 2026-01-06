@@ -240,7 +240,7 @@ open class ApiTestSetup {
             application {
                 konfigurasjon(meterRegistry, kallLoggRepository)
                 internalApi(meterRegistry)
-                rapporteringApi(rapporteringService, journalfoeringService, meldepliktMetrikker)
+                rapporteringApi(rapporteringService, meldepliktService, journalfoeringService, meldepliktMetrikker)
             }
 
             block()

@@ -137,6 +137,7 @@ class ApplicationBuilder(
                     engine.application.internalApi(meterRegistry)
                     engine.application.rapporteringApi(
                         rapporteringService,
+                        meldepliktService,
                         journalfoeringService,
                         meldepliktMetrikker,
                     )

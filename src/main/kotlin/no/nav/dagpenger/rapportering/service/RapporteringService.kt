@@ -58,9 +58,12 @@ class RapporteringService(
 
         return when (personstatus?.status) {
             Brukerstatus.IKKE_DAGPENGERBRUKER -> {
-                val meldekort = meldekortregisterService.hentRapporteringsperioder(
-                    ident, token, MeldekortStatus.TilUtfylling
-                )
+                val meldekort =
+                    meldekortregisterService.hentRapporteringsperioder(
+                        ident,
+                        token,
+                        MeldekortStatus.TilUtfylling,
+                    )
                 !meldekort.isNullOrEmpty()
             }
 
