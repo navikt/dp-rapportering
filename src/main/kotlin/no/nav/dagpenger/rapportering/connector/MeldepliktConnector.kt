@@ -24,6 +24,34 @@ class MeldepliktConnector(
     private val logger = KotlinLogging.logger {}
     private val httpClientUtils = HttpClientUtils(httpClient, meldepliktUrl, tokenProvider, actionTimer)
 
+    suspend fun harMeldeplikt(
+        ident: String,
+        subjectToken: String,
+    ): Boolean =
+        withContext(Dispatchers.IO) {
+            val result = httpClientUtils.get("/harmeldeplikt", subjectToken, "adapter-harMeldeplikt")
+
+            when (result.status) {
+                HttpStatusCode.OK -> {
+                    val harMeldeplikt = result.bodyAsText()
+
+                    logger.info { "Bruker har meldeplikt: $harMeldeplikt" }
+                    Sikkerlogg.info { "Bruker med ident $ident har meldeplikt: $harMeldeplikt" }
+
+                    harMeldeplikt.toBoolean()
+                }
+
+                else -> {
+                    logger.error { "Uventet status fra meldeplikt-adapter for harMeldeplikt: ${result.status}" }
+                    Sikkerlogg.error {
+                        "Uventet status fra meldeplikt-adapter for harMeldeplikt for $ident: ${result.status}"
+                    }
+
+                    false
+                }
+            }
+        }
+
     suspend fun hentRapporteringsperioder(
         ident: String,
         subjectToken: String,

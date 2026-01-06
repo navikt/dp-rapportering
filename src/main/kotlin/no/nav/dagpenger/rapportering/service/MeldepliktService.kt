@@ -8,6 +8,13 @@ import no.nav.dagpenger.rapportering.model.Person
 class MeldepliktService(
     private val meldepliktConnector: MeldepliktConnector,
 ) {
+    suspend fun harMeldeplikt(
+        ident: String,
+        token: String,
+    ): Boolean =
+        meldepliktConnector
+            .harMeldeplikt(ident, token)
+
     suspend fun hentRapporteringsperioder(
         ident: String,
         token: String,
