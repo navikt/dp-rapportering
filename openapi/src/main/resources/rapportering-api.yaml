@@ -44,9 +44,27 @@ paths:
                     description: OK
             summary: Sjekker om bruker har DP-meldeplikt
             description: Returnerer "true" hvis bruker har DP-meldeplikt, ellers returnerer "false"
-            operationId: get-har-meldeplikt
+            operationId: get-har-dp-meldeplikt
             tags:
                 - HarDpMeldeplikt
+            security:
+                -   tokenX: [ ]
+
+    /harmeldeplikt:
+        get:
+            responses:
+                '200':
+                    content:
+                        text/plain:
+                            schema:
+                                type: string
+                                example: true
+                    description: OK
+            summary: Sjekker om bruker har Arena-meldeplikt
+            description: Returnerer "true" hvis bruker har meldeplikt i Arena, ellers returnerer "false"
+            operationId: get-har-meldeplikt
+            tags:
+                - HarMeldeplikt
             security:
                 -   tokenX: [ ]
 

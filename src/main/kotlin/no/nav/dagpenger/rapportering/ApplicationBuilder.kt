@@ -158,6 +158,7 @@ class ApplicationBuilder(
                                 internalApi(meterRegistry)
                                 rapporteringApi(
                                     rapporteringService,
+                                    meldepliktService,
                                     journalfoeringService,
                                     meldepliktMetrikker,
                                 )

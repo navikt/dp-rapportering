@@ -252,7 +252,7 @@ open class ApiTestSetup {
                 }
                 pluginConfiguration(kallLoggRepository)
                 internalApi(meterRegistry)
-                rapporteringApi(rapporteringService, journalfoeringService, meldepliktMetrikker)
+                rapporteringApi(rapporteringService, meldepliktService, journalfoeringService, meldepliktMetrikker)
             }
 
             block()
