@@ -22,7 +22,7 @@
 
 ## Mer dokumentasjon
 - OpenAPI: https://navikt.github.io/dp-rapportering/
-- Dagpenger rapportering backend-dokumentasjon: https://dagpenger-dokumentasjon.ansatt.nav.no/innbyggerflate/losninger/rapportering/backend
+- Dagpenger rapportering backend-dokumentasjon: https://dagpenger-dokumentasjon.ansatt.nav.no/innbyggerflate/ramp/losninger/rapportering.html
 
 [dp-rapportering-frontend]: https://github.com/navikt/dp-rapportering-frontend
 [dp-arena-meldeplikt-adapter]: https://github.com/navikt/dp-arena-meldeplikt-adapter
