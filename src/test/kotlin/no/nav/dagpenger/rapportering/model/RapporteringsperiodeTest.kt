@@ -5,18 +5,18 @@ import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
 import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
 import no.nav.dagpenger.rapportering.model.PeriodeData.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
+import no.nav.dagpenger.rapportering.utils.UUIDv7
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
-import java.util.UUID
 
 class RapporteringsperiodeTest {
     @Test
     fun `Arbeidet = true hvis bruker jobbet`() {
         val rapporteringsperiode =
             rapporteringsperiodeFor(
-                aktivitet = Aktivitet(UUID.randomUUID(), Aktivitet.AktivitetsType.Arbeid, "PT7H30M"),
+                aktivitet = Aktivitet(UUIDv7.newUuid(), Aktivitet.AktivitetsType.Arbeid, "PT7H30M"),
             )
 
         rapporteringsperiode.arbeidet() shouldBe true
@@ -26,7 +26,7 @@ class RapporteringsperiodeTest {
     fun `Arbeidet = false true hvis bruker ikke jobbet`() {
         val rapporteringsperiode =
             rapporteringsperiodeFor(
-                aktivitet = Aktivitet(UUID.randomUUID(), Aktivitet.AktivitetsType.Fravaer, ""),
+                aktivitet = Aktivitet(UUIDv7.newUuid(), Aktivitet.AktivitetsType.Fravaer, ""),
             )
 
         rapporteringsperiode.arbeidet() shouldBe false
@@ -38,7 +38,7 @@ class RapporteringsperiodeTest {
         val originalId = "123456788"
         val ident = "01020312345"
         val periode = Periode(LocalDate.now(), LocalDate.now().plusDays(13))
-        val aktiviteter = listOf(Aktivitet(UUID.randomUUID(), Aktivitet.AktivitetsType.Utdanning, ""))
+        val aktiviteter = listOf(Aktivitet(UUIDv7.newUuid(), Aktivitet.AktivitetsType.Utdanning, ""))
         val mottattDato = LocalDate.now()
 
         val rapporteringsperiode =

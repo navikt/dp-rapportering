@@ -3,9 +3,8 @@ package no.nav.dagpenger.rapportering.utils
 import com.auth0.jwt.JWT
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
-import java.util.UUID
 
-fun generateCallId(): String = "dp-rapp-${UUID.randomUUID()}"
+fun generateCallId(): String = "dp-rapp-${UUIDv7.newUuid()}"
 
 fun headersToString(headers: List<String>): String {
     if (headers.size == 1) {

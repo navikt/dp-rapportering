@@ -5,10 +5,10 @@ import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
 import no.nav.dagpenger.rapportering.model.PeriodeData.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
+import no.nav.dagpenger.rapportering.utils.UUIDv7
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.UUID
 
 class PeriodeDataTest {
     @Test
@@ -25,7 +25,7 @@ class PeriodeDataTest {
         val perioder =
             listOf(
                 ArbeidssøkerperiodeResponse(
-                    UUID.randomUUID(),
+                    UUIDv7.newUuid(),
                     metadataResponse(LocalDateTime.now().minusDays(1)),
                     null,
                 ),
@@ -51,7 +51,7 @@ class PeriodeDataTest {
         val perioder =
             listOf(
                 ArbeidssøkerperiodeResponse(
-                    UUID.randomUUID(),
+                    UUIDv7.newUuid(),
                     metadataResponse(LocalDate.now().atStartOfDay()),
                     null,
                 ),
@@ -77,7 +77,7 @@ class PeriodeDataTest {
         val perioder =
             listOf(
                 ArbeidssøkerperiodeResponse(
-                    UUID.randomUUID(),
+                    UUIDv7.newUuid(),
                     metadataResponse(LocalDateTime.now().plusDays(1)),
                     null,
                 ),
@@ -103,7 +103,7 @@ class PeriodeDataTest {
         val perioder =
             listOf(
                 ArbeidssøkerperiodeResponse(
-                    UUID.randomUUID(),
+                    UUIDv7.newUuid(),
                     metadataResponse(LocalDateTime.now().minusDays(1)),
                     metadataResponse(LocalDate.now().atTime(23, 59, 59)),
                 ),
@@ -129,7 +129,7 @@ class PeriodeDataTest {
         val perioder =
             listOf(
                 ArbeidssøkerperiodeResponse(
-                    UUID.randomUUID(),
+                    UUIDv7.newUuid(),
                     metadataResponse(LocalDateTime.now().minusDays(1)),
                     metadataResponse(LocalDateTime.now().plusDays(2)),
                 ),
@@ -155,7 +155,7 @@ class PeriodeDataTest {
         val perioder =
             listOf(
                 ArbeidssøkerperiodeResponse(
-                    UUID.randomUUID(),
+                    UUIDv7.newUuid(),
                     metadataResponse(LocalDateTime.now().minusDays(3)),
                     metadataResponse(LocalDateTime.now().minusDays(2)),
                 ),
@@ -181,7 +181,7 @@ class PeriodeDataTest {
         val perioder =
             listOf(
                 ArbeidssøkerperiodeResponse(
-                    UUID.randomUUID(),
+                    UUIDv7.newUuid(),
                     metadataResponse(LocalDateTime.now().plusDays(1)),
                     metadataResponse(LocalDateTime.now().plusDays(2)),
                 ),
@@ -200,13 +200,13 @@ class PeriodeDataTest {
 
         val aktivitet1 =
             Aktivitet(
-                UUID.randomUUID(),
+                UUIDv7.newUuid(),
                 Aktivitet.AktivitetsType.Arbeid,
                 "5.5",
             )
         val aktivitet2 =
             Aktivitet(
-                UUID.randomUUID(),
+                UUIDv7.newUuid(),
                 Aktivitet.AktivitetsType.Utdanning,
                 "",
             )

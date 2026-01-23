@@ -8,14 +8,14 @@ import no.nav.dagpenger.rapportering.connector.toAdapterDag
 import no.nav.dagpenger.rapportering.connector.toDag
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
+import no.nav.dagpenger.rapportering.utils.UUIDv7
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
-import java.util.UUID
 
 class DagTest {
     @Test
     fun `kan konvertere Dag til AdapterDag`() {
-        val aktivitet = Aktivitet(id = UUID.randomUUID(), type = Syk, timer = null)
+        val aktivitet = Aktivitet(id = UUIDv7.newUuid(), type = Syk, timer = null)
         val dag = Dag(dato = 1.januar, aktiviteter = listOf(aktivitet), dagIndex = 0)
 
         val adapterDag = dag.toAdapterDag()
@@ -29,7 +29,7 @@ class DagTest {
 
     @Test
     fun `ved konvertering fra Dag til AdapterDag konverteres timer riktig`() {
-        val aktivitet = Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = "PT5H30M")
+        val aktivitet = Aktivitet(id = UUIDv7.newUuid(), type = Arbeid, timer = "PT5H30M")
         val dag = Dag(dato = 1.januar, aktiviteter = listOf(aktivitet), dagIndex = 0)
 
         val adapterDag = dag.toAdapterDag()
@@ -43,7 +43,7 @@ class DagTest {
 
     @Test
     fun `kan konvertere AdapterDag til Dag`() {
-        val adapterAktivitet = AdapterAktivitet(uuid = UUID.randomUUID(), type = AdapterAktivitetsType.Syk, timer = null)
+        val adapterAktivitet = AdapterAktivitet(uuid = UUIDv7.newUuid(), type = AdapterAktivitetsType.Syk, timer = null)
         val adapterDag = AdapterDag(dato = 1.januar, aktiviteter = listOf(adapterAktivitet), dagIndex = 0)
 
         val dag = adapterDag.toDag()
@@ -57,7 +57,7 @@ class DagTest {
 
     @Test
     fun `ved konvertering fra AdapterDag til Dag konverteres timer riktig`() {
-        val adapterAktivitet = AdapterAktivitet(uuid = UUID.randomUUID(), type = AdapterAktivitetsType.Arbeid, timer = 5.5)
+        val adapterAktivitet = AdapterAktivitet(uuid = UUIDv7.newUuid(), type = AdapterAktivitetsType.Arbeid, timer = 5.5)
         val adapterDag = AdapterDag(dato = 1.januar, aktiviteter = listOf(adapterAktivitet), dagIndex = 0)
 
         val dag = adapterDag.toDag()
