@@ -91,7 +91,7 @@ dependencies {
     implementation("org.apache.avro:avro:1.12.1")
     schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:1.26.01.09.34-1")
 
-    implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
+    implementation("com.fasterxml.uuid:java-uuid-generator:5.2.0")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(libs.rapids.and.rivers.test)
