@@ -13,6 +13,7 @@ import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.utils.UUIDv7
 import java.time.LocalDate
 import java.util.UUID
 import javax.sql.DataSource
@@ -167,7 +168,7 @@ class RapporteringRepositoryPostgres(
                             "SELECT id FROM dag WHERE rapportering_id = ? AND dag_index = ?",
                             rapporteringId,
                             dagIdex,
-                        ).map { row -> UUID.fromString(row.string("id")) }
+                        ).map { row -> UUIDv7.fromString(row.string("id")) }
                             .asSingle,
                     ) ?: throw RuntimeException("Finner ikke dag med rapporteringID $rapporteringId")
                 }
@@ -268,7 +269,7 @@ class RapporteringRepositoryPostgres(
                 "INSERT INTO dag (id, rapportering_id, dato, dag_index) VALUES (:id, :rapportering_id, :dato, :dag_index)",
                 dager.map { dag ->
                     mapOf(
-                        "id" to UUID.randomUUID(),
+                        "id" to UUIDv7.newUuid(),
                         "rapportering_id" to rapporteringId,
                         "dato" to dag.dato,
                         "dag_index" to dag.dagIndex,
@@ -581,7 +582,7 @@ private fun Row.toRapporteringsperiode() =
     )
 
 private fun Row.toDagPair(): Pair<UUID, Dag> =
-    UUID.fromString(string("id")) to
+    UUIDv7.fromString(string("id")) to
         Dag(
             dato = localDate("dato"),
             aktiviteter = emptyList(),
@@ -590,7 +591,7 @@ private fun Row.toDagPair(): Pair<UUID, Dag> =
 
 private fun Row.toAktivitet() =
     Aktivitet(
-        id = UUID.fromString(string("uuid")),
+        id = UUIDv7.fromString(string("uuid")),
         type = AktivitetsType.valueOf(string("type")),
         timer = stringOrNull("timer"),
     )

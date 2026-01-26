@@ -22,8 +22,8 @@ import no.nav.dagpenger.oauth2.CachedOauth2Client
 import no.nav.dagpenger.oauth2.OAuth2Config
 import no.nav.dagpenger.rapportering.kafka.KafkaSchemaRegistryConfig
 import no.nav.dagpenger.rapportering.kafka.KafkaServerKonfigurasjon
+import no.nav.dagpenger.rapportering.utils.UUIDv7
 import java.time.ZoneId
-import java.util.UUID
 
 internal object Configuration {
     const val APP_NAME = "dp-rapportering"
@@ -168,8 +168,8 @@ internal object Configuration {
         UnleashConfig
             .builder()
             .fetchTogglesInterval(5)
-            .appName(properties.getOrElse(Key("NAIS_APP_NAME", stringType), UUID.randomUUID().toString()))
-            .instanceId(properties.getOrElse(Key("NAIS_CLIENT_ID", stringType), UUID.randomUUID().toString()))
+            .appName(properties.getOrElse(Key("NAIS_APP_NAME", stringType), UUIDv7.newUuid().toString()))
+            .instanceId(properties.getOrElse(Key("NAIS_CLIENT_ID", stringType), UUIDv7.newUuid().toString()))
             .unleashAPI(properties[Key("UNLEASH_SERVER_API_URL", stringType)] + "/api")
             .apiKey(properties[Key("UNLEASH_SERVER_API_TOKEN", stringType)])
             .environment(properties[Key("UNLEASH_SERVER_API_ENV", stringType)])

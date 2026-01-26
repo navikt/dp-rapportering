@@ -28,6 +28,7 @@ import no.nav.dagpenger.rapportering.model.RecordKeyRequestBody
 import no.nav.dagpenger.rapportering.model.RecordKeyResponse
 import no.nav.dagpenger.rapportering.model.arbeidet
 import no.nav.dagpenger.rapportering.utils.Sikkerlogg
+import no.nav.dagpenger.rapportering.utils.UUIDv7
 import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
 import no.nav.paw.bekreftelse.melding.v1.vo.Bekreftelsesloesning
 import no.nav.paw.bekreftelse.melding.v1.vo.Bruker
@@ -37,7 +38,6 @@ import no.nav.paw.bekreftelse.melding.v1.vo.Svar
 import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
 import java.time.Instant
-import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class ArbeidssøkerService(
@@ -106,7 +106,7 @@ class ArbeidssøkerService(
             Bekreftelse(
                 arbeidssøkerperiode.periodeId,
                 Bekreftelsesloesning.DAGPENGER,
-                UUID.randomUUID(),
+                UUIDv7.newUuid(),
                 Svar(
                     Metadata(
                         Instant.now().atZone(ZONE_ID).toInstant(),

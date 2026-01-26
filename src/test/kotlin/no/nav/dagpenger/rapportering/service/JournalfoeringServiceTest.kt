@@ -44,13 +44,13 @@ import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.Postgres.database
+import no.nav.dagpenger.rapportering.utils.UUIDv7
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Base64
-import java.util.UUID
 
 class JournalfoeringServiceTest {
     private val ident = "01020312345"
@@ -248,7 +248,7 @@ class JournalfoeringServiceTest {
     fun `Kan hente journalpostId`() {
         setProperties()
 
-        val rapporteringsperiodeId = UUID.randomUUID().toString()
+        val rapporteringsperiodeId = UUIDv7.newUuid().toString()
         val journalpostId = 1234567890L
 
         // Mock
@@ -375,7 +375,7 @@ class JournalfoeringServiceTest {
                         fom,
                         listOf(
                             Aktivitet(
-                                UUID.randomUUID(),
+                                UUIDv7.newUuid(),
                                 Aktivitet.AktivitetsType.Arbeid,
                                 "PT07H30M",
                             ),
@@ -386,7 +386,7 @@ class JournalfoeringServiceTest {
                         fom.plusDays(1),
                         listOf(
                             Aktivitet(
-                                UUID.randomUUID(),
+                                UUIDv7.newUuid(),
                                 Aktivitet.AktivitetsType.Syk,
                                 null,
                             ),

@@ -59,6 +59,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylli
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
+import no.nav.dagpenger.rapportering.utils.UUIDv7
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
@@ -230,7 +231,7 @@ class RapporteringServiceTest {
                         startDato = 14.januar,
                         aktivitet =
                             Aktivitet(
-                                id = UUID.randomUUID(),
+                                id = UUIDv7.newUuid(),
                                 type = Utdanning,
                                 timer = null,
                             ),
@@ -296,7 +297,7 @@ class RapporteringServiceTest {
                         startDato = 14.januar,
                         aktivitet =
                             Aktivitet(
-                                id = UUID.randomUUID(),
+                                id = UUIDv7.newUuid(),
                                 type = Utdanning,
                                 timer = null,
                             ),
@@ -394,7 +395,7 @@ class RapporteringServiceTest {
             lagRapporteringsperiode(
                 id = "1",
                 periode = Periode(fraOgMed = 1.januar, tilOgMed = 14.januar),
-            ).copy(dager = getDager(startDato = 1.januar, aktivitet = Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null)))
+            ).copy(dager = getDager(startDato = 1.januar, aktivitet = Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null)))
         coEvery { rapporteringRepository.hentRapporteringsperiode("2", ident) } returns null
         coEvery { rapporteringRepository.hentRapporteringsperiode("3", ident) } returns null
         coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
@@ -442,8 +443,8 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan lagre aktivitet på eksisterende rapporteringsperiode`() {
-        val aktiviteter = listOf(Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null))
-        coEvery { rapporteringRepository.hentDagId(any(), any()) } returns UUID.randomUUID()
+        val aktiviteter = listOf(Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null))
+        coEvery { rapporteringRepository.hentDagId(any(), any()) } returns UUIDv7.newUuid()
         coJustRun { rapporteringRepository.slettOgLagreAktiviteter(any(), any(), any()) }
 
         runBlocking {
@@ -706,7 +707,7 @@ class RapporteringServiceTest {
         coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident), false) } returns
             listOf(
                 ArbeidssøkerperiodeResponse(
-                    UUID.randomUUID(),
+                    UUIDv7.newUuid(),
                     MetadataResponse(
                         LocalDateTime.now(),
                         BrukerResponse("", ""),
@@ -817,7 +818,7 @@ class RapporteringServiceTest {
         coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident), false) } returns
             listOf(
                 ArbeidssøkerperiodeResponse(
-                    UUID.randomUUID(),
+                    UUIDv7.newUuid(),
                     MetadataResponse(
                         rapporteringsperiode.periode.fraOgMed.atStartOfDay(),
                         BrukerResponse("", ""),
@@ -902,7 +903,7 @@ class RapporteringServiceTest {
         coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident), false) } returns
             listOf(
                 ArbeidssøkerperiodeResponse(
-                    UUID.randomUUID(),
+                    UUIDv7.newUuid(),
                     MetadataResponse(
                         rapporteringsperiode.periode.fraOgMed.atStartOfDay(),
                         BrukerResponse("", ""),
@@ -1006,7 +1007,7 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan slette alle aktiviteter for en periode`() {
-        val dagPairList: List<Pair<UUID, Dag>> = getDager().map { UUID.randomUUID() to it }
+        val dagPairList: List<Pair<UUID, Dag>> = getDager().map { UUIDv7.newUuid() to it }
         coEvery { rapporteringRepository.finnesRapporteringsperiode(any(), any()) } returns true
         coEvery { rapporteringRepository.hentDagerUtenAktivitet(any()) } returns dagPairList
         coJustRun { rapporteringRepository.slettAktiviteter(any()) }
@@ -1086,7 +1087,7 @@ class RapporteringServiceTest {
         coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident), hentKunSisteArbeidssøkerperiode) } returns
             listOf(
                 ArbeidssøkerperiodeResponse(
-                    UUID.randomUUID(),
+                    UUIDv7.newUuid(),
                     MetadataResponse(
                         LocalDateTime.now(),
                         BrukerResponse("", ""),

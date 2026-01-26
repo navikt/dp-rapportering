@@ -17,11 +17,11 @@ import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
 import no.nav.dagpenger.rapportering.model.toKorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
+import no.nav.dagpenger.rapportering.utils.UUIDv7
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.UUID
 
 class MeldekortregisterServiceTest {
     private val testTokenProvider: (token: String) -> String = { _ -> "testToken" }
@@ -55,13 +55,13 @@ class MeldekortregisterServiceTest {
 
         val aktivitet1 =
             Aktivitet(
-                UUID.randomUUID(),
+                UUIDv7.newUuid(),
                 Aktivitet.AktivitetsType.Arbeid,
                 "5.5",
             )
         val aktivitet2 =
             Aktivitet(
-                UUID.randomUUID(),
+                UUIDv7.newUuid(),
                 Aktivitet.AktivitetsType.Utdanning,
                 "",
             )
@@ -166,7 +166,7 @@ class MeldekortregisterServiceTest {
                         .map { i ->
                             PeriodeDag(
                                 dato = LocalDate.now().plusDays(i.toLong()),
-                                aktiviteter = listOf(Aktivitet(UUID.randomUUID(), Aktivitet.AktivitetsType.Utdanning, "")),
+                                aktiviteter = listOf(Aktivitet(UUIDv7.newUuid(), Aktivitet.AktivitetsType.Utdanning, "")),
                                 dagIndex = i,
                             )
                         },
@@ -202,7 +202,7 @@ class MeldekortregisterServiceTest {
 
     @Test
     fun `kan sende inn korrigering av meldekort`() {
-        val nyMeldekortId = UUID.randomUUID().toString()
+        val nyMeldekortId = UUIDv7.newUuid().toString()
         // OK
         var meldekortregisterService =
             meldekortregisterService(
@@ -223,7 +223,7 @@ class MeldekortregisterServiceTest {
                         .map { i ->
                             PeriodeDag(
                                 dato = LocalDate.now().plusDays(i.toLong()),
-                                aktiviteter = listOf(Aktivitet(UUID.randomUUID(), Aktivitet.AktivitetsType.Utdanning, "")),
+                                aktiviteter = listOf(Aktivitet(UUIDv7.newUuid(), Aktivitet.AktivitetsType.Utdanning, "")),
                                 dagIndex = i,
                             )
                         },

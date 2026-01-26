@@ -37,13 +37,13 @@ import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.utils.UUIDv7
 import no.nav.dagpenger.rapportering.utils.desember
 import no.nav.dagpenger.rapportering.utils.februar
 import no.nav.dagpenger.rapportering.utils.januar
 import no.nav.dagpenger.rapportering.utils.november
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import java.util.UUID
 
 class RapporteringApiTest : ApiTestSetup() {
     private val fnr = "12345678910"
@@ -60,7 +60,7 @@ class RapporteringApiTest : ApiTestSetup() {
     fun `hentJournalpostId returnerer liste med id`() =
         setUpTestApplication {
             val journalpostId = 1234567890L
-            val rapporteringsperiodeId = UUID.randomUUID().toString()
+            val rapporteringsperiodeId = UUIDv7.newUuid().toString()
             journalfoeringRepository.lagreJournalpostData(journalpostId, 0L, rapporteringsperiodeId)
 
             with(client.doGet("/hentJournalpostId/$rapporteringsperiodeId", issueAzureAdToken(emptyMap()))) {
@@ -229,7 +229,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         listOf(
                             adapterRapporteringsperiode(
                                 id = 123L,
-                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUIDv7.newUuid()),
                                 status = AdapterRapporteringsperiodeStatus.TilUtfylling,
                             ),
                         ),
@@ -272,7 +272,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         listOf(
                             adapterRapporteringsperiode(
                                 id = 123L,
-                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUIDv7.newUuid()),
                                 status = AdapterRapporteringsperiodeStatus.TilUtfylling,
                             ),
                         ),
@@ -507,7 +507,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
             client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
 
-            val aktivitet = Aktivitet(UUID.randomUUID(), AktivitetsType.Arbeid, "PT7H30M")
+            val aktivitet = Aktivitet(UUIDv7.newUuid(), AktivitetsType.Arbeid, "PT7H30M")
             val dagMedAktivitet = Dag(LocalDate.now(), listOf(aktivitet), 0)
             val response = client.doPost("/rapporteringsperiode/123/aktivitet", issueToken(fnr), dagMedAktivitet)
             response.status shouldBe HttpStatusCode.NoContent
@@ -528,7 +528,7 @@ class RapporteringApiTest : ApiTestSetup() {
     @Test
     fun `lagre aktivitet feiler hvis perioden ikke finnes`() {
         setUpTestApplication {
-            val aktivitet = Aktivitet(UUID.randomUUID(), AktivitetsType.Arbeid, "PT7H30M")
+            val aktivitet = Aktivitet(UUIDv7.newUuid(), AktivitetsType.Arbeid, "PT7H30M")
             val dagMedAktivitet = Dag(LocalDate.now(), listOf(aktivitet), 0)
             val response = client.doPost("/rapporteringsperiode/123/aktivitet", issueToken(fnr), dagMedAktivitet)
             response.status shouldBe HttpStatusCode.InternalServerError
@@ -545,7 +545,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
             client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
 
-            val aktivitet = Aktivitet(UUID.randomUUID(), AktivitetsType.Arbeid, "PT7H30M")
+            val aktivitet = Aktivitet(UUIDv7.newUuid(), AktivitetsType.Arbeid, "PT7H30M")
             val dagMedAktivitet = Dag(LocalDate.now(), listOf(aktivitet), 0)
             val response = client.doPost("/rapporteringsperiode/123/aktivitet", issueToken(fnr), dagMedAktivitet)
             response.status shouldBe HttpStatusCode.NoContent
@@ -695,7 +695,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         listOf(
                             adapterRapporteringsperiode(
                                 id = 125L,
-                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUIDv7.newUuid()),
                                 status = AdapterRapporteringsperiodeStatus.Innsendt,
                             ),
                             adapterRapporteringsperiode(
@@ -806,32 +806,32 @@ class RapporteringApiTest : ApiTestSetup() {
                             adapterRapporteringsperiode(
                                 id = 122L,
                                 fraOgMed = 20.november(2023),
-                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUIDv7.newUuid()),
                                 status = AdapterRapporteringsperiodeStatus.Innsendt,
                             ),
                             adapterRapporteringsperiode(
                                 id = 123L,
                                 fraOgMed = 4.desember(2023),
-                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUIDv7.newUuid()),
                                 status = AdapterRapporteringsperiodeStatus.Innsendt,
                             ),
                             adapterRapporteringsperiode(
                                 id = 124L,
                                 fraOgMed = 18.desember(2023),
-                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUIDv7.newUuid()),
                                 status = AdapterRapporteringsperiodeStatus.Innsendt,
                             ),
                             adapterRapporteringsperiode(
                                 id = 125L,
                                 fraOgMed = 1.januar(2024),
-                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUIDv7.newUuid()),
                                 status = AdapterRapporteringsperiodeStatus.Endret,
                                 mottattDato = 14.januar(2024),
                             ),
                             adapterRapporteringsperiode(
                                 id = 126L,
                                 fraOgMed = 1.januar(2024),
-                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUIDv7.newUuid()),
                                 status = AdapterRapporteringsperiodeStatus.Innsendt,
                                 begrunnelseEndring = "En god begrunnelse",
                                 mottattDato = 15.januar(2024),
@@ -845,28 +845,28 @@ class RapporteringApiTest : ApiTestSetup() {
                             adapterRapporteringsperiode(
                                 id = 128L,
                                 fraOgMed = 15.januar(2024),
-                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUIDv7.newUuid()),
                                 status = AdapterRapporteringsperiodeStatus.Innsendt,
                                 mottattDato = 20.januar(2024),
                             ),
                             adapterRapporteringsperiode(
                                 id = 129L,
                                 fraOgMed = 29.januar(2024),
-                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUIDv7.newUuid()),
                                 status = AdapterRapporteringsperiodeStatus.Innsendt,
                                 mottattDato = 10.februar(2024),
                             ),
                             adapterRapporteringsperiode(
                                 id = 130L,
                                 fraOgMed = 12.februar(2024),
-                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUIDv7.newUuid()),
                                 status = AdapterRapporteringsperiodeStatus.Endret,
                                 mottattDato = 24.februar(2024),
                             ),
                             adapterRapporteringsperiode(
                                 id = 131L,
                                 fraOgMed = 12.februar(2024),
-                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                                aktivitet = defaultAdapterAktivitet.copy(uuid = UUIDv7.newUuid()),
                                 status = AdapterRapporteringsperiodeStatus.Innsendt,
                                 begrunnelseEndring = "En god begrunnelse",
                                 mottattDato = 25.februar(2024),
@@ -910,7 +910,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
     private val defaultAdapterAktivitet =
         AdapterAktivitet(
-            uuid = UUID.randomUUID(),
+            uuid = UUIDv7.newUuid(),
             type = Arbeid,
             timer = 7.5,
         )
@@ -926,7 +926,7 @@ class RapporteringApiTest : ApiTestSetup() {
             listOf(
                 adapterRapporteringsperiode(
                     id = 125L,
-                    aktivitet = defaultAdapterAktivitet.copy(uuid = UUID.randomUUID()),
+                    aktivitet = defaultAdapterAktivitet.copy(uuid = UUIDv7.newUuid()),
                     status = AdapterRapporteringsperiodeStatus.Innsendt,
                 ),
                 adapterRapporteringsperiode(
@@ -1015,7 +1015,7 @@ class RapporteringApiTest : ApiTestSetup() {
             (0..13).map {
                 AdapterDag(
                     dato = fraOgMed.plusDays(it.toLong()),
-                    aktiviteter = aktivitet?.let { listOf(aktivitet.copy(uuid = UUID.randomUUID())) } ?: emptyList(),
+                    aktiviteter = aktivitet?.let { listOf(aktivitet.copy(uuid = UUIDv7.newUuid())) } ?: emptyList(),
                     dagIndex = it,
                 )
             },

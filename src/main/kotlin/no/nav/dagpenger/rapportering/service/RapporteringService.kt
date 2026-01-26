@@ -26,10 +26,10 @@ import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnKanSendesFra
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
+import no.nav.dagpenger.rapportering.utils.UUIDv7
 import no.nav.dagpenger.rapportering.utils.kontrollerAktiviteter
 import no.nav.dagpenger.rapportering.utils.kontrollerRapporteringsperiode
 import java.time.LocalDate
-import java.util.UUID
 import kotlin.random.Random
 import kotlin.random.nextLong
 
@@ -185,7 +185,7 @@ class RapporteringService(
                                 dag.copy(
                                     aktiviteter =
                                         dag.aktiviteter.map { aktivitet ->
-                                            aktivitet.copy(id = UUID.randomUUID())
+                                            aktivitet.copy(id = UUIDv7.newUuid())
                                         },
                                 )
                             },
@@ -395,7 +395,7 @@ class RapporteringService(
                         .map { dag ->
                             Dag(
                                 dag.dato,
-                                dag.aktiviteter.map { aktivitet -> Aktivitet(UUID.randomUUID(), aktivitet.type, aktivitet.timer) },
+                                dag.aktiviteter.map { aktivitet -> Aktivitet(UUIDv7.newUuid(), aktivitet.type, aktivitet.timer) },
                                 dag.dagIndex,
                             )
                         }

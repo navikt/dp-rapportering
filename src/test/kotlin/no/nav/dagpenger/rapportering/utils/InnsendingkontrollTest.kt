@@ -14,7 +14,6 @@ import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import java.util.UUID
 
 class InnsendingkontrollTest {
     @Test
@@ -67,8 +66,8 @@ class InnsendingkontrollTest {
                     getDager(
                         aktiviteter =
                             listOf(
-                                Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = "PT7H30M"),
-                                Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Arbeid, timer = "PT7H30M"),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null),
                             ),
                     ),
             )
@@ -83,8 +82,8 @@ class InnsendingkontrollTest {
                     getDager(
                         aktiviteter =
                             listOf(
-                                Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
-                                Aktivitet(id = UUID.randomUUID(), type = Syk, timer = null),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Syk, timer = null),
                             ),
                     ),
             )
@@ -99,8 +98,8 @@ class InnsendingkontrollTest {
                     getDager(
                         aktiviteter =
                             listOf(
-                                Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
-                                Aktivitet(id = UUID.randomUUID(), type = Fravaer, timer = null),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Fravaer, timer = null),
                             ),
                     ),
             )
@@ -115,8 +114,8 @@ class InnsendingkontrollTest {
                     getDager(
                         aktiviteter =
                             listOf(
-                                Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
-                                Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null),
                             ),
                     ),
             )
@@ -133,9 +132,9 @@ class InnsendingkontrollTest {
                     getDager(
                         aktiviteter =
                             listOf(
-                                Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
-                                Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = "PT5H30M"),
-                                Aktivitet(id = UUID.randomUUID(), type = Syk, timer = null),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Arbeid, timer = "PT5H30M"),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Syk, timer = null),
                             ),
                     ),
             )
@@ -152,7 +151,7 @@ class InnsendingkontrollTest {
                     getDager(
                         aktiviteter =
                             listOf(
-                                Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = null),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Arbeid, timer = null),
                             ),
                     ),
             )
@@ -169,7 +168,7 @@ class InnsendingkontrollTest {
                     getDager(
                         aktiviteter =
                             listOf(
-                                Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = "PT0M"),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Arbeid, timer = "PT0M"),
                             ),
                     ),
             )
@@ -186,7 +185,7 @@ class InnsendingkontrollTest {
                     getDager(
                         aktiviteter =
                             listOf(
-                                Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = "PT25H"),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Arbeid, timer = "PT25H"),
                             ),
                     ),
             )
@@ -203,7 +202,7 @@ class InnsendingkontrollTest {
                     getDager(
                         aktiviteter =
                             listOf(
-                                Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = "PT5H15M"),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Arbeid, timer = "PT5H15M"),
                             ),
                     ),
             )
@@ -220,7 +219,7 @@ class InnsendingkontrollTest {
                     getDager(
                         aktiviteter =
                             listOf(
-                                Aktivitet(id = UUID.randomUUID(), type = Syk, timer = "PT1H"),
+                                Aktivitet(id = UUIDv7.newUuid(), type = Syk, timer = "PT1H"),
                             ),
                     ),
             )

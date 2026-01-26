@@ -18,10 +18,10 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylli
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
+import no.nav.dagpenger.rapportering.utils.UUIDv7
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import java.util.UUID
 
 class RapporteringRepositoryPostgresTest {
     private val rapporteringRepositoryPostgres = RapporteringRepositoryPostgres(dataSource, actionTimer)
@@ -210,7 +210,7 @@ class RapporteringRepositoryPostgresTest {
     @Test
     fun `kan lagre rapporteringsperiode med aktiviteter`() {
         val rapporteringsperiode =
-            getRapporteringsperiode(dager = getDager(aktivitet = Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null)))
+            getRapporteringsperiode(dager = getDager(aktivitet = Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null)))
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(
                 rapporteringsperiode = rapporteringsperiode,
@@ -254,8 +254,8 @@ class RapporteringRepositoryPostgresTest {
                 dato = 1.januar,
                 aktiviteter =
                     listOf(
-                        Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
-                        Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = "PT5H30M"),
+                        Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null),
+                        Aktivitet(id = UUIDv7.newUuid(), type = Arbeid, timer = "PT5H30M"),
                     ),
                 dagIndex = 0,
             )
@@ -335,8 +335,8 @@ class RapporteringRepositoryPostgresTest {
                 dato = 1.januar,
                 aktiviteter =
                     listOf(
-                        Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
-                        Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = "PT5H30M"),
+                        Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null),
+                        Aktivitet(id = UUIDv7.newUuid(), type = Arbeid, timer = "PT5H30M"),
                     ),
                 dagIndex = 0,
             )
@@ -448,8 +448,8 @@ class RapporteringRepositoryPostgresTest {
                 dato = 1.januar,
                 aktiviteter =
                     listOf(
-                        Aktivitet(id = UUID.randomUUID(), type = Utdanning, timer = null),
-                        Aktivitet(id = UUID.randomUUID(), type = Arbeid, timer = "PT5H30M"),
+                        Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null),
+                        Aktivitet(id = UUIDv7.newUuid(), type = Arbeid, timer = "PT5H30M"),
                     ),
                 dagIndex = 0,
             )
@@ -579,7 +579,7 @@ private fun getDager(
         .map { i ->
             Dag(
                 dato = startDato.plusDays(i.toLong()),
-                aktiviteter = aktivitet?.let { listOf(it.copy(id = UUID.randomUUID())) } ?: emptyList(),
+                aktiviteter = aktivitet?.let { listOf(it.copy(id = UUIDv7.newUuid())) } ?: emptyList(),
                 dagIndex = i,
             )
         }

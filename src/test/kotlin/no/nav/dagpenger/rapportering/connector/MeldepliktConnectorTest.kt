@@ -17,12 +17,12 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
+import no.nav.dagpenger.rapportering.utils.UUIDv7
 import no.nav.dagpenger.rapportering.utils.februar
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import java.util.UUID
 
 class MeldepliktConnectorTest {
     private val testTokenProvider: (token: String) -> String = { _ -> "testToken" }
@@ -459,7 +459,7 @@ fun aktivitetslisteFor(
     """
     [
       {
-        "uuid": "${UUID.randomUUID()}",
+        "uuid": "${UUIDv7.newUuid()}",
         "type": "$type",
         "timer": $timer
       }

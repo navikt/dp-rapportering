@@ -5,10 +5,10 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
+import no.nav.dagpenger.rapportering.utils.UUIDv7
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import java.util.UUID
 
 class PersonregisterConnectorTest {
     private val testTokenXProvider: (token: String) -> String = { _ -> "testToken" }
@@ -168,7 +168,7 @@ class PersonregisterConnectorTest {
 
     @Test
     fun `hentSisteSakId returnerer sakId`() {
-        val sakId = UUID.randomUUID().toString()
+        val sakId = UUIDv7.newUuid().toString()
 
         val connector =
             personregisterConnector(
