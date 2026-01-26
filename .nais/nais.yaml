@@ -99,7 +99,7 @@ spec:
   accessPolicy:
     outbound:
       external:
-        - host: dagpenger-unleash-api.nav.cloud.nais.io
+        - host: teamdagpenger-unleash-api.nav.cloud.nais.io
         - host: "{{ PDL_API_HOST }}"
       rules:
         - application: logging
