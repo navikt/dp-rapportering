@@ -95,7 +95,7 @@ class JournalfoeringService(
             opprettOgSendBehov(ident, navn, loginLevel, headers, rapporteringsperiode, ansvarligSystem)
         } catch (e: Exception) {
             logger.warn(e) { "Feil ved journalføring" }
-            lagreDataMidlertidig(ident, navn, loginLevel, headers, rapporteringsperiode)
+            lagreDataMidlertidig(ident, navn, loginLevel, headers, rapporteringsperiode, ansvarligSystem)
         }
     }
 
@@ -267,6 +267,7 @@ class JournalfoeringService(
         loginLevel: Int,
         headers: Headers,
         rapporteringsperiode: Rapporteringsperiode,
+        ansvarligSystem: AnsvarligSystem,
     ) {
         logger.info { "Mellomlagrer data for rapporteringsperiode ${rapporteringsperiode.id}" }
         journalfoeringRepository.lagreDataMidlertidig(
@@ -276,6 +277,7 @@ class JournalfoeringService(
                 loginLevel,
                 headers.toMap(),
                 defaultObjectMapper.writeValueAsString(rapporteringsperiode),
+                ansvarligSystem,
             ),
         )
     }

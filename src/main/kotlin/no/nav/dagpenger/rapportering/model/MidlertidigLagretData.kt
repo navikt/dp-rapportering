@@ -8,5 +8,5 @@ data class MidlertidigLagretData(
     val loginLevel: Int,
     val headers: Map<String, List<String>>,
     val rapporteringsperiode: String,
-    val ansvarligSystem: AnsvarligSystem = AnsvarligSystem.ARENA,
+    val ansvarligSystem: AnsvarligSystem,
 )
