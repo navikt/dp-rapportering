@@ -83,7 +83,7 @@ internal object Configuration {
                 azureAdClient
                     .clientCredentials(
                         "api://" +
-                            properties[Key("PERSONREGISTER_SCOPE", stringType)].replace(":", ".") +
+                            properties[Key("PERSONREGISTER_AUDIENCE", stringType)].replace(":", ".") +
                             "/.default",
                     ).access_token ?: throw RuntimeException("Failed to get Personregister Azure token")
             }
