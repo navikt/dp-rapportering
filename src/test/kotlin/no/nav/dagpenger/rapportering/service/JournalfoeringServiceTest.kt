@@ -143,7 +143,20 @@ class JournalfoeringServiceTest {
         }
 
         // Får feil og sjekker at JournalfoeringService lagrer data midlertidig
-        coVerify(exactly = 1) { journalfoeringRepository.lagreDataMidlertidig(any()) }
+        coVerify(exactly = 1) {
+            journalfoeringRepository.lagreDataMidlertidig(
+                eq(
+                    MidlertidigLagretData(
+                        ident,
+                        navn,
+                        loginLevel,
+                        headers.toMap(),
+                        defaultObjectMapper.writeValueAsString(rapporteringsperiode),
+                        AnsvarligSystem.ARENA,
+                    ),
+                ),
+            )
+        }
     }
 
     @Test
@@ -179,6 +192,7 @@ class JournalfoeringServiceTest {
                         loginLevel,
                         headers.toMap(),
                         defaultObjectMapper.writeValueAsString(rapporteringsperiode),
+                        AnsvarligSystem.DP,
                     ),
                     0,
                 ),
@@ -193,6 +207,7 @@ class JournalfoeringServiceTest {
         coEvery { pdlService.hentNavn(any()) } returns navn
 
         val personregisterService = mockk<PersonregisterService>()
+        coEvery { personregisterService.hentSisteSakId(eq(ident)) } returns "12345"
 
         val journalfoeringService =
             JournalfoeringService(
@@ -210,12 +225,25 @@ class JournalfoeringServiceTest {
                 loginLevel,
                 headers,
                 rapporteringsperiode,
-                AnsvarligSystem.ARENA,
+                AnsvarligSystem.DP,
             )
         }
 
         // Får feil og sjekker at JournalfoeringService lagrer data midlertidig
-        coVerify(exactly = 1) { journalfoeringRepository.lagreDataMidlertidig(any()) }
+        coVerify(exactly = 1) {
+            journalfoeringRepository.lagreDataMidlertidig(
+                eq(
+                    MidlertidigLagretData(
+                        ident,
+                        navn,
+                        loginLevel,
+                        headers.toMap(),
+                        defaultObjectMapper.writeValueAsString(rapporteringsperiode),
+                        AnsvarligSystem.DP,
+                    ),
+                ),
+            )
+        }
 
         runBlocking {
             journalfoeringService.journalfoerPaaNytt()
@@ -241,7 +269,7 @@ class JournalfoeringServiceTest {
 
         // Sjekk
         coVerify(exactly = 1) { journalfoeringRepository.sletteMidlertidigLagretData("1") }
-        checkMessage(false, message.captured, rapporteringsperiode, AnsvarligSystem.ARENA)
+        checkMessage(false, message.captured, rapporteringsperiode, AnsvarligSystem.DP)
     }
 
     @Test
