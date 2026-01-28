@@ -9,7 +9,6 @@ on:
                 default: dev
                 options:
                     - dev
-                    # - prod
                 required: true
 
 jobs:
@@ -51,9 +50,19 @@ jobs:
         environment: ${{ inputs.environment }}-gcp
         steps:
             - uses: actions/checkout@v6
+            - name: Utled Unleash-miljø
+              run: |
+                if [[ "${{ inputs.environment }}" == "dev" ]]; then
+                    echo "UNLEASH_ENV=development" >> $GITHUB_ENV
+                elif [[ "${{ inputs.environment }}" == "prod" ]]; then
+                    echo "UNLEASH_ENV=production" >> $GITHUB_ENV
+                else
+                    echo "ENV=ukjent_unleash_environment" >> $GITHUB_ENV
+                fi
             - uses: nais/deploy/actions/deploy@v2
               env:
                   CLUSTER: ${{ inputs.environment }}-gcp
-                  RESOURCE: .nais/nais.yaml,.nais/alerts.yaml
-                  VAR: image=${{ needs.build.outputs.image }},githubSha=${{ github.sha }}
+                  RESOURCE: .nais/nais.yaml,.nais/alerts.yaml,.nais/unleash-apitoken.yaml
+                  VAR: image=${{ needs.build.outputs.image }},githubSha=${{ github.sha }},unleashEnv=${{ env.UNLEASH_ENV}}
                   VARS: .nais/vars-${{ inputs.environment }}.yaml
+                  PRINT_PAYLOAD: true
