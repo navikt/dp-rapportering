@@ -26,6 +26,7 @@ import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnKanSendesFra
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
+import no.nav.dagpenger.rapportering.utils.Sikkerlogg
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import no.nav.dagpenger.rapportering.utils.kontrollerAktiviteter
 import no.nav.dagpenger.rapportering.utils.kontrollerRapporteringsperiode
@@ -74,7 +75,7 @@ class RapporteringService(
         }
 
         if (rapporteringsperiode == null) {
-            logger.info { "Henter periode med id $rapporteringId fra Arena" }
+            logger.info { "Henter periode med id $rapporteringId" }
             rapporteringsperiode = hentRapporteringsperioder(ident, token)
                 ?.firstOrNull { it.id == rapporteringId }
                 ?.let { lagreEllerOppdaterPeriode(it, ident) }
@@ -109,8 +110,12 @@ class RapporteringService(
     ): List<Rapporteringsperiode>? {
         val perioder =
             if (personregisterService.hentAnsvarligSystem(ident, token) == AnsvarligSystem.ARENA) {
+                logger.info { "Henter perioder fra Arena" }
+                Sikkerlogg.info { "Henter perioder fra Arena for ident $ident" }
                 meldepliktService.hentRapporteringsperioder(ident, token)?.toRapporteringsperioder()
             } else {
+                logger.info { "Henter perioder fra dp-meldekortregister" }
+                Sikkerlogg.info { "Henter perioder fra dp-meldekortregister for ident $ident" }
                 meldekortregisterService
                     .hentRapporteringsperioder(
                         ident,
