@@ -102,5 +102,5 @@ dependencies {
     testImplementation(libs.mock.oauth2.server)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.mock)
-    testImplementation("de.redsix:pdfcompare:1.2.7")
+    testImplementation("de.redsix:pdfcompare:1.2.8")
 }
