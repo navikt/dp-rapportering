@@ -21,6 +21,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylli
 import no.nav.dagpenger.rapportering.model.toKorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.model.toPeriodeData
 import no.nav.dagpenger.rapportering.model.toRapporteringsperioder
+import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepository
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnKanSendesFra
@@ -40,6 +41,7 @@ class RapporteringService(
     private val meldepliktService: MeldepliktService,
     private val rapporteringRepository: RapporteringRepository,
     private val innsendingtidspunktRepository: InnsendingtidspunktRepository,
+    private val bekreftelsesmeldingRepository: BekreftelsesmeldingRepository,
     private val journalfoeringService: JournalfoeringService,
     private val arbeidssøkerService: ArbeidssøkerService,
     private val personregisterService: PersonregisterService,
@@ -463,7 +465,19 @@ class RapporteringService(
                             }
                         }
 
-                        arbeidssøkerService.sendBekreftelse(ident, token, loginLevel, periodeTilInnsending)
+                        val bekreftelseSkalSendesFra = periodeTilInnsending.periode.tilOgMed.plusDays(1)
+                        if (
+                            periodeTilInnsending.registrertArbeidssoker == false &&
+                            LocalDate.now() < bekreftelseSkalSendesFra
+                        ) {
+                            bekreftelsesmeldingRepository.lagreBekreftelsesmelding(
+                                periodeTilInnsending.id,
+                                ident,
+                                bekreftelseSkalSendesFra,
+                            )
+                        } else {
+                            arbeidssøkerService.sendBekreftelse(ident, token, loginLevel, periodeTilInnsending)
+                        }
                     } else {
                         // Oppdaterer perioden slik at den kan sendes inn på nytt
                         rapporteringRepository.settKanSendes(

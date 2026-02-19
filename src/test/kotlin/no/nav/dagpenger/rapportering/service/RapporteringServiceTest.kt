@@ -56,6 +56,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepository
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
@@ -72,6 +73,7 @@ class RapporteringServiceTest {
     private val meldepliktService = mockk<MeldepliktService>()
     private val rapporteringRepository = mockk<RapporteringRepository>()
     private val innsendingtidspunktRepository = mockk<InnsendingtidspunktRepository>()
+    private val bekreftelsesmeldingRepository = mockk<BekreftelsesmeldingRepository>()
     private val journalfoeringService = mockk<JournalfoeringService>()
     private val kallLoggService = mockk<KallLoggService>()
     private val arbeidssøkerService = mockk<ArbeidssøkerService>()
@@ -83,6 +85,7 @@ class RapporteringServiceTest {
             meldepliktService,
             rapporteringRepository,
             innsendingtidspunktRepository,
+            bekreftelsesmeldingRepository,
             journalfoeringService,
             arbeidssøkerService,
             personregisterService,
@@ -685,8 +688,66 @@ class RapporteringServiceTest {
     }
 
     @Test
+    fun `kan lagre data hvis registrertArbeidssoker = false og tom er lik i dag`() {
+        val tom = LocalDate.now()
+        val skalSendes = tom.plusDays(1)
+        val rapporteringsperiode =
+            lagRapporteringsperiode(
+                id = "2",
+                periode = Periode(fraOgMed = tom.minusDays(13), tilOgMed = tom),
+                registrertArbeidssoker = false,
+            )
+
+        coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.DP
+        coEvery { meldekortregisterService.sendinnRapporteringsperiode(any(), token) } returns
+            InnsendingResponse(
+                id = rapporteringsperiode.id,
+                status = "OK",
+                feil = listOf(),
+            )
+        coJustRun { bekreftelsesmeldingRepository.lagreBekreftelsesmelding(eq(rapporteringsperiode.id), eq(ident), eq(skalSendes)) }
+
+        sendInn(rapporteringsperiode, "Dagpenger", hentKunSisteArbeidssøkerperiode = false)
+
+        coVerify(exactly = 1) {
+            bekreftelsesmeldingRepository.lagreBekreftelsesmelding(
+                eq(rapporteringsperiode.id),
+                eq(ident),
+                eq(skalSendes),
+            )
+        }
+    }
+
+    @Test
+    fun `kan sende inn rapporteringsperiode hvis registrertArbeidssoker = false og tom er før i dag`() {
+        val rapporteringsperiode =
+            lagRapporteringsperiode(
+                id = "2",
+                periode = Periode(fraOgMed = LocalDate.now().minusDays(14), tilOgMed = LocalDate.now().minusDays(1)),
+                registrertArbeidssoker = false,
+            )
+
+        coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.DP
+        coEvery { meldekortregisterService.sendinnRapporteringsperiode(any(), token) } returns
+            InnsendingResponse(
+                id = rapporteringsperiode.id,
+                status = "OK",
+                feil = listOf(),
+            )
+
+        sendInn(rapporteringsperiode, "Dagpenger", hentKunSisteArbeidssøkerperiode = false)
+
+        coVerify(exactly = 1) { arbeidssøkerService.sendBekreftelse(eq(ident), eq(token), eq(4), eq(rapporteringsperiode)) }
+    }
+
+    @Test
     fun `kan override registrertArbeidssoker i rapporteringsperiode`() {
-        val rapporteringsperiode = rapporteringsperiodeListe.last().copy(registrertArbeidssoker = false)
+        val rapporteringsperiode =
+            lagRapporteringsperiode(
+                id = "2",
+                periode = Periode(fraOgMed = fom1, tilOgMed = fom1.plusDays(13)),
+                registrertArbeidssoker = false,
+            )
 
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true

@@ -26,6 +26,7 @@ import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.jobs.MidlertidigJournalføringJob
 import no.nav.dagpenger.rapportering.jobs.RapporterDatabaseMetrikkerJob
 import no.nav.dagpenger.rapportering.jobs.ScheduledTask
+import no.nav.dagpenger.rapportering.jobs.SendBekreftelsesmeldingerJob
 import no.nav.dagpenger.rapportering.jobs.SlettRapporteringsperioderJob
 import no.nav.dagpenger.rapportering.jobs.TaskExecutor
 import no.nav.dagpenger.rapportering.kafka.BekreftelseAvroSerializer
@@ -34,6 +35,7 @@ import no.nav.dagpenger.rapportering.kafka.KafkaKonfigurasjon
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.metrics.DatabaseMetrikker
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
+import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
@@ -77,6 +79,7 @@ class ApplicationBuilder(
 
     private val rapporteringRepository = RapporteringRepositoryPostgres(dataSource, actionTimer)
     private val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(dataSource, actionTimer)
+    private val bekreftelsesmeldingRepository = BekreftelsesmeldingRepositoryPostgres(dataSource, actionTimer)
     private val journalfoeringRepository = JournalfoeringRepositoryPostgres(dataSource, actionTimer)
     private val kallLoggRepository = KallLoggRepositoryPostgres(dataSource)
 
@@ -112,6 +115,7 @@ class ApplicationBuilder(
             meldepliktService,
             rapporteringRepository,
             innsendingtidspunktRepository,
+            bekreftelsesmeldingRepository,
             journalfoeringService,
             arbeidssøkerService,
             personregisterService,
@@ -120,11 +124,14 @@ class ApplicationBuilder(
 
     private val rapporterDatabaseMetrikkerJob = RapporterDatabaseMetrikkerJob(databaseMetrikker)
     private val midlertidigJournalføringJob = MidlertidigJournalføringJob(httpClient, meterRegistry)
+    private val sendBekreftelsesmeldingerJob =
+        SendBekreftelsesmeldingerJob(meterRegistry, httpClient, bekreftelsesmeldingRepository, rapporteringRepository, arbeidssøkerService)
     private val slettRapporteringsperioderJob =
         SlettRapporteringsperioderJob(meterRegistry, httpClient, rapporteringService)
     private val taskExecutor =
         TaskExecutor(
             listOf(
+                ScheduledTask(sendBekreftelsesmeldingerJob, 0, 5),
                 ScheduledTask(slettRapporteringsperioderJob, 0, 50),
             ),
         )

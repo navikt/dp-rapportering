@@ -245,6 +245,67 @@ class ArbeidssøkerServiceTest {
     }
 
     @Test
+    fun `Kan sende bekreftelse uten token og loginLevel`() {
+        val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
+
+        val kallLoggService = mockk<KallLoggService>()
+        every { kallLoggService.lagreKafkaUtKallLogg(any()) } returns 1
+        every { kallLoggService.lagreRequest(eq(1), any()) } just runs
+        every { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
+
+        val personregisterService = mockk<PersonregisterService>()
+
+        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
+        val bekreftelseSlot = slot<ProducerRecord<Long, Bekreftelse>>()
+        every { bekreftelseKafkaProdusent.send(capture(bekreftelseSlot), any()) } answers {
+            secondArg<Callback>().onCompletion(recordMetadata, null)
+            CompletableFuture.completedFuture(recordMetadata)
+        }
+
+        every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
+
+        val arbeidssoekerService =
+            ArbeidssøkerService(
+                kallLoggService = kallLoggService,
+                personregisterService = personregisterService,
+                httpClient = mockHttpClient(),
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
+                recordKeyTokenProvider = recordKeyTokenProvider,
+                oppslagTokenProvider = oppslagTokenProvider,
+            )
+
+        runBlocking {
+            arbeidssoekerService.sendBekreftelse(ident, rapporteringsperiode)
+        }
+
+        val bekreftelse = bekreftelseSlot.captured.value()
+        bekreftelse.periodeId.toString() shouldBe arbeidsregisterPeriodeId
+        bekreftelse.bekreftelsesloesning shouldBe Bekreftelsesloesning.DAGPENGER
+        val svar = bekreftelse.svar
+        svar.gjelderFra shouldBe
+            rapporteringsperiode.periode.fraOgMed
+                .atStartOfDay()
+                .atZone(ZONE_ID)
+                .toInstant()
+        svar.gjelderTil shouldBe
+            rapporteringsperiode.periode.tilOgMed
+                .plusDays(1)
+                .atStartOfDay()
+                .atZone(ZONE_ID)
+                .toInstant()
+        svar.harJobbetIDennePerioden shouldBe false
+        svar.vilFortsetteSomArbeidssoeker shouldBe false
+
+        svar.sendtInnAv.kilde shouldBe Bekreftelsesloesning.DAGPENGER.name
+        svar.sendtInnAv.aarsak shouldBe "Bruker sendte inn dagpengermeldekort"
+
+        val bruker = svar.sendtInnAv.utfoertAv
+        bruker.type shouldBe BrukerType.SLUTTBRUKER
+        bruker.id shouldBe ident
+        bruker.sikkerhetsnivaa shouldBe "azure:undefined"
+    }
+
+    @Test
     fun `Kaster Exception hvis ikke kan hente recordKey token`() {
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = false)
 
