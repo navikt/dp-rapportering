@@ -6,6 +6,7 @@ import kotliquery.sessionOf
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
+import no.nav.dagpenger.rapportering.utils.RepositoryUtils.validateRowsAffected
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import javax.sql.DataSource
 
@@ -37,10 +38,10 @@ class JournalfoeringRepositoryPostgres(
                     ) {
                         logger.warn {
                             "Journalpostdata med journalpostId $journalpostId og dokumentInfoId $dokumentInfoId og " +
-                                "rapporteringsperiodeId $rapporteringsperiodeId ble ikke l"
+                                "rapporteringsperiodeId $rapporteringsperiodeId ble ikke lagret"
                         }
                     }
-                } // .validateRowsAffected()
+                }
         }
     }
 
@@ -147,8 +148,4 @@ class JournalfoeringRepositoryPostgres(
                 )
             }
         }
-
-    private fun Int.validateRowsAffected(excepted: Int = 1) {
-        if (this != excepted) throw RuntimeException("Expected $excepted but got $this")
-    }
 }

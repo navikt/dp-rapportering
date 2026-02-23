@@ -38,6 +38,7 @@ import no.nav.paw.bekreftelse.melding.v1.vo.Svar
 import org.apache.kafka.clients.producer.Producer
 import org.apache.kafka.clients.producer.ProducerRecord
 import java.time.Instant
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class ArbeidssøkerService(
@@ -82,16 +83,30 @@ class ArbeidssøkerService(
 
     suspend fun sendBekreftelse(
         ident: String,
+        rapporteringsperiode: Rapporteringsperiode,
+    ): UUID? = sendBekreftelse(ident, null, rapporteringsperiode)
+
+    suspend fun sendBekreftelse(
+        ident: String,
         token: String,
         loginLevel: Int,
         rapporteringsperiode: Rapporteringsperiode,
     ) {
-        if (!unleash.isEnabled("send-arbeidssoekerstatus")) {
+        if (!personregisterService.erBekreftelseOvertatt(ident, token)) {
             return
         }
 
-        if (!personregisterService.erBekreftelseOvertatt(ident, token)) {
-            return
+        sendBekreftelse(ident, loginLevel, rapporteringsperiode)
+    }
+
+    private suspend fun sendBekreftelse(
+        ident: String,
+        loginLevel: Int?,
+        rapporteringsperiode: Rapporteringsperiode,
+    ): UUID? {
+        if (!unleash.isEnabled("send-arbeidssoekerstatus")) {
+            logger.info { "send-arbeidssoekerstatus er slått av. Sender ikke sp.5 til PAW." }
+            return null
         }
 
         val recordKeyResponse = hentRecordKey(ident)
@@ -99,8 +114,12 @@ class ArbeidssøkerService(
 
         if (arbeidssøkerperiode == null) {
             logger.info { "Kunne ikke hente arbeidssøkerperiode. Sender ikke sp.5 til PAW" }
-            return
+            return null
         }
+
+        val sikkerhetsnivå = if (loginLevel != null) "tokenx:Level$loginLevel" else "azure:undefined"
+
+        val id = UUIDv7.newUuid()
 
         val arbeidssøkerBekreftelse =
             Bekreftelse(
@@ -110,7 +129,7 @@ class ArbeidssøkerService(
                 Svar(
                     Metadata(
                         Instant.now().atZone(ZONE_ID).toInstant(),
-                        Bruker(BrukerType.SLUTTBRUKER, ident, "tokenx:Level$loginLevel"),
+                        Bruker(BrukerType.SLUTTBRUKER, ident, sikkerhetsnivå),
                         Bekreftelsesloesning.DAGPENGER.name,
                         "Bruker sendte inn dagpengermeldekort",
                     ),
@@ -140,6 +159,8 @@ class ArbeidssøkerService(
             }
 
             kallLoggService.lagreResponse(kallLoggId, 200, "")
+
+            return id
         } catch (e: Exception) {
             logger.error(e) { "Kunne ikke sende arbeidssøkerstatus til Kafka" }
 

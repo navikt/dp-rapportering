@@ -13,6 +13,7 @@ import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.utils.RepositoryUtils.validateRowsAffected
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import java.time.LocalDate
 import java.util.UUID
@@ -213,7 +214,7 @@ class RapporteringRepositoryPostgres(
                 if (tx.lagreRapporteringsperiode(rapporteringsperiode, ident) == 1) {
                     tx
                         .lagreDager(rapporteringsperiode.id, rapporteringsperiode.dager)
-                        .validateRowsAffected(excepted = 14)
+                        .validateRowsAffected(expected = 14)
                 }
             }
         }
@@ -307,7 +308,7 @@ class RapporteringRepositoryPostgres(
                             )
                         },
                     ).sum()
-                    .validateRowsAffected(excepted = dag.aktiviteter.size)
+                    .validateRowsAffected(expected = dag.aktiviteter.size)
             }
         }
     }
@@ -553,10 +554,6 @@ class RapporteringRepositoryPostgres(
                 ) ?: 0
             }
         }
-}
-
-private fun Int.validateRowsAffected(excepted: Int = 1) {
-    if (this != excepted) throw RuntimeException("Expected $excepted but got $this")
 }
 
 private fun Row.toRapporteringsperiode() =
