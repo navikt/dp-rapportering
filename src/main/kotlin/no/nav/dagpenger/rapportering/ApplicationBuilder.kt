@@ -131,7 +131,6 @@ class ApplicationBuilder(
     private val taskExecutor =
         TaskExecutor(
             listOf(
-                ScheduledTask(sendBekreftelsesmeldingerJob, 0, 5),
                 ScheduledTask(slettRapporteringsperioderJob, 0, 50),
             ),
         )
@@ -199,6 +198,11 @@ class ApplicationBuilder(
             .start(journalfoeringService)
             .also {
                 logger.info { "Startet jobb for midlertidig journalføring" }
+            }
+        sendBekreftelsesmeldingerJob
+            .start()
+            .also {
+                logger.info { "Startet jobb for å sende bekreftelsesmeldinger" }
             }
 
         taskExecutor.startExecution()

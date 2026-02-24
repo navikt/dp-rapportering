@@ -19,8 +19,6 @@ import no.nav.dagpenger.rapportering.utils.UUIDv7
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
 
 class SendBekreftelsesmeldingerJobTest {
     companion object {
@@ -108,19 +106,7 @@ class SendBekreftelsesmeldingerJobTest {
                 arbeidssøkerService = arbeidssøkerService,
             )
 
-        val mockedTime = LocalTime.of(1, 59, 58)
-        val mockTimeProvider = TimeProvider { LocalDateTime.now().with(mockedTime) }
-
-        val taskExecutor =
-            TaskExecutor(
-                scheduledTasks =
-                    listOf(
-                        ScheduledTask(sendBekreftelsesmeldingerJob, 2, 0),
-                    ),
-                timeProvider = mockTimeProvider,
-            )
-
-        taskExecutor.startExecution()
+        sendBekreftelsesmeldingerJob.start(0)
 
         // sendBekreftelse og oppdaterBekreftelsesmelding må kalles for rapporteringsperiodeId2
         coVerify(exactly = 1, timeout = 5000) {
