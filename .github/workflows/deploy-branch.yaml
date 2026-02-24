@@ -15,8 +15,10 @@ jobs:
     build:
         uses: ./.github/workflows/build-publish.yaml
         permissions:
-            contents: read
-            id-token: write
+          contents: "read"
+          checks: "write"
+          pull-requests: "write"
+          id-token: "write"
         secrets: inherit
         with:
             push_image: true
