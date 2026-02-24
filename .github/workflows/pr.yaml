@@ -1,0 +1,16 @@
+name: Pull Request Build
+
+on:
+    pull_request:
+
+jobs:
+    build:
+        uses: ./.github/workflows/build-publish.yaml
+        permissions:
+            contents: "read"
+            checks: "write"
+            pull-requests: "write"
+            id-token: "write"
+        secrets: inherit
+        with:
+            push_image: false # Bygger appen, men skipper push av docker image
