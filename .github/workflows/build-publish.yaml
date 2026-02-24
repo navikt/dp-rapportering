@@ -1,0 +1,52 @@
+name: Build and publish Docker image
+
+on:
+    workflow_call:
+        inputs:
+            push_image:
+                description: "Whether to push the docker image"
+                required: false
+                default: false
+                type: boolean
+        outputs:
+            image:
+                description: "The built Docker image"
+                value: ${{ jobs.build.outputs.image }}
+
+jobs:
+    build:
+        name: Build and publish Docker image
+        runs-on: ubuntu-latest
+        permissions:
+            contents: "read"
+            checks: "write"
+            pull-requests: "write"
+            id-token: "write"
+        steps:
+            - uses: actions/checkout@v6
+            - uses: actions/setup-java@v5
+              with:
+                  distribution: temurin
+                  java-version: 21
+            - uses: gradle/actions/wrapper-validation@v5
+            - uses: gradle/actions/setup-gradle@v5
+              env:
+                  DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS: compileClasspath|runtimeClasspath
+              with:
+                  gradle-version: wrapper
+                  dependency-graph: generate-and-submit
+            - name: Build
+              run: ./gradlew --configuration-cache build installDist
+
+            - name: docker-build-push
+              uses: nais/docker-build-push@v0
+              if: inputs.push_image
+              id: docker-build-push
+              with:
+                  team: teamdagpenger
+                  push_image: true # The step runs only if the condition above matches
+                  tag: ${{ github.sha }}
+                  identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+                  project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+        outputs:
+            image: ${{ steps.docker-build-push.outputs.image }}
