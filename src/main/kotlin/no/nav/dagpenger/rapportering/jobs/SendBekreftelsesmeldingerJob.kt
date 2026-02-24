@@ -10,6 +10,8 @@ import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import java.time.LocalDate
 import java.time.LocalDateTime
+import kotlin.concurrent.fixedRateTimer
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.measureTime
 
 internal class SendBekreftelsesmeldingerJob(
@@ -18,18 +20,33 @@ internal class SendBekreftelsesmeldingerJob(
     private val bekreftelsesmeldingRepository: BekreftelsesmeldingRepository,
     private val rapporteringRepository: RapporteringRepository,
     private val arbeidssøkerService: ArbeidssøkerService,
-) : Task {
+) {
     private val logger = KotlinLogging.logger { }
     private val metrikker: JobbkjoringMetrikker = JobbkjoringMetrikker(meterRegistry, this::class.simpleName!!)
 
-    override fun execute() {
+    internal fun start(
+        initialDelayMinutes: Long = 5,
+        periodeMinutes: Long = 30,
+    ) {
+        fixedRateTimer(
+            name = "Jobb for å sende bekreftelsesmeldinger",
+            daemon = true,
+            initialDelay = initialDelayMinutes.minutes.inWholeMilliseconds,
+            period = periodeMinutes.minutes.inWholeMilliseconds,
+            action = {
+                execute()
+            },
+        )
+    }
+
+    private fun execute() {
         try {
             if (!isLeader(httpClient, logger)) {
-                logger.info { "Pod er ikke leader, så jobb for å sende bekreftelsesmeldinger startes ikke" }
+                logger.info { "Pod er ikke leader, så jobb for å sende bekreftelsesmeldinger kjøres ikke" }
                 return
             }
 
-            logger.info { "Starter jobb for å sende bekreftelsesmeldinger" }
+            logger.info { "Kjører jobb for å sende bekreftelsesmeldinger" }
 
             var rowsAffected: Int
             val tidBrukt =
