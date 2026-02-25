@@ -10,6 +10,8 @@ import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import java.time.LocalDate
 import kotlin.time.Duration
 
+const val MELDESYKLUS_DAGER = 20L
+
 fun kontrollerRapporteringsperiode(periode: Rapporteringsperiode) {
     if (!periode.kanSendes) {
         throw BadRequestException("Rapporteringsperiode med id ${periode.id} kan ikke sendes")
@@ -17,7 +19,7 @@ fun kontrollerRapporteringsperiode(periode: Rapporteringsperiode) {
         throw BadRequestException(
             "Rapporteringsperiode med id ${periode.id} kan ikke sendes før kan sendes fra dato (${periode.kanSendesFra})",
         )
-    } else if (periode.registrertArbeidssoker == null) {
+    } else if (periode.registrertArbeidssoker == null && periode.periode.tilOgMed.plusDays(MELDESYKLUS_DAGER) > LocalDate.now()) {
         throw BadRequestException("Registrert arbeidssøker kan ikke være null")
     } else {
         kontrollerAktiviteter(periode.dager)

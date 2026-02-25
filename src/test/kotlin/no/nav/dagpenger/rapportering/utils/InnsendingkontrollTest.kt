@@ -32,7 +32,7 @@ class InnsendingkontrollTest {
 
     @Test
     fun `kontroll feiler hvis kanSendesFra ikke har passert`() {
-        val periode = lagRapporteringsperiode(kanSendesFra = LocalDate.now().plusDays(1))
+        val periode = lagRapporteringsperiode(tilOgMed = LocalDate.now().plusDays(2))
         shouldThrow<BadRequestException> {
             kontrollerRapporteringsperiode(periode)
         }
@@ -40,13 +40,13 @@ class InnsendingkontrollTest {
 
     @Test
     fun `kontroll feiler ikke hvis kanSendesFra har passert`() {
-        val periode = lagRapporteringsperiode(kanSendesFra = LocalDate.now().minusDays(1))
+        val periode = lagRapporteringsperiode()
         kontrollerRapporteringsperiode(periode)
     }
 
     @Test
     fun `kontroll feiler ikke hvis kanSendesFra er i dag`() {
-        val periode = lagRapporteringsperiode(kanSendesFra = LocalDate.now().minusDays(1))
+        val periode = lagRapporteringsperiode(tilOgMed = LocalDate.now().plusDays(1))
         kontrollerRapporteringsperiode(periode)
     }
 
@@ -56,6 +56,12 @@ class InnsendingkontrollTest {
         shouldThrow<BadRequestException> {
             kontrollerRapporteringsperiode(periode)
         }
+    }
+
+    @Test
+    fun `kontroll feiler ikke hvis registrertArbeidssoker er null men send inn for sent`() {
+        val periode = lagRapporteringsperiode(registrertArbeidssoker = null, tilOgMed = LocalDate.now().minusDays(MELDESYKLUS_DAGER))
+        kontrollerRapporteringsperiode(periode)
     }
 
     @Test
@@ -231,15 +237,15 @@ class InnsendingkontrollTest {
 
 fun lagRapporteringsperiode(
     kanSendes: Boolean = true,
-    kanSendesFra: LocalDate = LocalDate.now().minusDays(1),
+    tilOgMed: LocalDate = LocalDate.now(),
     registrertArbeidssoker: Boolean? = true,
     dager: List<Dag> = getDager(startDato = LocalDate.now().minusDays(13)),
 ) = Rapporteringsperiode(
     id = "1",
     type = KortType.Ordinaert,
-    periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()),
+    periode = Periode(tilOgMed.minusDays(13), tilOgMed),
     dager = dager,
-    kanSendesFra = kanSendesFra,
+    kanSendesFra = tilOgMed.minusDays(1),
     kanSendes = kanSendes,
     kanEndres = false,
     bruttoBelop = null,
