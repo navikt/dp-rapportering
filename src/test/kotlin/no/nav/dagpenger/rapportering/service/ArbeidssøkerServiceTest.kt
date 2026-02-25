@@ -123,6 +123,34 @@ class ArbeidssøkerServiceTest {
     }
 
     @Test
+    fun `Skal ikke sende bekreftelse hvis registrertArbeidssoker er null`() {
+        val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = null)
+
+        val kallLoggService = mockk<KallLoggService>()
+
+        val personregisterService = mockk<PersonregisterService>()
+        coEvery { personregisterService.erBekreftelseOvertatt(eq(ident), any()) } returns true
+
+        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
+        // send() skal ikke kalles og vi kaster Exception hvis det skjer
+        every { bekreftelseKafkaProdusent.send(any(), any()) } throws Exception()
+
+        val arbeidssoekerService =
+            ArbeidssøkerService(
+                kallLoggService = kallLoggService,
+                personregisterService = personregisterService,
+                httpClient = mockHttpClient(),
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
+                recordKeyTokenProvider = recordKeyTokenProvider,
+                oppslagTokenProvider = oppslagTokenProvider,
+            )
+
+        runBlocking {
+            arbeidssoekerService.sendBekreftelse(ident, "", loginLevel, rapporteringsperiode)
+        }
+    }
+
+    @Test
     fun `Skal ikke sende bekreftelse hvis Unleash send-arbeidssoekerstatus returnerer false`() {
         val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = true)
 
