@@ -684,13 +684,20 @@ class RapporteringServiceTest {
                 feil = listOf(),
             )
 
-        sendInn(rapporteringsperiode, "Dagpenger", hentKunSisteArbeidssøkerperiode = false)
+        sendInn(rapporteringsperiode, hentKunSisteArbeidssøkerperiode = false)
+
+        coVerify(exactly = 1) { meldekortregisterService.sendinnRapporteringsperiode(any(), token) }
+        coVerify(exactly = 0) {
+            bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any())
+        }
+        coVerify(exactly = 0) {
+            arbeidssøkerService.sendBekreftelse(any(), any(), any(), any())
+        }
     }
 
     @Test
-    fun `kan lagre data hvis registrertArbeidssoker = false og TOM-dato er lik i dag`() {
+    fun `skal ikke lagre data om bekreftelsesmelding hvis registrertArbeidssoker = false, TOM-dato er i dag og DP er ansvarlig system`() {
         val tom = LocalDate.now()
-        val skalSendes = tom.plusDays(1)
         val rapporteringsperiode =
             lagRapporteringsperiode(
                 id = "2",
@@ -705,9 +712,38 @@ class RapporteringServiceTest {
                 status = "OK",
                 feil = listOf(),
             )
+
+        sendInn(rapporteringsperiode, hentKunSisteArbeidssøkerperiode = false)
+
+        coVerify(exactly = 0) {
+            bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any())
+        }
+        coVerify(exactly = 0) {
+            arbeidssøkerService.sendBekreftelse(any(), any(), any(), any())
+        }
+    }
+
+    @Test
+    fun `kan lagre data om bekreftelsesmelding hvis registrertArbeidssoker = false, TOM-dato er i dag og Arena er ansvarlig system`() {
+        val tom = LocalDate.now()
+        val skalSendes = tom.plusDays(1)
+        val rapporteringsperiode =
+            lagRapporteringsperiode(
+                id = "2",
+                periode = Periode(fraOgMed = tom.minusDays(13), tilOgMed = tom),
+                registrertArbeidssoker = false,
+            )
+
+        coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
+        coEvery { meldepliktService.sendinnRapporteringsperiode(any(), token) } returns
+            InnsendingResponse(
+                id = rapporteringsperiode.id,
+                status = "OK",
+                feil = listOf(),
+            )
         coJustRun { bekreftelsesmeldingRepository.lagreBekreftelsesmelding(eq(rapporteringsperiode.id), eq(ident), eq(skalSendes)) }
 
-        sendInn(rapporteringsperiode, "Dagpenger", hentKunSisteArbeidssøkerperiode = false)
+        sendInn(rapporteringsperiode, hentKunSisteArbeidssøkerperiode = false)
 
         coVerify(exactly = 1) {
             bekreftelsesmeldingRepository.lagreBekreftelsesmelding(
@@ -722,7 +758,7 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `kan sende inn rapporteringsperiode hvis registrertArbeidssoker = false og TOM-dato er før i dag`() {
+    fun `skal ikke sende inn rapporteringsperiode hvis registrertArbeidssoker = false, TOM-dato er før i dag og DP er ansvarlig system`() {
         val rapporteringsperiode =
             lagRapporteringsperiode(
                 id = "2",
@@ -738,7 +774,30 @@ class RapporteringServiceTest {
                 feil = listOf(),
             )
 
-        sendInn(rapporteringsperiode, "Dagpenger", hentKunSisteArbeidssøkerperiode = false)
+        sendInn(rapporteringsperiode, hentKunSisteArbeidssøkerperiode = false)
+
+        coVerify(exactly = 0) { arbeidssøkerService.sendBekreftelse(any(), any(), any(), any()) }
+        coVerify(exactly = 0) { bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any()) }
+    }
+
+    @Test
+    fun `kan sende inn rapporteringsperiode hvis registrertArbeidssoker = false, TOM-dato er før i dag og Arena er ansvarlig system`() {
+        val rapporteringsperiode =
+            lagRapporteringsperiode(
+                id = "2",
+                periode = Periode(fraOgMed = LocalDate.now().minusDays(14), tilOgMed = LocalDate.now().minusDays(1)),
+                registrertArbeidssoker = false,
+            )
+
+        coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
+        coEvery { meldepliktService.sendinnRapporteringsperiode(any(), token) } returns
+            InnsendingResponse(
+                id = rapporteringsperiode.id,
+                status = "OK",
+                feil = listOf(),
+            )
+
+        sendInn(rapporteringsperiode, hentKunSisteArbeidssøkerperiode = false)
 
         coVerify(exactly = 1) { arbeidssøkerService.sendBekreftelse(eq(ident), eq(token), eq(4), eq(rapporteringsperiode)) }
         coVerify(exactly = 0) { bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any()) }
@@ -1137,7 +1196,6 @@ class RapporteringServiceTest {
 
     private fun sendInn(
         rapporteringsperiode: Rapporteringsperiode,
-        ansvarligSystem: String = "Arena",
         hentKunSisteArbeidssøkerperiode: Boolean = true,
     ) {
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()

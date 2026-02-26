@@ -465,18 +465,20 @@ class RapporteringService(
                             }
                         }
 
-                        val bekreftelseSkalSendesFra = periodeTilInnsending.periode.tilOgMed.plusDays(1)
-                        if (
-                            periodeTilInnsending.registrertArbeidssoker == false &&
-                            LocalDate.now() < bekreftelseSkalSendesFra
-                        ) {
-                            bekreftelsesmeldingRepository.lagreBekreftelsesmelding(
-                                periodeTilInnsending.id,
-                                ident,
-                                bekreftelseSkalSendesFra,
-                            )
-                        } else {
-                            arbeidssøkerService.sendBekreftelse(ident, token, loginLevel, periodeTilInnsending)
+                        if (ansvarligSystem == AnsvarligSystem.ARENA) {
+                            val bekreftelseSkalSendesFra = periodeTilInnsending.periode.tilOgMed.plusDays(1)
+                            if (
+                                periodeTilInnsending.registrertArbeidssoker == false &&
+                                LocalDate.now() < bekreftelseSkalSendesFra
+                            ) {
+                                bekreftelsesmeldingRepository.lagreBekreftelsesmelding(
+                                    periodeTilInnsending.id,
+                                    ident,
+                                    bekreftelseSkalSendesFra,
+                                )
+                            } else {
+                                arbeidssøkerService.sendBekreftelse(ident, token, loginLevel, periodeTilInnsending)
+                            }
                         }
                     } else {
                         // Oppdaterer perioden slik at den kan sendes inn på nytt
