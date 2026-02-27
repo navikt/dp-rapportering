@@ -18,6 +18,7 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.runs
 import io.mockk.slot
+import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
@@ -132,8 +133,6 @@ class ArbeidssøkerServiceTest {
         coEvery { personregisterService.erBekreftelseOvertatt(eq(ident), any()) } returns true
 
         val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
-        // send() skal ikke kalles og vi kaster Exception hvis det skjer
-        every { bekreftelseKafkaProdusent.send(any(), any()) } throws Exception()
 
         val arbeidssoekerService =
             ArbeidssøkerService(
@@ -148,6 +147,8 @@ class ArbeidssøkerServiceTest {
         runBlocking {
             arbeidssoekerService.sendBekreftelse(ident, "", loginLevel, rapporteringsperiode)
         }
+
+        verify(exactly = 0) { bekreftelseKafkaProdusent.send(any(), any()) }
     }
 
     @Test

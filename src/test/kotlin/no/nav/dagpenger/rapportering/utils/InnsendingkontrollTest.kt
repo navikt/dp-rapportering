@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.utils
 
+import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.assertions.throwables.shouldThrow
 import io.ktor.server.plugins.BadRequestException
 import no.nav.dagpenger.rapportering.model.Aktivitet
@@ -32,7 +33,7 @@ class InnsendingkontrollTest {
 
     @Test
     fun `kontroll feiler hvis kanSendesFra ikke har passert`() {
-        val periode = lagRapporteringsperiode(tilOgMed = LocalDate.now().plusDays(2))
+        val periode = lagRapporteringsperiode(kanSendesFra = LocalDate.now().plusDays(1))
         shouldThrow<BadRequestException> {
             kontrollerRapporteringsperiode(periode)
         }
@@ -40,18 +41,18 @@ class InnsendingkontrollTest {
 
     @Test
     fun `kontroll feiler ikke hvis kanSendesFra har passert`() {
-        val periode = lagRapporteringsperiode()
+        val periode = lagRapporteringsperiode(kanSendesFra = LocalDate.now().minusDays(1))
         kontrollerRapporteringsperiode(periode)
     }
 
     @Test
     fun `kontroll feiler ikke hvis kanSendesFra er i dag`() {
-        val periode = lagRapporteringsperiode(tilOgMed = LocalDate.now().plusDays(1))
+        val periode = lagRapporteringsperiode(kanSendesFra = LocalDate.now())
         kontrollerRapporteringsperiode(periode)
     }
 
     @Test
-    fun `kontroll feiler hvis registrertArbeidssoker er null`() {
+    fun `kontroll feiler hvis registrertArbeidssoker er null og sendt inn før MELDESYKLUS_DAGER utløper`() {
         val periode = lagRapporteringsperiode(registrertArbeidssoker = null)
         shouldThrow<BadRequestException> {
             kontrollerRapporteringsperiode(periode)
@@ -59,9 +60,21 @@ class InnsendingkontrollTest {
     }
 
     @Test
-    fun `kontroll feiler ikke hvis registrertArbeidssoker er null men send inn for sent`() {
-        val periode = lagRapporteringsperiode(registrertArbeidssoker = null, tilOgMed = LocalDate.now().minusDays(MELDESYKLUS_DAGER))
-        kontrollerRapporteringsperiode(periode)
+    fun `kontroll feiler hvis registrertArbeidssoker er null og sendt inn på grensen av MELDESYKLUS_DAGER`() {
+        val kanSendesFra = LocalDate.now().minusDays(MELDESYKLUS_DAGER + 1)
+        val periode = lagRapporteringsperiode(registrertArbeidssoker = null, kanSendesFra = kanSendesFra)
+        shouldThrow<BadRequestException> {
+            kontrollerRapporteringsperiode(periode)
+        }
+    }
+
+    @Test
+    fun `kontroll feiler ikke hvis registrertArbeidssoker er null men sendt inn etter MELDESYKLUS_DAGER`() {
+        val kanSendesFra = LocalDate.now().minusDays(MELDESYKLUS_DAGER + 2)
+        val periode = lagRapporteringsperiode(registrertArbeidssoker = null, kanSendesFra = kanSendesFra)
+        shouldNotThrow<Exception> {
+            kontrollerRapporteringsperiode(periode)
+        }
     }
 
     @Test
@@ -237,15 +250,15 @@ class InnsendingkontrollTest {
 
 fun lagRapporteringsperiode(
     kanSendes: Boolean = true,
-    tilOgMed: LocalDate = LocalDate.now(),
+    kanSendesFra: LocalDate = LocalDate.now().minusDays(1),
     registrertArbeidssoker: Boolean? = true,
-    dager: List<Dag> = getDager(startDato = LocalDate.now().minusDays(13)),
+    dager: List<Dag> = getDager(startDato = kanSendesFra.minusDays(12)),
 ) = Rapporteringsperiode(
     id = "1",
     type = KortType.Ordinaert,
-    periode = Periode(tilOgMed.minusDays(13), tilOgMed),
+    periode = Periode(kanSendesFra.minusDays(12), kanSendesFra.plusDays(1)),
     dager = dager,
-    kanSendesFra = tilOgMed.minusDays(1),
+    kanSendesFra = kanSendesFra,
     kanSendes = kanSendes,
     kanEndres = false,
     bruttoBelop = null,
