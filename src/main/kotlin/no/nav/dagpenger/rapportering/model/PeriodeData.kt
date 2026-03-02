@@ -26,7 +26,7 @@ data class PeriodeData(
     val bruttoBelop: Double? = null,
     val begrunnelse: String? = null,
     val registrertArbeidssoker: Boolean? = null,
-    val meldedato: LocalDate? = innsendtTidspunkt?.toLocalDate(),
+    val meldedato: LocalDate? = null,
 ) {
     enum class OpprettetAv {
         Arena,

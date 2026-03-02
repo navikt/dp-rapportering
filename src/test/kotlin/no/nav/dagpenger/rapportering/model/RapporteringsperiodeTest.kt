@@ -90,6 +90,6 @@ class RapporteringsperiodeTest {
         periodeData.bruttoBelop shouldBe null
         periodeData.begrunnelse shouldBe "Begrunnelse"
         periodeData.registrertArbeidssoker shouldBe true
-        periodeData.meldedato shouldBe LocalDate.now()
+        periodeData.meldedato shouldBe null
     }
 }
