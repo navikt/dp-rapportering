@@ -108,6 +108,7 @@ fun rapporteringsperiodeFor(
     originalId: String? = null,
     rapporteringstype: String? = null,
     mottattDato: LocalDate? = null,
+    sisteFristForTrekk: LocalDate = tilOgMed.plusDays(8),
 ) = Rapporteringsperiode(
     id = id,
     type = KortType.fromCode(type),
@@ -121,6 +122,7 @@ fun rapporteringsperiodeFor(
             )
         },
     kanSendesFra = tilOgMed.minusDays(1),
+    sisteFristForTrekk = sisteFristForTrekk,
     kanSendes = kanSendes,
     kanEndres = kanEndres,
     status = status,

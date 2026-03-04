@@ -90,6 +90,7 @@ fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
         periode = Periode(fraOgMed = this.periode.fraOgMed, tilOgMed = this.periode.tilOgMed),
         dager = this.dager.map { it.toDag() },
         kanSendesFra = this.kanSendesFra,
+        sisteFristForTrekk = this.periode.tilOgMed.plusDays(8),
         kanSendes = this.kanSendes,
         kanEndres = this.kanEndres,
         bruttoBelop = this.bruttoBelop,

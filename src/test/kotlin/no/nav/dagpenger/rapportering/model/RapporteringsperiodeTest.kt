@@ -81,6 +81,7 @@ class RapporteringsperiodeTest {
             periodeData.dager[it].meldt shouldBe false
         }
         periodeData.kanSendesFra shouldBe periode.tilOgMed.minusDays(2)
+        periodeData.sisteFristForTrekk shouldBe periode.tilOgMed.plusDays(8)
         periodeData.opprettetAv shouldBe OpprettetAv.Dagpenger
         periodeData.kilde shouldBe Kilde(PeriodeData.Rolle.Bruker, ident)
         periodeData.type shouldBe Type.Korrigert
