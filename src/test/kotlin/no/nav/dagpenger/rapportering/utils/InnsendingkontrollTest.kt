@@ -240,6 +240,7 @@ fun lagRapporteringsperiode(
     periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()),
     dager = dager,
     kanSendesFra = kanSendesFra,
+    sisteFristForTrekk = LocalDate.now().plusDays(8),
     kanSendes = kanSendes,
     kanEndres = false,
     bruttoBelop = null,

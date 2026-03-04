@@ -28,7 +28,6 @@ class MeldekortregisterServiceTest {
     private val meldekortregisterUrl = "http://meldekortregisterUrl"
     private val token = "gylidg_token"
     private val ident = "12345678903"
-    private val rapporteringId = "1806478069"
 
     companion object {
         @BeforeAll
@@ -73,7 +72,8 @@ class MeldekortregisterServiceTest {
                     ident = "01020312345",
                     periode = periode1,
                     dager = emptyList(),
-                    kanSendesFra = LocalDate.now(),
+                    kanSendesFra = periode1.tilOgMed.minusDays(1),
+                    sisteFristForTrekk = periode1.tilOgMed.plusDays(8),
                     opprettetAv = OpprettetAv.Dagpenger,
                     kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312345"),
                     type = Type.Ordinaert,
@@ -101,7 +101,8 @@ class MeldekortregisterServiceTest {
                                 1,
                             ),
                         ),
-                    kanSendesFra = LocalDate.now(),
+                    kanSendesFra = periode2.tilOgMed.minusDays(1),
+                    sisteFristForTrekk = periode2.tilOgMed.plusDays(8),
                     opprettetAv = OpprettetAv.Arena,
                     kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312346"),
                     type = Type.Korrigert,
@@ -170,7 +171,8 @@ class MeldekortregisterServiceTest {
                                 dagIndex = i,
                             )
                         },
-                kanSendesFra = LocalDate.now(),
+                kanSendesFra = periode.tilOgMed.minusDays(1),
+                sisteFristForTrekk = periode.tilOgMed.plusDays(8),
                 opprettetAv = OpprettetAv.Dagpenger,
                 kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312345"),
                 type = Type.Korrigert,
@@ -227,7 +229,8 @@ class MeldekortregisterServiceTest {
                                 dagIndex = i,
                             )
                         },
-                kanSendesFra = LocalDate.now(),
+                kanSendesFra = periode.tilOgMed.minusDays(1),
+                sisteFristForTrekk = periode.tilOgMed.plusDays(8),
                 opprettetAv = OpprettetAv.Dagpenger,
                 kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312345"),
                 type = Type.Korrigert,

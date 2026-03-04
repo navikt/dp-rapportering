@@ -234,8 +234,8 @@ class RapporteringRepositoryPostgres(
             queryOf(
                 """
                 INSERT INTO rapporteringsperiode 
-                (id, type, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id, rapporteringstype) 
-                VALUES (:id, :type, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id, :rapporteringstype)
+                (id, type, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id, rapporteringstype, siste_frist_for_trekk) 
+                VALUES (:id, :type, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id, :rapporteringstype, :siste_frist_for_trekk)
                 ON CONFLICT DO NOTHING
                 """.trimIndent(),
                 mapOf(
@@ -257,6 +257,7 @@ class RapporteringRepositoryPostgres(
                     "tom" to rapporteringsperiode.periode.tilOgMed,
                     "original_id" to rapporteringsperiode.originalId,
                     "rapporteringstype" to rapporteringsperiode.rapporteringstype,
+                    "siste_frist_for_trekk" to rapporteringsperiode.sisteFristForTrekk,
                 ),
             ).asUpdate,
         )
@@ -561,6 +562,7 @@ private fun Row.toRapporteringsperiode() =
         id = string("id"),
         type = KortType.fromCode(stringOrNull("type") ?: "09"),
         kanSendesFra = localDate("kan_sendes_fra"),
+        sisteFristForTrekk = localDate("siste_frist_for_trekk"),
         kanSendes = boolean("kan_sendes"),
         kanEndres = boolean("kan_endres"),
         bruttoBelop = doubleOrNull("brutto_belop"),

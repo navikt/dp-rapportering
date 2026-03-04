@@ -219,6 +219,7 @@ class PeriodeDataTest {
                     periode = periode1,
                     dager = emptyList(),
                     kanSendesFra = LocalDate.now(),
+                    sisteFristForTrekk = periode1.tilOgMed.plusDays(8),
                     opprettetAv = OpprettetAv.Dagpenger,
                     kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312345"),
                     type = Type.Ordinaert,
@@ -248,6 +249,7 @@ class PeriodeDataTest {
                             ),
                         ),
                     kanSendesFra = LocalDate.now(),
+                    sisteFristForTrekk = periode2.tilOgMed.plusDays(8),
                     opprettetAv = OpprettetAv.Arena,
                     kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312346"),
                     type = Type.Korrigert,
@@ -268,6 +270,7 @@ class PeriodeDataTest {
         rapporteringsperioder[0].periode shouldBe periode1
         rapporteringsperioder[0].dager shouldBe emptyList()
         rapporteringsperioder[0].kanSendesFra shouldBe LocalDate.now()
+        rapporteringsperioder[0].sisteFristForTrekk shouldBe periode1.tilOgMed.plusDays(8)
         rapporteringsperioder[0].kanSendes shouldBe true
         rapporteringsperioder[0].kanEndres shouldBe true
         rapporteringsperioder[0].bruttoBelop shouldBe null
@@ -289,6 +292,7 @@ class PeriodeDataTest {
         rapporteringsperioder[1].dager[1].dato shouldBe LocalDate.now().plusDays(1)
         rapporteringsperioder[1].dager[1].aktiviteter[0] shouldBe aktivitet2
         rapporteringsperioder[1].kanSendesFra shouldBe LocalDate.now()
+        rapporteringsperioder[1].sisteFristForTrekk shouldBe periode2.tilOgMed.plusDays(8)
         rapporteringsperioder[1].kanSendes shouldBe false
         rapporteringsperioder[1].kanEndres shouldBe false
         rapporteringsperioder[1].bruttoBelop shouldBe 123.0

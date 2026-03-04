@@ -1,8 +1,6 @@
 package no.nav.dagpenger.rapportering.model
 
-import com.fasterxml.jackson.module.kotlin.convertValue
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
 import java.time.LocalDate
@@ -16,6 +14,7 @@ data class PeriodeData(
     val periode: Periode,
     val dager: List<PeriodeDag>,
     val kanSendesFra: LocalDate,
+    val sisteFristForTrekk: LocalDate,
     val opprettetAv: OpprettetAv,
     val kilde: Kilde?,
     val type: Type,
@@ -57,8 +56,6 @@ data class PeriodeData(
     )
 }
 
-fun PeriodeData.toMap() = defaultObjectMapper.convertValue<Map<String, Any>>(this)
-
 fun List<PeriodeData>?.toRapporteringsperioder(): List<Rapporteringsperiode> =
     this?.map {
         try {
@@ -86,6 +83,7 @@ fun PeriodeData.toRapporteringsperiode(): Rapporteringsperiode {
         periode = Periode(fraOgMed = this.periode.fraOgMed, tilOgMed = this.periode.tilOgMed),
         dager = this.dager.map { it.toDag() },
         kanSendesFra = this.kanSendesFra,
+        sisteFristForTrekk = this.sisteFristForTrekk,
         kanSendes = kanSendesInn(this.kanSendesFra, status, true),
         kanEndres = this.originalMeldekortId == null,
         bruttoBelop = this.bruttoBelop,
