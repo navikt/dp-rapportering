@@ -57,8 +57,8 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepository
-import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
+import no.nav.dagpenger.rapportering.repository.TidspunktjusteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import no.nav.dagpenger.rapportering.utils.januar
@@ -72,7 +72,7 @@ import java.util.UUID
 class RapporteringServiceTest {
     private val meldepliktService = mockk<MeldepliktService>()
     private val rapporteringRepository = mockk<RapporteringRepository>()
-    private val innsendingtidspunktRepository = mockk<InnsendingtidspunktRepository>()
+    private val tidspunktjusteringRepository = mockk<TidspunktjusteringRepository>()
     private val bekreftelsesmeldingRepository = mockk<BekreftelsesmeldingRepository>()
     private val journalfoeringService = mockk<JournalfoeringService>()
     private val kallLoggService = mockk<KallLoggService>()
@@ -84,7 +84,7 @@ class RapporteringServiceTest {
         RapporteringService(
             meldepliktService,
             rapporteringRepository,
-            innsendingtidspunktRepository,
+            tidspunktjusteringRepository,
             bekreftelsesmeldingRepository,
             journalfoeringService,
             arbeidssøkerService,
@@ -180,7 +180,8 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
-        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
         val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode("2", ident, token, hentOriginal = true) }
 
@@ -244,7 +245,7 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns rapporteringsperiodeFraDb
         coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
-        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
 
         val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode("2", ident, token, hentOriginal = true) }
 
@@ -270,8 +271,9 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
-        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
-        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt("201803") } returns -2
+        coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt("201803") } returns -2
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
         val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode("2", ident, token, hentOriginal = true) }
 
@@ -308,7 +310,7 @@ class RapporteringServiceTest {
             )
 
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns rapporteringsperiodeFraDb
-        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
 
         val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode("2", ident, token, hentOriginal = false) }
 
@@ -333,7 +335,7 @@ class RapporteringServiceTest {
         coEvery { meldepliktService.hentRapporteringsperioder(any(), any()) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
-        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
@@ -354,8 +356,8 @@ class RapporteringServiceTest {
         coEvery { meldepliktService.hentRapporteringsperioder(any(), any()) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
-        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
-        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(finnPeriodeKode(fom3)) } returns -14
+        coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(finnPeriodeKode(fom3)) } returns -14
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
@@ -380,7 +382,7 @@ class RapporteringServiceTest {
         coEvery { meldekortregisterService.hentRapporteringsperioder(any(), any(), MeldekortStatus.TilUtfylling) } returns
             meldekortregisterRapporteringsperiodeListe
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
-        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
@@ -402,7 +404,7 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentRapporteringsperiode("2", ident) } returns null
         coEvery { rapporteringRepository.hentRapporteringsperiode("3", ident) } returns null
         coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
-        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
@@ -437,7 +439,8 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
-        coEvery { innsendingtidspunktRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
         runBlocking { rapporteringService.startUtfylling("1", ident, token) }
 
@@ -501,6 +504,7 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(ident) } returns emptyList()
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
         coEvery { rapporteringRepository.finnesRapporteringsperiode(any(), any()) } returns true andThen true andThen false
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
         val response = runBlocking { rapporteringService.startEndring("123", ident, token) }
 
@@ -1100,13 +1104,50 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `lagreEllerOppdaterPeriode lagrer perioden hvis den ikke finnes i databasen`() {
+    fun `lagreEllerOppdaterPeriode lagrer perioden hvis den ikke finnes i databasen uten endringer`() {
+        val rapporteringsperiode = rapporteringsperiodeListe.first()
+        val periodeKode = finnPeriodeKode(rapporteringsperiode.periode.fraOgMed)
+
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(eq(periodeKode)) } returns null
 
-        runBlocking { rapporteringService.lagreEllerOppdaterPeriode(rapporteringsperiodeListe.first(), ident) }
+        runBlocking { rapporteringService.lagreEllerOppdaterPeriode(rapporteringsperiode, ident) }
 
-        coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(eq(rapporteringsperiode), eq(ident)) }
+    }
+
+    @Test
+    fun `lagreEllerOppdaterPeriode lagrer perioden hvis den ikke finnes i databasen og kan justere sisteFristForTrekk om nødvendig`() {
+        val rapporteringsperiode = rapporteringsperiodeListe.first()
+        val periodeKode = finnPeriodeKode(rapporteringsperiode.periode.fraOgMed)
+
+        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
+        coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(eq(periodeKode)) } returns 10L
+
+        runBlocking { rapporteringService.lagreEllerOppdaterPeriode(rapporteringsperiode, ident) }
+
+        val slot = slot<Rapporteringsperiode>()
+        coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(capture(slot), eq(ident)) }
+
+        val lagretRapporteringsperiode = slot.captured
+        lagretRapporteringsperiode.id shouldBe rapporteringsperiode.id
+        lagretRapporteringsperiode.type shouldBe rapporteringsperiode.type
+        lagretRapporteringsperiode.periode shouldBe rapporteringsperiode.periode
+        lagretRapporteringsperiode.dager.forEachIndexed { dagIndex, dag -> dag shouldBe rapporteringsperiode.dager[dagIndex] }
+        lagretRapporteringsperiode.kanSendesFra shouldBe rapporteringsperiode.kanSendesFra
+        lagretRapporteringsperiode.sisteFristForTrekk shouldBe rapporteringsperiode.periode.tilOgMed.plusDays(10)
+        lagretRapporteringsperiode.kanSendes shouldBe rapporteringsperiode.kanSendes
+        lagretRapporteringsperiode.kanEndres shouldBe rapporteringsperiode.kanEndres
+        lagretRapporteringsperiode.bruttoBelop shouldBe rapporteringsperiode.bruttoBelop
+        lagretRapporteringsperiode.begrunnelseEndring shouldBe rapporteringsperiode.begrunnelseEndring
+        lagretRapporteringsperiode.status shouldBe rapporteringsperiode.status
+        lagretRapporteringsperiode.mottattDato shouldBe rapporteringsperiode.mottattDato
+        lagretRapporteringsperiode.registrertArbeidssoker shouldBe rapporteringsperiode.registrertArbeidssoker
+        lagretRapporteringsperiode.originalId shouldBe rapporteringsperiode.originalId
+        lagretRapporteringsperiode.rapporteringstype shouldBe rapporteringsperiode.rapporteringstype
+        lagretRapporteringsperiode.html shouldBe rapporteringsperiode.html
     }
 
     @Test

@@ -22,8 +22,8 @@ import no.nav.dagpenger.rapportering.model.toKorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.model.toPeriodeData
 import no.nav.dagpenger.rapportering.model.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepository
-import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
+import no.nav.dagpenger.rapportering.repository.TidspunktjusteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnKanSendesFra
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
@@ -40,7 +40,7 @@ private val logger = KotlinLogging.logger {}
 class RapporteringService(
     private val meldepliktService: MeldepliktService,
     private val rapporteringRepository: RapporteringRepository,
-    private val innsendingtidspunktRepository: InnsendingtidspunktRepository,
+    private val tidspunktjusteringRepository: TidspunktjusteringRepository,
     private val bekreftelsesmeldingRepository: BekreftelsesmeldingRepository,
     private val journalfoeringService: JournalfoeringService,
     private val arbeidssøkerService: ArbeidssøkerService,
@@ -146,7 +146,7 @@ class RapporteringService(
             val kanSendesFra =
                 finnKanSendesFra(
                     tilOgMed = it.periode.tilOgMed,
-                    innsendingtidspunktRepository.hentInnsendingtidspunkt(
+                    tidspunktjusteringRepository.hentInnsendingtidspunkt(
                         periodeKode = finnPeriodeKode(fraOgMed = it.periode.fraOgMed),
                     ),
                 )
@@ -307,8 +307,13 @@ class RapporteringService(
     ): Rapporteringsperiode {
         val periodeFraDb = rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
         return if (periodeFraDb == null) {
-            rapporteringRepository.lagreRapporteringsperiodeOgDager(periode, ident)
-            periode
+            val ukeKode = finnPeriodeKode(periode.periode.fraOgMed)
+            val antallDagerFraPeriodeSlutt = tidspunktjusteringRepository.hentSisteFristForTrekkJustering(ukeKode) ?: 8L
+            val justertSisteFristForTrekk = periode.periode.tilOgMed.plusDays(antallDagerFraPeriodeSlutt)
+            val periodeMedJustertSisteFristForTrekk = periode.copy(sisteFristForTrekk = justertSisteFristForTrekk)
+
+            rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeMedJustertSisteFristForTrekk, ident)
+            periodeMedJustertSisteFristForTrekk
         } else {
             if (periodeFraDb.status.ordinal <= periode.status.ordinal) {
                 rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
