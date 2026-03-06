@@ -33,7 +33,6 @@ import no.nav.dagpenger.rapportering.config.statusPagesConfig
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepositoryPostgres
-import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
@@ -41,6 +40,7 @@ import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.runMigration
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
+import no.nav.dagpenger.rapportering.repository.TidspunktjusteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
@@ -193,8 +193,8 @@ open class ApiTestSetup {
             val meldepliktService = MeldepliktService(meldepliktConnector)
             val rapporteringRepository =
                 RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
-            val innsendingtidspunktRepository =
-                InnsendingtidspunktRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
+            val tidspunktjusteringRepository =
+                TidspunktjusteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val bekreftelsesmeldingRepository =
                 BekreftelsesmeldingRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             journalfoeringRepository =
@@ -239,7 +239,7 @@ open class ApiTestSetup {
                 RapporteringService(
                     meldepliktService,
                     rapporteringRepository,
-                    innsendingtidspunktRepository,
+                    tidspunktjusteringRepository,
                     bekreftelsesmeldingRepository,
                     journalfoeringService,
                     arbeidssoekerService,

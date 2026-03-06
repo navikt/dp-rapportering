@@ -36,12 +36,12 @@ import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.metrics.DatabaseMetrikker
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepositoryPostgres
-import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.preparePartitions
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
+import no.nav.dagpenger.rapportering.repository.TidspunktjusteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
@@ -78,7 +78,7 @@ class ApplicationBuilder(
     private val personregisterConnector = PersonregisterConnector(httpClient = httpClient, actionTimer = actionTimer)
 
     private val rapporteringRepository = RapporteringRepositoryPostgres(dataSource, actionTimer)
-    private val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(dataSource, actionTimer)
+    private val tidspunktjusteringRepository = TidspunktjusteringRepositoryPostgres(dataSource, actionTimer)
     private val bekreftelsesmeldingRepository = BekreftelsesmeldingRepositoryPostgres(dataSource, actionTimer)
     private val journalfoeringRepository = JournalfoeringRepositoryPostgres(dataSource, actionTimer)
     private val kallLoggRepository = KallLoggRepositoryPostgres(dataSource)
@@ -114,7 +114,7 @@ class ApplicationBuilder(
         RapporteringService(
             meldepliktService,
             rapporteringRepository,
-            innsendingtidspunktRepository,
+            tidspunktjusteringRepository,
             bekreftelsesmeldingRepository,
             journalfoeringService,
             arbeidssøkerService,
