@@ -7,6 +7,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Fravaer
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.erEndring
 import java.time.LocalDate
 import kotlin.time.Duration
 
@@ -21,6 +22,10 @@ fun kontrollerRapporteringsperiode(periode: Rapporteringsperiode) {
         throw BadRequestException("Registrert arbeidssøker kan ikke være null")
     } else {
         kontrollerAktiviteter(periode.dager)
+    }
+
+    if (periode.erEndring() && periode.begrunnelseEndring.isNullOrBlank()) {
+        throw BadRequestException("Endret rapporteringsperiode med id ${periode.id} kan ikke sendes. Begrunnelse for endring må oppgis")
     }
 }
 
