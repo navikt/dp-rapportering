@@ -18,6 +18,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toKorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.model.toPeriodeData
 import no.nav.dagpenger.rapportering.model.toRapporteringsperioder
@@ -380,6 +381,8 @@ class RapporteringService(
             throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
         }
 
+        kontrollerRapporteringsperiode(rapporteringsperiode)
+
         // Oppdaterer perioden slik at den ikke kan sendes inn på nytt
         rapporteringRepository.settKanSendes(
             rapporteringId = rapporteringsperiode.id,
@@ -387,41 +390,33 @@ class RapporteringService(
             kanSendes = false,
         )
 
-        kontrollerRapporteringsperiode(rapporteringsperiode)
-
         var periodeTilInnsending = rapporteringsperiode
         val ansvarligSystem = personregisterService.hentAnsvarligSystem(ident, token)
 
-        if (rapporteringsperiode.status == TilUtfylling && rapporteringsperiode.originalId != null) {
-            if (rapporteringsperiode.begrunnelseEndring.isNullOrBlank()) {
-                throw BadRequestException(
-                    "Endret rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes. Begrunnelse for endring må oppgis",
-                )
-            } else {
-                val endringId = hentEndringId(ansvarligSystem, rapporteringsperiode.originalId, token)
+        if (rapporteringsperiode.erEndring()) {
+            val endringId = hentEndringId(ansvarligSystem, rapporteringsperiode.originalId!!, token)
 
-                // Oppretter nye ID for aktiviteter slik at vi kan lagre både original og midlertidig periode
-                val dager =
-                    rapporteringsperiode
-                        .dager
-                        .map { dag ->
-                            Dag(
-                                dag.dato,
-                                dag.aktiviteter.map { aktivitet -> Aktivitet(UUIDv7.newUuid(), aktivitet.type, aktivitet.timer) },
-                                dag.dagIndex,
-                            )
-                        }
-
-                periodeTilInnsending =
-                    if (endringId != null) {
-                        rapporteringsperiode.copy(id = endringId, dager = dager)
-                    } else {
-                        rapporteringsperiode.copy(dager = dager)
+            // Oppretter nye ID for aktiviteter slik at vi kan lagre både original og midlertidig periode
+            val dager =
+                rapporteringsperiode
+                    .dager
+                    .map { dag ->
+                        Dag(
+                            dag.dato,
+                            dag.aktiviteter.map { aktivitet -> Aktivitet(UUIDv7.newUuid(), aktivitet.type, aktivitet.timer) },
+                            dag.dagIndex,
+                        )
                     }
-                rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Midlertidig)
+
+            periodeTilInnsending =
                 if (endringId != null) {
-                    rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending, ident)
+                    rapporteringsperiode.copy(id = endringId, dager = dager)
+                } else {
+                    rapporteringsperiode.copy(dager = dager)
                 }
+            rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Midlertidig)
+            if (endringId != null) {
+                rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending, ident)
             }
         }
 

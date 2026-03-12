@@ -220,6 +220,41 @@ class RapporteringApiTest : ApiTestSetup() {
         }
 
     @Test
+    fun `sender ikke inn med duplikate i aktiviteter`() =
+        setUpTestApplication {
+            externalServices {
+                meldepliktAdapter()
+                pdfGenerator()
+                arbeidssokerregisterRecordKey()
+                arbeidssokerregisterOppslag()
+            }
+
+            val aktivitet1 = Aktivitet(UUIDv7.newUuid(), AktivitetsType.Arbeid, "PT7H30M")
+            val aktivitet2 = Aktivitet(UUIDv7.newUuid(), AktivitetsType.Arbeid, "PT7H30M")
+            val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = true)
+            val dager = rapporteringsperiode.dager.toMutableList()
+            dager[0] = dager[0].copy(aktiviteter = listOf(aktivitet1, aktivitet2))
+
+            // Lagrer perioden i databasen
+            client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
+
+            // Sender inn
+            with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiode.copy(dager = dager))) {
+                status shouldBe HttpStatusCode.BadRequest
+            }
+
+            // Sjekker at perioden ikke er sendt og kan sendes
+            with(client.doGet("/rapporteringsperiode/123", issueToken(fnr))) {
+                status shouldBe HttpStatusCode.OK
+                val periode = defaultObjectMapper.readValue<Rapporteringsperiode>(bodyAsText())
+                periode.id shouldBe "123"
+                periode.status shouldBe TilUtfylling
+                periode.kanSendes shouldBe true
+                periode.mottattDato shouldBe null
+            }
+        }
+
+    @Test
     fun `returnerer Bad Request og InnsendingResponse når innsending feilet med http status OK`() =
         setUpTestApplication {
             externalServices {
