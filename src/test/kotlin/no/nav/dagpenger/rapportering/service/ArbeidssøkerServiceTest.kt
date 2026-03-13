@@ -18,6 +18,7 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.runs
 import io.mockk.slot
+import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
@@ -120,6 +121,34 @@ class ArbeidssøkerServiceTest {
         bruker.type shouldBe BrukerType.SLUTTBRUKER
         bruker.id shouldBe ident
         bruker.sikkerhetsnivaa shouldBe "tokenx:Level$loginLevel"
+    }
+
+    @Test
+    fun `Skal ikke sende bekreftelse hvis registrertArbeidssoker er null`() {
+        val rapporteringsperiode = rapporteringsperiodeFor(registrertArbeidssoker = null)
+
+        val kallLoggService = mockk<KallLoggService>()
+
+        val personregisterService = mockk<PersonregisterService>()
+        coEvery { personregisterService.erBekreftelseOvertatt(eq(ident), any()) } returns true
+
+        val bekreftelseKafkaProdusent = mockk<Producer<Long, Bekreftelse>>()
+
+        val arbeidssoekerService =
+            ArbeidssøkerService(
+                kallLoggService = kallLoggService,
+                personregisterService = personregisterService,
+                httpClient = mockHttpClient(),
+                bekreftelseKafkaProdusent = bekreftelseKafkaProdusent,
+                recordKeyTokenProvider = recordKeyTokenProvider,
+                oppslagTokenProvider = oppslagTokenProvider,
+            )
+
+        runBlocking {
+            arbeidssoekerService.sendBekreftelse(ident, "", loginLevel, rapporteringsperiode)
+        }
+
+        verify(exactly = 0) { bekreftelseKafkaProdusent.send(any(), any()) }
     }
 
     @Test

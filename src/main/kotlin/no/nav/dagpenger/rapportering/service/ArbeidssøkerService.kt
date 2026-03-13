@@ -104,6 +104,13 @@ class ArbeidssøkerService(
         loginLevel: Int?,
         rapporteringsperiode: Rapporteringsperiode,
     ): UUID? {
+        if (rapporteringsperiode.registrertArbeidssoker == null) {
+            logger.info {
+                "Rapporteringsperiode med id {${rapporteringsperiode.id}} har registrertArbeidssoker = null. Sender ikke sp.5 til PAW."
+            }
+            return null
+        }
+
         if (!unleash.isEnabled("send-arbeidssoekerstatus")) {
             logger.info { "send-arbeidssoekerstatus er slått av. Sender ikke sp.5 til PAW." }
             return null
@@ -114,6 +121,7 @@ class ArbeidssøkerService(
 
         if (arbeidssøkerperiode == null) {
             logger.info { "Kunne ikke hente arbeidssøkerperiode. Sender ikke sp.5 til PAW" }
+            Sikkerlogg.info { "Kunne ikke hente arbeidssøkerperiode for ident {$ident}. Sender ikke sp.5 til PAW" }
             return null
         }
 
