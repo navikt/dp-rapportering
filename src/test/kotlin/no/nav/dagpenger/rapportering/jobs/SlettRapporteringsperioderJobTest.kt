@@ -4,14 +4,13 @@ import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.verify
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.connector.createMockClient
+import no.nav.dagpenger.rapportering.metrics.JobbkjøringMetrikker
 import no.nav.dagpenger.rapportering.service.RapporteringService
-import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.time.LocalTime
 
 class SlettRapporteringsperioderJobTest {
     companion object {
@@ -22,36 +21,35 @@ class SlettRapporteringsperioderJobTest {
         }
     }
 
+    private val rapporteringService = mockk<RapporteringService>()
+    private val jobbkjøringMetrikker = mockk<JobbkjøringMetrikker>(relaxed = true)
+    private val slettRapporteringsperioderJob =
+        SlettRapporteringsperioderJob(
+            httpClient = createMockClient(HttpStatusCode.InternalServerError, ""),
+            rapporteringService = rapporteringService,
+            jobbkjøringMetrikker = jobbkjøringMetrikker,
+        )
+
     @Test
-    fun `skal utføre oppgaver`() {
-        val rapporteringService = mockk<RapporteringService>()
-        coEvery { rapporteringService.slettMellomlagredeRapporteringsperioder() } returns 0
+    fun `execute sletter rapporteringsperioder og inkrementerer metrikker`() {
+        coEvery { rapporteringService.slettMellomlagredeRapporteringsperioder() } returns 1
 
-        val slettRapporteringsperioderJob =
-            SlettRapporteringsperioderJob(
-                meterRegistry,
-                httpClient = createMockClient(HttpStatusCode.InternalServerError, ""),
-                rapporteringService = rapporteringService,
-            )
+        slettRapporteringsperioderJob.execute()
 
-        val mockedTime = LocalTime.of(1, 59, 58)
-        val mockTimeProvider = TimeProvider { LocalDateTime.now().with(mockedTime) }
+        coVerify(exactly = 1) { rapporteringService.slettMellomlagredeRapporteringsperioder() }
+        verify(exactly = 1) { jobbkjøringMetrikker.jobbSjekketOmDenSkulleKjøre() }
+        verify(exactly = 1) { jobbkjøringMetrikker.jobbFullfort(duration = any(), affectedRows = 1) }
+        verify(exactly = 0) { jobbkjøringMetrikker.jobbFeilet() }
+    }
 
-        val taskExecutor =
-            TaskExecutor(
-                scheduledTasks =
-                    listOf(
-                        ScheduledTask(slettRapporteringsperioderJob, 2, 0),
-                    ),
-                timeProvider = mockTimeProvider,
-            )
+    @Test
+    fun `execute inkrementerer metrikker hvis jobben feiler`() {
+        coEvery { rapporteringService.slettMellomlagredeRapporteringsperioder() } throws RuntimeException()
 
-        taskExecutor.startExecution()
+        slettRapporteringsperioderJob.execute()
 
-        // slettMellomlagredeRapporteringsperioder må kalles én gang etter et par sekunder
-        coVerify(exactly = 1, timeout = 10000) { rapporteringService.slettMellomlagredeRapporteringsperioder() }
-
-        // slettMellomlagredeRapporteringsperioder må kalles én gang til etter et par sekunder fordi vi har mocked ZonedDateTime
-        coVerify(exactly = 2, timeout = 10000) { rapporteringService.slettMellomlagredeRapporteringsperioder() }
+        verify(exactly = 1) { jobbkjøringMetrikker.jobbSjekketOmDenSkulleKjøre() }
+        verify(exactly = 0) { jobbkjøringMetrikker.jobbFullfort(duration = any(), affectedRows = any()) }
+        verify(exactly = 1) { jobbkjøringMetrikker.jobbFeilet() }
     }
 }
