@@ -2,19 +2,17 @@ package no.nav.dagpenger.rapportering.jobs
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
-import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
-import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
+import no.nav.dagpenger.rapportering.metrics.JobbkjøringMetrikker
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import kotlin.time.measureTime
 
 internal class SlettRapporteringsperioderJob(
-    meterRegistry: MeterRegistry,
     private val httpClient: HttpClient,
     private val rapporteringService: RapporteringService,
+    private val jobbkjøringMetrikker: JobbkjøringMetrikker,
 ) : Task {
     private val logger = KotlinLogging.logger { }
-    private val metrikker: JobbkjoringMetrikker = JobbkjoringMetrikker(meterRegistry, this::class.simpleName!!)
 
     override fun execute() {
         try {
@@ -34,10 +32,12 @@ internal class SlettRapporteringsperioderJob(
             logger.info {
                 "Jobb for å slette mellomlagrede rapporteringsperioder ferdig. Brukte ${tidBrukt.inWholeSeconds} sekund(er)."
             }
-            metrikker.jobbFullfort(tidBrukt, rowsAffected)
+            jobbkjøringMetrikker.jobbFullfort(tidBrukt, rowsAffected)
         } catch (e: Exception) {
             logger.warn(e) { "Slettejobb feilet" }
-            metrikker.jobbFeilet()
+            jobbkjøringMetrikker.jobbFeilet()
+        } finally {
+            jobbkjøringMetrikker.jobbSjekketOmDenSkulleKjøre()
         }
     }
 }

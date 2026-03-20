@@ -67,3 +67,16 @@ spec:
                 labels:
                     namespace: teamdagpenger
                     severity: warning
+        -   name: dp-rapportering-tidsstyrte-jobber
+            rules:
+                -   alert: Tidsstyrt jobb har ikke sjekket om den skal starte
+                    expr: |
+                        sum by (navn) (increase(dp_rapportering_job_execution_trigger_evaluation_total[24h])) < 1
+                    for: 5m
+                    annotations:
+                        description: 'En eller flere tidsstyrte jobber i dp-rapportering har ikke evaluert om de skal kjøre i løpet av de siste 24 timene'
+                        consequence: 'En eller flere tidsstyrte jobber kjører ikke som forventet'
+                        action: 'Sjekk Grafana for å finne ut hvilke jobber dette gjelder: https://grafana.nav.cloud.nais.io/goto/efghn03efzs3kb?orgId=1'
+                    labels:
+                        namespace: teamdagpenger
+                        severity: warning

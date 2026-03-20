@@ -2,9 +2,8 @@ package no.nav.dagpenger.rapportering.jobs
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
-import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
-import no.nav.dagpenger.rapportering.metrics.JobbkjoringMetrikker
+import no.nav.dagpenger.rapportering.metrics.JobbkjøringMetrikker
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
@@ -15,14 +14,13 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.measureTime
 
 internal class SendBekreftelsesmeldingerJob(
-    meterRegistry: MeterRegistry,
     private val httpClient: HttpClient,
     private val bekreftelsesmeldingRepository: BekreftelsesmeldingRepository,
     private val rapporteringRepository: RapporteringRepository,
     private val arbeidssøkerService: ArbeidssøkerService,
+    private val jobbkjøringMetrikker: JobbkjøringMetrikker,
 ) {
     private val logger = KotlinLogging.logger { }
-    private val metrikker: JobbkjoringMetrikker = JobbkjoringMetrikker(meterRegistry, this::class.simpleName!!)
 
     internal fun start(
         initialDelayMinutes: Long = 5,
@@ -89,10 +87,12 @@ internal class SendBekreftelsesmeldingerJob(
             logger.info {
                 "Jobb for å sende bekreftelsesmeldinger ferdig. Brukte ${tidBrukt.inWholeSeconds} sekund(er)."
             }
-            metrikker.jobbFullfort(tidBrukt, rowsAffected)
+            jobbkjøringMetrikker.jobbFullfort(tidBrukt, rowsAffected)
         } catch (e: Exception) {
             logger.warn(e) { "Jobb for å sende bekreftelsesmeldinger feilet" }
-            metrikker.jobbFeilet()
+            jobbkjøringMetrikker.jobbFeilet()
+        } finally {
+            jobbkjøringMetrikker.jobbSjekketOmDenSkulleKjøre()
         }
     }
 }

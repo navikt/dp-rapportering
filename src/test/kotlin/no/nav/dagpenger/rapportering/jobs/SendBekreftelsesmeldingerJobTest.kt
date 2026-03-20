@@ -4,8 +4,10 @@ import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.verify
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.connector.createMockClient
+import no.nav.dagpenger.rapportering.metrics.JobbkjøringMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.Periode
@@ -14,13 +16,14 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
-import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class SendBekreftelsesmeldingerJobTest {
+    private val jobbkjøringMetrikker = mockk<JobbkjøringMetrikker>(relaxed = true)
+
     companion object {
         @BeforeAll
         @JvmStatic
@@ -30,7 +33,7 @@ class SendBekreftelsesmeldingerJobTest {
     }
 
     @Test
-    fun `skal sende bekreftelsesmelding`() {
+    fun `start sender bekreftelsesmelding og inkrementerer metrikker`() {
         val ident = "01020312345"
 
         val uuid1 = UUIDv7.newUuid()
@@ -99,11 +102,11 @@ class SendBekreftelsesmeldingerJobTest {
 
         val sendBekreftelsesmeldingerJob =
             SendBekreftelsesmeldingerJob(
-                meterRegistry = meterRegistry,
                 httpClient = createMockClient(HttpStatusCode.InternalServerError, ""),
                 bekreftelsesmeldingRepository = bekreftelsesmeldingRepository,
                 rapporteringRepository = rapporteringRepository,
                 arbeidssøkerService = arbeidssøkerService,
+                jobbkjøringMetrikker = jobbkjøringMetrikker,
             )
 
         sendBekreftelsesmeldingerJob.start(0)
@@ -122,5 +125,29 @@ class SendBekreftelsesmeldingerJobTest {
                 any(),
             )
         }
+
+        verify(exactly = 1, timeout = 5000) { jobbkjøringMetrikker.jobbSjekketOmDenSkulleKjøre() }
+        verify(exactly = 1, timeout = 5000) { jobbkjøringMetrikker.jobbFullfort(duration = any(), affectedRows = 2) }
+        verify(exactly = 0, timeout = 5000) { jobbkjøringMetrikker.jobbFeilet() }
+    }
+
+    @Test
+    fun `start inkrementerer metrikker hvis jobben feiler`() {
+        val bekreftelsesmeldingRepository = mockk<BekreftelsesmeldingRepository>()
+        coEvery { bekreftelsesmeldingRepository.hentBekreftelsesmeldingerSomSkalSendes(any()) } throws RuntimeException()
+        val sendBekreftelsesmeldingerJob =
+            SendBekreftelsesmeldingerJob(
+                httpClient = createMockClient(HttpStatusCode.InternalServerError, ""),
+                bekreftelsesmeldingRepository = bekreftelsesmeldingRepository,
+                rapporteringRepository = mockk<RapporteringRepository>(),
+                arbeidssøkerService = mockk<ArbeidssøkerService>(),
+                jobbkjøringMetrikker = jobbkjøringMetrikker,
+            )
+
+        sendBekreftelsesmeldingerJob.start(0)
+
+        verify(exactly = 1, timeout = 5000) { jobbkjøringMetrikker.jobbSjekketOmDenSkulleKjøre() }
+        verify(exactly = 0, timeout = 5000) { jobbkjøringMetrikker.jobbFullfort(duration = any(), affectedRows = any()) }
+        verify(exactly = 1, timeout = 5000) { jobbkjøringMetrikker.jobbFeilet() }
     }
 }
