@@ -107,14 +107,13 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
 fun Rapporteringsperiode.toPeriodeData(
     ident: String,
     opprettetAv: OpprettetAv,
-    arbeidssøkerperioder: List<ArbeidssøkerperiodeResponse>,
     nyStatus: String? = null,
 ): PeriodeData =
     PeriodeData(
         id = this.id,
         ident = ident,
         periode = this.periode,
-        dager = this.dager.toPeriodeDager(arbeidssøkerperioder),
+        dager = this.dager.toPeriodeDager(),
         kanSendesFra = this.kanSendesFra,
         sisteFristForTrekk = this.sisteFristForTrekk,
         opprettetAv = opprettetAv,
@@ -128,19 +127,12 @@ fun Rapporteringsperiode.toPeriodeData(
         registrertArbeidssoker = this.registrertArbeidssoker,
     )
 
-fun List<Dag>.toPeriodeDager(arbeidssøkerperioder: List<ArbeidssøkerperiodeResponse>): List<PeriodeDag> =
+fun List<Dag>.toPeriodeDager(): List<PeriodeDag> =
     this.map {
         PeriodeDag(
             dato = it.dato,
             aktiviteter = it.aktiviteter,
             dagIndex = it.dagIndex,
-            meldt =
-                arbeidssøkerperioder.find { periode ->
-                    val fom = periode.startet.tidspunkt
-                    val tom = periode.avsluttet
-                    !fom.toLocalDate().isAfter(it.dato) &&
-                        (tom == null || !tom.tidspunkt.toLocalDate().isBefore(it.dato))
-                } != null,
         )
     }
 

@@ -420,9 +420,8 @@ class RapporteringService(
             }
         }
 
-        val arbeidssøkerperioder = arbeidssøkerService.hentCachedArbeidssøkerperioder(ident, kunSistePeriode = false)
         val opprettetAv = if (ansvarligSystem == AnsvarligSystem.ARENA) PeriodeData.OpprettetAv.Arena else PeriodeData.OpprettetAv.Dagpenger
-        val periodeData = periodeTilInnsending.toPeriodeData(ident, opprettetAv, arbeidssøkerperioder, "Innsendt")
+        val periodeData = periodeTilInnsending.toPeriodeData(ident, opprettetAv, "Innsendt")
 
         val response =
             sendinnRapporteringsperiode(ansvarligSystem, periodeTilInnsending, periodeData, token)

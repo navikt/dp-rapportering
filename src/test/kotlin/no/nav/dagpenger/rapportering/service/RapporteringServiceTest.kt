@@ -36,12 +36,9 @@ import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
-import no.nav.dagpenger.rapportering.model.ArbeidssøkerperiodeResponse
-import no.nav.dagpenger.rapportering.model.BrukerResponse
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.KortType
-import no.nav.dagpenger.rapportering.model.MetadataResponse
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.PeriodeData
 import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
@@ -673,7 +670,7 @@ class RapporteringServiceTest {
                 feil = listOf(),
             )
 
-        sendInn(rapporteringsperiode, hentKunSisteArbeidssøkerperiode = false)
+        sendInn(rapporteringsperiode)
     }
 
     @Test
@@ -688,7 +685,7 @@ class RapporteringServiceTest {
                 feil = listOf(),
             )
 
-        sendInn(rapporteringsperiode, hentKunSisteArbeidssøkerperiode = false)
+        sendInn(rapporteringsperiode)
 
         coVerify(exactly = 1) { meldekortregisterService.sendinnRapporteringsperiode(any(), token) }
         coVerify(exactly = 0) {
@@ -717,7 +714,7 @@ class RapporteringServiceTest {
                 feil = listOf(),
             )
 
-        sendInn(rapporteringsperiode, hentKunSisteArbeidssøkerperiode = false)
+        sendInn(rapporteringsperiode)
 
         coVerify(exactly = 0) {
             bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any())
@@ -747,7 +744,7 @@ class RapporteringServiceTest {
             )
         coJustRun { bekreftelsesmeldingRepository.lagreBekreftelsesmelding(eq(rapporteringsperiode.id), eq(ident), eq(skalSendes)) }
 
-        sendInn(rapporteringsperiode, hentKunSisteArbeidssøkerperiode = false)
+        sendInn(rapporteringsperiode)
 
         coVerify(exactly = 1) {
             bekreftelsesmeldingRepository.lagreBekreftelsesmelding(
@@ -778,7 +775,7 @@ class RapporteringServiceTest {
                 feil = listOf(),
             )
 
-        sendInn(rapporteringsperiode, hentKunSisteArbeidssøkerperiode = false)
+        sendInn(rapporteringsperiode)
 
         coVerify(exactly = 0) { arbeidssøkerService.sendBekreftelse(any(), any(), any(), any()) }
         coVerify(exactly = 0) { bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any()) }
@@ -801,7 +798,7 @@ class RapporteringServiceTest {
                 feil = listOf(),
             )
 
-        sendInn(rapporteringsperiode, hentKunSisteArbeidssøkerperiode = false)
+        sendInn(rapporteringsperiode)
 
         coVerify(exactly = 1) { arbeidssøkerService.sendBekreftelse(eq(ident), eq(token), eq(4), eq(rapporteringsperiode)) }
         coVerify(exactly = 0) { bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any()) }
@@ -832,20 +829,6 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident), false) } returns
-            listOf(
-                ArbeidssøkerperiodeResponse(
-                    UUIDv7.newUuid(),
-                    MetadataResponse(
-                        LocalDateTime.now(),
-                        BrukerResponse("", ""),
-                        "Kilde",
-                        "Årsak",
-                        null,
-                    ),
-                    null,
-                ),
-            )
         coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
         every { unleash.isEnabled(eq("dp-rapportering-sp5-true")) } returns true
 
@@ -943,20 +926,6 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident), false) } returns
-            listOf(
-                ArbeidssøkerperiodeResponse(
-                    UUIDv7.newUuid(),
-                    MetadataResponse(
-                        rapporteringsperiode.periode.fraOgMed.atStartOfDay(),
-                        BrukerResponse("", ""),
-                        "Kilde",
-                        "Årsak",
-                        null,
-                    ),
-                    null,
-                ),
-            )
         coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
         every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
@@ -1028,20 +997,6 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident), false) } returns
-            listOf(
-                ArbeidssøkerperiodeResponse(
-                    UUIDv7.newUuid(),
-                    MetadataResponse(
-                        rapporteringsperiode.periode.fraOgMed.atStartOfDay(),
-                        BrukerResponse("", ""),
-                        "Kilde",
-                        "Årsak",
-                        null,
-                    ),
-                    null,
-                ),
-            )
         coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
         every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
@@ -1235,10 +1190,7 @@ class RapporteringServiceTest {
         slettedePerioder shouldBe 3
     }
 
-    private fun sendInn(
-        rapporteringsperiode: Rapporteringsperiode,
-        hentKunSisteArbeidssøkerperiode: Boolean = true,
-    ) {
+    private fun sendInn(rapporteringsperiode: Rapporteringsperiode) {
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
         coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
@@ -1248,20 +1200,6 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.hentCachedArbeidssøkerperioder(eq(ident), hentKunSisteArbeidssøkerperiode) } returns
-            listOf(
-                ArbeidssøkerperiodeResponse(
-                    UUIDv7.newUuid(),
-                    MetadataResponse(
-                        LocalDateTime.now(),
-                        BrukerResponse("", ""),
-                        "Kilde",
-                        "Årsak",
-                        null,
-                    ),
-                    null,
-                ),
-            )
         coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
         every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
@@ -1362,34 +1300,6 @@ val meldekortregisterRapporteringsperiodeListe =
         lagPeriodeData("1", Periode(LocalDate.now(), LocalDate.now().plusDays(13))),
         lagPeriodeData("2", Periode(LocalDate.now().minusDays(14), LocalDate.now().minusDays(1))),
         lagPeriodeData("3", Periode(LocalDate.now().minusDays(28), LocalDate.now().minusDays(15))),
-    )
-
-val fremtidigeRaporteringsperioder =
-    listOf(
-        lagRapporteringsperiode(
-            id = "1",
-            periode =
-                Periode(
-                    fraOgMed = LocalDate.now().minusWeeks(3).plusDays(1),
-                    tilOgMed = LocalDate.now().minusWeeks(1),
-                ),
-        ),
-        lagRapporteringsperiode(
-            id = "2",
-            periode =
-                Periode(
-                    fraOgMed = LocalDate.now().minusWeeks(2),
-                    tilOgMed = LocalDate.now().minusDays(1),
-                ),
-        ),
-        lagRapporteringsperiode(
-            id = "3",
-            periode =
-                Periode(
-                    fraOgMed = LocalDate.now(),
-                    tilOgMed = LocalDate.now().plusWeeks(2).minusDays(1),
-                ),
-        ),
     )
 
 fun lagRapporteringsperiode(
