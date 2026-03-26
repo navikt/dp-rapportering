@@ -1222,7 +1222,6 @@ class RapporteringServiceTest {
     private fun checkRapid(
         rapporteringsperiode: Rapporteringsperiode,
         endringId: String? = null,
-        meldt: Boolean = true,
         ansvarligSystem: String = "Arena",
     ) {
         if (ansvarligSystem != "Arena") {
@@ -1258,7 +1257,6 @@ class RapporteringServiceTest {
             dag.dato shouldBeEqual rapporteringsperiode.dager[i].dato
             dag.dagIndex shouldBeEqual rapporteringsperiode.dager[i].dagIndex
             dag.aktiviteter shouldBeEqual rapporteringsperiode.dager[i].aktiviteter
-            dag.meldt shouldBe meldt
         }
 
         message["kanSendesFra"].asLocalDate() shouldBe rapporteringsperiode.kanSendesFra

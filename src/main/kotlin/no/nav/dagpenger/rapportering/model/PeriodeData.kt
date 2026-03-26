@@ -52,7 +52,6 @@ data class PeriodeData(
         val dato: LocalDate,
         val aktiviteter: List<Aktivitet> = emptyList(),
         val dagIndex: Int,
-        val meldt: Boolean = true,
     )
 }
 

@@ -78,7 +78,6 @@ class RapporteringsperiodeTest {
             periodeData.dager[it].dato shouldBe LocalDate.now().plusDays(it.toLong())
             periodeData.dager[it].aktiviteter shouldBe aktiviteter
             periodeData.dager[it].dagIndex shouldBe it
-            periodeData.dager[it].meldt shouldBe true
         }
         periodeData.kanSendesFra shouldBe periode.tilOgMed.minusDays(2)
         periodeData.sisteFristForTrekk shouldBe periode.tilOgMed.plusDays(8)
