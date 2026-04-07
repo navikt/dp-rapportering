@@ -2,7 +2,6 @@ package no.nav.dagpenger.rapportering.model
 
 import io.kotest.matchers.shouldBe
 import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
-import no.nav.dagpenger.rapportering.model.PeriodeData.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
 import no.nav.dagpenger.rapportering.utils.UUIDv7

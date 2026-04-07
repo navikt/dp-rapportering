@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.KortType
+import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -578,6 +579,11 @@ private fun Row.toRapporteringsperiode() =
         originalId = stringOrNull("original_id"),
         rapporteringstype = stringOrNull("rapporteringstype"),
         mottattDato = localDateOrNull("mottatt_dato"),
+        opprettetAv =
+            when (string("id").length) {
+                32 -> OpprettetAv.Dagpenger
+                else -> OpprettetAv.Arena
+            },
     )
 
 private fun Row.toDagPair(): Pair<UUID, Dag> =

@@ -7,7 +7,6 @@ import no.nav.dagpenger.rapportering.api.models.PeriodeResponse
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeResponse
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse
 import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
-import no.nav.dagpenger.rapportering.model.PeriodeData.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
 import java.time.LocalDate
@@ -30,6 +29,7 @@ data class Rapporteringsperiode(
     val originalId: String?,
     val rapporteringstype: String?,
     val html: String? = null,
+    val opprettetAv: OpprettetAv = OpprettetAv.Dagpenger,
 )
 
 enum class KortType(

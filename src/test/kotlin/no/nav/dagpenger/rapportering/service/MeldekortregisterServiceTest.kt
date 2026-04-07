@@ -9,10 +9,10 @@ import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.createMockClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.PeriodeData
 import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
-import no.nav.dagpenger.rapportering.model.PeriodeData.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
 import no.nav.dagpenger.rapportering.model.toKorrigerMeldekortHendelse

@@ -39,6 +39,7 @@ import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
 import no.nav.dagpenger.rapportering.model.MineBehov
+import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
@@ -218,15 +219,21 @@ class JournalfoeringServiceTest {
                 createHttpClient(mockPdfGeneratorEngine),
             )
 
+        val failingRapidsConnection = mockk<RapidsConnection>()
+        every { failingRapidsConnection.publish(any(), any()) } throws RuntimeException("Kafka utilgjengelig")
+
         // Prøver å journalføre
         runBlocking {
-            journalfoeringService.journalfoer(
-                ident,
-                loginLevel,
-                headers,
-                rapporteringsperiode,
-                AnsvarligSystem.DP,
-            )
+            mockkObject(ApplicationBuilder) {
+                every { getRapidsConnection() } returns failingRapidsConnection
+                journalfoeringService.journalfoer(
+                    ident,
+                    loginLevel,
+                    headers,
+                    rapporteringsperiode,
+                    AnsvarligSystem.DP,
+                )
+            }
         }
 
         // Får feil og sjekker at JournalfoeringService lagrer data midlertidig
@@ -434,6 +441,7 @@ class JournalfoeringServiceTest {
             originalId = if (endring) "123" else null,
             rapporteringstype = null,
             html = html,
+            opprettetAv = OpprettetAv.Dagpenger,
         )
     }
 

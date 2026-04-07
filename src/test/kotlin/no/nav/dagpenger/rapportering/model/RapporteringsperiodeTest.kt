@@ -3,7 +3,6 @@ package no.nav.dagpenger.rapportering.model
 import io.kotest.matchers.shouldBe
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
 import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
-import no.nav.dagpenger.rapportering.model.PeriodeData.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import org.junit.jupiter.api.Test
@@ -67,6 +66,7 @@ class RapporteringsperiodeTest {
                 originalId = originalId,
                 rapporteringstype = "type",
                 html = "<html />",
+                opprettetAv = OpprettetAv.Dagpenger,
             )
 
         val periodeData = rapporteringsperiode.toPeriodeData(ident, OpprettetAv.Dagpenger)

@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.connector.createMockClient
 import no.nav.dagpenger.rapportering.metrics.JobbkjøringMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.KortType
+import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -60,6 +61,7 @@ class SendBekreftelsesmeldingerJobTest {
                 registrertArbeidssoker = false,
                 originalId = null,
                 rapporteringstype = null,
+                opprettetAv = OpprettetAv.Dagpenger,
             )
 
         val sendtBekreftelseId = UUIDv7.newUuid()

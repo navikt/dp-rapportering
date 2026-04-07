@@ -9,6 +9,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.KortType
+import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
@@ -250,6 +251,7 @@ fun lagRapporteringsperiode(
     originalId = null,
     rapporteringstype = null,
     mottattDato = null,
+    opprettetAv = OpprettetAv.Dagpenger,
 )
 
 private fun getDager(
