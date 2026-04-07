@@ -15,6 +15,7 @@ import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.KortType
+import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -132,4 +133,5 @@ fun rapporteringsperiodeFor(
     originalId = originalId,
     rapporteringstype = rapporteringstype,
     mottattDato = mottattDato,
+    opprettetAv = OpprettetAv.Dagpenger,
 )

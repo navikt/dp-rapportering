@@ -39,10 +39,10 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.KortType
+import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.PeriodeData
 import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
-import no.nav.dagpenger.rapportering.model.PeriodeData.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
 import no.nav.dagpenger.rapportering.model.Person
@@ -1321,6 +1321,7 @@ fun lagRapporteringsperiode(
     originalId = null,
     rapporteringstype = null,
     mottattDato = null,
+    opprettetAv = OpprettetAv.Dagpenger,
 )
 
 fun lagPeriodeData(

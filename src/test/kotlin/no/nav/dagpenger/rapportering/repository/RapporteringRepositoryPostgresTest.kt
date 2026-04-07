@@ -9,6 +9,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Utdanning
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.KortType
+import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -539,6 +540,24 @@ class RapporteringRepositoryPostgresTest {
             rapporteringRepositoryPostgres.hentAntallRapporteringsperioder() shouldBe 1
         }
     }
+
+    @Test
+    fun `opprettetAv er Dagpenger når id er 32 tegn (UUIDv7)`() {
+        val id = "a".repeat(32)
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(getRapporteringsperiode(id = id), ident)
+            rapporteringRepositoryPostgres.hentRapporteringsperiode(id, ident)!!.opprettetAv shouldBe OpprettetAv.Dagpenger
+        }
+    }
+
+    @Test
+    fun `opprettetAv er Arena når id ikke er 32 tegn`() {
+        val id = "123456"
+        withMigratedDb {
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(getRapporteringsperiode(id = id), ident)
+            rapporteringRepositoryPostgres.hentRapporteringsperiode(id, ident)!!.opprettetAv shouldBe OpprettetAv.Arena
+        }
+    }
 }
 
 fun getRapporteringsperiode(
@@ -571,6 +590,7 @@ fun getRapporteringsperiode(
     originalId = null,
     rapporteringstype = null,
     mottattDato = mottattDato,
+    opprettetAv = OpprettetAv.Dagpenger,
 )
 
 private fun getDager(

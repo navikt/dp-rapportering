@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
@@ -420,7 +421,7 @@ class RapporteringService(
             }
         }
 
-        val opprettetAv = if (ansvarligSystem == AnsvarligSystem.ARENA) PeriodeData.OpprettetAv.Arena else PeriodeData.OpprettetAv.Dagpenger
+        val opprettetAv = if (ansvarligSystem == AnsvarligSystem.ARENA) OpprettetAv.Arena else OpprettetAv.Dagpenger
         val periodeData = periodeTilInnsending.toPeriodeData(ident, opprettetAv, "Innsendt")
 
         val response =

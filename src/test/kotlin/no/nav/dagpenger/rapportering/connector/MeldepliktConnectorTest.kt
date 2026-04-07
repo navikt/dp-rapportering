@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
 import no.nav.dagpenger.rapportering.model.KortType
+import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -329,6 +330,7 @@ class MeldepliktConnectorTest {
                 registrertArbeidssoker = true,
                 originalId = null,
                 rapporteringstype = null,
+                opprettetAv = OpprettetAv.Dagpenger,
             )
 
         val response =

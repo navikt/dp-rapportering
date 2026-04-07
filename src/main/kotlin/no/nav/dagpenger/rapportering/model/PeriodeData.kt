@@ -27,11 +27,6 @@ data class PeriodeData(
     val registrertArbeidssoker: Boolean? = null,
     val meldedato: LocalDate? = null,
 ) {
-    enum class OpprettetAv {
-        Arena,
-        Dagpenger,
-    }
-
     data class Kilde(
         val rolle: Rolle,
         val ident: String,
@@ -92,6 +87,7 @@ fun PeriodeData.toRapporteringsperiode(): Rapporteringsperiode {
         registrertArbeidssoker = this.registrertArbeidssoker,
         originalId = this.originalMeldekortId,
         rapporteringstype = null,
+        opprettetAv = OpprettetAv.Dagpenger,
     )
 }
 
