@@ -32,3 +32,4 @@ BEKREFTELSE_TOPIC: paw.arbeidssoker-bekreftelse-teamdagpenger-v1
 PDL_API_HOST: pdl-api.dev-fss-pub.nais.io
 PDL_AUDIENCE: dev-fss:pdl:pdl-api
 PDL_API_SCOPE: api://dev-fss.pdl.pdl-api/.default
+DP_RAPPORTERING_FRONTEND_URL: https://arbeid.intern.dev.nav.no/arbeid/dagpenger/meldekort
