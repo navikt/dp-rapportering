@@ -243,6 +243,7 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns rapporteringsperiodeFraDb
         coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
         coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
         val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode("2", ident, token, hentOriginal = true) }
 
@@ -333,6 +334,7 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
         coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
@@ -355,6 +357,7 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
         coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
         coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(finnPeriodeKode(fom3)) } returns -14
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
@@ -380,6 +383,7 @@ class RapporteringServiceTest {
             meldekortregisterRapporteringsperiodeListe
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
         coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
@@ -402,6 +406,7 @@ class RapporteringServiceTest {
         coEvery { rapporteringRepository.hentRapporteringsperiode("3", ident) } returns null
         coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
         coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 

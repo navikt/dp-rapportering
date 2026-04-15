@@ -66,6 +66,8 @@ spec:
       value: "{{ PDL_AUDIENCE }}"
     - name: PDL_API_SCOPE
       value: "{{ PDL_API_SCOPE }}"
+    - name: DP_RAPPORTERING_FRONTEND_URL
+      value: "{{ DP_RAPPORTERING_FRONTEND_URL }}"
     - name: JDK_JAVA_OPTIONS # Bytter GC og lar JVMen se at det er flere CPU kjerner
       value: -XX:+UseParallelGC -XX:ActiveProcessorCount=4
   gcp:
@@ -117,6 +119,8 @@ spec:
         - application: dp-saksbehandling-frontend
         - application: dp-rapportering-frontend
         - application: dp-meldekortregister
+        - application: meldekort-landingsside
+          namespace: meldekort
         - application: tokenx-token-generator
           namespace: nais
           cluster: dev-gcp

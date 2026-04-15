@@ -68,6 +68,23 @@ paths:
             security:
                 -   tokenX: [ ]
 
+    /meldekortstatus:
+        get:
+            responses:
+                200:
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/MeldekortStatus'
+            summary: Returnerer meldekortstatus for bruker
+            description:
+            operationId: get-meldekortstatus
+            tags:
+                - Meldekortstatus
+            security:
+                -   tokenX: [ ]
+
     /rapporteringsperioder:
         get:
             responses:
@@ -511,6 +528,37 @@ components:
                     type: string
                     format: uri
                     description: Hvor feilen oppstod
+        MeldekortStatus:
+            type: object
+            required:
+                - harInnsendteMeldekort
+                - meldekortTilUtfylling
+                - redirectUrl
+            properties:
+                harInnsendteMeldekort:
+                    type: boolean
+                meldekortTilUtfylling:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/MeldekortTilUtfylling'
+                redirectUrl:
+                    type: string
+        MeldekortTilUtfylling:
+            type: object
+            required:
+                - kanSendesFra
+                - fristForInnsending
+            properties:
+                kanSendesFra:
+                    type: string
+                    format: date-time
+                kanFyllesUtFra:
+                    type: string
+                    format: date-time
+                fristForInnsending:
+                    type: string
+                    format: date-time
+
 
     securitySchemes:
         tokenX:

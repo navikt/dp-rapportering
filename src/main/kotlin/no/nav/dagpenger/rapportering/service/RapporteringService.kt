@@ -130,6 +130,7 @@ class RapporteringService(
 
         return perioder
             .justerInnsendingstidspunkt()
+            .justerSisteFristForTrekk()
             ?.filter { periode ->
                 // Filtrerer ut perioder som har en høyere status i databasen enn det vi får fra arena
                 rapporteringRepository
@@ -155,6 +156,20 @@ class RapporteringService(
             it.copy(
                 kanSendesFra = kanSendesFra,
                 kanSendes = kanSendesInn(kanSendesFra, it.status, true),
+            )
+        }
+
+    private suspend fun List<Rapporteringsperiode>?.justerSisteFristForTrekk(): List<Rapporteringsperiode>? =
+        this?.map { it.justerSisteFristForTrekk() }
+
+    private suspend fun Rapporteringsperiode.justerSisteFristForTrekk(): Rapporteringsperiode =
+        this.let {
+            val ukeKode = finnPeriodeKode(this.periode.fraOgMed)
+            val antallDagerFraPeriodeSlutt = tidspunktjusteringRepository.hentSisteFristForTrekkJustering(ukeKode) ?: 8L
+            val justertSisteFristForTrekk = this.periode.tilOgMed.plusDays(antallDagerFraPeriodeSlutt)
+
+            it.copy(
+                sisteFristForTrekk = justertSisteFristForTrekk,
             )
         }
 
@@ -309,10 +324,7 @@ class RapporteringService(
     ): Rapporteringsperiode {
         val periodeFraDb = rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
         return if (periodeFraDb == null) {
-            val ukeKode = finnPeriodeKode(periode.periode.fraOgMed)
-            val antallDagerFraPeriodeSlutt = tidspunktjusteringRepository.hentSisteFristForTrekkJustering(ukeKode) ?: 8L
-            val justertSisteFristForTrekk = periode.periode.tilOgMed.plusDays(antallDagerFraPeriodeSlutt)
-            val periodeMedJustertSisteFristForTrekk = periode.copy(sisteFristForTrekk = justertSisteFristForTrekk)
+            val periodeMedJustertSisteFristForTrekk = periode.justerSisteFristForTrekk()
 
             rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeMedJustertSisteFristForTrekk, ident)
             periodeMedJustertSisteFristForTrekk
