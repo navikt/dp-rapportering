@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
@@ -65,22 +66,7 @@ class MeldepliktConnector(
                         Sikkerlogg.info { "Kall til meldeplikt-adapter for å hente perioder for $ident ga status ${it.status}" }
                     }
 
-            if (result.status == HttpStatusCode.NoContent) {
-                null
-            } else {
-                result
-                    .bodyAsText()
-                    .let {
-                        val perioder =
-                            defaultObjectMapper.readValue(
-                                it,
-                                object : TypeReference<List<AdapterRapporteringsperiode>>() {},
-                            )
-                        perioder.ifEmpty {
-                            null
-                        }
-                    }
-            }
+            lesPerioder(result)
         }
 
     suspend fun hentPerson(
@@ -110,20 +96,15 @@ class MeldepliktConnector(
         subjectToken: String,
     ): List<AdapterRapporteringsperiode>? =
         withContext(Dispatchers.IO) {
-            hentData<String>("/sendterapporteringsperioder", subjectToken, "adapter-hentInnsendteRapporteringsperioder")
-                .let {
-                    val perioder =
-                        defaultObjectMapper.readValue(
-                            it,
-                            object : TypeReference<List<AdapterRapporteringsperiode>>() {},
-                        )
-                    perioder.ifEmpty {
-                        null
+            val result =
+                httpClientUtils
+                    .get("/sendterapporteringsperioder", subjectToken, "adapter-hentInnsendteRapporteringsperioder")
+                    .also {
+                        logger.info { "Kall til meldeplikt-adapter for å hente innsendte perioder ga status ${it.status}" }
+                        Sikkerlogg.info { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident ga status ${it.status}" }
                     }
-                }.also {
-                    logger.info { "Kall til meldeplikt-adapter for å hente innsendte perioder gikk OK" }
-                    Sikkerlogg.info { "Kall til meldeplikt-adapter for å hente innsendte perioder for $ident gikk OK" }
-                }
+
+            lesPerioder(result)
         }
 
     suspend fun hentAktivitetsdager(
@@ -174,6 +155,29 @@ class MeldepliktConnector(
                 .body<T>()
         } catch (e: Exception) {
             logger.error(e) { "Feil ved henting av data fra meldeplikt-adapter. Path: $path" }
+            throw e
+        }
+
+    private suspend fun lesPerioder(result: HttpResponse): List<AdapterRapporteringsperiode>? =
+        try {
+            if (result.status == HttpStatusCode.NoContent) {
+                null
+            } else {
+                result
+                    .bodyAsText()
+                    .let {
+                        val perioder =
+                            defaultObjectMapper.readValue(
+                                it,
+                                object : TypeReference<List<AdapterRapporteringsperiode>>() {},
+                            )
+                        perioder.ifEmpty {
+                            null
+                        }
+                    }
+            }
+        } catch (e: Exception) {
+            logger.error(e) { "Feil ved lesing av rapporteringsperioder fra meldeplikt-adapter" }
             throw e
         }
 }
