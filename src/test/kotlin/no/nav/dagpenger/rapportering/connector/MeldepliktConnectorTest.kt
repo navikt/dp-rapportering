@@ -142,6 +142,18 @@ class MeldepliktConnectorTest {
     }
 
     @Test
+    fun `returnerer null ved henting av innsendte rapporteringsperioder uten meldeplikt`() {
+        val connector = meldepliktConnector(HttpStatusCode.NoContent)
+
+        val response =
+            runBlocking {
+                connector.hentInnsendteRapporteringsperioder(ident, subjectToken)
+            }
+
+        response shouldBe null
+    }
+
+    @Test
     fun `henter tom liste for innsendte rapporteringsperioder gir null`() {
         val connector = meldepliktConnector(HttpStatusCode.OK, "[]")
 

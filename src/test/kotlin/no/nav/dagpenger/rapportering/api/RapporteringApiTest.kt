@@ -18,6 +18,7 @@ import io.mockk.coEvery
 import io.mockk.mockkObject
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.config.Configuration.dpRapporteringFrontendUrl
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Arbeid
@@ -229,6 +230,27 @@ class RapporteringApiTest : ApiTestSetup() {
                 meldekortStatusData.meldekortTilUtfylling[1].kanSendesFra shouldBe fom2.plusDays(12).atStartOfDay()
                 meldekortStatusData.meldekortTilUtfylling[1].kanFyllesUtFra shouldBe fom2.atStartOfDay()
                 meldekortStatusData.meldekortTilUtfylling[1].fristForInnsending shouldBe fom2.plusDays(21).atTime(23, 59, 59)
+                meldekortStatusData.redirectUrl shouldBe dpRapporteringFrontendUrl
+            }
+
+        @Test
+        fun `meldekortstatus returnerer data hvis bruker ikke har data i Arena`() =
+            setUpTestApplication {
+                externalServices {
+                    meldepliktAdapter(
+                        rapporteringsperioderResponseStatus = HttpStatusCode.NoContent,
+                        sendteRapporteringsperioderResponseStatus = HttpStatusCode.NoContent,
+                    )
+                }
+
+                val response = client.doGet("/meldekortstatus", issueToken(fnr))
+
+                response.status shouldBe HttpStatusCode.OK
+                val meldekortStatusData = defaultObjectMapper.readValue<MeldekortStatusData>(response.bodyAsText())
+
+                meldekortStatusData.harInnsendteMeldekort shouldBe false
+                meldekortStatusData.meldekortTilUtfylling.size shouldBe 0
+                meldekortStatusData.redirectUrl shouldBe dpRapporteringFrontendUrl
             }
 
         @Test
