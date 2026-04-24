@@ -136,6 +136,8 @@ data class Personstatus(
     val ansvarligSystem: AnsvarligSystem?,
 )
 
+fun Personstatus?.erBekreftelseOvertatt(): Boolean = this?.overtattBekreftelse ?: false
+
 data class IdentBody(
     val ident: String,
 )

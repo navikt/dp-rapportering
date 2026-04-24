@@ -5,6 +5,7 @@ import io.ktor.http.Headers
 import io.ktor.server.plugins.BadRequestException
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.Brukerstatus
+import no.nav.dagpenger.rapportering.connector.erBekreftelseOvertatt
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
@@ -404,7 +405,8 @@ class RapporteringService(
         )
 
         var periodeTilInnsending = rapporteringsperiode
-        val ansvarligSystem = personregisterService.hentAnsvarligSystem(ident, token)
+        val personstatus = personregisterService.hentPersonstatus(ident, token)
+        val ansvarligSystem = personstatus?.ansvarligSystem ?: AnsvarligSystem.ARENA
 
         if (rapporteringsperiode.erEndring()) {
             val endringId = hentEndringId(ansvarligSystem, rapporteringsperiode.originalId!!, token)
@@ -488,8 +490,8 @@ class RapporteringService(
                                     ident,
                                     bekreftelseSkalSendesFra,
                                 )
-                            } else {
-                                arbeidssøkerService.sendBekreftelse(ident, token, loginLevel, periodeTilInnsending)
+                            } else if (personstatus.erBekreftelseOvertatt()) {
+                                arbeidssøkerService.sendBekreftelse(ident, periodeTilInnsending, loginLevel)
                             }
                         }
                     } else {

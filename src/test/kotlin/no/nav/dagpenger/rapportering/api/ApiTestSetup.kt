@@ -31,7 +31,9 @@ import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.pluginConfiguration
 import no.nav.dagpenger.rapportering.config.statusPagesConfig
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
+import no.nav.dagpenger.rapportering.connector.Brukerstatus
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.connector.Personstatus
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
@@ -212,7 +214,13 @@ open class ApiTestSetup {
                 CompletableFuture.completedFuture(recordMetadata)
             }
 
-            coEvery { personregisterService.erBekreftelseOvertatt(any(), any()) } returns true
+            coEvery { personregisterService.hentPersonstatus(any(), any()) } returns
+                Personstatus(
+                    "01020312345",
+                    Brukerstatus.DAGPENGERBRUKER,
+                    true,
+                    AnsvarligSystem.ARENA,
+                )
             coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
 
             coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
