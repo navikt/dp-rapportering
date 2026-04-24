@@ -6,15 +6,6 @@ import no.nav.dagpenger.rapportering.connector.PersonregisterConnector
 class PersonregisterService(
     private val personregisterConnector: PersonregisterConnector,
 ) {
-    suspend fun erBekreftelseOvertatt(
-        ident: String,
-        token: String,
-    ): Boolean {
-        val personstatus = personregisterConnector.hentPersonstatus(ident, token)
-
-        return personstatus?.overtattBekreftelse ?: false
-    }
-
     suspend fun hentAnsvarligSystem(
         ident: String,
         token: String,

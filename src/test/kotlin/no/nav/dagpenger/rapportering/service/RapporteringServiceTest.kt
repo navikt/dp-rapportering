@@ -94,6 +94,21 @@ class RapporteringServiceTest {
     private val loginLevel = 4
     private val headers = Headers.Empty
 
+    private val personstatusMedDp =
+        Personstatus(
+            ident,
+            Brukerstatus.DAGPENGERBRUKER,
+            true,
+            AnsvarligSystem.DP,
+        )
+    private val personstatusMedArena =
+        Personstatus(
+            ident,
+            Brukerstatus.DAGPENGERBRUKER,
+            true,
+            AnsvarligSystem.ARENA,
+        )
+
     companion object {
         private val testRapid = TestRapid()
 
@@ -112,6 +127,7 @@ class RapporteringServiceTest {
     fun reset() {
         testRapid.reset()
 
+        coEvery { personregisterService.hentPersonstatus(any(), any()) } returns personstatusMedArena
         coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
         coEvery { pdlService.hentNavn(any()) } returns "Test Testesen"
     }
@@ -682,7 +698,7 @@ class RapporteringServiceTest {
     fun `kan sende inn rapporteringsperiode til dp-meldekortregister`() {
         val rapporteringsperiode = rapporteringsperiodeListe.last().copy(registrertArbeidssoker = true)
 
-        coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.DP
+        coEvery { personregisterService.hentPersonstatus(eq(ident), any()) } returns personstatusMedDp
         coEvery { meldekortregisterService.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
                 id = rapporteringsperiode.id,
@@ -697,7 +713,38 @@ class RapporteringServiceTest {
             bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any())
         }
         coVerify(exactly = 0) {
-            arbeidssøkerService.sendBekreftelse(any(), any(), any(), any())
+            arbeidssøkerService.sendBekreftelse(any(), any(), any())
+        }
+    }
+
+    @Test
+    fun `skal ikke sende bekreftelsesmelding hvis bekreftelse ikke er overtatt`() {
+        val tom = LocalDate.now()
+        val rapporteringsperiode =
+            lagRapporteringsperiode(
+                id = "2",
+                periode = Periode(fraOgMed = tom.minusDays(13), tilOgMed = tom),
+                registrertArbeidssoker = true,
+            )
+
+        coEvery { personregisterService.hentPersonstatus(eq(ident), any()) } returns
+            Personstatus(
+                ident,
+                Brukerstatus.DAGPENGERBRUKER,
+                false,
+                AnsvarligSystem.ARENA,
+            )
+        coEvery { meldepliktService.sendinnRapporteringsperiode(any(), token) } returns
+            InnsendingResponse(
+                id = rapporteringsperiode.id,
+                status = "OK",
+                feil = listOf(),
+            )
+
+        sendInn(rapporteringsperiode)
+
+        coVerify(exactly = 0) {
+            arbeidssøkerService.sendBekreftelse(any(), any(), any())
         }
     }
 
@@ -711,7 +758,7 @@ class RapporteringServiceTest {
                 registrertArbeidssoker = false,
             )
 
-        coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.DP
+        coEvery { personregisterService.hentPersonstatus(eq(ident), any()) } returns personstatusMedDp
         coEvery { meldekortregisterService.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
                 id = rapporteringsperiode.id,
@@ -725,7 +772,7 @@ class RapporteringServiceTest {
             bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any())
         }
         coVerify(exactly = 0) {
-            arbeidssøkerService.sendBekreftelse(any(), any(), any(), any())
+            arbeidssøkerService.sendBekreftelse(any(), any(), any())
         }
     }
 
@@ -740,7 +787,6 @@ class RapporteringServiceTest {
                 registrertArbeidssoker = false,
             )
 
-        coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
         coEvery { meldepliktService.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
                 id = rapporteringsperiode.id,
@@ -759,7 +805,7 @@ class RapporteringServiceTest {
             )
         }
         coVerify(exactly = 0) {
-            arbeidssøkerService.sendBekreftelse(any(), any(), any(), any())
+            arbeidssøkerService.sendBekreftelse(any(), any(), any())
         }
     }
 
@@ -772,7 +818,7 @@ class RapporteringServiceTest {
                 registrertArbeidssoker = false,
             )
 
-        coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.DP
+        coEvery { personregisterService.hentPersonstatus(eq(ident), any()) } returns personstatusMedDp
         coEvery { meldekortregisterService.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
                 id = rapporteringsperiode.id,
@@ -782,12 +828,12 @@ class RapporteringServiceTest {
 
         sendInn(rapporteringsperiode)
 
-        coVerify(exactly = 0) { arbeidssøkerService.sendBekreftelse(any(), any(), any(), any()) }
+        coVerify(exactly = 0) { arbeidssøkerService.sendBekreftelse(any(), any(), any()) }
         coVerify(exactly = 0) { bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any()) }
     }
 
     @Test
-    fun `kan sende inn rapporteringsperiode hvis registrertArbeidssoker = false, TOM-dato er før i dag og Arena er ansvarlig system`() {
+    fun `kan sende inn hvis registrertArbeidssoker = false, TOM-dato er før i dag, Arena er ansvarlig og bekreftelse er overtatt`() {
         val rapporteringsperiode =
             lagRapporteringsperiode(
                 id = "2",
@@ -795,7 +841,6 @@ class RapporteringServiceTest {
                 registrertArbeidssoker = false,
             )
 
-        coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
         coEvery { meldepliktService.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
                 id = rapporteringsperiode.id,
@@ -805,7 +850,29 @@ class RapporteringServiceTest {
 
         sendInn(rapporteringsperiode)
 
-        coVerify(exactly = 1) { arbeidssøkerService.sendBekreftelse(eq(ident), eq(token), eq(4), eq(rapporteringsperiode)) }
+        coVerify(exactly = 1) { arbeidssøkerService.sendBekreftelse(eq(ident), eq(rapporteringsperiode), eq(4)) }
+        coVerify(exactly = 0) { bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any()) }
+    }
+
+    @Test
+    fun `kan sende inn hvis registrertArbeidssoker = true, Arena er ansvarlig og bekreftelse er overtatt`() {
+        val rapporteringsperiode =
+            lagRapporteringsperiode(
+                id = "2",
+                periode = Periode(fraOgMed = LocalDate.now().minusDays(14), tilOgMed = LocalDate.now().minusDays(1)),
+                registrertArbeidssoker = true,
+            )
+
+        coEvery { meldepliktService.sendinnRapporteringsperiode(any(), token) } returns
+            InnsendingResponse(
+                id = rapporteringsperiode.id,
+                status = "OK",
+                feil = listOf(),
+            )
+
+        sendInn(rapporteringsperiode)
+
+        coVerify(exactly = 1) { arbeidssøkerService.sendBekreftelse(eq(ident), eq(rapporteringsperiode), eq(4)) }
         coVerify(exactly = 0) { bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any()) }
     }
 
@@ -834,7 +901,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
+        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any()) } returns null
         every { unleash.isEnabled(eq("dp-rapportering-sp5-true")) } returns true
 
         runBlocking {
@@ -931,7 +998,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
+        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any()) } returns null
         every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
         val innsendingResponse =
@@ -983,7 +1050,7 @@ class RapporteringServiceTest {
                 originalId = originalPeriode.id,
                 registrertArbeidssoker = true,
             )
-        coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.DP
+        coEvery { personregisterService.hentPersonstatus(eq(ident), any()) } returns personstatusMedDp
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), AnsvarligSystem.DP) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
         coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
@@ -1002,7 +1069,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
+        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any()) } returns null
         every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
         val innsendingResponse =
@@ -1205,7 +1272,7 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
-        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any(), any()) } just runs
+        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any()) } returns null
         every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
         val innsendingResponse =
