@@ -1,5 +1,7 @@
 package no.nav.dagpenger.rapportering.repository
 
-interface InnsendingtidspunktRepository {
+interface TidspunktjusteringRepository {
     suspend fun hentInnsendingtidspunkt(periodeKode: String): Int?
+
+    suspend fun hentSisteFristForTrekkJustering(periodeKode: String): Long?
 }

@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.KortType
+import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -234,8 +235,8 @@ class RapporteringRepositoryPostgres(
             queryOf(
                 """
                 INSERT INTO rapporteringsperiode 
-                (id, type, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id, rapporteringstype) 
-                VALUES (:id, :type, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id, :rapporteringstype)
+                (id, type, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id, rapporteringstype, siste_frist_for_trekk) 
+                VALUES (:id, :type, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id, :rapporteringstype, :siste_frist_for_trekk)
                 ON CONFLICT DO NOTHING
                 """.trimIndent(),
                 mapOf(
@@ -257,6 +258,7 @@ class RapporteringRepositoryPostgres(
                     "tom" to rapporteringsperiode.periode.tilOgMed,
                     "original_id" to rapporteringsperiode.originalId,
                     "rapporteringstype" to rapporteringsperiode.rapporteringstype,
+                    "siste_frist_for_trekk" to rapporteringsperiode.sisteFristForTrekk,
                 ),
             ).asUpdate,
         )
@@ -561,6 +563,7 @@ private fun Row.toRapporteringsperiode() =
         id = string("id"),
         type = KortType.fromCode(stringOrNull("type") ?: "09"),
         kanSendesFra = localDate("kan_sendes_fra"),
+        sisteFristForTrekk = localDate("siste_frist_for_trekk"),
         kanSendes = boolean("kan_sendes"),
         kanEndres = boolean("kan_endres"),
         bruttoBelop = doubleOrNull("brutto_belop"),
@@ -576,6 +579,11 @@ private fun Row.toRapporteringsperiode() =
         originalId = stringOrNull("original_id"),
         rapporteringstype = stringOrNull("rapporteringstype"),
         mottattDato = localDateOrNull("mottatt_dato"),
+        opprettetAv =
+            when (string("id").length) {
+                32 -> OpprettetAv.Dagpenger
+                else -> OpprettetAv.Arena
+            },
     )
 
 private fun Row.toDagPair(): Pair<UUID, Dag> =

@@ -4,8 +4,8 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     alias(libs.plugins.shadow.jar)
     alias(libs.plugins.kotlin)
-    id("io.ktor.plugin") version "3.4.0"
-    id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
+    id("io.ktor.plugin") version "3.4.3"
+    id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
 
@@ -77,15 +77,15 @@ dependencies {
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.client)
     implementation(libs.jackson.annotation)
-    implementation("no.nav.dagpenger:oauth2-klient:2025.12.19-08.15.2e150cd55270")
+    implementation("no.nav.dagpenger:oauth2-klient:2026.05.04-11.00.ccf523d33b63")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
-    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.8.2")
-    implementation("io.getunleash:unleash-client-java:12.1.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.0")
+    implementation("io.getunleash:unleash-client-java:12.2.1")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
-    implementation("no.nav.dagpenger:pdl-klient:2025.12.19-08.15.2e150cd55270")
-    implementation("com.github.navikt.tbd-libs:naisful-app:2025.11.04-10.54-c831038e")
+    implementation("no.nav.dagpenger:pdl-klient:2026.05.04-11.00.ccf523d33b63")
+    implementation("com.github.navikt.tbd-libs:naisful-app:20260429.1019")
 
     implementation("io.confluent:kafka-streams-avro-serde:8.1.1")
     implementation("org.apache.avro:avro:1.12.1")

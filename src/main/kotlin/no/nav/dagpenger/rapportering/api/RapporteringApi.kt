@@ -19,6 +19,7 @@ import no.nav.dagpenger.rapportering.api.auth.ident
 import no.nav.dagpenger.rapportering.api.auth.jwt
 import no.nav.dagpenger.rapportering.api.auth.loginLevel
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.config.Configuration.dpRapporteringFrontendUrl
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
@@ -29,6 +30,7 @@ import no.nav.dagpenger.rapportering.service.MeldepliktService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.getCallId
 import java.net.URI
+import java.time.LocalDateTime
 
 private val logger = KotlinLogging.logger {}
 
@@ -73,6 +75,32 @@ internal fun Application.rapporteringApi(
                     meldepliktService
                         .harMeldeplikt(ident, jwtToken)
                         .also { call.respond(HttpStatusCode.OK, it) }
+                }
+            }
+
+            route("/meldekortstatus") {
+                get {
+                    val ident = call.ident()
+                    val jwtToken = call.request.jwt()
+
+                    val rapporteringsperioder = rapporteringService.hentOgOppdaterRapporteringsperioder(ident, jwtToken)
+                    val innsendteRapporteringsperioder = rapporteringService.hentInnsendteRapporteringsperioder(ident, jwtToken)
+
+                    val meldekortStatusData =
+                        MeldekortStatusData(
+                            harInnsendteMeldekort = innsendteRapporteringsperioder?.isNotEmpty() ?: false,
+                            meldekortTilUtfylling =
+                                rapporteringsperioder?.map { periode ->
+                                    MeldekortTilUtfylling(
+                                        kanSendesFra = periode.kanSendesFra.atStartOfDay(),
+                                        kanFyllesUtFra = periode.periode.fraOgMed.atStartOfDay(),
+                                        fristForInnsending = periode.sisteFristForTrekk.atTime(23, 59, 59),
+                                    )
+                                } ?: emptyList(),
+                            redirectUrl = dpRapporteringFrontendUrl,
+                        )
+
+                    call.respond(HttpStatusCode.OK, meldekortStatusData)
                 }
             }
 
@@ -279,6 +307,18 @@ data class BegrunnelseRequest(
 
 data class RapporteringstypeRequest(
     val rapporteringstype: String,
+)
+
+data class MeldekortStatusData(
+    val harInnsendteMeldekort: Boolean,
+    val meldekortTilUtfylling: List<MeldekortTilUtfylling>,
+    val redirectUrl: String,
+)
+
+data class MeldekortTilUtfylling(
+    val kanSendesFra: LocalDateTime,
+    val kanFyllesUtFra: LocalDateTime?,
+    val fristForInnsending: LocalDateTime,
 )
 
 private fun ApplicationCall.getParameter(name: String): String =

@@ -32,36 +32,6 @@ class PersonregisterServiceTest {
     }
 
     @Test
-    fun `Skal hente overtattBekreftelse`() {
-        val personregisterService = PersonregisterService(personregisterConnector)
-
-        // Null
-        runBlocking {
-            coEvery { personregisterConnector.hentPersonstatus(eq(ident), eq(token)) } returns null
-            val erBekreftelseOvertatt = personregisterService.erBekreftelseOvertatt(ident, token)
-            erBekreftelseOvertatt shouldBe false
-        }
-
-        // True
-        runBlocking {
-            coEvery { personregisterConnector.hentPersonstatus(eq(ident), eq(token)) } returns
-                Personstatus(ident, Brukerstatus.DAGPENGERBRUKER, true, null)
-            val erBekreftelseOvertatt = personregisterService.erBekreftelseOvertatt(ident, token)
-            erBekreftelseOvertatt shouldBe true
-        }
-
-        // False
-        runBlocking {
-            coEvery { personregisterConnector.hentPersonstatus(eq(ident), eq(token)) } returns
-                Personstatus(ident, Brukerstatus.DAGPENGERBRUKER, false, null)
-            val erBekreftelseOvertatt = personregisterService.erBekreftelseOvertatt(ident, token)
-            erBekreftelseOvertatt shouldBe false
-        }
-
-        coVerify(exactly = 3) { personregisterConnector.hentPersonstatus(any(), any()) }
-    }
-
-    @Test
     fun `Skal hente ansvarligSystem`() {
         val personregisterService = PersonregisterService(personregisterConnector)
 

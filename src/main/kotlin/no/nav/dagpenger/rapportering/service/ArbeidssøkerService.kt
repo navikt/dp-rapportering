@@ -84,26 +84,15 @@ class ArbeidssøkerService(
     suspend fun sendBekreftelse(
         ident: String,
         rapporteringsperiode: Rapporteringsperiode,
-    ): UUID? = sendBekreftelse(ident, null, rapporteringsperiode)
-
-    suspend fun sendBekreftelse(
-        ident: String,
-        token: String,
-        loginLevel: Int,
-        rapporteringsperiode: Rapporteringsperiode,
-    ) {
-        if (!personregisterService.erBekreftelseOvertatt(ident, token)) {
-            return
+        loginLevel: Int? = null,
+    ): UUID? {
+        if (rapporteringsperiode.registrertArbeidssoker == null) {
+            logger.info {
+                "Rapporteringsperiode med id {${rapporteringsperiode.id}} har registrertArbeidssoker = null. Sender ikke sp.5 til PAW."
+            }
+            return null
         }
 
-        sendBekreftelse(ident, loginLevel, rapporteringsperiode)
-    }
-
-    private suspend fun sendBekreftelse(
-        ident: String,
-        loginLevel: Int?,
-        rapporteringsperiode: Rapporteringsperiode,
-    ): UUID? {
         if (!unleash.isEnabled("send-arbeidssoekerstatus")) {
             logger.info { "send-arbeidssoekerstatus er slått av. Sender ikke sp.5 til PAW." }
             return null
@@ -114,6 +103,7 @@ class ArbeidssøkerService(
 
         if (arbeidssøkerperiode == null) {
             logger.info { "Kunne ikke hente arbeidssøkerperiode. Sender ikke sp.5 til PAW" }
+            Sikkerlogg.info { "Kunne ikke hente arbeidssøkerperiode for ident {$ident}. Sender ikke sp.5 til PAW" }
             return null
         }
 

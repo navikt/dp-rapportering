@@ -34,14 +34,15 @@ import no.nav.dagpenger.rapportering.kafka.KafkaFactory
 import no.nav.dagpenger.rapportering.kafka.KafkaKonfigurasjon
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.metrics.DatabaseMetrikker
+import no.nav.dagpenger.rapportering.metrics.JobbkjøringMetrikker
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepositoryPostgres
-import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.dataSource
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.preparePartitions
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
+import no.nav.dagpenger.rapportering.repository.TidspunktjusteringRepositoryPostgres
 import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
@@ -71,14 +72,13 @@ class ApplicationBuilder(
     private val meterRegistry =
         PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry, Clock.SYSTEM)
     private val meldepliktMetrikker = MeldepliktMetrikker(meterRegistry)
-    private val databaseMetrikker = DatabaseMetrikker(meterRegistry)
     private val actionTimer = ActionTimer(meterRegistry)
 
     private val meldepliktConnector = MeldepliktConnector(httpClient = httpClient, actionTimer = actionTimer)
     private val personregisterConnector = PersonregisterConnector(httpClient = httpClient, actionTimer = actionTimer)
 
     private val rapporteringRepository = RapporteringRepositoryPostgres(dataSource, actionTimer)
-    private val innsendingtidspunktRepository = InnsendingtidspunktRepositoryPostgres(dataSource, actionTimer)
+    private val tidspunktjusteringRepository = TidspunktjusteringRepositoryPostgres(dataSource, actionTimer)
     private val bekreftelsesmeldingRepository = BekreftelsesmeldingRepositoryPostgres(dataSource, actionTimer)
     private val journalfoeringRepository = JournalfoeringRepositoryPostgres(dataSource, actionTimer)
     private val kallLoggRepository = KallLoggRepositoryPostgres(dataSource)
@@ -114,7 +114,7 @@ class ApplicationBuilder(
         RapporteringService(
             meldepliktService,
             rapporteringRepository,
-            innsendingtidspunktRepository,
+            tidspunktjusteringRepository,
             bekreftelsesmeldingRepository,
             journalfoeringService,
             arbeidssøkerService,
@@ -122,12 +122,41 @@ class ApplicationBuilder(
             meldekortregisterService,
         )
 
-    private val rapporterDatabaseMetrikkerJob = RapporterDatabaseMetrikkerJob(databaseMetrikker)
-    private val midlertidigJournalføringJob = MidlertidigJournalføringJob(httpClient, meterRegistry)
+    private val rapporterDatabaseMetrikkerJob =
+        RapporterDatabaseMetrikkerJob(
+            DatabaseMetrikker(meterRegistry),
+            JobbkjøringMetrikker(
+                meterRegistry,
+                RapporterDatabaseMetrikkerJob::class.simpleName!!,
+            ),
+        )
+    private val midlertidigJournalføringJob =
+        MidlertidigJournalføringJob(
+            httpClient,
+            jobbkjøringMetrikker = JobbkjøringMetrikker(meterRegistry, MidlertidigJournalføringJob::class.simpleName!!),
+        )
     private val sendBekreftelsesmeldingerJob =
-        SendBekreftelsesmeldingerJob(meterRegistry, httpClient, bekreftelsesmeldingRepository, rapporteringRepository, arbeidssøkerService)
+        SendBekreftelsesmeldingerJob(
+            httpClient,
+            bekreftelsesmeldingRepository,
+            rapporteringRepository,
+            arbeidssøkerService,
+            jobbkjøringMetrikker =
+                JobbkjøringMetrikker(
+                    meterRegistry,
+                    SendBekreftelsesmeldingerJob::class.simpleName!!,
+                ),
+        )
     private val slettRapporteringsperioderJob =
-        SlettRapporteringsperioderJob(meterRegistry, httpClient, rapporteringService)
+        SlettRapporteringsperioderJob(
+            httpClient,
+            rapporteringService,
+            jobbkjøringMetrikker =
+                JobbkjøringMetrikker(
+                    meterRegistry,
+                    SlettRapporteringsperioderJob::class.simpleName!!,
+                ),
+        )
     private val taskExecutor =
         TaskExecutor(
             listOf(

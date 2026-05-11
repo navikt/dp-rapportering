@@ -66,8 +66,10 @@ spec:
       value: "{{ PDL_AUDIENCE }}"
     - name: PDL_API_SCOPE
       value: "{{ PDL_API_SCOPE }}"
-    - name: JDK_JAVA_OPTIONS # Bytter GC og lar JVMen se at det er flere CPU kjerner
-      value: -XX:+UseParallelGC -XX:ActiveProcessorCount=4
+    - name: DP_RAPPORTERING_FRONTEND_URL
+      value: "{{ DP_RAPPORTERING_FRONTEND_URL }}"
+    - name: JDK_JAVA_OPTIONS # Bytter GC, lar JVMen se at det er flere CPU kjerner og styrer heap-storrelse via MaxRAMPercentage (https://nav-it.slack.com/archives/C5KUST8N6/p1714054537557279)
+      value: -XX:+UseParallelGC -XX:MaxRAMPercentage=50.0 -XX:ActiveProcessorCount=4
   gcp:
       sqlInstances:
         - type: POSTGRES_15
@@ -117,6 +119,8 @@ spec:
         - application: dp-saksbehandling-frontend
         - application: dp-rapportering-frontend
         - application: dp-meldekortregister
+        - application: meldekort-landingsside
+          namespace: meldekort
         - application: tokenx-token-generator
           namespace: nais
           cluster: dev-gcp
@@ -136,7 +140,7 @@ spec:
       memory: 1024Mi
     requests:
       cpu: 198m
-      memory: 512Mi
+      memory: 768Mi
 
   observability:
     logging:

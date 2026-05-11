@@ -31,9 +31,10 @@ import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.pluginConfiguration
 import no.nav.dagpenger.rapportering.config.statusPagesConfig
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
+import no.nav.dagpenger.rapportering.connector.Brukerstatus
 import no.nav.dagpenger.rapportering.connector.MeldepliktConnector
+import no.nav.dagpenger.rapportering.connector.Personstatus
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepositoryPostgres
-import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.KallLoggRepositoryPostgres
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
@@ -41,6 +42,7 @@ import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder
 import no.nav.dagpenger.rapportering.repository.PostgresDataSourceBuilder.runMigration
 import no.nav.dagpenger.rapportering.repository.RapporteringRepositoryPostgres
+import no.nav.dagpenger.rapportering.repository.TidspunktjusteringRepository
 import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
 import no.nav.dagpenger.rapportering.service.KallLoggService
@@ -69,6 +71,8 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientCon
 open class ApiTestSetup {
     lateinit var journalfoeringRepository: JournalfoeringRepositoryPostgres
     val personregisterService = mockk<PersonregisterService>()
+    val meldekortregisterService = mockk<MeldekortregisterService>()
+    val tidspunktjusteringRepository = mockk<TidspunktjusteringRepository>()
 
     companion object {
         const val TOKENX_ISSUER_ID = "tokenx"
@@ -164,6 +168,7 @@ open class ApiTestSetup {
             System.setProperty("UNLEASH_SERVER_API_URL", "http://localhost")
             System.setProperty("UNLEASH_SERVER_API_TOKEN", "token")
             System.setProperty("UNLEASH_SERVER_API_ENV", "development")
+            System.setProperty("DP_RAPPORTERING_FRONTEND_URL", "https://dp-rapportering-frontend.dagpenger")
         }
     }
 
@@ -193,8 +198,6 @@ open class ApiTestSetup {
             val meldepliktService = MeldepliktService(meldepliktConnector)
             val rapporteringRepository =
                 RapporteringRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
-            val innsendingtidspunktRepository =
-                InnsendingtidspunktRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             val bekreftelsesmeldingRepository =
                 BekreftelsesmeldingRepositoryPostgres(PostgresDataSourceBuilder.dataSource, actionTimer)
             journalfoeringRepository =
@@ -211,10 +214,17 @@ open class ApiTestSetup {
                 CompletableFuture.completedFuture(recordMetadata)
             }
 
-            coEvery { personregisterService.erBekreftelseOvertatt(any(), any()) } returns true
+            coEvery { personregisterService.hentPersonstatus(any(), any()) } returns
+                Personstatus(
+                    "01020312345",
+                    Brukerstatus.DAGPENGERBRUKER,
+                    true,
+                    AnsvarligSystem.ARENA,
+                )
             coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
 
-            val meldekortregisterService = mockk<MeldekortregisterService>()
+            coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
+            coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
             val pdlService = mockk<PdlService>()
             coEvery { pdlService.hentNavn(any()) } returns "Test Testesen"
@@ -239,7 +249,7 @@ open class ApiTestSetup {
                 RapporteringService(
                     meldepliktService,
                     rapporteringRepository,
-                    innsendingtidspunktRepository,
+                    tidspunktjusteringRepository,
                     bekreftelsesmeldingRepository,
                     journalfoeringService,
                     arbeidssoekerService,

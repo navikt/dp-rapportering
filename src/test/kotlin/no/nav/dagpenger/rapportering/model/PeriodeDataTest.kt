@@ -2,7 +2,6 @@ package no.nav.dagpenger.rapportering.model
 
 import io.kotest.matchers.shouldBe
 import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
-import no.nav.dagpenger.rapportering.model.PeriodeData.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
 import no.nav.dagpenger.rapportering.utils.UUIDv7
@@ -11,188 +10,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 class PeriodeDataTest {
-    @Test
-    fun `meldt = true hvis periode startes tidligere`() {
-        val dager =
-            listOf(
-                Dag(
-                    LocalDate.now(),
-                    emptyList(),
-                    0,
-                ),
-            )
-
-        val perioder =
-            listOf(
-                ArbeidssøkerperiodeResponse(
-                    UUIDv7.newUuid(),
-                    metadataResponse(LocalDateTime.now().minusDays(1)),
-                    null,
-                ),
-            )
-
-        val periodeDager = dager.toPeriodeDager(perioder)
-
-        periodeDager.size shouldBe 1
-        periodeDager[0].meldt shouldBe true
-    }
-
-    @Test
-    fun `meldt = true hvis periode startes den dagen`() {
-        val dager =
-            listOf(
-                Dag(
-                    LocalDate.now(),
-                    emptyList(),
-                    0,
-                ),
-            )
-
-        val perioder =
-            listOf(
-                ArbeidssøkerperiodeResponse(
-                    UUIDv7.newUuid(),
-                    metadataResponse(LocalDate.now().atStartOfDay()),
-                    null,
-                ),
-            )
-
-        val periodeDager = dager.toPeriodeDager(perioder)
-
-        periodeDager.size shouldBe 1
-        periodeDager[0].meldt shouldBe true
-    }
-
-    @Test
-    fun `meldt = false hvis periode startes senere`() {
-        val dager =
-            listOf(
-                Dag(
-                    LocalDate.now(),
-                    emptyList(),
-                    0,
-                ),
-            )
-
-        val perioder =
-            listOf(
-                ArbeidssøkerperiodeResponse(
-                    UUIDv7.newUuid(),
-                    metadataResponse(LocalDateTime.now().plusDays(1)),
-                    null,
-                ),
-            )
-
-        val periodeDager = dager.toPeriodeDager(perioder)
-
-        periodeDager.size shouldBe 1
-        periodeDager[0].meldt shouldBe false
-    }
-
-    @Test
-    fun `meldt = true hvis periode startes tidligere og avsluttes den dagen`() {
-        val dager =
-            listOf(
-                Dag(
-                    LocalDate.now(),
-                    emptyList(),
-                    0,
-                ),
-            )
-
-        val perioder =
-            listOf(
-                ArbeidssøkerperiodeResponse(
-                    UUIDv7.newUuid(),
-                    metadataResponse(LocalDateTime.now().minusDays(1)),
-                    metadataResponse(LocalDate.now().atTime(23, 59, 59)),
-                ),
-            )
-
-        val periodeDager = dager.toPeriodeDager(perioder)
-
-        periodeDager.size shouldBe 1
-        periodeDager[0].meldt shouldBe true
-    }
-
-    @Test
-    fun `meldt = true hvis periode startes tidligere og avsluttes senere`() {
-        val dager =
-            listOf(
-                Dag(
-                    LocalDate.now(),
-                    emptyList(),
-                    0,
-                ),
-            )
-
-        val perioder =
-            listOf(
-                ArbeidssøkerperiodeResponse(
-                    UUIDv7.newUuid(),
-                    metadataResponse(LocalDateTime.now().minusDays(1)),
-                    metadataResponse(LocalDateTime.now().plusDays(2)),
-                ),
-            )
-
-        val periodeDager = dager.toPeriodeDager(perioder)
-
-        periodeDager.size shouldBe 1
-        periodeDager[0].meldt shouldBe true
-    }
-
-    @Test
-    fun `meldt = false hvis periode startes tidligere og avsluttes tidligere`() {
-        val dager =
-            listOf(
-                Dag(
-                    LocalDate.now(),
-                    emptyList(),
-                    0,
-                ),
-            )
-
-        val perioder =
-            listOf(
-                ArbeidssøkerperiodeResponse(
-                    UUIDv7.newUuid(),
-                    metadataResponse(LocalDateTime.now().minusDays(3)),
-                    metadataResponse(LocalDateTime.now().minusDays(2)),
-                ),
-            )
-
-        val periodeDager = dager.toPeriodeDager(perioder)
-
-        periodeDager.size shouldBe 1
-        periodeDager[0].meldt shouldBe false
-    }
-
-    @Test
-    fun `meldt = false hvis periode startes senere og avsluttes senere`() {
-        val dager =
-            listOf(
-                Dag(
-                    LocalDate.now(),
-                    emptyList(),
-                    0,
-                ),
-            )
-
-        val perioder =
-            listOf(
-                ArbeidssøkerperiodeResponse(
-                    UUIDv7.newUuid(),
-                    metadataResponse(LocalDateTime.now().plusDays(1)),
-                    metadataResponse(LocalDateTime.now().plusDays(2)),
-                ),
-            )
-
-        val periodeDager = dager.toPeriodeDager(perioder)
-
-        periodeDager.size shouldBe 1
-        periodeDager[0].meldt shouldBe false
-    }
-
     @Test
     fun `kan konvertere til Rapporteringsperiode`() {
         val periode1 = Periode(LocalDate.now(), LocalDate.now().plusDays(13))
@@ -219,6 +36,7 @@ class PeriodeDataTest {
                     periode = periode1,
                     dager = emptyList(),
                     kanSendesFra = LocalDate.now(),
+                    sisteFristForTrekk = periode1.tilOgMed.plusDays(8),
                     opprettetAv = OpprettetAv.Dagpenger,
                     kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312345"),
                     type = Type.Ordinaert,
@@ -248,6 +66,7 @@ class PeriodeDataTest {
                             ),
                         ),
                     kanSendesFra = LocalDate.now(),
+                    sisteFristForTrekk = periode2.tilOgMed.plusDays(8),
                     opprettetAv = OpprettetAv.Arena,
                     kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312346"),
                     type = Type.Korrigert,
@@ -268,6 +87,7 @@ class PeriodeDataTest {
         rapporteringsperioder[0].periode shouldBe periode1
         rapporteringsperioder[0].dager shouldBe emptyList()
         rapporteringsperioder[0].kanSendesFra shouldBe LocalDate.now()
+        rapporteringsperioder[0].sisteFristForTrekk shouldBe periode1.tilOgMed.plusDays(8)
         rapporteringsperioder[0].kanSendes shouldBe true
         rapporteringsperioder[0].kanEndres shouldBe true
         rapporteringsperioder[0].bruttoBelop shouldBe null
@@ -289,6 +109,7 @@ class PeriodeDataTest {
         rapporteringsperioder[1].dager[1].dato shouldBe LocalDate.now().plusDays(1)
         rapporteringsperioder[1].dager[1].aktiviteter[0] shouldBe aktivitet2
         rapporteringsperioder[1].kanSendesFra shouldBe LocalDate.now()
+        rapporteringsperioder[1].sisteFristForTrekk shouldBe periode2.tilOgMed.plusDays(8)
         rapporteringsperioder[1].kanSendes shouldBe false
         rapporteringsperioder[1].kanEndres shouldBe false
         rapporteringsperioder[1].bruttoBelop shouldBe 123.0
@@ -300,13 +121,4 @@ class PeriodeDataTest {
         rapporteringsperioder[1].rapporteringstype shouldBe null
         rapporteringsperioder[1].html shouldBe null
     }
-
-    private fun metadataResponse(tidspunkt: LocalDateTime): MetadataResponse =
-        MetadataResponse(
-            tidspunkt,
-            BrukerResponse("", ""),
-            "Kilde",
-            "Årsak",
-            null,
-        )
 }

@@ -79,10 +79,17 @@ class DatabaseMetrikker(
     }
 }
 
-internal class JobbkjoringMetrikker(
+class JobbkjøringMetrikker(
     meterRegistry: MeterRegistry,
     navn: String,
 ) {
+    private val jobExecutionTriggerEvaluation: Counter =
+        Counter
+            .builder("${NAMESPACE}_job_execution_trigger_evaluation_total")
+            .description("Antall ganger jobben har sjekket om den skal kjøre")
+            .tag("navn", navn)
+            .register(meterRegistry)
+
     private val jobStatus: Counter =
         Counter
             .builder("${NAMESPACE}_job_execution_status_total")
@@ -131,6 +138,10 @@ internal class JobbkjoringMetrikker(
         incrementJobStatus(true)
         observeJobDuration(duration.inWholeSeconds)
         incrementAffectedRowsCount(affectedRows)
+    }
+
+    fun jobbSjekketOmDenSkulleKjøre() {
+        jobExecutionTriggerEvaluation.increment()
     }
 }
 

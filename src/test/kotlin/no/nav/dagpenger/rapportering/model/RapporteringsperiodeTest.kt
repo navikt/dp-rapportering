@@ -3,7 +3,6 @@ package no.nav.dagpenger.rapportering.model
 import io.kotest.matchers.shouldBe
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
 import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
-import no.nav.dagpenger.rapportering.model.PeriodeData.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import org.junit.jupiter.api.Test
@@ -67,9 +66,10 @@ class RapporteringsperiodeTest {
                 originalId = originalId,
                 rapporteringstype = "type",
                 html = "<html />",
+                opprettetAv = OpprettetAv.Dagpenger,
             )
 
-        val periodeData = rapporteringsperiode.toPeriodeData(ident, OpprettetAv.Dagpenger, emptyList())
+        val periodeData = rapporteringsperiode.toPeriodeData(ident, OpprettetAv.Dagpenger)
 
         periodeData.id shouldBe id
         periodeData.ident shouldBe ident
@@ -78,9 +78,9 @@ class RapporteringsperiodeTest {
             periodeData.dager[it].dato shouldBe LocalDate.now().plusDays(it.toLong())
             periodeData.dager[it].aktiviteter shouldBe aktiviteter
             periodeData.dager[it].dagIndex shouldBe it
-            periodeData.dager[it].meldt shouldBe false
         }
         periodeData.kanSendesFra shouldBe periode.tilOgMed.minusDays(2)
+        periodeData.sisteFristForTrekk shouldBe periode.tilOgMed.plusDays(8)
         periodeData.opprettetAv shouldBe OpprettetAv.Dagpenger
         periodeData.kilde shouldBe Kilde(PeriodeData.Rolle.Bruker, ident)
         periodeData.type shouldBe Type.Korrigert
@@ -90,6 +90,6 @@ class RapporteringsperiodeTest {
         periodeData.bruttoBelop shouldBe null
         periodeData.begrunnelse shouldBe "Begrunnelse"
         periodeData.registrertArbeidssoker shouldBe true
-        periodeData.meldedato shouldBe LocalDate.now()
+        periodeData.meldedato shouldBe null
     }
 }

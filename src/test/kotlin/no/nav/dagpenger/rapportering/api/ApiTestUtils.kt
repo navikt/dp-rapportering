@@ -15,6 +15,7 @@ import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.KortType
+import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -108,6 +109,7 @@ fun rapporteringsperiodeFor(
     originalId: String? = null,
     rapporteringstype: String? = null,
     mottattDato: LocalDate? = null,
+    sisteFristForTrekk: LocalDate = tilOgMed.plusDays(8),
 ) = Rapporteringsperiode(
     id = id,
     type = KortType.fromCode(type),
@@ -121,6 +123,7 @@ fun rapporteringsperiodeFor(
             )
         },
     kanSendesFra = tilOgMed.minusDays(1),
+    sisteFristForTrekk = sisteFristForTrekk,
     kanSendes = kanSendes,
     kanEndres = kanEndres,
     status = status,
@@ -130,4 +133,5 @@ fun rapporteringsperiodeFor(
     originalId = originalId,
     rapporteringstype = rapporteringstype,
     mottattDato = mottattDato,
+    opprettetAv = OpprettetAv.Dagpenger,
 )

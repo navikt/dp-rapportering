@@ -15,6 +15,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.KortType
+import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
@@ -90,6 +91,7 @@ fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
         periode = Periode(fraOgMed = this.periode.fraOgMed, tilOgMed = this.periode.tilOgMed),
         dager = this.dager.map { it.toDag() },
         kanSendesFra = this.kanSendesFra,
+        sisteFristForTrekk = this.periode.tilOgMed.plusDays(8),
         kanSendes = this.kanSendes,
         kanEndres = this.kanEndres,
         bruttoBelop = this.bruttoBelop,
@@ -106,6 +108,7 @@ fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
         registrertArbeidssoker = this.registrertArbeidssoker,
         originalId = null,
         rapporteringstype = null,
+        opprettetAv = OpprettetAv.Arena,
     )
 
 fun AdapterDag.toDag(): Dag = Dag(dato = this.dato, aktiviteter = this.aktiviteter.map { it.toAktivitet() }, dagIndex = this.dagIndex)

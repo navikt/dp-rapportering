@@ -114,6 +114,8 @@ internal object Configuration {
         }
     }
 
+    val dpRapporteringFrontendUrl by lazy { properties[Key("DP_RAPPORTERING_FRONTEND_URL", stringType)] }
+
     val pdfGeneratorUrl by lazy { properties[Key("PDF_GENERATOR_URL", stringType)] }
 
     val arbeidssokerregisterRecordKeyUrl by lazy {

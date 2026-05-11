@@ -7,7 +7,6 @@ import no.nav.dagpenger.rapportering.api.models.PeriodeResponse
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeResponse
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse
 import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
-import no.nav.dagpenger.rapportering.model.PeriodeData.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
 import java.time.LocalDate
@@ -19,7 +18,7 @@ data class Rapporteringsperiode(
     val periode: Periode,
     val dager: List<Dag>,
     val kanSendesFra: LocalDate,
-    val sisteFristForTrekk: LocalDate = periode.tilOgMed.plusDays(8),
+    val sisteFristForTrekk: LocalDate,
     val kanSendes: Boolean,
     val kanEndres: Boolean,
     val bruttoBelop: Double?,
@@ -30,6 +29,7 @@ data class Rapporteringsperiode(
     val originalId: String?,
     val rapporteringstype: String?,
     val html: String? = null,
+    val opprettetAv: OpprettetAv = OpprettetAv.Dagpenger,
 )
 
 enum class KortType(
@@ -107,15 +107,15 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
 fun Rapporteringsperiode.toPeriodeData(
     ident: String,
     opprettetAv: OpprettetAv,
-    arbeidssøkerperioder: List<ArbeidssøkerperiodeResponse>,
     nyStatus: String? = null,
 ): PeriodeData =
     PeriodeData(
         id = this.id,
         ident = ident,
         periode = this.periode,
-        dager = this.dager.toPeriodeDager(arbeidssøkerperioder),
+        dager = this.dager.toPeriodeDager(),
         kanSendesFra = this.kanSendesFra,
+        sisteFristForTrekk = this.sisteFristForTrekk,
         opprettetAv = opprettetAv,
         kilde = Kilde(PeriodeData.Rolle.Bruker, ident),
         type = if (this.erEndring()) Type.Korrigert else Type.valueOf(this.type.name),
@@ -127,19 +127,12 @@ fun Rapporteringsperiode.toPeriodeData(
         registrertArbeidssoker = this.registrertArbeidssoker,
     )
 
-fun List<Dag>.toPeriodeDager(arbeidssøkerperioder: List<ArbeidssøkerperiodeResponse>): List<PeriodeDag> =
+fun List<Dag>.toPeriodeDager(): List<PeriodeDag> =
     this.map {
         PeriodeDag(
             dato = it.dato,
             aktiviteter = it.aktiviteter,
             dagIndex = it.dagIndex,
-            meldt =
-                arbeidssøkerperioder.find { periode ->
-                    val fom = periode.startet.tidspunkt
-                    val tom = periode.avsluttet
-                    !fom.toLocalDate().isAfter(it.dato) &&
-                        (tom == null || !tom.tidspunkt.toLocalDate().isBefore(it.dato))
-                } != null,
         )
     }
 

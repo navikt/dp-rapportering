@@ -5,11 +5,13 @@ import io.ktor.http.Headers
 import io.ktor.server.plugins.BadRequestException
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.Brukerstatus
+import no.nav.dagpenger.rapportering.connector.erBekreftelseOvertatt
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
@@ -18,12 +20,13 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toKorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.model.toPeriodeData
 import no.nav.dagpenger.rapportering.model.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepository
-import no.nav.dagpenger.rapportering.repository.InnsendingtidspunktRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
+import no.nav.dagpenger.rapportering.repository.TidspunktjusteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnKanSendesFra
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
@@ -40,7 +43,7 @@ private val logger = KotlinLogging.logger {}
 class RapporteringService(
     private val meldepliktService: MeldepliktService,
     private val rapporteringRepository: RapporteringRepository,
-    private val innsendingtidspunktRepository: InnsendingtidspunktRepository,
+    private val tidspunktjusteringRepository: TidspunktjusteringRepository,
     private val bekreftelsesmeldingRepository: BekreftelsesmeldingRepository,
     private val journalfoeringService: JournalfoeringService,
     private val arbeidssøkerService: ArbeidssøkerService,
@@ -128,6 +131,7 @@ class RapporteringService(
 
         return perioder
             .justerInnsendingstidspunkt()
+            .justerSisteFristForTrekk()
             ?.filter { periode ->
                 // Filtrerer ut perioder som har en høyere status i databasen enn det vi får fra arena
                 rapporteringRepository
@@ -146,13 +150,27 @@ class RapporteringService(
             val kanSendesFra =
                 finnKanSendesFra(
                     tilOgMed = it.periode.tilOgMed,
-                    innsendingtidspunktRepository.hentInnsendingtidspunkt(
+                    tidspunktjusteringRepository.hentInnsendingtidspunkt(
                         periodeKode = finnPeriodeKode(fraOgMed = it.periode.fraOgMed),
                     ),
                 )
             it.copy(
                 kanSendesFra = kanSendesFra,
                 kanSendes = kanSendesInn(kanSendesFra, it.status, true),
+            )
+        }
+
+    private suspend fun List<Rapporteringsperiode>?.justerSisteFristForTrekk(): List<Rapporteringsperiode>? =
+        this?.map { it.justerSisteFristForTrekk() }
+
+    private suspend fun Rapporteringsperiode.justerSisteFristForTrekk(): Rapporteringsperiode =
+        this.let {
+            val ukeKode = finnPeriodeKode(this.periode.fraOgMed)
+            val antallDagerFraPeriodeSlutt = tidspunktjusteringRepository.hentSisteFristForTrekkJustering(ukeKode) ?: 8L
+            val justertSisteFristForTrekk = this.periode.tilOgMed.plusDays(antallDagerFraPeriodeSlutt)
+
+            it.copy(
+                sisteFristForTrekk = justertSisteFristForTrekk,
             )
         }
 
@@ -307,8 +325,10 @@ class RapporteringService(
     ): Rapporteringsperiode {
         val periodeFraDb = rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
         return if (periodeFraDb == null) {
-            rapporteringRepository.lagreRapporteringsperiodeOgDager(periode, ident)
-            periode
+            val periodeMedJustertSisteFristForTrekk = periode.justerSisteFristForTrekk()
+
+            rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeMedJustertSisteFristForTrekk, ident)
+            periodeMedJustertSisteFristForTrekk
         } else {
             if (periodeFraDb.status.ordinal <= periode.status.ordinal) {
                 rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
@@ -375,6 +395,8 @@ class RapporteringService(
             throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
         }
 
+        kontrollerRapporteringsperiode(rapporteringsperiode)
+
         // Oppdaterer perioden slik at den ikke kan sendes inn på nytt
         rapporteringRepository.settKanSendes(
             rapporteringId = rapporteringsperiode.id,
@@ -382,47 +404,39 @@ class RapporteringService(
             kanSendes = false,
         )
 
-        kontrollerRapporteringsperiode(rapporteringsperiode)
-
         var periodeTilInnsending = rapporteringsperiode
-        val ansvarligSystem = personregisterService.hentAnsvarligSystem(ident, token)
+        val personstatus = personregisterService.hentPersonstatus(ident, token)
+        val ansvarligSystem = personstatus?.ansvarligSystem ?: AnsvarligSystem.ARENA
 
-        if (rapporteringsperiode.status == TilUtfylling && rapporteringsperiode.originalId != null) {
-            if (rapporteringsperiode.begrunnelseEndring.isNullOrBlank()) {
-                throw BadRequestException(
-                    "Endret rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes. Begrunnelse for endring må oppgis",
-                )
-            } else {
-                val endringId = hentEndringId(ansvarligSystem, rapporteringsperiode.originalId, token)
+        if (rapporteringsperiode.erEndring()) {
+            val endringId = hentEndringId(ansvarligSystem, rapporteringsperiode.originalId!!, token)
 
-                // Oppretter nye ID for aktiviteter slik at vi kan lagre både original og midlertidig periode
-                val dager =
-                    rapporteringsperiode
-                        .dager
-                        .map { dag ->
-                            Dag(
-                                dag.dato,
-                                dag.aktiviteter.map { aktivitet -> Aktivitet(UUIDv7.newUuid(), aktivitet.type, aktivitet.timer) },
-                                dag.dagIndex,
-                            )
-                        }
-
-                periodeTilInnsending =
-                    if (endringId != null) {
-                        rapporteringsperiode.copy(id = endringId, dager = dager)
-                    } else {
-                        rapporteringsperiode.copy(dager = dager)
+            // Oppretter nye ID for aktiviteter slik at vi kan lagre både original og midlertidig periode
+            val dager =
+                rapporteringsperiode
+                    .dager
+                    .map { dag ->
+                        Dag(
+                            dag.dato,
+                            dag.aktiviteter.map { aktivitet -> Aktivitet(UUIDv7.newUuid(), aktivitet.type, aktivitet.timer) },
+                            dag.dagIndex,
+                        )
                     }
-                rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Midlertidig)
+
+            periodeTilInnsending =
                 if (endringId != null) {
-                    rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending, ident)
+                    rapporteringsperiode.copy(id = endringId, dager = dager)
+                } else {
+                    rapporteringsperiode.copy(dager = dager)
                 }
+            rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Midlertidig)
+            if (endringId != null) {
+                rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending, ident)
             }
         }
 
-        val arbeidssøkerperioder = arbeidssøkerService.hentCachedArbeidssøkerperioder(ident, kunSistePeriode = false)
-        val opprettetAv = if (ansvarligSystem == AnsvarligSystem.ARENA) PeriodeData.OpprettetAv.Arena else PeriodeData.OpprettetAv.Dagpenger
-        val periodeData = periodeTilInnsending.toPeriodeData(ident, opprettetAv, arbeidssøkerperioder, "Innsendt")
+        val opprettetAv = if (ansvarligSystem == AnsvarligSystem.ARENA) OpprettetAv.Arena else OpprettetAv.Dagpenger
+        val periodeData = periodeTilInnsending.toPeriodeData(ident, opprettetAv, "Innsendt")
 
         val response =
             sendinnRapporteringsperiode(ansvarligSystem, periodeTilInnsending, periodeData, token)
@@ -465,18 +479,20 @@ class RapporteringService(
                             }
                         }
 
-                        val bekreftelseSkalSendesFra = periodeTilInnsending.periode.tilOgMed.plusDays(1)
-                        if (
-                            periodeTilInnsending.registrertArbeidssoker == false &&
-                            LocalDate.now() < bekreftelseSkalSendesFra
-                        ) {
-                            bekreftelsesmeldingRepository.lagreBekreftelsesmelding(
-                                periodeTilInnsending.id,
-                                ident,
-                                bekreftelseSkalSendesFra,
-                            )
-                        } else {
-                            arbeidssøkerService.sendBekreftelse(ident, token, loginLevel, periodeTilInnsending)
+                        if (ansvarligSystem == AnsvarligSystem.ARENA) {
+                            val bekreftelseSkalSendesFra = periodeTilInnsending.periode.tilOgMed.plusDays(1)
+                            if (
+                                periodeTilInnsending.registrertArbeidssoker == false &&
+                                LocalDate.now() < bekreftelseSkalSendesFra
+                            ) {
+                                bekreftelsesmeldingRepository.lagreBekreftelsesmelding(
+                                    periodeTilInnsending.id,
+                                    ident,
+                                    bekreftelseSkalSendesFra,
+                                )
+                            } else if (personstatus.erBekreftelseOvertatt()) {
+                                arbeidssøkerService.sendBekreftelse(ident, periodeTilInnsending, loginLevel)
+                            }
                         }
                     } else {
                         // Oppdaterer perioden slik at den kan sendes inn på nytt
