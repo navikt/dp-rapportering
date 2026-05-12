@@ -83,7 +83,7 @@ dependencies {
     implementation(libs.bundles.postgres)
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.0")
     implementation("io.getunleash:unleash-client-java:12.2.1")
-    implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
     implementation("no.nav.dagpenger:pdl-klient:2026.05.04-11.00.ccf523d33b63")
     implementation("com.github.navikt.tbd-libs:naisful-app:20260429.1019")
 
