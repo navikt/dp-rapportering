@@ -36,7 +36,7 @@ class PdlService(
             } catch (e: Exception) {
                 logger.error(e) { "Feil ved henting av person fra PDL" }
                 Sikkerlogg.error(e) { "Feil ved henting av person fra PDL for ident $ident" }
-                ""
+                throw RuntimeException("Kunne ikke hente navn")
             }
         }
 }
