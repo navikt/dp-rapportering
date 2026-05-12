@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.service
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.every
@@ -62,7 +63,7 @@ class PdlServiceTest {
     }
 
     @Test
-    fun `returnerer tom String ved feil`() {
+    fun `kaster exception videre men skjuler opprinnelig beskrivelse`() {
         val personOppslag = mockk<PersonOppslag>()
         coEvery { personOppslag.hentPerson(eq(ident), any()) } throws Exception("Test exception")
 
@@ -72,11 +73,13 @@ class PdlServiceTest {
                 tokenProvider = testTokenProvider,
             )
 
-        val response =
-            runBlocking {
-                pdlService.hentNavn(ident)
+        val throwable =
+            shouldThrow<Exception> {
+                runBlocking {
+                    pdlService.hentNavn(ident)
+                }
             }
 
-        response shouldBe ""
+        throwable.message shouldBe "Kunne ikke hente navn"
     }
 }

@@ -180,7 +180,7 @@ class ApplicationBuilder(
                                 callLogger = LoggerFactory.getLogger("CallLogger"),
                                 callIdHeaderName = HttpHeaders.XRequestId,
                                 preStopHook = preStopHook::handlePreStopRequest,
-                                aliveCheck = rapid::isReady,
+                                aliveCheck = rapid::isRunning,
                                 readyCheck = rapid::isReady,
                                 statusPagesConfig = { statusPagesConfig(meldepliktMetrikker) },
                             ) {

@@ -60,10 +60,15 @@ class JournalfoeringService(
                 defaultObjectMapper.readValue<Rapporteringsperiode>(midlertidigLagretData.rapporteringsperiode)
 
             try {
+                var navn = midlertidigLagretData.navn
+                if (navn.isBlank()) {
+                    navn = pdlService.hentNavn(midlertidigLagretData.ident)
+                }
+
                 // Journalfør
                 opprettOgSendBehov(
                     midlertidigLagretData.ident,
-                    midlertidigLagretData.navn,
+                    navn,
                     midlertidigLagretData.loginLevel,
                     HeadersImpl(midlertidigLagretData.headers),
                     rapporteringsperiode,
@@ -89,9 +94,11 @@ class JournalfoeringService(
         rapporteringsperiode: Rapporteringsperiode,
         ansvarligSystem: AnsvarligSystem,
     ) {
-        val navn = pdlService.hentNavn(ident)
+        var navn = ""
 
         try {
+            navn = pdlService.hentNavn(ident)
+
             opprettOgSendBehov(ident, navn, loginLevel, headers, rapporteringsperiode, ansvarligSystem)
         } catch (e: Exception) {
             logger.warn(e) { "Feil ved journalføring" }
