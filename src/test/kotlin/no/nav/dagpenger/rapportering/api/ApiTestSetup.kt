@@ -53,7 +53,6 @@ import no.nav.dagpenger.rapportering.service.PersonregisterService
 import no.nav.dagpenger.rapportering.service.RapporteringService
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meldepliktMetrikker
-import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.meterRegistry
 import no.nav.dagpenger.rapportering.utils.OutgoingCallLoggingPlugin
 import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
 import no.nav.security.mock.oauth2.MockOAuth2Server
@@ -265,7 +264,6 @@ open class ApiTestSetup {
                     statusPagesConfig(meldepliktMetrikker)
                 }
                 pluginConfiguration(kallLoggRepository)
-                internalApi(meterRegistry)
                 rapporteringApi(rapporteringService, meldepliktService, journalfoeringService, meldepliktMetrikker)
             }
 

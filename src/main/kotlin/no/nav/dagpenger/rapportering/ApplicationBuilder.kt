@@ -12,7 +12,6 @@ import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.prometheus.metrics.model.registry.PrometheusRegistry
-import no.nav.dagpenger.rapportering.api.internalApi
 import no.nav.dagpenger.rapportering.api.rapporteringApi
 import no.nav.dagpenger.rapportering.config.Configuration.config
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
@@ -191,7 +190,6 @@ class ApplicationBuilder(
                                 }
 
                                 pluginConfiguration(kallLoggRepository)
-                                internalApi(meterRegistry)
                                 rapporteringApi(
                                     rapporteringService,
                                     meldepliktService,
