@@ -132,6 +132,7 @@ open class ApiTestSetup {
                 "DB_JDBC_URL",
                 "${database.jdbcUrl}&user=${database.username}&password=${database.password}",
             )
+            System.setProperty("MAXIMUM_POOL_SIZE_PER_POD", "10")
             System.setProperty("token-x.client-id", TOKENX_ISSUER_ID)
             System.setProperty("TOKEN_X_CLIENT_ID", TOKENX_ISSUER_ID)
             System.setProperty("TOKEN_X_PRIVATE_JWK", TEST_PRIVATE_JWK)

@@ -10,6 +10,7 @@ beregningsdato:
 gcp:
   sql:
     tier: db-custom-4-8192
+    maximumPoolSizePerPod: 40
 
 azure:
   tenant: nav.no

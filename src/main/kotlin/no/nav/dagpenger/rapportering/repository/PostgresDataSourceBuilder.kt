@@ -13,18 +13,17 @@ import java.util.TimerTask
 import java.util.concurrent.ThreadLocalRandom
 
 internal object PostgresDataSourceBuilder {
-    const val DB_URL_KEY = "DB_JDBC_URL"
-
     private fun getOrThrow(key: String): String = getenv(key) ?: getProperty(key)
 
     val dataSource by lazy {
         HikariDataSource().apply {
-            jdbcUrl = getOrThrow(DB_URL_KEY)
-            maximumPoolSize = 40
-            minimumIdle = 1
-            idleTimeout = 10000 // 10s
-            connectionTimeout = 5000 // 5s
-            maxLifetime = 30000 // 30s
+            jdbcUrl = getOrThrow("DB_JDBC_URL")
+            maximumPoolSize = getOrThrow("MAXIMUM_POOL_SIZE_PER_POD").toInt()
+            minimumIdle = 5
+            idleTimeout = 300000 // 5min
+            connectionTimeout = 10000 // 10s
+            keepaliveTime = 30000 // 30s
+            maxLifetime = 600000 // 10min
             initializationFailTimeout = 5000 // 5s
             addDataSourceProperty("tcpKeepAlive", true)
             addDataSourceProperty("socketTimeout", 30)
