@@ -30,6 +30,8 @@ spec:
     - secret: dp-rapportering-unleash-api-token
 
   env:
+    - name: MAXIMUM_POOL_SIZE_PER_POD
+      value: "{{gcp.sql.maximumPoolSizePerPod}}"
     - name: BEREGNINGSDATO_STRATEGI
       value: {{beregningsdato.strategi}}
     - name: GRUPPER_SAKSBEHANDLER

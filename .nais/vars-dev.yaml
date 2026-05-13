@@ -9,7 +9,8 @@ beregningsdato:
 
 gcp:
   sql:
-    tier: db-f1-micro
+    tier: db-g1-small
+    maximumPoolSizePerPod: 10
 
 azure:
   tenant: trygdeetaten.no
