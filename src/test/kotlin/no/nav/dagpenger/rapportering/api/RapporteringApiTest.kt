@@ -667,7 +667,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val response =
                     client.doPost("/rapporteringsperiode/123/arbeidssoker", issueToken(fnr), ArbeidssokerRequest(true))
-                response.status shouldBe HttpStatusCode.InternalServerError
+                response.status shouldBe HttpStatusCode.BadRequest
             }
     }
 
@@ -706,7 +706,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 val aktivitet = Aktivitet(UUIDv7.newUuid(), AktivitetsType.Arbeid, "PT7H30M")
                 val dagMedAktivitet = Dag(LocalDate.now(), listOf(aktivitet), 0)
                 val response = client.doPost("/rapporteringsperiode/123/aktivitet", issueToken(fnr), dagMedAktivitet)
-                response.status shouldBe HttpStatusCode.InternalServerError
+                response.status shouldBe HttpStatusCode.BadRequest
             }
         }
     }
@@ -821,7 +821,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         issueToken(fnr),
                         RapporteringstypeRequest("harIkkeAktivitet"),
                     )
-                response.httpResponse.status shouldBe HttpStatusCode.InternalServerError
+                response.httpResponse.status shouldBe HttpStatusCode.BadRequest
                 response.body.correlationId shouldContain "dp-rapp"
             }
 

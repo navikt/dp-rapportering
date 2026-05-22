@@ -182,7 +182,8 @@ class RapporteringService(
         hentRapporteringsperioder(ident, token)
             ?.firstOrNull { it.id == rapporteringId }
             ?.let { lagreEllerOppdaterPeriode(it, ident) }
-            ?: throw RuntimeException("Fant ingen periode med id $rapporteringId for ident $ident")
+            ?.also { if (!it.kanSendes) throw BadRequestException("Perioden med id $rapporteringId kan ikke sendes inn") }
+            ?: throw RuntimeException("Fant ingen periode med id $rapporteringId")
     }
 
     suspend fun startEndring(
@@ -192,7 +193,7 @@ class RapporteringService(
     ): Rapporteringsperiode =
         hentInnsendteRapporteringsperioder(ident, token)
             ?.firstOrNull { it.id == rapporteringId }
-            .run { this ?: throw RuntimeException("Fant ingen innsendt periode med id $rapporteringId for ident $ident") }
+            .run { this ?: throw RuntimeException("Fant ingen innsendt periode med id $rapporteringId") }
             .takeIf { it.kanEndres }
             .run { this ?: throw IllegalArgumentException("Perioden med id $rapporteringId kan ikke endres") }
             .let { originalPeriode ->
@@ -269,7 +270,9 @@ class RapporteringService(
                         val originalPeriode =
                             perioder
                                 .filter { it.begrunnelseEndring.isNullOrBlank() }
-                                .minByOrNull { it.mottattDato ?: throw RuntimeException("Innsendt periode har ikke mottatt dato") }
+                                .minByOrNull {
+                                    it.mottattDato ?: throw RuntimeException("Innsendt periode har ikke mottatt dato")
+                                }
                                 ?: return@map perioder.also {
                                     logger.warn { "Fant ingen original for perioden: ${perioder.first().periode}" }
                                 }
@@ -344,6 +347,13 @@ class RapporteringService(
         dag: Dag,
     ) {
         kontrollerAktiviteter(listOf(dag))
+
+        if (rapporteringRepository.hentKanSendes(rapporteringId) != true) {
+            throw BadRequestException(
+                "Kan ikke endre aktiviteter for periode med id $rapporteringId (eksisterer ikke eller kan ikke sendes inn)",
+            )
+        }
+
         val dagId = rapporteringRepository.hentDagId(rapporteringId, dag.dagIndex)
         rapporteringRepository.slettOgLagreAktiviteter(rapporteringId, dagId, dag)
     }
@@ -353,8 +363,13 @@ class RapporteringService(
         ident: String,
     ) {
         if (!rapporteringRepository.finnesRapporteringsperiode(rapporteringId, ident)) {
-            throw RuntimeException("Fant ingen rapporteringsperiode med id $rapporteringId for ident $ident")
+            throw RuntimeException("Fant ingen rapporteringsperiode med id $rapporteringId")
         }
+
+        if (rapporteringRepository.hentKanSendes(rapporteringId) != true) {
+            throw BadRequestException("Kan ikke resette aktiviteter for periode med id $rapporteringId (kan ikke sendes inn)")
+        }
+
         val dager = rapporteringRepository.hentDagerUtenAktivitet(rapporteringId)
         dager.forEach { (dagId, _) ->
             rapporteringRepository.slettAktiviteter(dagId)
@@ -365,23 +380,47 @@ class RapporteringService(
         rapporteringId: String,
         ident: String,
         registrertArbeidssoker: Boolean,
-    ) = rapporteringRepository.oppdaterRegistrertArbeidssoker(
-        rapporteringId,
-        ident,
-        registrertArbeidssoker,
-    )
+    ) {
+        if (rapporteringRepository.hentKanSendes(rapporteringId) != true) {
+            throw BadRequestException(
+                "Kan ikke oppdatere registrert arbeidssøker for periode med id $rapporteringId (eksisterer ikke eller kan ikke sendes inn)",
+            )
+        }
+
+        rapporteringRepository.oppdaterRegistrertArbeidssoker(
+            rapporteringId,
+            ident,
+            registrertArbeidssoker,
+        )
+    }
 
     suspend fun oppdaterBegrunnelse(
         rapporteringId: String,
         ident: String,
         begrunnelse: String,
-    ) = rapporteringRepository.oppdaterBegrunnelse(rapporteringId, ident, begrunnelse)
+    ) {
+        if (rapporteringRepository.hentKanSendes(rapporteringId) != true) {
+            throw BadRequestException(
+                "Kan ikke oppdatere begrunnelse for periode med id $rapporteringId (eksisterer ikke eller kan ikke sendes inn)",
+            )
+        }
+
+        rapporteringRepository.oppdaterBegrunnelse(rapporteringId, ident, begrunnelse)
+    }
 
     suspend fun oppdaterRapporteringstype(
         rapporteringId: String,
         ident: String,
         rapporteringstype: String,
-    ) = rapporteringRepository.oppdaterRapporteringstype(rapporteringId, ident, rapporteringstype)
+    ) {
+        if (rapporteringRepository.hentKanSendes(rapporteringId) != true) {
+            throw BadRequestException(
+                "Kan ikke oppdatere rapporteringstype for periode med id $rapporteringId (eksisterer ikke eller kan ikke sendes inn)",
+            )
+        }
+
+        rapporteringRepository.oppdaterRapporteringstype(rapporteringId, ident, rapporteringstype)
+    }
 
     suspend fun sendRapporteringsperiode(
         rapporteringsperiode: Rapporteringsperiode,
@@ -391,8 +430,8 @@ class RapporteringService(
         headers: Headers,
     ): InnsendingResponse {
         val kanSendes = rapporteringRepository.hentKanSendes(rapporteringsperiode.id)
-        if (kanSendes == null || !kanSendes) {
-            throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes")
+        if (kanSendes != true) {
+            throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes inn")
         }
 
         kontrollerRapporteringsperiode(rapporteringsperiode)
@@ -418,7 +457,13 @@ class RapporteringService(
                     .map { dag ->
                         Dag(
                             dag.dato,
-                            dag.aktiviteter.map { aktivitet -> Aktivitet(UUIDv7.newUuid(), aktivitet.type, aktivitet.timer) },
+                            dag.aktiviteter.map { aktivitet ->
+                                Aktivitet(
+                                    UUIDv7.newUuid(),
+                                    aktivitet.type,
+                                    aktivitet.timer,
+                                )
+                            },
                             dag.dagIndex,
                         )
                     }
@@ -429,7 +474,13 @@ class RapporteringService(
                 } else {
                     rapporteringsperiode.copy(dager = dager)
                 }
-            rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, false, false, Midlertidig)
+            rapporteringRepository.oppdaterPeriodeEtterInnsending(
+                rapporteringsperiode.id,
+                ident,
+                false,
+                false,
+                Midlertidig,
+            )
             if (endringId != null) {
                 rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeTilInnsending, ident)
             }
@@ -452,7 +503,13 @@ class RapporteringService(
 
                         logger.info { "Journalføring rapporteringsperiode ${periodeTilInnsending.id}" }
 
-                        journalfoeringService.journalfoer(ident, loginLevel, headers, periodeTilInnsending, ansvarligSystem)
+                        journalfoeringService.journalfoer(
+                            ident,
+                            loginLevel,
+                            headers,
+                            periodeTilInnsending,
+                            ansvarligSystem,
+                        )
 
                         if (periodeTilInnsending.id != periodeTilInnsending.originalId) {
                             rapporteringRepository.oppdaterPeriodeEtterInnsending(
