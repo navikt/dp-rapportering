@@ -460,16 +460,20 @@ class RapporteringServiceTest {
         coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
         coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
-        runBlocking { rapporteringService.startUtfylling("1", ident, token) }
+        val throwable =
+            shouldThrow<RuntimeException> {
+                runBlocking { rapporteringService.startUtfylling("4", ident, token) }
+            }
 
-        coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        throwable.message shouldBe "Fant ingen periode med id 4"
     }
 
     @Test
     fun `kan lagre aktivitet på eksisterende rapporteringsperiode`() {
         val aktiviteter = listOf(Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null))
         coEvery { rapporteringRepository.hentDagId(any(), any()) } returns UUIDv7.newUuid()
-        coJustRun { rapporteringRepository.slettOgLagreAktiviteter(any(), any(), any()) }
+        coEvery { rapporteringRepository.hentKanSendes(eq("1")) } returns true
+        coJustRun { rapporteringRepository.slettOgLagreAktiviteter(eq("1"), any(), any()) }
 
         runBlocking {
             rapporteringService.lagreEllerOppdaterAktiviteter(
@@ -489,7 +493,8 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan oppdatere om bruker vil fortsette som registrert arbeidssoker`() {
-        coJustRun { rapporteringRepository.oppdaterRegistrertArbeidssoker(any(), any(), any()) }
+        coEvery { rapporteringRepository.hentKanSendes(eq("1")) } returns true
+        coJustRun { rapporteringRepository.oppdaterRegistrertArbeidssoker(eq("1"), eq("12345678910"), eq(true)) }
 
         runBlocking { rapporteringService.oppdaterRegistrertArbeidssoker("1", "12345678910", true) }
 
@@ -498,7 +503,8 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan oppdatere begrunnelse`() {
-        coJustRun { rapporteringRepository.oppdaterBegrunnelse(any(), any(), any()) }
+        coEvery { rapporteringRepository.hentKanSendes(eq("1")) } returns true
+        coJustRun { rapporteringRepository.oppdaterBegrunnelse(eq("1"), eq("12345678910"), eq("Begrunnelse")) }
 
         runBlocking { rapporteringService.oppdaterBegrunnelse("1", "12345678910", "Begrunnelse") }
 
@@ -507,7 +513,8 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan oppdatere rapporteringstype`() {
-        coJustRun { rapporteringRepository.oppdaterRapporteringstype(any(), any(), any()) }
+        coEvery { rapporteringRepository.hentKanSendes(eq("1")) } returns true
+        coJustRun { rapporteringRepository.oppdaterRapporteringstype(eq("1"), eq("12345678910"), eq("harIngenAktivitet")) }
 
         runBlocking { rapporteringService.oppdaterRapporteringstype("1", "12345678910", "harIngenAktivitet") }
 
@@ -1202,6 +1209,7 @@ class RapporteringServiceTest {
         val dagPairList: List<Pair<UUID, Dag>> = getDager().map { UUIDv7.newUuid() to it }
         coEvery { rapporteringRepository.finnesRapporteringsperiode(any(), any()) } returns true
         coEvery { rapporteringRepository.hentDagerUtenAktivitet(any()) } returns dagPairList
+        coEvery { rapporteringRepository.hentKanSendes(eq("1")) } returns true
         coJustRun { rapporteringRepository.slettAktiviteter(any()) }
 
         runBlocking { rapporteringService.resettAktiviteter("1", ident) }
