@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.connector
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
@@ -11,6 +12,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
+import no.nav.dagpenger.rapportering.utils.Sikkerlogg
 import kotlin.time.measureTime
 
 class HttpClientUtils(
@@ -19,22 +21,32 @@ class HttpClientUtils(
     private val tokenProvider: (String) -> String?,
     private val actionTimer: ActionTimer,
 ) {
+    private val logger = KotlinLogging.logger {}
+
     suspend fun get(
         path: String,
         subjectToken: String,
         metrikkNavn: String,
     ): HttpResponse {
         val response: HttpResponse
-        val token = tokenProvider.invoke(subjectToken) ?: throw RuntimeException("Fant ikke token")
-        val tidBrukt =
-            measureTime {
-                response =
-                    httpClient.get("$baseUrl$path") {
-                        bearerAuth(token)
-                        contentType(ContentType.Application.Json)
-                    }
-            }
-        actionTimer.httpTimer(metrikkNavn, response.status, HttpMethod.Get, tidBrukt.inWholeSeconds)
+
+        try {
+            val token = tokenProvider.invoke(subjectToken) ?: throw RuntimeException("Fant ikke token")
+            val tidBrukt =
+                measureTime {
+                    response =
+                        httpClient.get("$baseUrl$path") {
+                            bearerAuth(token)
+                            contentType(ContentType.Application.Json)
+                        }
+                }
+            actionTimer.httpTimer(metrikkNavn, response.status, HttpMethod.Get, tidBrukt.inWholeSeconds)
+        } catch (e: Exception) {
+            logger.error(e) { "Feil ved GET URL $baseUrl$path" }
+            Sikkerlogg.error(e) { "Feil ved GET URL $baseUrl$path" }
+            throw e
+        }
+
         return response
     }
 
@@ -46,17 +58,25 @@ class HttpClientUtils(
         body: Any?,
     ): HttpResponse {
         val response: HttpResponse
-        val token = tokenProvider.invoke(subjectToken) ?: throw RuntimeException("Fant ikke token")
-        val tidBrukt =
-            measureTime {
-                response =
-                    httpClient.post("$baseUrl$path") {
-                        bearerAuth(token)
-                        contentType(contentType)
-                        setBody(defaultObjectMapper.writeValueAsString(body))
-                    }
-            }
-        actionTimer.httpTimer(metrikkNavn, response.status, HttpMethod.Post, tidBrukt.inWholeSeconds)
+
+        try {
+            val token = tokenProvider.invoke(subjectToken) ?: throw RuntimeException("Fant ikke token")
+            val tidBrukt =
+                measureTime {
+                    response =
+                        httpClient.post("$baseUrl$path") {
+                            bearerAuth(token)
+                            contentType(contentType)
+                            setBody(defaultObjectMapper.writeValueAsString(body))
+                        }
+                }
+            actionTimer.httpTimer(metrikkNavn, response.status, HttpMethod.Post, tidBrukt.inWholeSeconds)
+        } catch (e: Exception) {
+            logger.error(e) { "Feil ved POST URL $baseUrl$path" }
+            Sikkerlogg.error(e) { "Feil ved POST URL $baseUrl$path" }
+            throw e
+        }
+
         return response
     }
 
