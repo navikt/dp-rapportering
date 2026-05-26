@@ -37,8 +37,8 @@ class PersonregisterConnectorTest {
     )
 
     @Test
-    fun `hentPersonstatus returnerer riktig overtattBekreftelse og ansvarligSystem`() {
-        // True, ARENA
+    fun `hentPersonstatus returnerer riktig personstatus`() {
+        // True, ARENA, false
         var connector =
             personregisterConnector(
                 HttpStatusCode.OK,
@@ -47,7 +47,8 @@ class PersonregisterConnectorTest {
                   "ident": "$ident",
                   "status": "DAGPENGERBRUKER",
                   "overtattBekreftelse": true,
-                  "ansvarligSystem": "ARENA" 
+                  "ansvarligSystem": "ARENA",
+                  "erRegistrertArbeidssøker": false
                 }
                 """.trimIndent(),
             )
@@ -59,8 +60,9 @@ class PersonregisterConnectorTest {
 
         response?.overtattBekreftelse shouldBe true
         response?.ansvarligSystem shouldBe AnsvarligSystem.ARENA
+        response?.erRegistrertArbeidssøker shouldBe false
 
-        // False, DP
+        // False, DP, true
         connector =
             personregisterConnector(
                 HttpStatusCode.OK,
@@ -69,7 +71,8 @@ class PersonregisterConnectorTest {
                   "ident": "$ident",
                   "status": "DAGPENGERBRUKER",
                   "overtattBekreftelse": false,
-                  "ansvarligSystem": "DP" 
+                  "ansvarligSystem": "DP",
+                  "erRegistrertArbeidssøker": true
                 }
                 """.trimIndent(),
             )
@@ -81,8 +84,9 @@ class PersonregisterConnectorTest {
 
         response?.overtattBekreftelse shouldBe false
         response?.ansvarligSystem shouldBe AnsvarligSystem.DP
+        response?.erRegistrertArbeidssøker shouldBe true
 
-        // Null, Null
+        // Null, Null, Null
         connector =
             personregisterConnector(
                 HttpStatusCode.OK,
@@ -101,6 +105,7 @@ class PersonregisterConnectorTest {
 
         response?.overtattBekreftelse shouldBe false
         response?.ansvarligSystem shouldBe null
+        response?.erRegistrertArbeidssøker shouldBe false
     }
 
     @Test

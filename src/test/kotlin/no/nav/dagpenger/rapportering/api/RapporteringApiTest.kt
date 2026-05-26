@@ -99,6 +99,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         Brukerstatus.DAGPENGERBRUKER,
                         true,
                         AnsvarligSystem.DP,
+                        true,
                     )
 
                 val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
@@ -116,6 +117,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         Brukerstatus.IKKE_DAGPENGERBRUKER,
                         true,
                         AnsvarligSystem.DP,
+                        true,
                     )
 
                 val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
@@ -133,6 +135,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         Brukerstatus.DAGPENGERBRUKER,
                         true,
                         AnsvarligSystem.ARENA,
+                        true,
                     )
 
                 val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
@@ -150,9 +153,57 @@ class RapporteringApiTest : ApiTestSetup() {
                         Brukerstatus.IKKE_DAGPENGERBRUKER,
                         true,
                         AnsvarligSystem.ARENA,
+                        true,
                     )
 
                 val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
+
+                response.status shouldBe HttpStatusCode.OK
+                response.bodyAsText() shouldBe "false"
+            }
+    }
+
+    @Nested
+    inner class ErRegistrertArbeidssoker {
+        @Test
+        fun `erRegistrertArbeidssøker uten token gir unauthorized`() =
+            setUpTestApplication {
+                with(client.doGet("/erregistrertarbeidssoker", null)) {
+                    status shouldBe HttpStatusCode.Unauthorized
+                }
+            }
+
+        @Test
+        fun `Returnerer true hvis erRegistrertArbeidssøker = true`() =
+            setUpTestApplication {
+                coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
+                    Personstatus(
+                        fnr,
+                        Brukerstatus.DAGPENGERBRUKER,
+                        true,
+                        AnsvarligSystem.DP,
+                        true,
+                    )
+
+                val response = client.doGet("/erregistrertarbeidssoker", issueToken(fnr))
+
+                response.status shouldBe HttpStatusCode.OK
+                response.bodyAsText() shouldBe "true"
+            }
+
+        @Test
+        fun `Returnerer false hvis erRegistrertArbeidssøker = false`() =
+            setUpTestApplication {
+                coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
+                    Personstatus(
+                        fnr,
+                        Brukerstatus.IKKE_DAGPENGERBRUKER,
+                        true,
+                        AnsvarligSystem.DP,
+                        false,
+                    )
+
+                val response = client.doGet("/erregistrertarbeidssoker", issueToken(fnr))
 
                 response.status shouldBe HttpStatusCode.OK
                 response.bodyAsText() shouldBe "false"

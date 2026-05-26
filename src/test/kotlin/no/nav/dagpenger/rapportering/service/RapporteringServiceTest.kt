@@ -100,6 +100,7 @@ class RapporteringServiceTest {
             Brukerstatus.DAGPENGERBRUKER,
             true,
             AnsvarligSystem.DP,
+            true,
         )
     private val personstatusMedArena =
         Personstatus(
@@ -107,6 +108,7 @@ class RapporteringServiceTest {
             Brukerstatus.DAGPENGERBRUKER,
             true,
             AnsvarligSystem.ARENA,
+            true,
         )
 
     companion object {
@@ -141,6 +143,7 @@ class RapporteringServiceTest {
                 Brukerstatus.DAGPENGERBRUKER,
                 true,
                 AnsvarligSystem.DP,
+                true,
             )
 
         var harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
@@ -154,6 +157,7 @@ class RapporteringServiceTest {
                 Brukerstatus.IKKE_DAGPENGERBRUKER,
                 true,
                 AnsvarligSystem.DP,
+                true,
             )
 
         harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
@@ -167,6 +171,7 @@ class RapporteringServiceTest {
                 Brukerstatus.DAGPENGERBRUKER,
                 true,
                 AnsvarligSystem.ARENA,
+                true,
             )
 
         harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
@@ -180,11 +185,53 @@ class RapporteringServiceTest {
                 Brukerstatus.IKKE_DAGPENGERBRUKER,
                 true,
                 AnsvarligSystem.ARENA,
+                true,
             )
 
         harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
 
         harDpMeldeplikt shouldBe false
+    }
+
+    @Test
+    fun `erRegistrertArbeidssøker returnerer true hvis erRegistrertArbeidssøker i hentPersonstatus er true`() {
+        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
+            Personstatus(
+                ident,
+                Brukerstatus.DAGPENGERBRUKER,
+                true,
+                AnsvarligSystem.DP,
+                true,
+            )
+
+        val erRegistrertArbeidssøker = runBlocking { rapporteringService.erRegistrertArbeidssøker(ident, token) }
+
+        erRegistrertArbeidssøker shouldBe true
+    }
+
+    @Test
+    fun `erRegistrertArbeidssøker returnerer false hvis erRegistrertArbeidssøker i hentPersonstatus er false`() {
+        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
+            Personstatus(
+                ident,
+                Brukerstatus.DAGPENGERBRUKER,
+                true,
+                AnsvarligSystem.DP,
+                false,
+            )
+
+        val erRegistrertArbeidssøker = runBlocking { rapporteringService.erRegistrertArbeidssøker(ident, token) }
+
+        erRegistrertArbeidssøker shouldBe false
+    }
+
+    @Test
+    fun `erRegistrertArbeidssøker returnerer false hvis hentPersonstatus returnerer null`() {
+        coEvery { personregisterService.hentPersonstatus(ident, token) } returns null
+
+        val erRegistrertArbeidssøker = runBlocking { rapporteringService.erRegistrertArbeidssøker(ident, token) }
+
+        erRegistrertArbeidssøker shouldBe false
     }
 
     @Test
@@ -740,6 +787,7 @@ class RapporteringServiceTest {
                 Brukerstatus.DAGPENGERBRUKER,
                 false,
                 AnsvarligSystem.ARENA,
+                true,
             )
         coEvery { meldepliktService.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
