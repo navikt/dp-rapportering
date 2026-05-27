@@ -78,7 +78,7 @@ internal fun Application.rapporteringApi(
                 }
             }
 
-            route("/erregistrertarbeidssoker") {
+            route("/er-registrert-arbeidssoker") {
                 get {
                     val ident = call.ident()
                     val jwtToken = call.request.jwt()

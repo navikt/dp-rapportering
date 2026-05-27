@@ -66,11 +66,7 @@ class RapporteringService(
     suspend fun erRegistrertArbeidssøker(
         ident: String,
         token: String,
-    ): Boolean {
-        val personstatus = personregisterService.hentPersonstatus(ident, token)
-
-        return personstatus?.erRegistrertArbeidssøker == true
-    }
+    ): Boolean = personregisterService.hentPersonstatus(ident, token)?.erRegistrertArbeidssøker == true
 
     suspend fun hentPeriode(
         rapporteringId: String,
