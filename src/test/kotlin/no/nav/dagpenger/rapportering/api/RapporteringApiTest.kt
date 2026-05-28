@@ -8,6 +8,8 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.HttpStatusCode.Companion.OK
+import io.ktor.http.HttpStatusCode.Companion.Unauthorized
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
@@ -27,7 +29,9 @@ import no.nav.dagpenger.rapportering.connector.AdapterPeriode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
-import no.nav.dagpenger.rapportering.connector.Brukerstatus
+import no.nav.dagpenger.rapportering.connector.AnsvarligSystem.DP
+import no.nav.dagpenger.rapportering.connector.Brukerstatus.DAGPENGERBRUKER
+import no.nav.dagpenger.rapportering.connector.Brukerstatus.IKKE_DAGPENGERBRUKER
 import no.nav.dagpenger.rapportering.connector.Personstatus
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
@@ -62,7 +66,7 @@ class RapporteringApiTest : ApiTestSetup() {
         fun `hentJournalpostId uten token gir unauthorized`() =
             setUpTestApplication {
                 with(client.doGet("/hentJournalpostId/1", null)) {
-                    status shouldBe HttpStatusCode.Unauthorized
+                    status shouldBe Unauthorized
                 }
             }
 
@@ -74,7 +78,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 journalfoeringRepository.lagreJournalpostData(journalpostId, 0L, rapporteringsperiodeId)
 
                 with(client.doGet("/hentJournalpostId/$rapporteringsperiodeId", issueAzureAdToken(emptyMap()))) {
-                    status shouldBe HttpStatusCode.OK
+                    status shouldBe OK
                     bodyAsText() shouldBe """[$journalpostId]"""
                 }
             }
@@ -86,7 +90,7 @@ class RapporteringApiTest : ApiTestSetup() {
         fun `harDpMeldekort uten token gir unauthorized`() =
             setUpTestApplication {
                 with(client.doGet("/hardpmeldeplikt", null)) {
-                    status shouldBe HttpStatusCode.Unauthorized
+                    status shouldBe Unauthorized
                 }
             }
 
@@ -96,14 +100,15 @@ class RapporteringApiTest : ApiTestSetup() {
                 coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
                     Personstatus(
                         fnr,
-                        Brukerstatus.DAGPENGERBRUKER,
+                        DAGPENGERBRUKER,
                         true,
-                        AnsvarligSystem.DP,
+                        DP,
+                        true,
                     )
 
                 val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
 
-                response.status shouldBe HttpStatusCode.OK
+                response.status shouldBe OK
                 response.bodyAsText() shouldBe "true"
             }
 
@@ -113,14 +118,15 @@ class RapporteringApiTest : ApiTestSetup() {
                 coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
                     Personstatus(
                         fnr,
-                        Brukerstatus.IKKE_DAGPENGERBRUKER,
+                        IKKE_DAGPENGERBRUKER,
                         true,
-                        AnsvarligSystem.DP,
+                        DP,
+                        true,
                     )
 
                 val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
 
-                response.status shouldBe HttpStatusCode.OK
+                response.status shouldBe OK
                 response.bodyAsText() shouldBe "true"
             }
 
@@ -130,14 +136,15 @@ class RapporteringApiTest : ApiTestSetup() {
                 coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
                     Personstatus(
                         fnr,
-                        Brukerstatus.DAGPENGERBRUKER,
+                        DAGPENGERBRUKER,
                         true,
                         AnsvarligSystem.ARENA,
+                        true,
                     )
 
                 val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
 
-                response.status shouldBe HttpStatusCode.OK
+                response.status shouldBe OK
                 response.bodyAsText() shouldBe "true"
             }
 
@@ -147,14 +154,62 @@ class RapporteringApiTest : ApiTestSetup() {
                 coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
                     Personstatus(
                         fnr,
-                        Brukerstatus.IKKE_DAGPENGERBRUKER,
+                        IKKE_DAGPENGERBRUKER,
                         true,
                         AnsvarligSystem.ARENA,
+                        true,
                     )
 
                 val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
 
-                response.status shouldBe HttpStatusCode.OK
+                response.status shouldBe OK
+                response.bodyAsText() shouldBe "false"
+            }
+    }
+
+    @Nested
+    inner class ErRegistrertArbeidssokerTest {
+        @Test
+        fun `er-registrert-arbeidssoker returnerer unauthorized hvis kallet gjøres uten token`() =
+            setUpTestApplication {
+                with(client.doGet("/er-registrert-arbeidssoker", null)) {
+                    status shouldBe Unauthorized
+                }
+            }
+
+        @Test
+        fun `er-registrert-arbeidssoker returnerer true hvis erRegistrertArbeidssøker == true`() =
+            setUpTestApplication {
+                coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
+                    Personstatus(
+                        ident = fnr,
+                        status = DAGPENGERBRUKER,
+                        overtattBekreftelse = true,
+                        ansvarligSystem = DP,
+                        erRegistrertArbeidssøker = true,
+                    )
+
+                val response = client.doGet("/er-registrert-arbeidssoker", issueToken(fnr))
+
+                response.status shouldBe OK
+                response.bodyAsText() shouldBe "true"
+            }
+
+        @Test
+        fun `er-registrert-arbeidssoker returnerer false hvis erRegistrertArbeidssøker == false`() =
+            setUpTestApplication {
+                coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
+                    Personstatus(
+                        ident = fnr,
+                        status = IKKE_DAGPENGERBRUKER,
+                        overtattBekreftelse = true,
+                        ansvarligSystem = DP,
+                        erRegistrertArbeidssøker = false,
+                    )
+
+                val response = client.doGet("/er-registrert-arbeidssoker", issueToken(fnr))
+
+                response.status shouldBe OK
                 response.bodyAsText() shouldBe "false"
             }
     }
@@ -165,7 +220,7 @@ class RapporteringApiTest : ApiTestSetup() {
         fun `harMeldeplikt uten token gir unauthorized`() =
             setUpTestApplication {
                 with(client.doGet("/harmeldeplikt", null)) {
-                    status shouldBe HttpStatusCode.Unauthorized
+                    status shouldBe Unauthorized
                 }
             }
 
@@ -178,7 +233,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val response = client.doGet("/harmeldeplikt", issueToken(fnr))
 
-                response.status shouldBe HttpStatusCode.OK
+                response.status shouldBe OK
                 response.bodyAsText() shouldBe "true"
             }
 
@@ -191,7 +246,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val response = client.doGet("/harmeldeplikt", issueToken(fnr))
 
-                response.status shouldBe HttpStatusCode.OK
+                response.status shouldBe OK
                 response.bodyAsText() shouldBe "false"
             }
     }
@@ -202,7 +257,7 @@ class RapporteringApiTest : ApiTestSetup() {
         fun `meldekortstatus uten token gir unauthorized`() =
             setUpTestApplication {
                 with(client.doGet("/meldekortstatus", null)) {
-                    status shouldBe HttpStatusCode.Unauthorized
+                    status shouldBe Unauthorized
                 }
             }
 
@@ -215,7 +270,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val response = client.doGet("/meldekortstatus", issueToken(fnr))
 
-                response.status shouldBe HttpStatusCode.OK
+                response.status shouldBe OK
                 val meldekortStatusData = defaultObjectMapper.readValue<MeldekortStatusData>(response.bodyAsText())
 
                 val idag = LocalDate.now()
@@ -245,7 +300,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val response = client.doGet("/meldekortstatus", issueToken(fnr))
 
-                response.status shouldBe HttpStatusCode.OK
+                response.status shouldBe OK
                 val meldekortStatusData = defaultObjectMapper.readValue<MeldekortStatusData>(response.bodyAsText())
 
                 meldekortStatusData.harInnsendteMeldekort shouldBe false
@@ -265,7 +320,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 val sisteFristForTrekkDager = 9L
                 val sisteFristForTrekk = tom.plusDays(sisteFristForTrekkDager)
 
-                coEvery { personregisterService.hentAnsvarligSystem(eq(fnr), any()) } returns AnsvarligSystem.DP
+                coEvery { personregisterService.hentAnsvarligSystem(eq(fnr), any()) } returns DP
                 coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns kanSendesFraDager.toInt()
                 coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns sisteFristForTrekkDager
 
@@ -306,7 +361,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val response = client.doGet("/meldekortstatus", issueToken(fnr))
 
-                response.status shouldBe HttpStatusCode.OK
+                response.status shouldBe OK
                 val meldekortStatusData = defaultObjectMapper.readValue<MeldekortStatusData>(response.bodyAsText())
 
                 meldekortStatusData.harInnsendteMeldekort shouldBe false
@@ -333,7 +388,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
 
                 with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(registrertArbeidssoker = true))) {
-                    status shouldBe HttpStatusCode.OK
+                    status shouldBe OK
                 }
             }
 
@@ -341,7 +396,7 @@ class RapporteringApiTest : ApiTestSetup() {
         fun `innsending av rapporteringsperiode uten token gir unauthorized`() =
             setUpTestApplication {
                 with(client.doPost("/rapporteringsperiode", null, rapporteringsperiodeFor())) {
-                    status shouldBe HttpStatusCode.Unauthorized
+                    status shouldBe Unauthorized
                 }
             }
 
@@ -381,7 +436,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 // Sjekker at perioden ikke er sendt og kan sendes
                 with(client.doGet("/rapporteringsperiode/123", issueToken(fnr))) {
-                    status shouldBe HttpStatusCode.OK
+                    status shouldBe OK
                     val periode = defaultObjectMapper.readValue<Rapporteringsperiode>(bodyAsText())
                     periode.id shouldBe "123"
                     periode.status shouldBe TilUtfylling
@@ -425,7 +480,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 // Sjekker at perioden ikke er sendt
                 with(client.doGet("/rapporteringsperiode/123", issueToken(fnr))) {
-                    status shouldBe HttpStatusCode.OK
+                    status shouldBe OK
                     val periode = defaultObjectMapper.readValue<Rapporteringsperiode>(bodyAsText())
                     periode.id shouldBe "123"
                     periode.status shouldBe TilUtfylling
@@ -470,7 +525,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 }
 
                 val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
-                endreResponse.status shouldBe HttpStatusCode.OK
+                endreResponse.status shouldBe OK
                 val endretPeriode = defaultObjectMapper.readValue(endreResponse.bodyAsText(), Rapporteringsperiode::class.java)
 
                 with(
@@ -486,7 +541,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         ),
                     ),
                 ) {
-                    status shouldBe HttpStatusCode.OK
+                    status shouldBe OK
                     println(bodyAsText())
                     val periodeId = defaultObjectMapper.readValue<PeriodeId>(bodyAsText())
                     periodeId.id shouldBe "123"
@@ -501,7 +556,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 }
 
                 val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
-                endreResponse.status shouldBe HttpStatusCode.OK
+                endreResponse.status shouldBe OK
                 val nyId = defaultObjectMapper.readValue(endreResponse.bodyAsText(), Rapporteringsperiode::class.java).id
 
                 with(
@@ -527,7 +582,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val response = client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
 
-                response.httpResponse.status shouldBe HttpStatusCode.OK
+                response.httpResponse.status shouldBe OK
                 response.body.id shouldBe "123"
             }
 
@@ -540,7 +595,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val response = client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/126", issueToken(fnr))
 
-                response.httpResponse.status shouldBe HttpStatusCode.OK
+                response.httpResponse.status shouldBe OK
                 response.body.id shouldBe "126"
             }
 
@@ -576,7 +631,7 @@ class RapporteringApiTest : ApiTestSetup() {
                         listOf(Pair("hentOriginal", "false")),
                     ),
                 ) {
-                    httpResponse.status shouldBe HttpStatusCode.OK
+                    httpResponse.status shouldBe OK
                     body.id shouldBe "123"
                 }
             }
@@ -592,7 +647,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 }
 
                 val startResponse = client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
-                startResponse.status shouldBe HttpStatusCode.OK
+                startResponse.status shouldBe OK
 
                 val periodeResponse =
                     client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
@@ -633,7 +688,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val periodeResponse =
                     client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
-                periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
+                periodeResponse.httpResponse.status shouldBe OK
                 with(periodeResponse.body) {
                     id shouldBe "123"
                     status shouldBe TilUtfylling
@@ -689,7 +744,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val periodeResponse =
                     client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
-                periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
+                periodeResponse.httpResponse.status shouldBe OK
                 with(periodeResponse.body) {
                     id shouldBe "123"
                     status shouldBe TilUtfylling
@@ -729,7 +784,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val periodeResponse =
                     client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
-                periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
+                periodeResponse.httpResponse.status shouldBe OK
                 with(periodeResponse.body) {
                     id shouldBe "123"
                     dager.first().aktiviteter.first() shouldBe aktivitet
@@ -739,7 +794,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val periodeResponseAfterDelete =
                     client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
-                periodeResponseAfterDelete.httpResponse.status shouldBe HttpStatusCode.OK
+                periodeResponseAfterDelete.httpResponse.status shouldBe OK
                 with(periodeResponseAfterDelete.body) {
                     id shouldBe "123"
                     dager.first().aktiviteter shouldBe emptyList()
@@ -758,7 +813,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 }
 
                 val endringResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
-                endringResponse.status shouldBe HttpStatusCode.OK
+                endringResponse.status shouldBe OK
                 val endretPeriode = defaultObjectMapper.readValue(endringResponse.bodyAsText(), Rapporteringsperiode::class.java)
 
                 val response =
@@ -771,7 +826,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val periodeResponse =
                     client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/${endretPeriode.id}", issueToken(fnr))
-                periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
+                periodeResponse.httpResponse.status shouldBe OK
                 with(periodeResponse.body) {
                     id shouldBe endretPeriode.id
                     status shouldBe TilUtfylling
@@ -801,7 +856,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val periodeResponse =
                     client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
-                periodeResponse.httpResponse.status shouldBe HttpStatusCode.OK
+                periodeResponse.httpResponse.status shouldBe OK
                 with(periodeResponse.body) {
                     id shouldBe "123"
                     rapporteringstype shouldBe "harAktivitet"
@@ -851,7 +906,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val response =
                     client.doPostAndReceive<Rapporteringsperiode>("/rapporteringsperiode/125/endre", issueToken(fnr))
-                response.httpResponse.status shouldBe HttpStatusCode.OK
+                response.httpResponse.status shouldBe OK
                 with(response.body) {
                     id shouldNotBe 125L
                     dager.forEach { dag ->
@@ -894,7 +949,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val response =
                     client.doPostAndReceive<Rapporteringsperiode>("/rapporteringsperiode/125/endre", issueToken(fnr))
-                response.httpResponse.status shouldBe HttpStatusCode.OK
+                response.httpResponse.status shouldBe OK
                 with(response.body) {
                     id shouldNotBe "125"
                     dager.forEach { dag ->
@@ -947,7 +1002,7 @@ class RapporteringApiTest : ApiTestSetup() {
                     client
                         .doGetAndReceive<List<Rapporteringsperiode>>("/rapporteringsperioder", issueToken(fnr))
 
-                response.httpResponse.status shouldBe HttpStatusCode.OK
+                response.httpResponse.status shouldBe OK
                 with(response.body) {
                     size shouldBe 2
                     first().id shouldBe "123"
@@ -1065,7 +1120,7 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 println(response.body)
 
-                response.httpResponse.status shouldBe HttpStatusCode.OK
+                response.httpResponse.status shouldBe OK
                 with(response.body) {
                     size shouldBe 10
                     this[0].id shouldBe "127"
@@ -1106,7 +1161,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 adapterRapporteringsperiode(),
                 adapterRapporteringsperiode(id = 124L, fraOgMed = LocalDate.now().plusDays(1)),
             ),
-        rapporteringsperioderResponseStatus: HttpStatusCode = HttpStatusCode.OK,
+        rapporteringsperioderResponseStatus: HttpStatusCode = OK,
         sendteRapporteringsperioderResponse: List<AdapterRapporteringsperiode> =
             listOf(
                 adapterRapporteringsperiode(
@@ -1121,13 +1176,13 @@ class RapporteringApiTest : ApiTestSetup() {
                     status = AdapterRapporteringsperiodeStatus.Innsendt,
                 ),
             ),
-        sendteRapporteringsperioderResponseStatus: HttpStatusCode = HttpStatusCode.OK,
+        sendteRapporteringsperioderResponseStatus: HttpStatusCode = OK,
         endreRapporteringsperiodeResponse: Long = 321L,
-        endreRapporteringsperiodeResponseStatus: HttpStatusCode = HttpStatusCode.OK,
+        endreRapporteringsperiodeResponseStatus: HttpStatusCode = OK,
         sendInnResponse: InnsendingResponse? = InnsendingResponse(id = "123", status = "OK", feil = emptyList()),
-        sendInnResponseStatus: HttpStatusCode = HttpStatusCode.OK,
+        sendInnResponseStatus: HttpStatusCode = OK,
         personResponse: String = person(),
-        personResponseStatus: HttpStatusCode = HttpStatusCode.OK,
+        personResponseStatus: HttpStatusCode = OK,
         harMeldeplikt: Boolean = true,
     ) {
         hosts("https://meldeplikt-adapter") {
@@ -1135,7 +1190,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 get("/harmeldeplikt") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Text.Plain.toString())
                     call.respond(
-                        HttpStatusCode.OK,
+                        OK,
                         harMeldeplikt.toString(),
                     )
                 }

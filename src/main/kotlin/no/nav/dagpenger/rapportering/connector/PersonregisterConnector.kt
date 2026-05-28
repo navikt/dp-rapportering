@@ -134,6 +134,7 @@ data class Personstatus(
     val status: Brukerstatus,
     val overtattBekreftelse: Boolean,
     val ansvarligSystem: AnsvarligSystem?,
+    val erRegistrertArbeidssøker: Boolean,
 )
 
 fun Personstatus?.erBekreftelseOvertatt(): Boolean = this?.overtattBekreftelse ?: false

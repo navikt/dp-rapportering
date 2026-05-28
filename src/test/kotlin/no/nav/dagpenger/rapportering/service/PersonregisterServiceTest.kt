@@ -45,7 +45,7 @@ class PersonregisterServiceTest {
         // Arena
         runBlocking {
             coEvery { personregisterConnector.hentPersonstatus(eq(ident), eq(token)) } returns
-                Personstatus(ident, Brukerstatus.DAGPENGERBRUKER, true, AnsvarligSystem.ARENA)
+                Personstatus(ident, Brukerstatus.DAGPENGERBRUKER, true, AnsvarligSystem.ARENA, true)
             val ansvarligSystem = personregisterService.hentAnsvarligSystem(ident, token)
             ansvarligSystem shouldBe AnsvarligSystem.ARENA
         }
@@ -53,7 +53,7 @@ class PersonregisterServiceTest {
         // DP
         runBlocking {
             coEvery { personregisterConnector.hentPersonstatus(eq(ident), eq(token)) } returns
-                Personstatus(ident, Brukerstatus.DAGPENGERBRUKER, true, AnsvarligSystem.DP)
+                Personstatus(ident, Brukerstatus.DAGPENGERBRUKER, true, AnsvarligSystem.DP, true)
             val ansvarligSystem = personregisterService.hentAnsvarligSystem(ident, token)
             ansvarligSystem shouldBe AnsvarligSystem.DP
         }

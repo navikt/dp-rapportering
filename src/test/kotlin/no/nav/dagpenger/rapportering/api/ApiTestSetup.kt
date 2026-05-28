@@ -220,6 +220,7 @@ open class ApiTestSetup {
                     Brukerstatus.DAGPENGERBRUKER,
                     true,
                     AnsvarligSystem.ARENA,
+                    true,
                 )
             coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
 

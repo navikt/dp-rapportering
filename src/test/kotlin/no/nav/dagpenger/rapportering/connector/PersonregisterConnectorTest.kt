@@ -8,6 +8,8 @@ import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.time.LocalDate
 
 class PersonregisterConnectorTest {
@@ -36,54 +38,40 @@ class PersonregisterConnectorTest {
         actionTimer = actionTimer,
     )
 
+    @ParameterizedTest
+    @CsvSource("true,ARENA,false", "false,DP,true")
+    fun `hentPersonstatus returnerer forventet personstatus gitt respons fra personregisteret`(
+        overtattBekreftelse: String?,
+        ansvarligSystem: String?,
+        erRegistrertArbeidssøker: String?,
+    ) {
+        val connector =
+            personregisterConnector(
+                HttpStatusCode.OK,
+                """
+                {
+                  "ident": "$ident",
+                  "status": "DAGPENGERBRUKER",
+                  "overtattBekreftelse": $overtattBekreftelse,
+                  "ansvarligSystem": "$ansvarligSystem",
+                  "erRegistrertArbeidssøker": $erRegistrertArbeidssøker
+                }
+                """.trimIndent(),
+            )
+
+        val response =
+            runBlocking {
+                connector.hentPersonstatus(ident, subjectToken)
+            }
+
+        response?.overtattBekreftelse shouldBe overtattBekreftelse?.toBooleanStrict()
+        response?.ansvarligSystem shouldBe ansvarligSystem?.let { AnsvarligSystem.valueOf(ansvarligSystem) }
+        response?.erRegistrertArbeidssøker shouldBe erRegistrertArbeidssøker?.toBooleanStrict()
+    }
+
     @Test
-    fun `hentPersonstatus returnerer riktig overtattBekreftelse og ansvarligSystem`() {
-        // True, ARENA
-        var connector =
-            personregisterConnector(
-                HttpStatusCode.OK,
-                """
-                {
-                  "ident": "$ident",
-                  "status": "DAGPENGERBRUKER",
-                  "overtattBekreftelse": true,
-                  "ansvarligSystem": "ARENA" 
-                }
-                """.trimIndent(),
-            )
-
-        var response =
-            runBlocking {
-                connector.hentPersonstatus(ident, subjectToken)
-            }
-
-        response?.overtattBekreftelse shouldBe true
-        response?.ansvarligSystem shouldBe AnsvarligSystem.ARENA
-
-        // False, DP
-        connector =
-            personregisterConnector(
-                HttpStatusCode.OK,
-                """
-                {
-                  "ident": "$ident",
-                  "status": "DAGPENGERBRUKER",
-                  "overtattBekreftelse": false,
-                  "ansvarligSystem": "DP" 
-                }
-                """.trimIndent(),
-            )
-
-        response =
-            runBlocking {
-                connector.hentPersonstatus(ident, subjectToken)
-            }
-
-        response?.overtattBekreftelse shouldBe false
-        response?.ansvarligSystem shouldBe AnsvarligSystem.DP
-
-        // Null, Null
-        connector =
+    fun `hentPersonstatus returnerer forventet personstatus hvis responsen fra personregisteret ikke inneholder forventede felter`() {
+        val connector =
             personregisterConnector(
                 HttpStatusCode.OK,
                 """
@@ -94,13 +82,14 @@ class PersonregisterConnectorTest {
                 """.trimIndent(),
             )
 
-        response =
+        val response =
             runBlocking {
                 connector.hentPersonstatus(ident, subjectToken)
             }
 
         response?.overtattBekreftelse shouldBe false
         response?.ansvarligSystem shouldBe null
+        response?.erRegistrertArbeidssøker shouldBe false
     }
 
     @Test

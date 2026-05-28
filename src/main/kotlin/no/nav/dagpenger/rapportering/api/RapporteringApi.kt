@@ -78,6 +78,17 @@ internal fun Application.rapporteringApi(
                 }
             }
 
+            route("/er-registrert-arbeidssoker") {
+                get {
+                    val ident = call.ident()
+                    val jwtToken = call.request.jwt()
+
+                    rapporteringService
+                        .erRegistrertArbeidssøker(ident, jwtToken)
+                        .also { call.respond(HttpStatusCode.OK, it) }
+                }
+            }
+
             route("/meldekortstatus") {
                 get {
                     val ident = call.ident()
