@@ -16,5 +16,10 @@ updates:
       interval: "daily"
       time: "10:05"
       timezone: "Europe/Oslo"
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
     cooldown:
       default-days: 7
