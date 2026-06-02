@@ -6,7 +6,6 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.auth.authenticate
 import io.ktor.server.plugins.BadRequestException
-import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.header
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -20,6 +19,7 @@ import no.nav.dagpenger.rapportering.api.auth.jwt
 import no.nav.dagpenger.rapportering.api.auth.loginLevel
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.dpRapporteringFrontendUrl
+import no.nav.dagpenger.rapportering.exceptions.RapporteringsperiodeNotFoundException
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
@@ -166,7 +166,7 @@ internal fun Application.rapporteringApi(
                         rapporteringService
                             .hentPeriode(rapporteringId, ident, jwtToken, hentOriginal)
                             ?.also { call.respond(HttpStatusCode.OK, it.toResponse()) }
-                            ?: throw NotFoundException(
+                            ?: throw RapporteringsperiodeNotFoundException(
                                 "Rapportering med id $rapporteringId ikke funnet. Header Hent-Original: $hentOriginal",
                             )
                     }
