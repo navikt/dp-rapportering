@@ -10,6 +10,7 @@ import io.ktor.server.plugins.statuspages.StatusPagesConfig
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
 import no.nav.dagpenger.rapportering.api.HttpProblem
+import no.nav.dagpenger.rapportering.exceptions.RapporteringsperiodeNotFoundException
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import java.net.URI
 
@@ -61,6 +62,16 @@ internal fun StatusPagesConfig.statusPagesConfig(meldepliktMetrikker: Meldeplikt
                 call.respond(
                     HttpStatusCode.NotFound,
                     HttpProblem(title = "Feilet", detail = cause.message, status = 404),
+                )
+            }
+
+            is RapporteringsperiodeNotFoundException -> {
+                logger.warn(cause) { "Kunne ikke håndtere API kall - Rapporteringsperiode ikke funnet" }
+                meldepliktMetrikker.rapporteringApiFeil.increment()
+
+                call.respond(
+                    HttpStatusCode.NotFound,
+                    HttpProblem(title = "Ikke funnet", detail = cause.message, status = 404),
                 )
             }
 
