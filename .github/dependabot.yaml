@@ -22,7 +22,7 @@ updates:
                     - "minor"
                     - "patch"
         ignore:
-            -   dependency-name: "io.ktor.*"
+            -   dependency-name: "io.ktor:*"
                 versions: [ "3.5.0" ]
         cooldown:
             default-days: 7
