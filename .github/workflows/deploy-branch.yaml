@@ -32,7 +32,7 @@ jobs:
             id-token: write
         environment: ${{ inputs.environment }}-gcp
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@v6.0.2
             - name: Utled Unleash-miljø
               run: |
                 if [[ "${{ inputs.environment }}" == "dev" ]]; then
