@@ -68,6 +68,24 @@ paths:
             security:
                 -   tokenX: [ ]
 
+    /er-registrert-arbeidssoker:
+        get:
+            responses:
+                200:
+                    description: OK
+                    content:
+                        text/plain:
+                            schema:
+                                type: boolean
+                                example: "true"
+            summary: Informasjon om bruker er registrert arbeidssøker
+            description: Returnerer informasjon om bruker er registrert arbeidssøker eller ikke på tidspunktet endepunktet kalles
+            operationId: get-er-registrert-arbeidssoker
+            tags:
+                - Arbeidssøker
+            security:
+                -   tokenX: [ ]
+
     /meldekortstatus:
         get:
             responses:
@@ -78,7 +96,6 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/MeldekortStatus'
             summary: Returnerer meldekortstatus for bruker
-            description:
             operationId: get-meldekortstatus
             tags:
                 - Meldekortstatus
