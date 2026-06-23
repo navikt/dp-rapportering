@@ -5,7 +5,9 @@ metadata:
   name: dp-rapportering
   namespace: teamdagpenger
   labels:
-    team: teamdagpenger
+    team: "teamdagpenger"
+    app: "dp-rapportering"
+    subteam: "ramp"
 
 spec:
   image: {{ image }}
