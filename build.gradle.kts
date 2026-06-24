@@ -85,7 +85,7 @@ dependencies {
     implementation("io.getunleash:unleash-client-java:12.2.2")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
     implementation("no.nav.dagpenger:pdl-klient:2026.05.04-11.00.ccf523d33b63")
-    implementation("com.github.navikt.tbd-libs:naisful-app:20260526.1506")
+    implementation("com.github.navikt.tbd-libs:naisful-app:20260616.1253")
 
     implementation("io.confluent:kafka-streams-avro-serde:8.1.1")
     implementation("org.apache.avro:avro:1.12.1")
