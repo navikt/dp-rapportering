@@ -2,21 +2,18 @@ package no.nav.dagpenger.rapportering.api.auth
 
 import com.auth0.jwk.JwkProviderBuilder
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.DeserializationFeature
 import com.natpryce.konfig.PropertyGroup
 import com.natpryce.konfig.getValue
 import com.natpryce.konfig.stringType
-import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
-import io.ktor.serialization.jackson.jackson
 import io.ktor.server.auth.jwt.JWTAuthenticationProvider
 import io.ktor.server.auth.jwt.JWTPrincipal
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.properties
+import no.nav.dagpenger.rapportering.connector.createHttpClient
 import java.net.URI
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -101,11 +98,4 @@ private data class OpenIdConfiguration(
     val authorizationEndpoint: String,
 )
 
-private val httpClient =
-    HttpClient(CIO) {
-        install(ContentNegotiation) {
-            jackson {
-                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            }
-        }
-    }
+private val httpClient = createHttpClient(CIO.create {})

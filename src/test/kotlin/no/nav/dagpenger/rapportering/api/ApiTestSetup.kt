@@ -260,7 +260,7 @@ open class ApiTestSetup {
 
             application {
                 install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(defaultObjectMapper))
+                    register(ContentType.Application.Json, JacksonConverter(defaultObjectMapper, false))
                 }
                 install(StatusPages) {
                     statusPagesConfig(meldepliktMetrikker)

@@ -23,7 +23,7 @@ fun createHttpClient(engine: HttpClientEngine) =
         }
 
         install(ContentNegotiation) {
-            jackson {
+            jackson(streamBody = false) {
                 registerKotlinModule()
                 registerModule(JavaTimeModule())
                 disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
