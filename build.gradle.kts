@@ -4,7 +4,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     alias(libs.plugins.shadow.jar)
     alias(libs.plugins.kotlin)
-    id("io.ktor.plugin") version "3.4.3"
+    id("io.ktor.plugin") version "3.5.1"
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
@@ -103,5 +103,5 @@ dependencies {
     testImplementation(libs.mock.oauth2.server)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.mock)
-    testImplementation("de.redsix:pdfcompare:1.2.8")
+    testImplementation("de.redsix:pdfcompare:1.2.9")
 }
