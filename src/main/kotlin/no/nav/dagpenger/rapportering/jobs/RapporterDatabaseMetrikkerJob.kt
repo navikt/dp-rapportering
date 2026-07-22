@@ -1,6 +1,7 @@
 package no.nav.dagpenger.rapportering.jobs
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.opentelemetry.api.GlobalOpenTelemetry
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.metrics.DatabaseMetrikker
 import no.nav.dagpenger.rapportering.metrics.JobbkjøringMetrikker
@@ -28,18 +29,22 @@ internal class RapporterDatabaseMetrikkerJob(
             initialDelay = initialDelay,
             period = 10.minutes.inWholeMilliseconds,
             action = {
+                val span = tracer.spanBuilder("rapportering-database-metrikker").startSpan()
                 try {
-                    val tidBrukt =
-                        measureTime {
-                            runBlocking {
-                                databaseMetrikker.oppdater(
-                                    lagredeRapporteringsperioder = rapporteringRepository.hentAntallRapporteringsperioder(),
-                                    midlertidigLagredeJournalposter = journalfoeringRepository.hentAntallMidlertidigLagretData(),
-                                )
+                    span.makeCurrent().use {
+                        val tidBrukt =
+                            measureTime {
+                                runBlocking {
+                                    databaseMetrikker.oppdater(
+                                        lagredeRapporteringsperioder = rapporteringRepository.hentAntallRapporteringsperioder(),
+                                        midlertidigLagredeJournalposter = journalfoeringRepository.hentAntallMidlertidigLagretData(),
+                                    )
+                                }
                             }
-                        }
-                    jobbkjøringMetrikker.jobbFullfort(tidBrukt, 0)
+                        jobbkjøringMetrikker.jobbFullfort(tidBrukt, 0)
+                    }
                 } catch (e: Exception) {
+                    span.recordException(e)
                     logger.warn(e) { "Uthenting av metrikker for lagrede elementer i databasen feilet" }
                     databaseMetrikker.oppdater(
                         lagredeRapporteringsperioder = -1,
@@ -48,8 +53,13 @@ internal class RapporterDatabaseMetrikkerJob(
                     jobbkjøringMetrikker.jobbFeilet()
                 } finally {
                     jobbkjøringMetrikker.jobbSjekketOmDenSkulleKjøre()
+                    span.end()
                 }
             },
         )
+    }
+
+    private companion object {
+        private val tracer = GlobalOpenTelemetry.getTracer(RapporterDatabaseMetrikkerJob::class.java.name)
     }
 }
