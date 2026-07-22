@@ -82,12 +82,12 @@ dependencies {
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.1")
-    implementation("io.getunleash:unleash-client-java:12.2.2")
+    implementation("io.getunleash:unleash-client-java:12.2.3")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
     implementation("no.nav.dagpenger:pdl-klient:2026.05.04-11.00.ccf523d33b63")
     implementation("com.github.navikt.tbd-libs:naisful-app:20260616.1253")
 
-    implementation("io.opentelemetry:opentelemetry-api:1.36.0")
+    implementation("io.opentelemetry:opentelemetry-api:1.64.0")
 
     implementation("io.confluent:kafka-streams-avro-serde:8.1.1")
     implementation("org.apache.avro:avro:1.12.1")
@@ -96,8 +96,8 @@ dependencies {
     implementation("com.fasterxml.uuid:java-uuid-generator:5.2.0")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:6.1.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:6.1.2")
     testImplementation(libs.rapids.and.rivers.test)
     testImplementation(libs.bundles.postgres.test)
     testImplementation("io.kotest:kotest-assertions-core-jvm:${libs.versions.kotest.get()}")
@@ -105,5 +105,5 @@ dependencies {
     testImplementation(libs.mock.oauth2.server)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.mock)
-    testImplementation("de.redsix:pdfcompare:1.2.8")
+    testImplementation("de.redsix:pdfcompare:1.2.9")
 }
