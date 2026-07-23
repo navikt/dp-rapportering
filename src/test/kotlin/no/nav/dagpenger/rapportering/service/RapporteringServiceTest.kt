@@ -1362,25 +1362,28 @@ class RapporteringServiceTest {
         val message = testRapid.inspektør.message(0)
 
         if (endringId == null) {
-            message["@event_name"].asText() shouldBe "meldekort_innsendt"
-            message["id"].asText() shouldBe rapporteringsperiode.id
-            message["type"].asText() shouldBe "Ordinaert"
+            message["@event_name"].asString() shouldBe "meldekort_innsendt"
+            message["id"].asString() shouldBe rapporteringsperiode.id
+            message["type"].asString() shouldBe "Ordinaert"
             message["originalMeldekortId"].isNull shouldBe true
         } else {
-            message["@event_name"].asText() shouldBe "meldekort_innsendt"
-            message["id"].asText() shouldBe endringId
-            message["type"].asText() shouldBe "Korrigert"
-            message["originalMeldekortId"].asText() shouldBe rapporteringsperiode.id
+            message["@event_name"].asString() shouldBe "meldekort_innsendt"
+            message["id"].asString() shouldBe endringId
+            message["type"].asString() shouldBe "Korrigert"
+            message["originalMeldekortId"].asString() shouldBe rapporteringsperiode.id
         }
 
-        message["ident"].asText() shouldBe ident
+        message["ident"].asString() shouldBe ident
 
         val periode = message["periode"]
         periode["fraOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.fraOgMed
         periode["tilOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.tilOgMed
 
         val reader: ObjectReader = defaultObjectMapper.readerFor(object : TypeReference<List<PeriodeDag>>() {})
-        val dager: List<PeriodeDag> = reader.readValue(message["dager"])
+        // testRapid.inspektør.message returnerer JsonNode fra Jackson 3
+        // Vi må konvertere til JsonNode fra Jackson 2
+        // Hele appen kan flyttes til Jackson 3 når naisful-app har Jackson 3
+        val dager: List<PeriodeDag> = reader.readValue(defaultObjectMapper.readTree(message["dager"].asString()))
         dager.forEachIndexed { i, dag ->
             dag.dato shouldBeEqual rapporteringsperiode.dager[i].dato
             dag.dagIndex shouldBeEqual rapporteringsperiode.dager[i].dagIndex
@@ -1388,13 +1391,13 @@ class RapporteringServiceTest {
         }
 
         message["kanSendesFra"].asLocalDate() shouldBe rapporteringsperiode.kanSendesFra
-        message["opprettetAv"].asText() shouldBe ansvarligSystem
+        message["opprettetAv"].asString() shouldBe ansvarligSystem
 
         val kilde = message["kilde"]
-        kilde["rolle"].asText() shouldBe "Bruker"
-        kilde["ident"].asText() shouldBe ident
+        kilde["rolle"].asString() shouldBe "Bruker"
+        kilde["ident"].asString() shouldBe ident
 
-        message["status"].asText() shouldBe "Innsendt"
+        message["status"].asString() shouldBe "Innsendt"
         val innsendtTidspunkt = message["innsendtTidspunkt"].asLocalDateTime()
         innsendtTidspunkt.toLocalDate() shouldBe LocalDate.now()
         innsendtTidspunkt shouldBeBefore LocalDateTime.now()

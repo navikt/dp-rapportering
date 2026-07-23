@@ -51,8 +51,8 @@ internal class RapporteringJournalførtMottak(
         metadata: MessageMetadata,
         meterRegistry: MeterRegistry,
     ) {
-        val behovId = packet["@behovId"].asText()
-        val periodeId = packet[behov]["periodeId"].asText()
+        val behovId = packet["@behovId"].asString()
+        val periodeId = packet[behov]["periodeId"].asString()
         val kallLoggId = packet[behov]["kallLoggId"].asLong()
         val journalpostId = packet["@løsning"][behov].asLong()
 
@@ -62,7 +62,7 @@ internal class RapporteringJournalførtMottak(
             "behovId" to behovId,
             "periodeId" to periodeId,
         ) {
-            if (packet["@id"].asText() in listOf("84478f4a-f27d-4dcb-adf4-b627c7a03872")) {
+            if (packet["@id"].asString() in listOf("84478f4a-f27d-4dcb-adf4-b627c7a03872")) {
                 logger.warn {
                     "Ignorerer melding fordi den inneholder en duplikat journalføring, periodeId=$periodeId, journalpostId=$journalpostId"
                 }

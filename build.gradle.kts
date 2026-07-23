@@ -73,10 +73,11 @@ dependencies {
     implementation(libs.rapids.and.rivers)
     implementation(libs.konfig)
     implementation(libs.kotlin.logging)
-    implementation(libs.bundles.jackson)
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.22")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.22.1")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.1")
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.client)
-    implementation(libs.jackson.annotation)
     implementation("no.nav.dagpenger:oauth2-klient:2026.05.04-11.00.ccf523d33b63")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
@@ -85,7 +86,7 @@ dependencies {
     implementation("io.getunleash:unleash-client-java:12.2.3")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
     implementation("no.nav.dagpenger:pdl-klient:2026.05.04-11.00.ccf523d33b63")
-    implementation("com.github.navikt.tbd-libs:naisful-app:20260616.1253")
+    implementation("com.github.navikt.tbd-libs:naisful-app:20260702.1010")
 
     implementation("io.opentelemetry:opentelemetry-api:1.64.0")
 
@@ -97,6 +98,7 @@ dependencies {
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:6.1.2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:6.1.2")
     testImplementation(libs.rapids.and.rivers.test)
     testImplementation(libs.bundles.postgres.test)
