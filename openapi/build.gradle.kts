@@ -7,6 +7,10 @@ plugins {
 group = "org.example"
 version = "0.0.1"
 
+kotlin {
+    jvmToolchain(21)
+}
+
 tasks.named("compileKotlin").configure {
     dependsOn("openApiGenerate")
 }
