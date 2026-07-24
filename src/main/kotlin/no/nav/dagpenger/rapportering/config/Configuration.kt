@@ -174,7 +174,6 @@ internal object Configuration {
             .instanceId(properties.getOrElse(Key("NAIS_CLIENT_ID", stringType), UUIDv7.newUuid().toString()))
             .unleashAPI(properties[Key("UNLEASH_SERVER_API_URL", stringType)] + "/api")
             .apiKey(properties[Key("UNLEASH_SERVER_API_TOKEN", stringType)])
-            .environment(properties[Key("UNLEASH_SERVER_API_ENV", stringType)])
             .build()
     }
 
