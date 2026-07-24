@@ -167,7 +167,6 @@ open class ApiTestSetup {
             System.setProperty("GITHUB_SHA", "some_sha")
             System.setProperty("UNLEASH_SERVER_API_URL", "http://localhost")
             System.setProperty("UNLEASH_SERVER_API_TOKEN", "token")
-            System.setProperty("UNLEASH_SERVER_API_ENV", "development")
             System.setProperty("DP_RAPPORTERING_FRONTEND_URL", "https://dp-rapportering-frontend.dagpenger")
         }
     }
