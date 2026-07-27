@@ -29,7 +29,7 @@ internal class RapporterDatabaseMetrikkerJob(
             initialDelay = initialDelay,
             period = 10.minutes.inWholeMilliseconds,
             action = {
-                val span = tracer.spanBuilder("rapportering-database-metrikker").startSpan()
+                val span = tracer.spanBuilder("rapporter-database-metrikker").startSpan()
                 try {
                     span.makeCurrent().use {
                         val tidBrukt =
