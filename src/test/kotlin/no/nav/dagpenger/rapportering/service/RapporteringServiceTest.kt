@@ -1,7 +1,5 @@
 package no.nav.dagpenger.rapportering.service
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectReader
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDate
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
@@ -26,7 +24,6 @@ import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
-import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
@@ -62,6 +59,9 @@ import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectReader
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -1362,24 +1362,27 @@ class RapporteringServiceTest {
         val message = testRapid.inspektør.message(0)
 
         if (endringId == null) {
-            message["@event_name"].asText() shouldBe "meldekort_innsendt"
-            message["id"].asText() shouldBe rapporteringsperiode.id
-            message["type"].asText() shouldBe "Ordinaert"
+            message["@event_name"].asString() shouldBe "meldekort_innsendt"
+            message["id"].asString() shouldBe rapporteringsperiode.id
+            message["type"].asString() shouldBe "Ordinaert"
             message["originalMeldekortId"].isNull shouldBe true
         } else {
-            message["@event_name"].asText() shouldBe "meldekort_innsendt"
-            message["id"].asText() shouldBe endringId
-            message["type"].asText() shouldBe "Korrigert"
-            message["originalMeldekortId"].asText() shouldBe rapporteringsperiode.id
+            message["@event_name"].asString() shouldBe "meldekort_innsendt"
+            message["id"].asString() shouldBe endringId
+            message["type"].asString() shouldBe "Korrigert"
+            message["originalMeldekortId"].asString() shouldBe rapporteringsperiode.id
         }
 
-        message["ident"].asText() shouldBe ident
+        message["ident"].asString() shouldBe ident
 
         val periode = message["periode"]
         periode["fraOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.fraOgMed
         periode["tilOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.tilOgMed
 
-        val reader: ObjectReader = defaultObjectMapper.readerFor(object : TypeReference<List<PeriodeDag>>() {})
+        // testRapid.inspektør.message returnerer JsonNode fra Jackson 3
+        // defaultObjectMapper bruker Jackson 2
+        // Hele appen kan flyttes til Jackson 3 når naisful-app har Jackson 3
+        val reader: ObjectReader = ObjectMapper().readerFor(object : TypeReference<List<PeriodeDag>>() {})
         val dager: List<PeriodeDag> = reader.readValue(message["dager"])
         dager.forEachIndexed { i, dag ->
             dag.dato shouldBeEqual rapporteringsperiode.dager[i].dato
@@ -1388,13 +1391,13 @@ class RapporteringServiceTest {
         }
 
         message["kanSendesFra"].asLocalDate() shouldBe rapporteringsperiode.kanSendesFra
-        message["opprettetAv"].asText() shouldBe ansvarligSystem
+        message["opprettetAv"].asString() shouldBe ansvarligSystem
 
         val kilde = message["kilde"]
-        kilde["rolle"].asText() shouldBe "Bruker"
-        kilde["ident"].asText() shouldBe ident
+        kilde["rolle"].asString() shouldBe "Bruker"
+        kilde["ident"].asString() shouldBe ident
 
-        message["status"].asText() shouldBe "Innsendt"
+        message["status"].asString() shouldBe "Innsendt"
         val innsendtTidspunkt = message["innsendtTidspunkt"].asLocalDateTime()
         innsendtTidspunkt.toLocalDate() shouldBe LocalDate.now()
         innsendtTidspunkt shouldBeBefore LocalDateTime.now()
