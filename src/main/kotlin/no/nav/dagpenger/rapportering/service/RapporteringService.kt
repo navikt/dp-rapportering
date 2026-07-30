@@ -436,7 +436,9 @@ class RapporteringService(
     ): InnsendingResponse {
         val kanSendes = rapporteringRepository.hentKanSendes(rapporteringsperiode.id)
         if (kanSendes != true) {
-            throw BadRequestException("Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes inn")
+            throw BadRequestException(
+                "Rapporteringsperiode med id ${rapporteringsperiode.id} kan ikke sendes inn. Feltet kanSendes = $kanSendes i databasen",
+            )
         }
 
         kontrollerRapporteringsperiode(rapporteringsperiode)
