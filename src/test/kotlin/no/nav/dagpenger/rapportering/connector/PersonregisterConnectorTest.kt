@@ -1,6 +1,8 @@
 package no.nav.dagpenger.rapportering.connector
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
@@ -10,7 +12,6 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
-import java.time.LocalDate
 
 class PersonregisterConnectorTest {
     private val testTokenXProvider: (token: String) -> String = { _ -> "testToken" }
@@ -93,6 +94,18 @@ class PersonregisterConnectorTest {
     }
 
     @Test
+    fun `hentPersonstatus kaster exception ved uforventet status`() {
+        val connector = personregisterConnector(HttpStatusCode.InternalServerError)
+
+        val exception =
+            shouldThrow<RuntimeException> {
+                runBlocking { connector.hentPersonstatus(ident, subjectToken) }
+            }
+
+        exception.message shouldContain "500"
+    }
+
+    @Test
     fun `hentBrukerstatus returnerer IKKE_DAGPENGERBRUKER hvis 404 Not Found`() {
         val connector = personregisterConnector(HttpStatusCode.NotFound)
 
@@ -144,15 +157,6 @@ class PersonregisterConnectorTest {
             }
 
         response shouldBe Brukerstatus.DAGPENGERBRUKER
-    }
-
-    @Test
-    fun `oppdaterPersonstatus fungerer`() {
-        val connector = personregisterConnector(HttpStatusCode.OK)
-
-        runBlocking {
-            connector.oppdaterPersonstatus(ident, subjectToken, LocalDate.now())
-        }
     }
 
     @Test
