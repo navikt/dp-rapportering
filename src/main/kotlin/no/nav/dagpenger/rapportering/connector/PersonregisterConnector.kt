@@ -16,8 +16,6 @@ import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.utils.Sikkerlogg
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 class PersonregisterConnector(
     val personregisterUrl: String = Configuration.personregisterUrl,
@@ -45,12 +43,26 @@ class PersonregisterConnector(
                         Sikkerlogg.info { "Kall til personregister for å hente personstatus for $ident ga status ${it.status}" }
                     }
 
-            if (result.status == HttpStatusCode.NotFound) {
-                null
-            } else {
-                result
-                    .bodyAsText()
-                    .let { defaultObjectMapper.readValue(it, Personstatus::class.java) }
+            when (result.status) {
+                HttpStatusCode.NotFound -> {
+                    null
+                }
+
+                HttpStatusCode.OK -> {
+                    result
+                        .bodyAsText()
+                        .let { defaultObjectMapper.readValue(it, Personstatus::class.java) }
+                }
+
+                else -> {
+                    val melding = result.bodyAsText()
+                    Sikkerlogg.error {
+                        "Uforventet status ved henting av personstatus for $ident: ${result.status.value} - $melding"
+                    }
+                    throw RuntimeException(
+                        "Uforventet status ved henting av personstatus: ${result.status.value}",
+                    )
+                }
             }
         }
 
@@ -62,30 +74,6 @@ class PersonregisterConnector(
             val personstatus = hentPersonstatus(ident, subjectToken)
 
             personstatus?.status ?: Brukerstatus.IKKE_DAGPENGERBRUKER
-        }
-
-    suspend fun oppdaterPersonstatus(
-        ident: String,
-        subjectToken: String,
-        datoFra: LocalDate,
-    ): Unit =
-        withContext(Dispatchers.IO) {
-            try {
-                httpClientUtils
-                    .post(
-                        "/personstatus",
-                        subjectToken,
-                        "personregister-oppdaterPersonstatus",
-                        ContentType.Text.Plain,
-                        datoFra.format(DateTimeFormatter.ISO_LOCAL_DATE),
-                    ).also {
-                        logger.info { "Kall til personregister for å oppdatere personstatus ga status ${it.status}" }
-                        Sikkerlogg.info { "Kall til personregister for å oppdatere personstatus for $ident ga status ${it.status}" }
-                    }
-            } catch (e: Exception) {
-                logger.error(e) { "Feil ved sending av data til personregister" }
-                throw e
-            }
         }
 
     suspend fun hentSisteSakId(ident: String): String? =
