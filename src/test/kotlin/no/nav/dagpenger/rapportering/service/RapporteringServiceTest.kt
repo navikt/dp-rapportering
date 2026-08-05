@@ -135,65 +135,6 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `harDpMeldeplikt sjekker personregisterService`() {
-        // Ansvarlig system DP gir TRUE
-        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
-            Personstatus(
-                ident,
-                Brukerstatus.DAGPENGERBRUKER,
-                true,
-                AnsvarligSystem.DP,
-                true,
-            )
-
-        var harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
-
-        harDpMeldeplikt shouldBe true
-
-        // Ansvarlig system DP gir TRUE selv om IKKE_DAGPENGERBRUKER
-        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
-            Personstatus(
-                ident,
-                Brukerstatus.IKKE_DAGPENGERBRUKER,
-                true,
-                AnsvarligSystem.DP,
-                true,
-            )
-
-        harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
-
-        harDpMeldeplikt shouldBe true
-
-        // Ansvarlig system ARENA men DAGPENGERBRUKER gir TRUE
-        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
-            Personstatus(
-                ident,
-                Brukerstatus.DAGPENGERBRUKER,
-                true,
-                AnsvarligSystem.ARENA,
-                true,
-            )
-
-        harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
-
-        harDpMeldeplikt shouldBe true
-
-        // Ansvarlig system ARENA og IKKE_DAGPENGERBRUKER gir FALSE
-        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
-            Personstatus(
-                ident,
-                Brukerstatus.IKKE_DAGPENGERBRUKER,
-                true,
-                AnsvarligSystem.ARENA,
-                true,
-            )
-
-        harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
-
-        harDpMeldeplikt shouldBe false
-    }
-
-    @Test
     fun `erRegistrertArbeidssøker returnerer true hvis erRegistrertArbeidssøker i hentPersonstatus er true`() {
         coEvery { personregisterService.hentPersonstatus(ident, token) } returns
             Personstatus(

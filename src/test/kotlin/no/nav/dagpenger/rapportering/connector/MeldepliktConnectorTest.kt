@@ -52,27 +52,6 @@ class MeldepliktConnectorTest {
     )
 
     @Test
-    fun `returnerer true når bruker har meldeplikt`() {
-        val connector = meldepliktConnector(HttpStatusCode.OK, "true")
-
-        val response = runBlocking { connector.harMeldeplikt(ident, subjectToken) }
-
-        response shouldBe true
-    }
-
-    @Test
-    fun `kaster exception med status ved feil ved harMeldeplikt`() {
-        val connector = meldepliktConnector(HttpStatusCode.InternalServerError)
-
-        val exception =
-            shouldThrow<RuntimeException> {
-                runBlocking { connector.harMeldeplikt(ident, subjectToken) }
-            }
-
-        exception.message shouldContain "500"
-    }
-
-    @Test
     fun `returnerer null ved henting av rapporteringsperiodeliste uten meldeplikt`() {
         val connector = meldepliktConnector(HttpStatusCode.NoContent)
 

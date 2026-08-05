@@ -4,7 +4,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.Headers
 import io.ktor.server.plugins.BadRequestException
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
-import no.nav.dagpenger.rapportering.connector.Brukerstatus
 import no.nav.dagpenger.rapportering.connector.erBekreftelseOvertatt
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
@@ -50,19 +49,6 @@ class RapporteringService(
     private val personregisterService: PersonregisterService,
     private val meldekortregisterService: MeldekortregisterService,
 ) {
-    suspend fun harDpMeldeplikt(
-        ident: String,
-        token: String,
-    ): Boolean {
-        val personstatus = personregisterService.hentPersonstatus(ident, token)
-
-        if (personstatus?.ansvarligSystem == AnsvarligSystem.DP) {
-            return true
-        }
-
-        return personstatus?.status == Brukerstatus.DAGPENGERBRUKER
-    }
-
     suspend fun erRegistrertArbeidssøker(
         ident: String,
         token: String,
