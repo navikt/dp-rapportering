@@ -356,16 +356,25 @@ class RapporteringRepositoryPostgres(
                                 kan_sendes = :kan_sendes,
                                 kan_endres = :kan_endres,
                                 brutto_belop = :brutto_belop,
-                                status = :status
-                            WHERE id = :id
+                                begrunnelse_endring = :begrunnelse_endring,
+                                registrert_arbeidssoker = :registrert_arbeidssoker,
+                                status = :status,
+                                rapporteringstype = :rapporteringstype,
+                                mottatt_dato = :mottatt_dato
+                            WHERE id = :id AND ident = :ident
                             """.trimIndent(),
                             mapOf(
                                 "kan_sendes_fra" to rapporteringsperiode.kanSendesFra,
                                 "kan_sendes" to rapporteringsperiode.kanSendes,
                                 "kan_endres" to rapporteringsperiode.kanEndres,
                                 "brutto_belop" to rapporteringsperiode.bruttoBelop,
+                                "begrunnelse_endring" to rapporteringsperiode.begrunnelseEndring,
+                                "registrert_arbeidssoker" to rapporteringsperiode.registrertArbeidssoker,
                                 "status" to rapporteringsperiode.status.name,
+                                "rapporteringstype" to rapporteringsperiode.rapporteringstype,
+                                "mottatt_dato" to rapporteringsperiode.mottattDato,
                                 "id" to rapporteringsperiode.id,
+                                "ident" to ident,
                             ),
                         ).asUpdate,
                     ).validateRowsAffected()

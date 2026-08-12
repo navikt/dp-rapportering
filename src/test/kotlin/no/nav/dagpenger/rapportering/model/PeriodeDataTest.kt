@@ -96,7 +96,7 @@ class PeriodeDataTest {
         rapporteringsperioder[0].mottattDato shouldBe null
         rapporteringsperioder[0].registrertArbeidssoker shouldBe null
         rapporteringsperioder[0].originalId shouldBe null
-        rapporteringsperioder[0].rapporteringstype shouldBe null
+        rapporteringsperioder[0].rapporteringstype shouldBe "harIngenAktivitet"
         rapporteringsperioder[0].html shouldBe null
         rapporteringsperioder[1].id shouldBe "2"
         rapporteringsperioder[1].type shouldBe KortType.Korrigert
@@ -118,7 +118,7 @@ class PeriodeDataTest {
         rapporteringsperioder[1].mottattDato shouldBe LocalDate.now()
         rapporteringsperioder[1].registrertArbeidssoker shouldBe true
         rapporteringsperioder[1].originalId shouldBe "123456789"
-        rapporteringsperioder[1].rapporteringstype shouldBe null
+        rapporteringsperioder[1].rapporteringstype shouldBe "harAktivitet"
         rapporteringsperioder[1].html shouldBe null
     }
 }

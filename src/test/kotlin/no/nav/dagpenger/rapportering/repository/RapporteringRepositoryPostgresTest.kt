@@ -341,6 +341,7 @@ class RapporteringRepositoryPostgresTest {
                     ),
                 dagIndex = 0,
             )
+        val idag = LocalDate.now()
 
         withMigratedDb {
             rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiode = rapporteringsperiode, ident = ident)
@@ -361,7 +362,11 @@ class RapporteringRepositoryPostgresTest {
                 kanSendes shouldBe true
                 kanEndres shouldBe false
                 bruttoBelop shouldBe null
+                begrunnelseEndring shouldBe null
+                registrertArbeidssoker shouldBe null
                 status shouldBe TilUtfylling
+                mottattDato shouldBe null
+                rapporteringstype shouldBe null
             }
 
             rapporteringRepositoryPostgres.oppdaterRapporteringsperiodeFraArena(
@@ -369,7 +374,11 @@ class RapporteringRepositoryPostgresTest {
                     kanSendes = false,
                     kanEndres = true,
                     bruttoBelop = 100.0,
+                    begrunnelseEndring = "Bla bla bla",
+                    registrertArbeidssoker = true,
                     status = Innsendt,
+                    mottattDato = idag,
+                    rapporteringstype = "harAktivitet",
                 ),
                 ident,
             )
@@ -387,7 +396,11 @@ class RapporteringRepositoryPostgresTest {
                 kanSendes shouldBe false
                 kanEndres shouldBe true
                 bruttoBelop shouldBe 100.0
+                begrunnelseEndring shouldBe "Bla bla bla"
                 status shouldBe Innsendt
+                mottattDato shouldBe idag
+                registrertArbeidssoker shouldBe true
+                rapporteringstype shouldBe "harAktivitet"
             }
         }
     }
