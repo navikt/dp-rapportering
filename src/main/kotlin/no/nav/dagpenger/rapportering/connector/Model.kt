@@ -105,7 +105,7 @@ fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
             },
         mottattDato = this.mottattDato,
         begrunnelseEndring = if (this.begrunnelseEndring.isNullOrBlank()) null else this.begrunnelseEndring,
-        registrertArbeidssoker = this.registrertArbeidssoker,
+        registrertArbeidssoker = if (KortType.fromCode(type) != KortType.Korrigert) this.registrertArbeidssoker else null,
         originalId = null,
         rapporteringstype = if (this.dager.any { it.aktiviteter.isNotEmpty() }) "harAktivitet" else "harIngenAktivitet",
         opprettetAv = OpprettetAv.Arena,
