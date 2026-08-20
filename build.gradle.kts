@@ -74,7 +74,7 @@ dependencies {
     implementation(libs.konfig)
     implementation(libs.kotlin.logging)
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.22")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.22.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.22.2")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.1")
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.client)
