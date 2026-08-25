@@ -1,6 +1,5 @@
 package no.nav.dagpenger.rapportering.api
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
@@ -54,6 +53,7 @@ import no.nav.dagpenger.rapportering.utils.januar
 import no.nav.dagpenger.rapportering.utils.november
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import tools.jackson.module.kotlin.readValue
 import java.time.LocalDate
 
 class RapporteringApiTest : ApiTestSetup() {

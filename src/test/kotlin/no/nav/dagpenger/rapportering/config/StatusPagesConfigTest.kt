@@ -1,6 +1,5 @@
 package no.nav.dagpenger.rapportering.config
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.ktor.client.plugins.ResponseException
@@ -12,7 +11,7 @@ import io.ktor.http.HttpStatusCode.Companion.BadRequest
 import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.http.HttpStatusCode.Companion.NotFound
 import io.ktor.serialization.JsonConvertException
-import io.ktor.serialization.jackson.JacksonConverter
+import io.ktor.serialization.jackson3.JacksonConverter
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -25,6 +24,7 @@ import io.mockk.mockk
 import no.nav.dagpenger.rapportering.exceptions.RapporteringsperiodeNotFoundException
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.ObjectMapper
 
 class StatusPagesConfigTest {
     @Test

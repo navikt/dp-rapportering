@@ -1,12 +1,10 @@
 package no.nav.dagpenger.rapportering.api
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
-import io.ktor.serialization.jackson.JacksonConverter
-import io.ktor.serialization.jackson.jackson
+import io.ktor.serialization.jackson3.JacksonConverter
+import io.ktor.serialization.jackson3.jackson
 import io.ktor.server.application.install
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -64,6 +62,7 @@ import org.apache.kafka.clients.producer.RecordMetadata
 import org.apache.kafka.common.TopicPartition
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
+import tools.jackson.databind.DeserializationFeature
 import java.util.concurrent.CompletableFuture
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
@@ -187,8 +186,7 @@ open class ApiTestSetup {
                     }
                     install(ClientContentNegotiation) {
                         jackson {
-                            registerModule(JavaTimeModule())
-                            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                            disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                         }
                     }
                 }

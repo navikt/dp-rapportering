@@ -8,7 +8,7 @@ group = "org.example"
 version = "0.0.1"
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(25)
 }
 
 tasks.named("compileKotlin").configure {

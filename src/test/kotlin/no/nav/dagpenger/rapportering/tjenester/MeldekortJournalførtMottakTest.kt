@@ -1,6 +1,5 @@
 package no.nav.dagpenger.rapportering.tjenester
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
@@ -14,6 +13,7 @@ import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.ObjectMapper
 
 class MeldekortJournalførtMottakTest {
     private val testRapid = TestRapid()
@@ -41,7 +41,7 @@ class MeldekortJournalførtMottakTest {
 
         val jsonNode = ObjectMapper().readTree(response.captured)
 
-        jsonNode["JournalføreMeldekort"].asText() shouldBe "SE TILSVARENDE REQUEST"
+        jsonNode["JournalføreMeldekort"].asString() shouldBe "SE TILSVARENDE REQUEST"
     }
 }
 

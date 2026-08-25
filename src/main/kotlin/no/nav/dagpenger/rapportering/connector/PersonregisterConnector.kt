@@ -120,9 +120,9 @@ class PersonregisterConnector(
 data class Personstatus(
     val ident: String,
     val status: Brukerstatus,
-    val overtattBekreftelse: Boolean,
+    val overtattBekreftelse: Boolean? = false,
     val ansvarligSystem: AnsvarligSystem?,
-    val erRegistrertArbeidssøker: Boolean,
+    val erRegistrertArbeidssøker: Boolean? = false,
 )
 
 fun Personstatus?.erBekreftelseOvertatt(): Boolean = this?.overtattBekreftelse ?: false

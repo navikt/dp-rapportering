@@ -1,6 +1,5 @@
 package no.nav.dagpenger.rapportering.service
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import com.natpryce.konfig.Key
 import com.natpryce.konfig.stringType
@@ -26,6 +25,7 @@ import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
+import tools.jackson.module.kotlin.readValue
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields

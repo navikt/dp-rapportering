@@ -1,6 +1,5 @@
 package no.nav.dagpenger.rapportering.api
 
-import com.fasterxml.jackson.core.type.TypeReference
 import io.ktor.client.HttpClient
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -20,6 +19,7 @@ import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import tools.jackson.core.type.TypeReference
 import java.time.LocalDate
 
 fun objectMapper() = defaultObjectMapper

@@ -1,6 +1,5 @@
 package no.nav.dagpenger.rapportering.connector
 
-import com.fasterxml.jackson.core.type.TypeReference
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -15,6 +14,7 @@ import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.utils.Sikkerlogg
+import tools.jackson.core.type.TypeReference
 
 class MeldepliktConnector(
     private val meldepliktUrl: String = Configuration.meldepliktAdapterUrl,

@@ -1,6 +1,5 @@
 package no.nav.dagpenger.rapportering.service
 
-import com.fasterxml.jackson.core.type.TypeReference
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -16,6 +15,7 @@ import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.KorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.model.PeriodeData
 import no.nav.dagpenger.rapportering.utils.Sikkerlogg
+import tools.jackson.core.type.TypeReference
 
 class MeldekortregisterService(
     meldekortregisterUrl: String = Configuration.meldekortregisterUrl,
