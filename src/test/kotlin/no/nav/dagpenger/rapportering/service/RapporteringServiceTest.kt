@@ -194,47 +194,6 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `erRegistrertArbeidssøker returnerer true hvis erRegistrertArbeidssøker i hentPersonstatus er true`() {
-        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
-            Personstatus(
-                ident,
-                Brukerstatus.DAGPENGERBRUKER,
-                true,
-                AnsvarligSystem.DP,
-                true,
-            )
-
-        val erRegistrertArbeidssøker = runBlocking { rapporteringService.erRegistrertArbeidssøker(ident, token) }
-
-        erRegistrertArbeidssøker shouldBe true
-    }
-
-    @Test
-    fun `erRegistrertArbeidssøker returnerer false hvis erRegistrertArbeidssøker i hentPersonstatus er false`() {
-        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
-            Personstatus(
-                ident,
-                Brukerstatus.DAGPENGERBRUKER,
-                true,
-                AnsvarligSystem.DP,
-                false,
-            )
-
-        val erRegistrertArbeidssøker = runBlocking { rapporteringService.erRegistrertArbeidssøker(ident, token) }
-
-        erRegistrertArbeidssøker shouldBe false
-    }
-
-    @Test
-    fun `erRegistrertArbeidssøker returnerer false hvis hentPersonstatus returnerer null`() {
-        coEvery { personregisterService.hentPersonstatus(ident, token) } returns null
-
-        val erRegistrertArbeidssøker = runBlocking { rapporteringService.erRegistrertArbeidssøker(ident, token) }
-
-        erRegistrertArbeidssøker shouldBe false
-    }
-
-    @Test
     fun `hent periode henter spesifisert periode som ikke er sendt inn og lagrer denne i databasen hvis den ikke finnes`() {
         coEvery { meldepliktService.hentRapporteringsperioder(ident, token) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()

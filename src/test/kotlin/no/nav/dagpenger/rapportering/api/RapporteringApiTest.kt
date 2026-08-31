@@ -168,53 +168,6 @@ class RapporteringApiTest : ApiTestSetup() {
     }
 
     @Nested
-    inner class ErRegistrertArbeidssokerTest {
-        @Test
-        fun `er-registrert-arbeidssoker returnerer unauthorized hvis kallet gjøres uten token`() =
-            setUpTestApplication {
-                with(client.doGet("/er-registrert-arbeidssoker", null)) {
-                    status shouldBe Unauthorized
-                }
-            }
-
-        @Test
-        fun `er-registrert-arbeidssoker returnerer true hvis erRegistrertArbeidssøker == true`() =
-            setUpTestApplication {
-                coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
-                    Personstatus(
-                        ident = fnr,
-                        status = DAGPENGERBRUKER,
-                        overtattBekreftelse = true,
-                        ansvarligSystem = DP,
-                        erRegistrertArbeidssøker = true,
-                    )
-
-                val response = client.doGet("/er-registrert-arbeidssoker", issueToken(fnr))
-
-                response.status shouldBe OK
-                response.bodyAsText() shouldBe "true"
-            }
-
-        @Test
-        fun `er-registrert-arbeidssoker returnerer false hvis erRegistrertArbeidssøker == false`() =
-            setUpTestApplication {
-                coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
-                    Personstatus(
-                        ident = fnr,
-                        status = IKKE_DAGPENGERBRUKER,
-                        overtattBekreftelse = true,
-                        ansvarligSystem = DP,
-                        erRegistrertArbeidssøker = false,
-                    )
-
-                val response = client.doGet("/er-registrert-arbeidssoker", issueToken(fnr))
-
-                response.status shouldBe OK
-                response.bodyAsText() shouldBe "false"
-            }
-    }
-
-    @Nested
     inner class HarMeldekort {
         @Test
         fun `harMeldeplikt uten token gir unauthorized`() =

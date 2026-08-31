@@ -63,11 +63,6 @@ class RapporteringService(
         return personstatus?.status == Brukerstatus.DAGPENGERBRUKER
     }
 
-    suspend fun erRegistrertArbeidssøker(
-        ident: String,
-        token: String,
-    ): Boolean = personregisterService.hentPersonstatus(ident, token)?.erRegistrertArbeidssøker == true
-
     suspend fun hentPeriode(
         rapporteringId: String,
         ident: String,
