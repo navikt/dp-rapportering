@@ -91,7 +91,7 @@ dependencies {
 
     implementation("io.confluent:kafka-streams-avro-serde:8.3.1")
     implementation("org.apache.avro:avro:1.12.1")
-    schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:1.26.05.04.35-1")
+    schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:25.02.07.15-1")
 
     implementation("com.fasterxml.uuid:java-uuid-generator:5.2.0")
 
