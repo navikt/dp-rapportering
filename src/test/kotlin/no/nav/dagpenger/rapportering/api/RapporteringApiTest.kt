@@ -28,9 +28,6 @@ import no.nav.dagpenger.rapportering.connector.AdapterPeriode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem.DP
-import no.nav.dagpenger.rapportering.connector.Brukerstatus.DAGPENGERBRUKER
-import no.nav.dagpenger.rapportering.connector.Brukerstatus.IKKE_DAGPENGERBRUKER
-import no.nav.dagpenger.rapportering.connector.Personstatus
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
@@ -80,53 +77,6 @@ class RapporteringApiTest : ApiTestSetup() {
                     status shouldBe OK
                     bodyAsText() shouldBe """[$journalpostId]"""
                 }
-            }
-    }
-
-    @Nested
-    inner class ErRegistrertArbeidssokerTest {
-        @Test
-        fun `er-registrert-arbeidssoker returnerer unauthorized hvis kallet gjøres uten token`() =
-            setUpTestApplication {
-                with(client.doGet("/er-registrert-arbeidssoker", null)) {
-                    status shouldBe Unauthorized
-                }
-            }
-
-        @Test
-        fun `er-registrert-arbeidssoker returnerer true hvis erRegistrertArbeidssøker == true`() =
-            setUpTestApplication {
-                coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
-                    Personstatus(
-                        ident = fnr,
-                        status = DAGPENGERBRUKER,
-                        overtattBekreftelse = true,
-                        ansvarligSystem = DP,
-                        erRegistrertArbeidssøker = true,
-                    )
-
-                val response = client.doGet("/er-registrert-arbeidssoker", issueToken(fnr))
-
-                response.status shouldBe OK
-                response.bodyAsText() shouldBe "true"
-            }
-
-        @Test
-        fun `er-registrert-arbeidssoker returnerer false hvis erRegistrertArbeidssøker == false`() =
-            setUpTestApplication {
-                coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
-                    Personstatus(
-                        ident = fnr,
-                        status = IKKE_DAGPENGERBRUKER,
-                        overtattBekreftelse = true,
-                        ansvarligSystem = DP,
-                        erRegistrertArbeidssøker = false,
-                    )
-
-                val response = client.doGet("/er-registrert-arbeidssoker", issueToken(fnr))
-
-                response.status shouldBe OK
-                response.bodyAsText() shouldBe "false"
             }
     }
 
