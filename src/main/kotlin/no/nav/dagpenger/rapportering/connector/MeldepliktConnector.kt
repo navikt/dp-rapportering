@@ -1,6 +1,5 @@
 package no.nav.dagpenger.rapportering.connector
 
-import com.fasterxml.jackson.core.type.TypeReference
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -15,6 +14,7 @@ import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.utils.Sikkerlogg
+import tools.jackson.core.type.TypeReference
 
 class MeldepliktConnector(
     private val meldepliktUrl: String = Configuration.meldepliktAdapterUrl,
@@ -24,34 +24,6 @@ class MeldepliktConnector(
 ) {
     private val logger = KotlinLogging.logger {}
     private val httpClientUtils = HttpClientUtils(httpClient, meldepliktUrl, tokenProvider, actionTimer)
-
-    suspend fun harMeldeplikt(
-        ident: String,
-        subjectToken: String,
-    ): Boolean =
-        withContext(Dispatchers.IO) {
-            val result = httpClientUtils.get("/harmeldeplikt", subjectToken, "adapter-harMeldeplikt")
-
-            when (result.status) {
-                HttpStatusCode.OK -> {
-                    val harMeldeplikt = result.bodyAsText()
-
-                    logger.info { "Bruker har meldeplikt: $harMeldeplikt" }
-                    Sikkerlogg.info { "Bruker med ident $ident har meldeplikt: $harMeldeplikt" }
-
-                    harMeldeplikt.toBoolean()
-                }
-
-                else -> {
-                    logger.error { "Uventet status fra meldeplikt-adapter for harMeldeplikt: ${result.status}" }
-                    Sikkerlogg.error {
-                        "Uventet status fra meldeplikt-adapter for harMeldeplikt for $ident: ${result.status}"
-                    }
-
-                    false
-                }
-            }
-        }
 
     suspend fun hentRapporteringsperioder(
         ident: String,
@@ -82,12 +54,26 @@ class MeldepliktConnector(
                         Sikkerlogg.info { "Kall til meldeplikt-adapter for å hente person $ident ga status ${it.status}" }
                     }
 
-            if (result.status == HttpStatusCode.NoContent) {
-                null
-            } else {
-                result
-                    .bodyAsText()
-                    .let { defaultObjectMapper.readValue(it, Person::class.java) }
+            when (result.status) {
+                HttpStatusCode.NoContent -> {
+                    null
+                }
+
+                HttpStatusCode.OK -> {
+                    result
+                        .bodyAsText()
+                        .let { defaultObjectMapper.readValue(it, Person::class.java) }
+                }
+
+                else -> {
+                    val melding = result.bodyAsText()
+                    Sikkerlogg.error {
+                        "Uforventet status ved henting av person fra adapter for $ident: ${result.status.value} - $melding"
+                    }
+                    throw RuntimeException(
+                        "Uforventet status ved henting av person fra adapter: ${result.status.value}",
+                    )
+                }
             }
         }
 
@@ -132,15 +118,26 @@ class MeldepliktConnector(
         withContext(Dispatchers.IO) {
             logger.info { "Rapporteringsperiode som sendes til adapter: $rapporteringsperiode" }
             logger.info { "Meldeplikt-url: $meldepliktUrl" }
-            try {
+
+            val result =
                 httpClientUtils
                     .post("/sendinn", subjectToken, "adapter-sendinnRapporteringsperiode", rapporteringsperiode)
                     .also { logger.info { "Kall til meldeplikt-adapter for å sende inn rapporteringsperiode ga status ${it.status}" } }
-                    .bodyAsText()
-                    .let { defaultObjectMapper.readValue(it, InnsendingResponse::class.java) }
-            } catch (e: Exception) {
-                logger.error(e) { "Feil ved sending av data til meldeplikt-adapter" }
-                throw e
+
+            when (result.status) {
+                HttpStatusCode.OK -> {
+                    result.bodyAsText().let { defaultObjectMapper.readValue(it, InnsendingResponse::class.java) }
+                }
+
+                else -> {
+                    val melding = result.bodyAsText()
+                    Sikkerlogg.error {
+                        "Uforventet status ved sending av rapporteringsperiode til adapter: ${result.status.value} - $melding"
+                    }
+                    throw RuntimeException(
+                        "Uforventet status ved sending av rapporteringsperiode til adapter: ${result.status.value}",
+                    )
+                }
             }
         }
 
@@ -148,36 +145,50 @@ class MeldepliktConnector(
         path: String,
         subjectToken: String,
         metrikkNavn: String,
-    ): T =
-        try {
-            httpClientUtils
-                .get(path, subjectToken, metrikkNavn)
-                .body<T>()
-        } catch (e: Exception) {
-            logger.error(e) { "Feil ved henting av data fra meldeplikt-adapter. Path: $path" }
-            throw e
+    ): T {
+        val result = httpClientUtils.get(path, subjectToken, metrikkNavn)
+        return when (result.status) {
+            HttpStatusCode.OK -> {
+                result.body<T>()
+            }
+
+            else -> {
+                val melding = result.bodyAsText()
+                Sikkerlogg.error {
+                    "Uforventet status fra meldeplikt-adapter for $path: ${result.status.value} - $melding"
+                }
+                throw RuntimeException(
+                    "Uforventet status fra meldeplikt-adapter for $path: ${result.status.value}",
+                )
+            }
         }
+    }
 
     private suspend fun lesPerioder(result: HttpResponse): List<AdapterRapporteringsperiode>? =
-        try {
-            if (result.status == HttpStatusCode.NoContent) {
+        when (result.status) {
+            HttpStatusCode.NoContent -> {
                 null
-            } else {
-                result
-                    .bodyAsText()
-                    .let {
-                        val perioder =
-                            defaultObjectMapper.readValue(
-                                it,
-                                object : TypeReference<List<AdapterRapporteringsperiode>>() {},
-                            )
-                        perioder.ifEmpty {
-                            null
-                        }
-                    }
             }
-        } catch (e: Exception) {
-            logger.error(e) { "Feil ved lesing av rapporteringsperioder fra meldeplikt-adapter" }
-            throw e
+
+            HttpStatusCode.OK -> {
+                result.bodyAsText().let {
+                    val perioder =
+                        defaultObjectMapper.readValue(
+                            it,
+                            object : TypeReference<List<AdapterRapporteringsperiode>>() {},
+                        )
+                    perioder.ifEmpty { null }
+                }
+            }
+
+            else -> {
+                val melding = result.bodyAsText()
+                Sikkerlogg.error {
+                    "Uforventet status ved henting av rapporteringsperioder fra adapter: ${result.status.value} - $melding"
+                }
+                throw RuntimeException(
+                    "Uforventet status ved henting av rapporteringsperioder fra adapter: ${result.status.value}",
+                )
+            }
         }
 }

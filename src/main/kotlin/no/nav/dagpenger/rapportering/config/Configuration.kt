@@ -1,12 +1,5 @@
 package no.nav.dagpenger.rapportering.config
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.KotlinFeature
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.github.navikt.tbd_libs.naisful.NaisEndpoints
 import com.natpryce.konfig.ConfigurationMap
 import com.natpryce.konfig.ConfigurationProperties
 import com.natpryce.konfig.EnvironmentVariables
@@ -23,6 +16,12 @@ import no.nav.dagpenger.oauth2.OAuth2Config
 import no.nav.dagpenger.rapportering.kafka.KafkaSchemaRegistryConfig
 import no.nav.dagpenger.rapportering.kafka.KafkaServerKonfigurasjon
 import no.nav.dagpenger.rapportering.utils.UUIDv7
+import no.nav.helse.rapids_rivers.NaisEndpoints
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.cfg.DateTimeFeature
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.KotlinFeature
+import tools.jackson.module.kotlin.KotlinModule
 import java.time.ZoneId
 
 internal object Configuration {
@@ -174,7 +173,6 @@ internal object Configuration {
             .instanceId(properties.getOrElse(Key("NAIS_CLIENT_ID", stringType), UUIDv7.newUuid().toString()))
             .unleashAPI(properties[Key("UNLEASH_SERVER_API_URL", stringType)] + "/api")
             .apiKey(properties[Key("UNLEASH_SERVER_API_TOKEN", stringType)])
-            .environment(properties[Key("UNLEASH_SERVER_API_ENV", stringType)])
             .build()
     }
 
@@ -208,10 +206,10 @@ internal object Configuration {
         )
     }
 
-    val defaultObjectMapper: ObjectMapper =
-        ObjectMapper().apply {
-            registerModule(JavaTimeModule())
-            registerModule(
+    val defaultObjectMapper =
+        JsonMapper
+            .builder()
+            .addModule(
                 KotlinModule
                     .Builder()
                     .configure(KotlinFeature.NullToEmptyCollection, true)
@@ -220,8 +218,7 @@ internal object Configuration {
                     .configure(KotlinFeature.SingletonSupport, true)
                     .configure(KotlinFeature.StrictNullChecks, false)
                     .build(),
-            )
-            disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-            disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-        }
+            ).configure(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .build()
 }

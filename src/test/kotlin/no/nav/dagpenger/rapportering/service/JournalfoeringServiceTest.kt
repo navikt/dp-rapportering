@@ -1,9 +1,5 @@
 package no.nav.dagpenger.rapportering.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import de.redsix.pdfcompare.CompareResultImpl
 import de.redsix.pdfcompare.PageArea
@@ -48,6 +44,9 @@ import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.cfg.DateTimeFeature
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.KotlinModule
 import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -67,10 +66,14 @@ class JournalfoeringServiceTest {
         }
 
     private val objectMapper =
-        ObjectMapper()
-            .registerKotlinModule()
-            .registerModule(JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        JsonMapper
+            .builder()
+            .addModule(
+                KotlinModule
+                    .Builder()
+                    .build(),
+            ).configure(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+            .build()
 
     companion object {
         @BeforeAll
@@ -460,13 +463,13 @@ class JournalfoeringServiceTest {
 
         val jsonNode = objectMapper.readTree(message)
 
-        jsonNode.get("@event_name").asText() shouldBe "behov"
+        jsonNode.get("@event_name").asString() shouldBe "behov"
         jsonNode
             .get("@behov")
             .asIterable()
             .iterator()
             .next()
-            .asText() shouldBe behovNavn
+            .asString() shouldBe behovNavn
 
         val behov = jsonNode.get(behovNavn)
 
@@ -477,29 +480,30 @@ class JournalfoeringServiceTest {
         }
 
         if (endring) {
-            behov.get("brevkode").asText() shouldBe "NAV 00-10.03"
-            behov.get("tittel").asText() shouldBe "Korrigert meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av Nav"
+            behov.get("brevkode").asString() shouldBe "NAV 00-10.03"
+            behov.get("tittel").asString() shouldBe
+                "Korrigert meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av Nav"
         } else {
-            behov.get("brevkode").asText() shouldBe "NAV 00-10.02"
-            behov.get("tittel").asText() shouldBe "Meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av Nav"
+            behov.get("brevkode").asString() shouldBe "NAV 00-10.02"
+            behov.get("tittel").asString() shouldBe "Meldekort for uke 26 - 27 (24.06.2024 - 07.07.2024) elektronisk mottatt av Nav"
         }
 
-        checkJson(behov.get("json").asText(), rapporteringsperiode)
-        checkPdf(endring, behov.get("pdf").asText())
+        checkJson(behov.get("json").asString(), rapporteringsperiode)
+        checkPdf(endring, behov.get("pdf").asString())
 
         val to = behov.get("tilleggsopplysninger")
 
-        to.get(0).get("first").asText() shouldBe "periodeId"
-        to.get(0).get("second").asText() shouldBe rapporteringsperiode.id
-        to.get(1).get("first").asText() shouldBe "kanSendesFra"
-        to.get(1).get("second").asText() shouldBe rapporteringsperiode.kanSendesFra.format(DateTimeFormatter.ISO_DATE)
-        to.get(2).get("first").asText() shouldBe "userAgent"
-        to.get(2).get("second").asText() shouldBe userAgent
-        to.get(3).get("first").asText() shouldBe "frontendGithubSha"
-        to.get(3).get("second").asText() shouldBe frontendGithubSha
-        to.get(4).get("first").asText() shouldBe "backendGithubSha"
-        to.get(4).get("second").asText() shouldBe backendGithubSha
-        to.get(5).get("first").asText() shouldBe "loginLevel"
+        to.get(0).get("first").asString() shouldBe "periodeId"
+        to.get(0).get("second").asString() shouldBe rapporteringsperiode.id
+        to.get(1).get("first").asString() shouldBe "kanSendesFra"
+        to.get(1).get("second").asString() shouldBe rapporteringsperiode.kanSendesFra.format(DateTimeFormatter.ISO_DATE)
+        to.get(2).get("first").asString() shouldBe "userAgent"
+        to.get(2).get("second").asString() shouldBe userAgent
+        to.get(3).get("first").asString() shouldBe "frontendGithubSha"
+        to.get(3).get("second").asString() shouldBe frontendGithubSha
+        to.get(4).get("first").asString() shouldBe "backendGithubSha"
+        to.get(4).get("second").asString() shouldBe backendGithubSha
+        to.get(5).get("first").asString() shouldBe "loginLevel"
         to.get(5).get("second").asInt() shouldBe loginLevel
     }
 

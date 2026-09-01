@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.jobs
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
+import io.opentelemetry.api.GlobalOpenTelemetry
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.metrics.JobbkjøringMetrikker
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepository
@@ -38,61 +39,76 @@ internal class SendBekreftelsesmeldingerJob(
     }
 
     private fun execute() {
+        val span = tracer.spanBuilder("send-bekreftelsesmeldinger").startSpan()
+
         try {
-            if (!isLeader(httpClient, logger)) {
-                logger.info { "Pod er ikke leader, så jobb for å sende bekreftelsesmeldinger kjøres ikke" }
-                return
-            }
+            span.makeCurrent().use {
+                if (!isLeader(httpClient, logger)) {
+                    logger.info { "Pod er ikke leader, så jobb for å sende bekreftelsesmeldinger kjøres ikke" }
+                    return
+                }
 
-            logger.info { "Kjører jobb for å sende bekreftelsesmeldinger" }
+                logger.info { "Kjører jobb for å sende bekreftelsesmeldinger" }
 
-            var rowsAffected: Int
-            val tidBrukt =
-                measureTime {
-                    runBlocking {
-                        val lagretData = bekreftelsesmeldingRepository.hentBekreftelsesmeldingerSomSkalSendes(LocalDate.now())
-                        rowsAffected = lagretData.size
+                var rowsAffected: Int
+                val tidBrukt =
+                    measureTime {
+                        runBlocking {
+                            val lagretData =
+                                bekreftelsesmeldingRepository.hentBekreftelsesmeldingerSomSkalSendes(LocalDate.now())
+                            rowsAffected = lagretData.size
 
-                        lagretData.forEach { (id, rapporteringId, ident) ->
-                            try {
-                                val rapporteringsperiode = rapporteringRepository.hentRapporteringsperiode(rapporteringId, ident)
-                                if (rapporteringsperiode == null) {
-                                    logger.error { "Fant ikke rapporteringsperiode med id $rapporteringId" }
-                                    return@forEach
-                                }
-
-                                val sendtBekreftelseId = arbeidssøkerService.sendBekreftelse(ident, rapporteringsperiode)
-
-                                if (sendtBekreftelseId != null) {
-                                    bekreftelsesmeldingRepository.oppdaterBekreftelsesmelding(
-                                        id,
-                                        sendtBekreftelseId,
-                                        LocalDateTime.now(),
-                                    )
-                                } else {
-                                    logger.warn {
-                                        "sendBekreftelse returnerte null for bekreftelsesmeldingId=$id, rapporteringId=$rapporteringId. " +
-                                            "Meldingen vil bli forsøkt sendt på nytt så lenge denne tilstanden vedvarer."
+                            lagretData.forEach { (id, rapporteringId, ident) ->
+                                try {
+                                    val rapporteringsperiode =
+                                        rapporteringRepository.hentRapporteringsperiode(rapporteringId, ident)
+                                    if (rapporteringsperiode == null) {
+                                        logger.error { "Fant ikke rapporteringsperiode med id $rapporteringId" }
+                                        return@forEach
                                     }
-                                }
-                            } catch (e: Exception) {
-                                logger.warn(e) {
-                                    "Klarte ikke å sende bekreftelsesmelding med id $id og rapporteringId $rapporteringId"
+
+                                    val sendtBekreftelseId =
+                                        arbeidssøkerService.sendBekreftelse(ident, rapporteringsperiode)
+
+                                    if (sendtBekreftelseId != null) {
+                                        bekreftelsesmeldingRepository.oppdaterBekreftelsesmelding(
+                                            id,
+                                            sendtBekreftelseId,
+                                            LocalDateTime.now(),
+                                        )
+                                    } else {
+                                        logger.warn {
+                                            "sendBekreftelse returnerte null for bekreftelsesmeldingId=$id, " +
+                                                "rapporteringId=$rapporteringId. Meldingen vil bli forsøkt sendt på nytt så lenge " +
+                                                "denne tilstanden vedvarer."
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    span.recordException(e)
+                                    logger.warn(e) {
+                                        "Klarte ikke å sende bekreftelsesmelding med id $id og rapporteringId $rapporteringId"
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-            logger.info {
-                "Jobb for å sende bekreftelsesmeldinger ferdig. Brukte ${tidBrukt.inWholeSeconds} sekund(er)."
+                logger.info {
+                    "Jobb for å sende bekreftelsesmeldinger ferdig. Brukte ${tidBrukt.inWholeSeconds} sekund(er)."
+                }
+                jobbkjøringMetrikker.jobbFullfort(tidBrukt, rowsAffected)
             }
-            jobbkjøringMetrikker.jobbFullfort(tidBrukt, rowsAffected)
         } catch (e: Exception) {
+            span.recordException(e)
             logger.warn(e) { "Jobb for å sende bekreftelsesmeldinger feilet" }
             jobbkjøringMetrikker.jobbFeilet()
         } finally {
             jobbkjøringMetrikker.jobbSjekketOmDenSkulleKjøre()
+            span.end()
         }
+    }
+
+    private companion object {
+        private val tracer = GlobalOpenTelemetry.getTracer(SendBekreftelsesmeldingerJob::class.java.name)
     }
 }

@@ -14,7 +14,7 @@
       {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            temurin-bin-21
+            temurin-bin-25
 #            gradle
           ];
 

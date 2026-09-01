@@ -86,7 +86,7 @@ fun PeriodeData.toRapporteringsperiode(): Rapporteringsperiode {
         begrunnelseEndring = if (this.begrunnelse.isNullOrBlank()) null else this.begrunnelse,
         registrertArbeidssoker = this.registrertArbeidssoker,
         originalId = this.originalMeldekortId,
-        rapporteringstype = null,
+        rapporteringstype = if (this.dager.any { it.aktiviteter.isNotEmpty() }) "harAktivitet" else "harIngenAktivitet",
         opprettetAv = OpprettetAv.Dagpenger,
     )
 }

@@ -56,28 +56,6 @@ internal fun Application.rapporteringApi(
 
     routing {
         authenticate("tokenX") {
-            route("/hardpmeldeplikt") {
-                get {
-                    val ident = call.ident()
-                    val jwtToken = call.request.jwt()
-
-                    rapporteringService
-                        .harDpMeldeplikt(ident, jwtToken)
-                        .also { call.respond(HttpStatusCode.OK, it) }
-                }
-            }
-
-            route("/harmeldeplikt") {
-                get {
-                    val ident = call.ident()
-                    val jwtToken = call.request.jwt()
-
-                    meldepliktService
-                        .harMeldeplikt(ident, jwtToken)
-                        .also { call.respond(HttpStatusCode.OK, it) }
-                }
-            }
-
             route("/meldekortstatus") {
                 get {
                     val ident = call.ident()

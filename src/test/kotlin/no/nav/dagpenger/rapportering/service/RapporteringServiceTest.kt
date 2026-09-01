@@ -1,7 +1,5 @@
 package no.nav.dagpenger.rapportering.service
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectReader
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDate
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
@@ -26,7 +24,6 @@ import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
-import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
@@ -62,6 +59,9 @@ import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectReader
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -135,65 +135,6 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `harDpMeldeplikt sjekker personregisterService`() {
-        // Ansvarlig system DP gir TRUE
-        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
-            Personstatus(
-                ident,
-                Brukerstatus.DAGPENGERBRUKER,
-                true,
-                AnsvarligSystem.DP,
-                true,
-            )
-
-        var harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
-
-        harDpMeldeplikt shouldBe true
-
-        // Ansvarlig system DP gir TRUE selv om IKKE_DAGPENGERBRUKER
-        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
-            Personstatus(
-                ident,
-                Brukerstatus.IKKE_DAGPENGERBRUKER,
-                true,
-                AnsvarligSystem.DP,
-                true,
-            )
-
-        harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
-
-        harDpMeldeplikt shouldBe true
-
-        // Ansvarlig system ARENA men DAGPENGERBRUKER gir TRUE
-        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
-            Personstatus(
-                ident,
-                Brukerstatus.DAGPENGERBRUKER,
-                true,
-                AnsvarligSystem.ARENA,
-                true,
-            )
-
-        harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
-
-        harDpMeldeplikt shouldBe true
-
-        // Ansvarlig system ARENA og IKKE_DAGPENGERBRUKER gir FALSE
-        coEvery { personregisterService.hentPersonstatus(ident, token) } returns
-            Personstatus(
-                ident,
-                Brukerstatus.IKKE_DAGPENGERBRUKER,
-                true,
-                AnsvarligSystem.ARENA,
-                true,
-            )
-
-        harDpMeldeplikt = runBlocking { rapporteringService.harDpMeldeplikt(ident, token) }
-
-        harDpMeldeplikt shouldBe false
-    }
-
-    @Test
     fun `hent periode henter spesifisert periode som ikke er sendt inn og lagrer denne i databasen hvis den ikke finnes`() {
         coEvery { meldepliktService.hentRapporteringsperioder(ident, token) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
@@ -227,9 +168,40 @@ class RapporteringServiceTest {
             rapporteringsperiodeListe.map { it.copy(status = Innsendt) }.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
-        val gjeldendePeriode = runBlocking { rapporteringService.hentPeriode("2", ident, token, hentOriginal = true) }
+        val periode0 = runBlocking { rapporteringService.hentPeriode("0", ident, token, hentOriginal = true) }
+        with(periode0!!) {
+            id shouldBe "0"
+            periode.fraOgMed shouldBe fom0
+            periode.tilOgMed shouldBe fom0.plusDays(13)
+            dager.size shouldBe 14
+            dager.first().aktiviteter shouldBe emptyList()
+            kanSendesFra shouldBe fom0.plusDays(12)
+            sisteFristForTrekk shouldBe fom0.plusDays(21)
+            kanSendes shouldBe true
+            kanEndres shouldBe false
+            bruttoBelop shouldBe null
+            status shouldBe Innsendt
+            registrertArbeidssoker shouldBe null
+        }
 
-        with(gjeldendePeriode!!) {
+        val periode1 = runBlocking { rapporteringService.hentPeriode("1", ident, token, hentOriginal = true) }
+        with(periode1!!) {
+            id shouldBe "1"
+            periode.fraOgMed shouldBe fom1
+            periode.tilOgMed shouldBe fom1.plusDays(13)
+            dager.size shouldBe 14
+            dager.first().aktiviteter shouldBe emptyList()
+            kanSendesFra shouldBe fom1.plusDays(12)
+            sisteFristForTrekk shouldBe fom1.plusDays(21)
+            kanSendes shouldBe true
+            kanEndres shouldBe false
+            bruttoBelop shouldBe null
+            status shouldBe Innsendt
+            registrertArbeidssoker shouldBe true
+        }
+
+        val periode2 = runBlocking { rapporteringService.hentPeriode("2", ident, token, hentOriginal = true) }
+        with(periode2!!) {
             id shouldBe "2"
             periode.fraOgMed shouldBe fom2
             periode.tilOgMed shouldBe fom2.plusDays(13)
@@ -360,16 +332,19 @@ class RapporteringServiceTest {
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
-        rapporteringsperioder.size shouldBe 3
-        rapporteringsperioder[0].id shouldBe "1"
-        rapporteringsperioder[0].status shouldBe Innsendt
-        rapporteringsperioder[0].kanSendes shouldBe false
-        rapporteringsperioder[1].id shouldBe "2"
-        rapporteringsperioder[1].status shouldBe TilUtfylling
-        rapporteringsperioder[1].kanSendes shouldBe true
-        rapporteringsperioder[2].id shouldBe "3"
+        rapporteringsperioder.size shouldBe 4
+        rapporteringsperioder[0].id shouldBe "0"
+        rapporteringsperioder[0].status shouldBe TilUtfylling
+        rapporteringsperioder[0].kanSendes shouldBe true
+        rapporteringsperioder[1].id shouldBe "1"
+        rapporteringsperioder[1].status shouldBe Innsendt
+        rapporteringsperioder[1].kanSendes shouldBe false
+        rapporteringsperioder[2].id shouldBe "2"
         rapporteringsperioder[2].status shouldBe TilUtfylling
-        rapporteringsperioder[2].kanSendes shouldBe false
+        rapporteringsperioder[2].kanSendes shouldBe true
+        rapporteringsperioder[3].id shouldBe "3"
+        rapporteringsperioder[3].status shouldBe TilUtfylling
+        rapporteringsperioder[3].kanSendes shouldBe false
     }
 
     @Test
@@ -383,19 +358,23 @@ class RapporteringServiceTest {
 
         val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
-        rapporteringsperioder.size shouldBe 3
-        rapporteringsperioder[0].id shouldBe "1"
-        rapporteringsperioder[0].status shouldBe Innsendt
-        rapporteringsperioder[0].kanSendes shouldBe false
-        rapporteringsperioder[0].kanSendesFra shouldBe fom1.plusDays(12)
-        rapporteringsperioder[1].id shouldBe "2"
-        rapporteringsperioder[1].status shouldBe TilUtfylling
-        rapporteringsperioder[1].kanSendes shouldBe true
-        rapporteringsperioder[1].kanSendesFra shouldBe fom2.plusDays(12)
-        rapporteringsperioder[2].id shouldBe "3"
+        rapporteringsperioder.size shouldBe 4
+        rapporteringsperioder[0].id shouldBe "0"
+        rapporteringsperioder[0].status shouldBe TilUtfylling
+        rapporteringsperioder[0].kanSendes shouldBe true
+        rapporteringsperioder[0].kanSendesFra shouldBe fom0.plusDays(12)
+        rapporteringsperioder[1].id shouldBe "1"
+        rapporteringsperioder[1].status shouldBe Innsendt
+        rapporteringsperioder[1].kanSendes shouldBe false
+        rapporteringsperioder[1].kanSendesFra shouldBe fom1.plusDays(12)
+        rapporteringsperioder[2].id shouldBe "2"
         rapporteringsperioder[2].status shouldBe TilUtfylling
         rapporteringsperioder[2].kanSendes shouldBe true
-        rapporteringsperioder[0].kanSendesFra shouldBe fom3.minusDays(16)
+        rapporteringsperioder[2].kanSendesFra shouldBe fom2.plusDays(12)
+        rapporteringsperioder[3].id shouldBe "3"
+        rapporteringsperioder[3].status shouldBe TilUtfylling
+        rapporteringsperioder[3].kanSendes shouldBe true
+        rapporteringsperioder[3].kanSendesFra shouldBe fom3.minusDays(1)
     }
 
     @Test
@@ -419,6 +398,7 @@ class RapporteringServiceTest {
     fun `hent alle rapporteringsperioder populeres med data fra databasen hvis perioden finnes`() {
         coEvery { meldepliktService.hentRapporteringsperioder(any(), any()) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
+        coEvery { rapporteringRepository.hentRapporteringsperiode("0", ident) } returns null
         coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns
             lagRapporteringsperiode(
                 id = "1",
@@ -442,9 +422,10 @@ class RapporteringServiceTest {
             .aktiviteter
             .first()
             .type shouldBe Utdanning
-        rapporteringsperioder[1].id shouldBe "2"
-        rapporteringsperioder[2].id shouldBe "3"
-        rapporteringsperioder.size shouldBe 3
+        rapporteringsperioder[1].id shouldBe "0"
+        rapporteringsperioder[2].id shouldBe "2"
+        rapporteringsperioder[3].id shouldBe "3"
+        rapporteringsperioder.size shouldBe 4
     }
 
     @Test
@@ -594,10 +575,11 @@ class RapporteringServiceTest {
 
         val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
-        innsendteRapporteringsperioder.size shouldBe 3
+        innsendteRapporteringsperioder.size shouldBe 4
         innsendteRapporteringsperioder[0].id shouldBe "3"
         innsendteRapporteringsperioder[1].id shouldBe "2"
         innsendteRapporteringsperioder[2].id shouldBe "1"
+        innsendteRapporteringsperioder[3].id shouldBe "0"
     }
 
     @Test
@@ -615,11 +597,12 @@ class RapporteringServiceTest {
 
         val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
-        innsendteRapporteringsperioder.size shouldBe 4
+        innsendteRapporteringsperioder.size shouldBe 5
         innsendteRapporteringsperioder[0].id shouldBe "3"
         innsendteRapporteringsperioder[1].id shouldBe "2"
         innsendteRapporteringsperioder[2].id shouldBe "1"
-        innsendteRapporteringsperioder[3].id shouldBe "4"
+        innsendteRapporteringsperioder[3].id shouldBe "0"
+        innsendteRapporteringsperioder[4].id shouldBe "4"
     }
 
     @Test
@@ -640,13 +623,16 @@ class RapporteringServiceTest {
         // Perioden med ID = 3 finnes ikke i databasen og skal ikke endres
         // Perioden med ID = 2 har lavere status (Innsendt) i databasen enn i Arena (Ferdig) og skal ikke endres
         // Perioden med ID = 1 har samme status i databasen og Arena og skal populeres fra databasen
-        innsendteRapporteringsperioder.size shouldBe 3
+        // Perioden med ID = 0 er korrigert og må ha registrertArbeidssoker = null
+        innsendteRapporteringsperioder.size shouldBe 4
         innsendteRapporteringsperioder[0].id shouldBe "3"
-        innsendteRapporteringsperioder[0].registrertArbeidssoker shouldBe null
+        innsendteRapporteringsperioder[0].registrertArbeidssoker shouldBe false
         innsendteRapporteringsperioder[1].id shouldBe "2"
         innsendteRapporteringsperioder[1].registrertArbeidssoker shouldBe null
         innsendteRapporteringsperioder[2].id shouldBe "1"
         innsendteRapporteringsperioder[2].registrertArbeidssoker shouldBe true
+        innsendteRapporteringsperioder[3].id shouldBe "0"
+        innsendteRapporteringsperioder[3].registrertArbeidssoker shouldBe null
     }
 
     @Test
@@ -684,13 +670,14 @@ class RapporteringServiceTest {
 
         val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
-        innsendteRapporteringsperioder.size shouldBe 5
+        innsendteRapporteringsperioder.size shouldBe 6
         innsendteRapporteringsperioder[0].id shouldBe "10"
         innsendteRapporteringsperioder[0].periode shouldBeEqual innsendteRapporteringsperioder[1].periode
         innsendteRapporteringsperioder[1].id shouldBe "3"
         innsendteRapporteringsperioder[2].id shouldBe "2"
         innsendteRapporteringsperioder[3].id shouldBe "1"
-        innsendteRapporteringsperioder[4].id shouldBe "4"
+        innsendteRapporteringsperioder[4].id shouldBe "0"
+        innsendteRapporteringsperioder[5].id shouldBe "4"
     }
 
     @Test
@@ -1273,8 +1260,8 @@ class RapporteringServiceTest {
 
         val slettedePerioder = runBlocking { rapporteringService.slettMellomlagredeRapporteringsperioder() }
 
-        coVerify(exactly = 3) { rapporteringRepository.slettRaporteringsperiode(any()) }
-        slettedePerioder shouldBe 3
+        coVerify(exactly = 4) { rapporteringRepository.slettRaporteringsperiode(any()) }
+        slettedePerioder shouldBe 4
     }
 
     private fun sendInn(rapporteringsperiode: Rapporteringsperiode) {
@@ -1321,24 +1308,27 @@ class RapporteringServiceTest {
         val message = testRapid.inspektør.message(0)
 
         if (endringId == null) {
-            message["@event_name"].asText() shouldBe "meldekort_innsendt"
-            message["id"].asText() shouldBe rapporteringsperiode.id
-            message["type"].asText() shouldBe "Ordinaert"
+            message["@event_name"].asString() shouldBe "meldekort_innsendt"
+            message["id"].asString() shouldBe rapporteringsperiode.id
+            message["type"].asString() shouldBe "Ordinaert"
             message["originalMeldekortId"].isNull shouldBe true
         } else {
-            message["@event_name"].asText() shouldBe "meldekort_innsendt"
-            message["id"].asText() shouldBe endringId
-            message["type"].asText() shouldBe "Korrigert"
-            message["originalMeldekortId"].asText() shouldBe rapporteringsperiode.id
+            message["@event_name"].asString() shouldBe "meldekort_innsendt"
+            message["id"].asString() shouldBe endringId
+            message["type"].asString() shouldBe "Korrigert"
+            message["originalMeldekortId"].asString() shouldBe rapporteringsperiode.id
         }
 
-        message["ident"].asText() shouldBe ident
+        message["ident"].asString() shouldBe ident
 
         val periode = message["periode"]
         periode["fraOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.fraOgMed
         periode["tilOgMed"].asLocalDate() shouldBe rapporteringsperiode.periode.tilOgMed
 
-        val reader: ObjectReader = defaultObjectMapper.readerFor(object : TypeReference<List<PeriodeDag>>() {})
+        // testRapid.inspektør.message returnerer JsonNode fra Jackson 3
+        // defaultObjectMapper bruker Jackson 2
+        // Hele appen kan flyttes til Jackson 3 når naisful-app har Jackson 3
+        val reader: ObjectReader = ObjectMapper().readerFor(object : TypeReference<List<PeriodeDag>>() {})
         val dager: List<PeriodeDag> = reader.readValue(message["dager"])
         dager.forEachIndexed { i, dag ->
             dag.dato shouldBeEqual rapporteringsperiode.dager[i].dato
@@ -1347,19 +1337,20 @@ class RapporteringServiceTest {
         }
 
         message["kanSendesFra"].asLocalDate() shouldBe rapporteringsperiode.kanSendesFra
-        message["opprettetAv"].asText() shouldBe ansvarligSystem
+        message["opprettetAv"].asString() shouldBe ansvarligSystem
 
         val kilde = message["kilde"]
-        kilde["rolle"].asText() shouldBe "Bruker"
-        kilde["ident"].asText() shouldBe ident
+        kilde["rolle"].asString() shouldBe "Bruker"
+        kilde["ident"].asString() shouldBe ident
 
-        message["status"].asText() shouldBe "Innsendt"
+        message["status"].asString() shouldBe "Innsendt"
         val innsendtTidspunkt = message["innsendtTidspunkt"].asLocalDateTime()
         innsendtTidspunkt.toLocalDate() shouldBe LocalDate.now()
         innsendtTidspunkt shouldBeBefore LocalDateTime.now()
     }
 }
 
+val fom0 = LocalDate.now().minusDays(41)
 val fom1 = LocalDate.now().minusDays(27)
 val fom2 = LocalDate.now().minusDays(13)
 val fom3 = LocalDate.now().plusDays(1)
@@ -1368,15 +1359,24 @@ val rapporteringsperiodeListe =
         lagRapporteringsperiode(
             id = "3",
             periode = Periode(fraOgMed = fom3, tilOgMed = fom3.plusDays(13)),
+            registrertArbeidssoker = false,
+        ),
+        lagRapporteringsperiode(
+            id = "0",
+            periode = Periode(fraOgMed = fom0, tilOgMed = fom0.plusDays(13)),
+            registrertArbeidssoker = true,
+            type = KortType.Korrigert,
         ),
         lagRapporteringsperiode(
             id = "1",
             periode = Periode(fraOgMed = fom1, fom1.plusDays(13)),
             status = Innsendt,
+            registrertArbeidssoker = true,
         ),
         lagRapporteringsperiode(
             id = "2",
             periode = Periode(fraOgMed = fom2, tilOgMed = fom2.plusDays(13)),
+            registrertArbeidssoker = null,
         ),
     )
 
@@ -1391,10 +1391,11 @@ fun lagRapporteringsperiode(
     id: String,
     periode: Periode,
     status: RapporteringsperiodeStatus = TilUtfylling,
+    type: KortType = KortType.Ordinaert,
     registrertArbeidssoker: Boolean? = null,
 ) = Rapporteringsperiode(
     id = id,
-    type = KortType.Ordinaert,
+    type = type,
     periode = periode,
     dager = getDager(startDato = periode.fraOgMed),
     kanSendesFra = periode.tilOgMed.minusDays(1),

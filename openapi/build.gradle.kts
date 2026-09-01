@@ -1,11 +1,15 @@
 plugins {
     kotlin("jvm")
-    id("org.openapi.generator") version "7.23.0"
+    id("org.openapi.generator") version "7.25.0"
     id("org.jlleitschuh.gradle.ktlint")
 }
 
 group = "org.example"
 version = "0.0.1"
+
+kotlin {
+    jvmToolchain(25)
+}
 
 tasks.named("compileKotlin").configure {
     dependsOn("openApiGenerate")
@@ -24,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    implementation(libs.jackson.annotation)
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.22")
 }
 
 tasks.test {

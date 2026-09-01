@@ -4,7 +4,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     alias(libs.plugins.shadow.jar)
     alias(libs.plugins.kotlin)
-    id("io.ktor.plugin") version "3.4.3"
+    id("io.ktor.plugin") version "3.5.2"
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
@@ -13,7 +13,7 @@ group = "no.nav.dagpenger.rapportering"
 version = "0.0.1"
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(25)
 }
 
 application {
@@ -73,29 +73,32 @@ dependencies {
     implementation(libs.rapids.and.rivers)
     implementation(libs.konfig)
     implementation(libs.kotlin.logging)
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.22")
     implementation(libs.bundles.jackson)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.client)
-    implementation(libs.jackson.annotation)
-    implementation("no.nav.dagpenger:oauth2-klient:2026.05.04-11.00.ccf523d33b63")
+    implementation("no.nav.dagpenger:oauth2-klient:2026.08.31-20.20.1e39ba859781")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
-    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.0")
-    implementation("io.getunleash:unleash-client-java:12.2.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.1")
+    implementation("io.getunleash:unleash-client-java:12.3.0")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
-    implementation("no.nav.dagpenger:pdl-klient:2026.05.04-11.00.ccf523d33b63")
-    implementation("com.github.navikt.tbd-libs:naisful-app:20260616.1253")
+    implementation("no.nav.dagpenger:pdl-klient:2026.08.31-20.20.1e39ba859781")
+    implementation("com.github.navikt.tbd-libs:naisful-app:20260827.1253")
 
-    implementation("io.confluent:kafka-streams-avro-serde:8.1.1")
+    implementation("io.opentelemetry:opentelemetry-api:1.65.0")
+
+    implementation("io.confluent:kafka-streams-avro-serde:8.3.1")
     implementation("org.apache.avro:avro:1.12.1")
     schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:1.26.05.04.35-1")
 
     implementation("com.fasterxml.uuid:java-uuid-generator:5.2.0")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:6.1.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:6.1.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:6.1.3")
     testImplementation(libs.rapids.and.rivers.test)
     testImplementation(libs.bundles.postgres.test)
     testImplementation("io.kotest:kotest-assertions-core-jvm:${libs.versions.kotest.get()}")
@@ -103,5 +106,5 @@ dependencies {
     testImplementation(libs.mock.oauth2.server)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.mock)
-    testImplementation("de.redsix:pdfcompare:1.2.8")
+    testImplementation("de.redsix:pdfcompare:1.2.9")
 }

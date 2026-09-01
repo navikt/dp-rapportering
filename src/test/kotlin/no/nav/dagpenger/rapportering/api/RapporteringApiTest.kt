@@ -1,6 +1,5 @@
 package no.nav.dagpenger.rapportering.api
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
@@ -28,11 +27,7 @@ import no.nav.dagpenger.rapportering.connector.AdapterDag
 import no.nav.dagpenger.rapportering.connector.AdapterPeriode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus
-import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem.DP
-import no.nav.dagpenger.rapportering.connector.Brukerstatus.DAGPENGERBRUKER
-import no.nav.dagpenger.rapportering.connector.Brukerstatus.IKKE_DAGPENGERBRUKER
-import no.nav.dagpenger.rapportering.connector.Personstatus
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
@@ -55,6 +50,7 @@ import no.nav.dagpenger.rapportering.utils.januar
 import no.nav.dagpenger.rapportering.utils.november
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import tools.jackson.module.kotlin.readValue
 import java.time.LocalDate
 
 class RapporteringApiTest : ApiTestSetup() {
@@ -81,126 +77,6 @@ class RapporteringApiTest : ApiTestSetup() {
                     status shouldBe OK
                     bodyAsText() shouldBe """[$journalpostId]"""
                 }
-            }
-    }
-
-    @Nested
-    inner class HarDpMeldeplikt {
-        @Test
-        fun `harDpMeldekort uten token gir unauthorized`() =
-            setUpTestApplication {
-                with(client.doGet("/hardpmeldeplikt", null)) {
-                    status shouldBe Unauthorized
-                }
-            }
-
-        @Test
-        fun `Returnerer harDpMeldeplikt = true hvis ansvarlig system er DP`() =
-            setUpTestApplication {
-                coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
-                    Personstatus(
-                        fnr,
-                        DAGPENGERBRUKER,
-                        true,
-                        DP,
-                        true,
-                    )
-
-                val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
-
-                response.status shouldBe OK
-                response.bodyAsText() shouldBe "true"
-            }
-
-        @Test
-        fun `Returnerer harDpMeldeplikt = true hvis ansvarlig system er DP selv om IKKE_DAGPENGERBRUKER`() =
-            setUpTestApplication {
-                coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
-                    Personstatus(
-                        fnr,
-                        IKKE_DAGPENGERBRUKER,
-                        true,
-                        DP,
-                        true,
-                    )
-
-                val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
-
-                response.status shouldBe OK
-                response.bodyAsText() shouldBe "true"
-            }
-
-        @Test
-        fun `Returnerer harDpMeldeplikt = true hvis ansvarlig system er Arena men DAGPENGERBRUKER`() =
-            setUpTestApplication {
-                coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
-                    Personstatus(
-                        fnr,
-                        DAGPENGERBRUKER,
-                        true,
-                        AnsvarligSystem.ARENA,
-                        true,
-                    )
-
-                val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
-
-                response.status shouldBe OK
-                response.bodyAsText() shouldBe "true"
-            }
-
-        @Test
-        fun `Returnerer harDpMeldeplikt = false hvis ansvarlig system er Arena og IKKE_DAGPENGERBRUKER`() =
-            setUpTestApplication {
-                coEvery { personregisterService.hentPersonstatus(eq(fnr), any()) } returns
-                    Personstatus(
-                        fnr,
-                        IKKE_DAGPENGERBRUKER,
-                        true,
-                        AnsvarligSystem.ARENA,
-                        true,
-                    )
-
-                val response = client.doGet("/hardpmeldeplikt", issueToken(fnr))
-
-                response.status shouldBe OK
-                response.bodyAsText() shouldBe "false"
-            }
-    }
-
-    @Nested
-    inner class HarMeldekort {
-        @Test
-        fun `harMeldeplikt uten token gir unauthorized`() =
-            setUpTestApplication {
-                with(client.doGet("/harmeldeplikt", null)) {
-                    status shouldBe Unauthorized
-                }
-            }
-
-        @Test
-        fun `harMeldeplikt returnerer true hvis bruker har meldeplikt i Arena`() =
-            setUpTestApplication {
-                externalServices {
-                    meldepliktAdapter()
-                }
-
-                val response = client.doGet("/harmeldeplikt", issueToken(fnr))
-
-                response.status shouldBe OK
-                response.bodyAsText() shouldBe "true"
-            }
-
-        @Test
-        fun `harMeldeplikt returnerer false hvis bruker ikke har meldeplikt i Arena`() =
-            setUpTestApplication {
-                externalServices {
-                    meldepliktAdapter(harMeldeplikt = false)
-                }
-
-                val response = client.doGet("/harmeldeplikt", issueToken(fnr))
-
-                response.status shouldBe OK
-                response.bodyAsText() shouldBe "false"
             }
     }
 
@@ -1136,17 +1012,9 @@ class RapporteringApiTest : ApiTestSetup() {
         sendInnResponseStatus: HttpStatusCode = OK,
         personResponse: String = person(),
         personResponseStatus: HttpStatusCode = OK,
-        harMeldeplikt: Boolean = true,
     ) {
         hosts("https://meldeplikt-adapter") {
             routing {
-                get("/harmeldeplikt") {
-                    call.response.header(HttpHeaders.ContentType, ContentType.Text.Plain.toString())
-                    call.respond(
-                        OK,
-                        harMeldeplikt.toString(),
-                    )
-                }
                 get("/rapporteringsperioder") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                     call.respond(

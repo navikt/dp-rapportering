@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.connector
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
@@ -275,7 +276,7 @@ class MeldepliktConnectorTest {
     @Test
     fun `henter endringId`() {
         val id = "1806985352"
-        val connector = meldepliktConnector(HttpStatusCode.OK, id.toString())
+        val connector = meldepliktConnector(HttpStatusCode.OK, id)
 
         val response =
             runBlocking {
@@ -283,6 +284,100 @@ class MeldepliktConnectorTest {
             }
 
         response shouldBe id
+    }
+
+    @Test
+    fun `kaster exception med status og melding ved feil ved henting av rapporteringsperioder`() {
+        val connector = meldepliktConnector(HttpStatusCode.InternalServerError)
+
+        val exception =
+            shouldThrow<RuntimeException> {
+                runBlocking { connector.hentRapporteringsperioder(ident, subjectToken) }
+            }
+
+        exception.message shouldContain "500"
+    }
+
+    @Test
+    fun `kaster exception med status og melding ved feil ved henting av innsendte rapporteringsperioder`() {
+        val connector = meldepliktConnector(HttpStatusCode.ServiceUnavailable)
+
+        val exception =
+            shouldThrow<RuntimeException> {
+                runBlocking { connector.hentInnsendteRapporteringsperioder(ident, subjectToken) }
+            }
+
+        exception.message shouldContain "503"
+    }
+
+    @Test
+    fun `kaster exception med status og melding ved feil ved henting av person`() {
+        val connector = meldepliktConnector(HttpStatusCode.NotFound)
+
+        val exception =
+            shouldThrow<RuntimeException> {
+                runBlocking { connector.hentPerson(ident, subjectToken) }
+            }
+
+        exception.message shouldContain "404"
+    }
+
+    @Test
+    fun `kaster exception med status og melding ved feil ved sending av rapporteringsperiode`() {
+        val connector = meldepliktConnector(HttpStatusCode.BadRequest)
+
+        val rapporteringsperiode =
+            Rapporteringsperiode(
+                id = "1",
+                type = KortType.Ordinaert,
+                periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()),
+                dager = emptyList(),
+                kanSendesFra = LocalDate.now(),
+                sisteFristForTrekk = LocalDate.now().plusDays(7),
+                kanSendes = true,
+                kanEndres = true,
+                bruttoBelop = 0.0,
+                begrunnelseEndring = null,
+                status = TilUtfylling,
+                mottattDato = null,
+                registrertArbeidssoker = true,
+                originalId = null,
+                rapporteringstype = null,
+                opprettetAv = OpprettetAv.Dagpenger,
+            )
+
+        val exception =
+            shouldThrow<RuntimeException> {
+                runBlocking {
+                    connector.sendinnRapporteringsperiode(rapporteringsperiode.toAdapterRapporteringsperiode(), subjectToken)
+                }
+            }
+
+        exception.message shouldContain "400"
+    }
+
+    @Test
+    fun `kaster exception med status og melding ved feil ved henting av aktivitetsdager`() {
+        val connector = meldepliktConnector(HttpStatusCode.Unauthorized)
+
+        val exception =
+            shouldThrow<RuntimeException> {
+                runBlocking { connector.hentAktivitetsdager(rapporteringId, subjectToken) }
+            }
+
+        exception.message shouldContain "401"
+    }
+
+    @Test
+    fun `kaster exception med status og melding ved feil ved henting av endringId`() {
+        val connector = meldepliktConnector(HttpStatusCode.Forbidden)
+
+        val exception =
+            shouldThrow<RuntimeException> {
+                runBlocking { connector.hentEndringId(rapporteringId, subjectToken) }
+            }
+
+        exception.message shouldContain "403"
     }
 
     @Test
