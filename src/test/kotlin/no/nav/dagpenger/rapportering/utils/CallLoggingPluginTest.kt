@@ -87,7 +87,6 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 arbeidssokerregisterOppslag()
             }
 
-
             val adapterRapporteringsperiodeString =
                 defaultObjectMapper.writeValueAsString(
                     rapporteringsperiode.toAdapterRapporteringsperiode(),
