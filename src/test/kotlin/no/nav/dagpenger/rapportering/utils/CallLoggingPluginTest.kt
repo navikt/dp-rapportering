@@ -100,7 +100,6 @@ class CallLoggingPluginTest : ApiTestSetup() {
             }
 
             every { unleash.isEnabled(eq("send-periodedata")) } returns true
-            every { unleash.isEnabled(eq("send-arbeidssoekerstatus")) } returns true
 
             val adapterRapporteringsperiodeString =
                 defaultObjectMapper.writeValueAsString(
