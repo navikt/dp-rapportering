@@ -19,7 +19,6 @@ import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.ZONE_ID
 import no.nav.dagpenger.rapportering.config.Configuration.bekreftelseTopic
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
-import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.kafka.sendDeferred
 import no.nav.dagpenger.rapportering.model.ArbeidssøkerperiodeRequestBody
 import no.nav.dagpenger.rapportering.model.ArbeidssøkerperiodeResponse
@@ -90,11 +89,6 @@ class ArbeidssøkerService(
             logger.info {
                 "Rapporteringsperiode med id {${rapporteringsperiode.id}} har registrertArbeidssoker = null. Sender ikke sp.5 til PAW."
             }
-            return null
-        }
-
-        if (!unleash.isEnabled("send-arbeidssoekerstatus")) {
-            logger.info { "send-arbeidssoekerstatus er slått av. Sender ikke sp.5 til PAW." }
             return null
         }
 

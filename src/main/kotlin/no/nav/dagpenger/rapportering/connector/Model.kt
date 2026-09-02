@@ -1,7 +1,6 @@
 package no.nav.dagpenger.rapportering.connector
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Fravaer
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Syk
@@ -152,7 +151,7 @@ fun Rapporteringsperiode.toAdapterRapporteringsperiode(overrideRegistrertArbeids
         mottattDato = this.mottattDato,
         // Sender "true" til adapteren hvis overrideRegistrertArbeidssoker = true (mens det reelle svaret sendes til Team PAW)
         registrertArbeidssoker =
-            if (unleash.isEnabled("dp-rapportering-sp5-true") && overrideRegistrertArbeidssoker) {
+            if (overrideRegistrertArbeidssoker) {
                 true
             } else {
                 this.registrertArbeidssoker

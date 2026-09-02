@@ -24,7 +24,6 @@ import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
-import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.Brukerstatus
@@ -120,7 +119,6 @@ class RapporteringServiceTest {
             setEnvConfig()
 
             mockkObject(ApplicationBuilder.Companion)
-            mockkObject(unleash)
             every { getRapidsConnection() } returns testRapid
         }
     }
@@ -903,7 +901,6 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
         coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any()) } returns null
-        every { unleash.isEnabled(eq("dp-rapportering-sp5-true")) } returns true
 
         runBlocking {
             rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, loginLevel, headers)
@@ -914,7 +911,6 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan ikke sende inn rapporteringsperiode som allerede ble sendt`() {
-        every { unleash.isEnabled(eq("dp-rapportering-tillat-innsending-uavhengig-av-kansendes")) } returns false
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns false
 
         shouldThrow<BadRequestException> {
@@ -932,7 +928,6 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan ikke sende inn rapporteringsperiode som ikke kan sendes`() {
-        every { unleash.isEnabled(eq("dp-rapportering-tillat-innsending-uavhengig-av-kansendes")) } returns false
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns false
 
         shouldThrow<BadRequestException> {
@@ -950,7 +945,6 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan ikke sende inn rapporteringsperiode som ikke finnes i databasen`() {
-        every { unleash.isEnabled(eq("dp-rapportering-tillat-innsending-uavhengig-av-kansendes")) } returns false
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns null
 
         shouldThrow<BadRequestException> {
@@ -1000,7 +994,6 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
         coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any()) } returns null
-        every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
         val innsendingResponse =
             runBlocking {
@@ -1071,7 +1064,6 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
         coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any()) } returns null
-        every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
         val innsendingResponse =
             runBlocking {
@@ -1275,7 +1267,6 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
         coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any()) } returns null
-        every { unleash.isEnabled(eq("send-periodedata")) } returns true
 
         val innsendingResponse =
             runBlocking {
