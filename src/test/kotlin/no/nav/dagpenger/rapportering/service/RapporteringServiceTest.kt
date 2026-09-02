@@ -903,7 +903,6 @@ class RapporteringServiceTest {
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
         coEvery { kallLoggService.lagreResponse(eq(1), eq(200), eq("")) } just runs
         coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), any(), any()) } returns null
-        every { unleash.isEnabled(eq("dp-rapportering-sp5-true")) } returns true
 
         runBlocking {
             rapporteringService.sendRapporteringsperiode(rapporteringsperiode, token, ident, loginLevel, headers)
