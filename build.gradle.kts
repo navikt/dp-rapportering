@@ -77,7 +77,7 @@ dependencies {
     implementation(libs.bundles.jackson)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.client)
-    implementation("no.nav.dagpenger:oauth2-klient:2026.09.03-18.21.7950730f307f")
+    implementation("no.nav.dagpenger:oauth2-klient:2026.09.04-06.19.6163927c6426")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
