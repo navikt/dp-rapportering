@@ -70,13 +70,13 @@ spec:
               - alert: Ingen innsendte meldekort
                 expr: |
                     (
-                      sum(increase(dp_rapportering_innsendte_meldekort_ok_total[5m])) <= 0
+                      (sum(increase(dp_rapportering_innsendte_meldekort_ok_total[1m])) or vector(0)) <= 0
                     )
                     and on()
                     (
                       (hour() >= 5) and (hour() < 21)
                     )
-                for: 5m
+                for: 10m
                 annotations:
                     description: 'Det er ikke registrert innsendte meldekort siste 10 minutter.'
                     consequence: 'Det kan være feil i innsending eller nedetid i dp-rapportering'
