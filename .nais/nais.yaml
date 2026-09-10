@@ -76,7 +76,7 @@ spec:
       value: -XX:+UseParallelGC -XX:MaxRAMPercentage=50.0 -XX:ActiveProcessorCount=4
   gcp:
       sqlInstances:
-        - type: POSTGRES_15
+        - type: POSTGRES_18
           highAvailability: true
           diskAutoresize: true
           pointInTimeRecovery: false
