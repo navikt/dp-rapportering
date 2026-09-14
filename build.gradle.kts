@@ -87,7 +87,7 @@ dependencies {
     implementation("no.nav.dagpenger:pdl-klient:2026.09.11-06.18.3bec782ce866")
     implementation("com.github.navikt.tbd-libs:naisful-app:20260827.1253")
 
-    implementation("io.opentelemetry:opentelemetry-api:1.65.0")
+    implementation("io.opentelemetry:opentelemetry-api:1.66.0")
 
     implementation("io.confluent:kafka-streams-avro-serde:8.3.1")
     implementation("org.apache.avro:avro:1.12.1")
