@@ -18,6 +18,7 @@ import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.time.Duration
@@ -105,6 +106,7 @@ fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
         mottattDato = this.mottattDato,
         begrunnelseEndring = if (this.begrunnelseEndring.isNullOrBlank()) null else this.begrunnelseEndring,
         registrertArbeidssoker = if (KortType.fromCode(type) != KortType.Korrigert) this.registrertArbeidssoker else null,
+        årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
         originalId = null,
         rapporteringstype = if (this.dager.any { it.aktiviteter.isNotEmpty() }) "harAktivitet" else "harIngenAktivitet",
         opprettetAv = OpprettetAv.Arena,

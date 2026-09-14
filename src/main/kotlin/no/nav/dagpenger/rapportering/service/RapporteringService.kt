@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.KortType.Etterregistrert
 import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
@@ -23,6 +24,10 @@ import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toKorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.model.toPeriodeData
 import no.nav.dagpenger.rapportering.model.toRapporteringsperioder
+import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.ARBEIDSSØKERPERIODEN_ER_I_FORTID
+import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
+import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.ETTERREGISTRERT_MELDEKORT
+import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.KORRIGERT_MELDEKORT
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.repository.TidspunktjusteringRepository
@@ -168,8 +173,51 @@ class RapporteringService(
         hentRapporteringsperioder(ident, token)
             ?.firstOrNull { it.id == rapporteringId }
             ?.let { lagreEllerOppdaterPeriode(it, ident) }
+            ?.let { utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(it.id, ident, token) }
             ?.also { if (!it.kanSendes) throw BadRequestException("Perioden med id $rapporteringId kan ikke sendes inn") }
             ?: throw RuntimeException("Fant ingen periode med id $rapporteringId")
+    }
+
+    @Suppress("ktlint:standard:max-line-length")
+    suspend fun utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+        rapporteringsperiodeId: String,
+        ident: String,
+        token: String,
+    ): Rapporteringsperiode {
+        val rapporteringsperiode =
+            rapporteringRepository.hentRapporteringsperiode(rapporteringsperiodeId, ident)
+                ?: throw RuntimeException("Fant ingen rapporteringsperiode med id $rapporteringsperiodeId")
+
+        val rapporteringsperiodeMedÅrsakBrukerikkeHarSvartePåSpørsmålOmArbeidssøkerstatus =
+            when {
+                rapporteringsperiode.type == Etterregistrert -> {
+                    rapporteringsperiode.copy(årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = ETTERREGISTRERT_MELDEKORT)
+                }
+
+                rapporteringsperiode.erEndring() -> {
+                    rapporteringsperiode.copy(årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = KORRIGERT_MELDEKORT)
+                }
+
+                !personregisterService.hentPersonstatus(ident, token).erBekreftelseOvertatt() -> {
+                    rapporteringsperiode.copy(
+                        årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS,
+                    )
+                }
+
+                rapporteringsperiode.periode.tilOgMed.plusDays(14) < LocalDate.now() -> {
+                    rapporteringsperiode.copy(årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = ARBEIDSSØKERPERIODEN_ER_I_FORTID)
+                }
+
+                else -> {
+                    rapporteringsperiode
+                }
+            }
+        rapporteringRepository.lagreRapporteringsperiodeOgDager(
+            rapporteringsperiodeMedÅrsakBrukerikkeHarSvartePåSpørsmålOmArbeidssøkerstatus,
+            ident,
+        )
+
+        return rapporteringsperiodeMedÅrsakBrukerikkeHarSvartePåSpørsmålOmArbeidssøkerstatus
     }
 
     suspend fun startEndring(

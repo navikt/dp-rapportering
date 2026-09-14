@@ -19,6 +19,7 @@ import no.nav.dagpenger.rapportering.utils.UUIDv7
 import no.nav.helse.rapids_rivers.NaisEndpoints
 import tools.jackson.databind.DeserializationFeature
 import tools.jackson.databind.cfg.DateTimeFeature
+import tools.jackson.databind.introspect.DefaultAccessorNamingStrategy
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.KotlinFeature
 import tools.jackson.module.kotlin.KotlinModule
@@ -220,5 +221,6 @@ internal object Configuration {
                     .build(),
             ).configure(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .accessorNaming(DefaultAccessorNamingStrategy.Provider().withFirstCharAcceptance(true, true))
             .build()
 }

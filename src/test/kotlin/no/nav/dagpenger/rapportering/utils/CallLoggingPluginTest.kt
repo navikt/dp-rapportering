@@ -39,6 +39,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
     @Test
     fun `Kan lagre get request og response`() =
         setUpTestApplication {
+            val ekstraBytesForNorskeTegn = 8
             externalServices {
                 meldepliktAdapter()
             }
@@ -69,7 +70,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 """
                 HTTP/1.1 200 OK
                 Content-Type: application/json
-                Content-Length: ${rapporteringsperiodeString.length + 2}
+                Content-Length: ${rapporteringsperiodeString.length + ekstraBytesForNorskeTegn}
 
                 [$rapporteringsperiodeString]
                 """.trimIndent()

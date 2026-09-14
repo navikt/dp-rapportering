@@ -19,6 +19,7 @@ import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
 import tools.jackson.core.type.TypeReference
 import java.time.LocalDate
 
@@ -129,6 +130,7 @@ fun rapporteringsperiodeFor(
     status = status,
     bruttoBelop = bruttoBelop?.toDouble(),
     registrertArbeidssoker = registrertArbeidssoker,
+    årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
     begrunnelseEndring = begrunnelseEndring,
     originalId = originalId,
     rapporteringstype = rapporteringstype,

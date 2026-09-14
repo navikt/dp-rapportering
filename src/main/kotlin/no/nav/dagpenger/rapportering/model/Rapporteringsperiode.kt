@@ -26,6 +26,7 @@ data class Rapporteringsperiode(
     val status: RapporteringsperiodeStatus,
     val mottattDato: LocalDate?,
     val registrertArbeidssoker: Boolean?,
+    val årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus: ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus?,
     val originalId: String?,
     val rapporteringstype: String?,
     val html: String? = null,

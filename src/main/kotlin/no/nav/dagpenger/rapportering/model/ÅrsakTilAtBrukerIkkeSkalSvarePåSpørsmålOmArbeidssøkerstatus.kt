@@ -1,0 +1,9 @@
+package no.nav.dagpenger.rapportering.model
+
+enum class ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus {
+    KORRIGERT_MELDEKORT,
+    ETTERREGISTRERT_MELDEKORT,
+    DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS,
+    ARBEIDSSØKERPERIODEN_ER_I_FORTID,
+    UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+}
