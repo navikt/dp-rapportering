@@ -16,6 +16,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.withMigratedDb
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
@@ -599,6 +600,7 @@ fun getRapporteringsperiode(
     bruttoBelop = bruttoBelop,
     status = status,
     registrertArbeidssoker = registrertArbeidssoker,
+    årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
     begrunnelseEndring = begrunnelseEndring,
     originalId = null,
     rapporteringstype = null,
