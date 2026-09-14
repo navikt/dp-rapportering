@@ -4,6 +4,7 @@ import io.kotest.matchers.shouldBe
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
 import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
+import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -63,6 +64,7 @@ class RapporteringsperiodeTest {
                 status = RapporteringsperiodeStatus.TilUtfylling,
                 mottattDato = mottattDato,
                 registrertArbeidssoker = true,
+                årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
                 originalId = originalId,
                 rapporteringstype = "type",
                 html = "<html />",

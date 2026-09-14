@@ -2,6 +2,7 @@ package no.nav.dagpenger.rapportering.model
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
+import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -85,6 +86,9 @@ fun PeriodeData.toRapporteringsperiode(): Rapporteringsperiode {
         mottattDato = this.innsendtTidspunkt?.toLocalDate(),
         begrunnelseEndring = if (this.begrunnelse.isNullOrBlank()) null else this.begrunnelse,
         registrertArbeidssoker = this.registrertArbeidssoker,
+        // TODO: Denne kommer fra dp-meldekortregister, så her er det faktisk en verdi som kan brukes når det endepunktet i dp-meldekortregsiter er oppdatert så det returnerer verdien (RAMP-14)
+        // TODO: Men verdien som kommer fra dp-meldekortregister utledes og sendes fra dp-rapportering, så høne og egget osv...
+        årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
         originalId = this.originalMeldekortId,
         rapporteringstype = if (this.dager.any { it.aktiviteter.isNotEmpty() }) "harAktivitet" else "harIngenAktivitet",
         opprettetAv = OpprettetAv.Dagpenger,

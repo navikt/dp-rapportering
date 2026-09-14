@@ -14,8 +14,10 @@ import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus
 import no.nav.dagpenger.rapportering.utils.RepositoryUtils.validateRowsAffected
 import no.nav.dagpenger.rapportering.utils.UUIDv7
+import no.nav.dagpenger.rapportering.utils.valueOfOrNull
 import java.time.LocalDate
 import java.util.UUID
 import javax.sql.DataSource
@@ -235,8 +237,8 @@ class RapporteringRepositoryPostgres(
             queryOf(
                 """
                 INSERT INTO rapporteringsperiode 
-                (id, type, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id, rapporteringstype, siste_frist_for_trekk) 
-                VALUES (:id, :type, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id, :rapporteringstype, :siste_frist_for_trekk)
+                (id, type, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id, rapporteringstype, siste_frist_for_trekk, arsak_bruker_har_ikke_svarte_pa_sporsmal_om_arbeidssokerstatus) 
+                VALUES (:id, :type, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id, :rapporteringstype, :siste_frist_for_trekk, :arsak_bruker_har_ikke_svarte_pa_sporsmal_om_arbeidssokerstatus)
                 ON CONFLICT DO NOTHING
                 """.trimIndent(),
                 mapOf(
@@ -259,6 +261,8 @@ class RapporteringRepositoryPostgres(
                     "original_id" to rapporteringsperiode.originalId,
                     "rapporteringstype" to rapporteringsperiode.rapporteringstype,
                     "siste_frist_for_trekk" to rapporteringsperiode.sisteFristForTrekk,
+                    "årsak_bruker_har_ikke_svarte_på_spørsmål_om_arbeidssøkerstatus" to
+                        rapporteringsperiode.årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus,
                 ),
             ).asUpdate,
         )
@@ -578,6 +582,10 @@ private fun Row.toRapporteringsperiode() =
         bruttoBelop = doubleOrNull("brutto_belop"),
         status = RapporteringsperiodeStatus.valueOf(string("status")),
         registrertArbeidssoker = stringOrNull("registrert_arbeidssoker").toBooleanOrNull(),
+        årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus =
+            ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.entries.valueOfOrNull(
+                stringOrNull("arsak_bruker_har_ikke_svarte_pa_sporsmal_om_arbeidssokerstatus"),
+            ),
         dager = emptyList(),
         periode =
             Periode(
