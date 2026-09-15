@@ -33,7 +33,7 @@ jobs:
               env:
                   DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS: compileClasspath|runtimeClasspath
               with:
-                  gradle-version: 9.7.1
+                  gradle-version: wrapper
                   dependency-graph: generate-and-submit
             - name: Build
               run: ./gradlew --configuration-cache build installDist
