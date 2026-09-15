@@ -138,6 +138,9 @@ spec:
     path: /isalive
   readiness:
     path: /isready
+  preStopHook:
+    http:
+      path: /stop
   replicas:
     min: 2
     max: 4
