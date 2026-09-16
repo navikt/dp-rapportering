@@ -116,6 +116,7 @@ spec:
         - application: dp-behov-pdf-generator
         - application: dp-rapportering-personregister
         - application: dp-meldekortregister
+        - application: dp-meldekort
         - application: paw-kafka-key-generator
           namespace: paw
         - application: paw-arbeidssoekerregisteret-api-oppslag-v2
