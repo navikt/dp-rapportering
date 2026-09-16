@@ -77,19 +77,19 @@ dependencies {
     implementation(libs.bundles.jackson)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.client)
-    implementation("no.nav.dagpenger:oauth2-klient:2026.09.10-10.45.1ea60774fcd8")
+    implementation("no.nav.dagpenger:oauth2-klient:2026.09.16-13.55.7056752f06df")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.1")
     implementation("io.getunleash:unleash-client-java:12.3.0")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
-    implementation("no.nav.dagpenger:pdl-klient:2026.09.10-10.45.1ea60774fcd8")
+    implementation("no.nav.dagpenger:pdl-klient:2026.09.16-13.55.7056752f06df")
     implementation("com.github.navikt.tbd-libs:naisful-app:20260827.1253")
 
-    implementation("io.opentelemetry:opentelemetry-api:1.65.0")
+    implementation("io.opentelemetry:opentelemetry-api:1.66.0")
 
-    implementation("io.confluent:kafka-streams-avro-serde:8.3.1")
+    implementation("io.confluent:kafka-streams-avro-serde:8.3.2")
     implementation("org.apache.avro:avro:1.12.1")
     schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:1.26.05.04.35-1")
 
@@ -106,5 +106,5 @@ dependencies {
     testImplementation(libs.mock.oauth2.server)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.mock)
-    testImplementation("de.redsix:pdfcompare:1.2.9")
+    testImplementation("de.redsix:pdfcompare:1.2.11")
 }
