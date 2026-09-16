@@ -8,7 +8,7 @@ import javax.sql.DataSource
 
 internal object Postgres {
     val database by lazy {
-        PostgreSQLContainer("postgres:15").apply {
+        PostgreSQLContainer("postgres:18").apply {
             start()
         }
     }
