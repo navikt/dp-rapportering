@@ -77,7 +77,7 @@ dependencies {
     implementation(libs.bundles.jackson)
     implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.ktor.client)
-    implementation("no.nav.dagpenger:oauth2-klient:2026.09.16-13.55.7056752f06df")
+    implementation("no.nav.dagpenger:oauth2-klient:2026.09.17-06.22.ccf7ed62c283")
     implementation("io.ktor:ktor-server-config-yaml:${libs.versions.ktor.get()}")
     implementation("io.ktor:ktor-server-metrics-micrometer:${libs.versions.ktor.get()}")
     implementation(libs.bundles.postgres)
@@ -85,7 +85,7 @@ dependencies {
     implementation("io.getunleash:unleash-client-java:12.3.0")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
     implementation("no.nav.dagpenger:pdl-klient:2026.09.16-13.55.7056752f06df")
-    implementation("com.github.navikt.tbd-libs:naisful-app:20260827.1253")
+    implementation("com.github.navikt.tbd-libs:naisful-app:20260917.2152")
 
     implementation("io.opentelemetry:opentelemetry-api:1.66.0")
 
