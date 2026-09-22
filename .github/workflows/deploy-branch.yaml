@@ -42,7 +42,7 @@ jobs:
                 else
                     echo "ENV=ukjent_unleash_environment" >> $GITHUB_ENV
                 fi
-            - uses: nais/deploy/actions/deploy@v2
+            - uses: nais/deploy/actions/deploy@v3
               env:
                   CLUSTER: ${{ inputs.environment }}-gcp
                   RESOURCE: .nais/nais.yaml,.nais/alerts.yaml,.nais/unleash-apitoken.yaml
