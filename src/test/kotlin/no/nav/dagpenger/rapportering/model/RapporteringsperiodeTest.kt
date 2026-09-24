@@ -63,8 +63,11 @@ class RapporteringsperiodeTest {
                 begrunnelseEndring = "Begrunnelse",
                 status = RapporteringsperiodeStatus.TilUtfylling,
                 mottattDato = mottattDato,
-                registrertArbeidssoker = true,
-                årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+                sporsmalOmRegistrertArbeidssoker =
+                    SporsmalOmRegistrertArbeidssoker(
+                        svarFraBruker = true,
+                        arsakBrukerHarIkkeSvart = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+                    ),
                 originalId = originalId,
                 rapporteringstype = "type",
                 html = "<html />",
@@ -73,6 +76,7 @@ class RapporteringsperiodeTest {
 
         val periodeData = rapporteringsperiode.toPeriodeData(ident, OpprettetAv.Dagpenger)
 
+        rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe true
         periodeData.id shouldBe id
         periodeData.ident shouldBe ident
         periodeData.periode shouldBe periode
@@ -92,6 +96,8 @@ class RapporteringsperiodeTest {
         periodeData.bruttoBelop shouldBe null
         periodeData.begrunnelse shouldBe "Begrunnelse"
         periodeData.registrertArbeidssoker shouldBe true
+        periodeData.årsakBrukerHarIkkeSvartOmArbeidssøkerstatus shouldBe
+            UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA.name
         periodeData.meldedato shouldBe null
     }
 }

@@ -18,6 +18,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
 import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import no.nav.dagpenger.rapportering.utils.UUIDv7
@@ -341,8 +342,11 @@ class MeldepliktConnectorTest {
                 begrunnelseEndring = null,
                 status = TilUtfylling,
                 mottattDato = null,
-                registrertArbeidssoker = true,
-                årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+                sporsmalOmRegistrertArbeidssoker =
+                    SporsmalOmRegistrertArbeidssoker(
+                        svarFraBruker = true,
+                        arsakBrukerHarIkkeSvart = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+                    ),
                 originalId = null,
                 rapporteringstype = null,
                 opprettetAv = OpprettetAv.Dagpenger,
@@ -436,8 +440,11 @@ class MeldepliktConnectorTest {
                 begrunnelseEndring = null,
                 status = TilUtfylling,
                 mottattDato = null,
-                registrertArbeidssoker = true,
-                årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+                sporsmalOmRegistrertArbeidssoker =
+                    SporsmalOmRegistrertArbeidssoker(
+                        svarFraBruker = true,
+                        arsakBrukerHarIkkeSvart = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+                    ),
                 originalId = null,
                 rapporteringstype = null,
                 opprettetAv = OpprettetAv.Dagpenger,

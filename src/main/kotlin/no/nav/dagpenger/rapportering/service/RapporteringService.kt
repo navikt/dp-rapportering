@@ -24,6 +24,7 @@ import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toKorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.model.toPeriodeData
 import no.nav.dagpenger.rapportering.model.toRapporteringsperioder
+import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus
 import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.ARBEIDSSØKERPERIODEN_ER_I_FORTID
 import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
 import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.ETTERREGISTRERT_MELDEKORT
@@ -54,6 +55,11 @@ class RapporteringService(
     private val personregisterService: PersonregisterService,
     private val meldekortregisterService: MeldekortregisterService,
 ) {
+    suspend fun hentRapporteringsperiodeFraDb(
+        rapporteringId: String,
+        ident: String,
+    ): Rapporteringsperiode? = rapporteringRepository.hentRapporteringsperiode(rapporteringId, ident)
+
     suspend fun hentPeriode(
         rapporteringId: String,
         ident: String,
@@ -178,7 +184,6 @@ class RapporteringService(
             ?: throw RuntimeException("Fant ingen periode med id $rapporteringId")
     }
 
-    @Suppress("ktlint:standard:max-line-length")
     suspend fun utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
         rapporteringsperiodeId: String,
         ident: String,
@@ -188,37 +193,51 @@ class RapporteringService(
             rapporteringRepository.hentRapporteringsperiode(rapporteringsperiodeId, ident)
                 ?: throw RuntimeException("Fant ingen rapporteringsperiode med id $rapporteringsperiodeId")
 
-        val rapporteringsperiodeMedÅrsakBrukerikkeHarSvartePåSpørsmålOmArbeidssøkerstatus =
-            when {
-                rapporteringsperiode.type == Etterregistrert -> {
-                    rapporteringsperiode.copy(årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = ETTERREGISTRERT_MELDEKORT)
-                }
+        val årsak = utledÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus(rapporteringsperiode, ident, token)
+        val rapporteringsperiodeMedÅrsakBrukerIkkeHarSvartPåSpørsmålOmArbeidssøkerstatus =
+            rapporteringsperiode.copy(
+                sporsmalOmRegistrertArbeidssoker =
+                    rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.copy(
+                        arsakBrukerHarIkkeSvart = årsak,
+                    ),
+            )
 
-                rapporteringsperiode.erEndring() -> {
-                    rapporteringsperiode.copy(årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = KORRIGERT_MELDEKORT)
-                }
-
-                !personregisterService.hentPersonstatus(ident, token).erBekreftelseOvertatt() -> {
-                    rapporteringsperiode.copy(
-                        årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS,
-                    )
-                }
-
-                rapporteringsperiode.periode.tilOgMed.plusDays(14) < LocalDate.now() -> {
-                    rapporteringsperiode.copy(årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = ARBEIDSSØKERPERIODEN_ER_I_FORTID)
-                }
-
-                else -> {
-                    rapporteringsperiode
-                }
-            }
-        rapporteringRepository.lagreRapporteringsperiodeOgDager(
-            rapporteringsperiodeMedÅrsakBrukerikkeHarSvartePåSpørsmålOmArbeidssøkerstatus,
+        rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartPåSpørsmålOmArbeidssøkerstatus(
+            rapporteringsperiodeMedÅrsakBrukerIkkeHarSvartPåSpørsmålOmArbeidssøkerstatus.id,
             ident,
+            rapporteringsperiodeMedÅrsakBrukerIkkeHarSvartPåSpørsmålOmArbeidssøkerstatus
+                .sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart,
         )
 
-        return rapporteringsperiodeMedÅrsakBrukerikkeHarSvartePåSpørsmålOmArbeidssøkerstatus
+        return rapporteringsperiodeMedÅrsakBrukerIkkeHarSvartPåSpørsmålOmArbeidssøkerstatus
     }
+
+    private suspend fun utledÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+        rapporteringsperiode: Rapporteringsperiode,
+        ident: String,
+        token: String,
+    ): ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus? =
+        when {
+            rapporteringsperiode.erEndring() -> {
+                KORRIGERT_MELDEKORT
+            }
+
+            rapporteringsperiode.type == Etterregistrert -> {
+                ETTERREGISTRERT_MELDEKORT
+            }
+
+            !personregisterService.hentPersonstatus(ident, token).erBekreftelseOvertatt() -> {
+                DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
+            }
+
+            rapporteringsperiode.periode.tilOgMed.plusDays(14) < LocalDate.now() -> {
+                ARBEIDSSØKERPERIODEN_ER_I_FORTID
+            }
+
+            else -> {
+                null
+            }
+        }
 
     suspend fun startEndring(
         rapporteringId: String,
@@ -369,7 +388,7 @@ class RapporteringService(
         } else {
             if (periodeFraDb.status.ordinal <= periode.status.ordinal) {
                 rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
-                rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
+                return rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
                     ?: throw RuntimeException("Fant ikke rapporteringsperiode, selv om den skal ha blitt lagret")
             }
             periodeFraDb
@@ -420,6 +439,8 @@ class RapporteringService(
                 "Kan ikke oppdatere registrert arbeidssøker for periode med id $rapporteringId (eksisterer ikke eller kan ikke sendes inn)",
             )
         }
+
+        // TODO: Kaste BadRequestException om utledÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus ikke er null
 
         rapporteringRepository.oppdaterRegistrertArbeidssoker(
             rapporteringId,
@@ -575,7 +596,7 @@ class RapporteringService(
                         if (ansvarligSystem == AnsvarligSystem.ARENA) {
                             val bekreftelseSkalSendesFra = periodeTilInnsending.periode.tilOgMed.plusDays(1)
                             if (
-                                periodeTilInnsending.registrertArbeidssoker == false &&
+                                periodeTilInnsending.sporsmalOmRegistrertArbeidssoker.svarFraBruker == false &&
                                 LocalDate.now() < bekreftelseSkalSendesFra
                             ) {
                                 bekreftelsesmeldingRepository.lagreBekreftelsesmelding(

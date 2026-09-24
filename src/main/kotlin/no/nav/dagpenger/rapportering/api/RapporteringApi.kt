@@ -21,7 +21,6 @@ import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.exceptions.RapporteringsperiodeNotFoundException
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
-import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
@@ -59,7 +58,13 @@ internal fun Application.rapporteringApi(
                     val jwtToken = call.request.jwt()
                     val headers = call.request.headers
 
-                    val rapporteringsperiode = call.receive(Rapporteringsperiode::class)
+                    val request = call.receive<RapporteringsperiodeRequest>()
+                    val rapporteringsperiodeFraDb =
+                        rapporteringService.hentRapporteringsperiodeFraDb(request.id, ident)
+                            ?: throw RapporteringsperiodeNotFoundException(
+                                "Rapportering med id ${request.id} ikke funnet",
+                            )
+                    val rapporteringsperiode = request.toRapporteringsperiode(rapporteringsperiodeFraDb)
 
                     logger.info { "Rapporteringsperiode: $rapporteringsperiode" }
 
