@@ -97,7 +97,7 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/Rapporteringsperiode'
+                            $ref: '#/components/schemas/RapporteringsperiodeRequest'
             responses:
                 200:
                     description: OK
@@ -415,14 +415,7 @@ components:
         Rapporteringsperiode:
             required:
                 - id
-                - type
-                - periode
                 - dager
-                - sisteFristForTrekk
-                - kanSendesFra
-                - kanSendes
-                - kanEndres
-                - status
             type: object
             properties:
                 id:
@@ -455,12 +448,42 @@ components:
                     format: date
                 registrertArbeidssoker:
                     type: boolean
+                sporsmalOmRegistrertArbeidssoker:
+                    $ref: '#/components/schemas/SporsmalOmRegistrertArbeidssoker'
                 originalId:
                     type: string
                 html:
                     type: string
                 rapporteringstype:
                     type: string
+        RapporteringsperiodeRequest:
+            required:
+                - id
+                - dager
+            type: object
+            properties:
+                id:
+                    type: string
+                dager:
+                    $ref: '#/components/schemas/dag'
+                begrunnelseEndring:
+                    type: string
+                registrertArbeidssoker:
+                    type: boolean
+                rapporteringstype:
+                    type: string
+        SporsmalOmRegistrertArbeidssoker:
+            type: object
+            properties:
+                svarFraBruker:
+                    type: boolean
+                arsakBrukerHarIkkeSvart:
+                    type: string
+                    enum:
+                        - KORRIGERT_MELDEKORT
+                        - ETTERREGISTRERT_MELDEKORT
+                        - DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
+                        - ARBEIDSSØKERPERIODEN_ER_I_FORTID
         RapporteringsperiodeStatus:
             type: string
             enum:

@@ -16,6 +16,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
 import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.withMigratedDb
@@ -51,7 +52,11 @@ class RapporteringRepositoryPostgresTest {
             with(hentetRapporteringsperiode) {
                 id shouldBe id
                 this?.bruttoBelop?.shouldBe(null)
-                this?.registrertArbeidssoker?.shouldBe(null)
+                this?.sporsmalOmRegistrertArbeidssoker?.svarFraBruker?.shouldBe(null)
+                this?.sporsmalOmRegistrertArbeidssoker?.svarFraBruker?.shouldBe(null)
+                this?.sporsmalOmRegistrertArbeidssoker?.arsakBrukerHarIkkeSvart?.shouldBe(
+                    UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+                )
             }
         }
     }
@@ -67,7 +72,8 @@ class RapporteringRepositoryPostgresTest {
 
             with(hentetRapporteringsperiode) {
                 id shouldBe id
-                this?.registrertArbeidssoker?.shouldBe(true)
+                this?.sporsmalOmRegistrertArbeidssoker?.svarFraBruker?.shouldBe(true)
+                this?.sporsmalOmRegistrertArbeidssoker?.svarFraBruker?.shouldBe(true)
             }
         }
     }
@@ -291,7 +297,8 @@ class RapporteringRepositoryPostgresTest {
             )
             val oppdatertPeriode = rapporteringRepositoryPostgres.hentRapporteringsperiode(id = rapporteringsperiode.id, ident = ident)!!
 
-            oppdatertPeriode.registrertArbeidssoker shouldBe true
+            oppdatertPeriode.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe true
+            oppdatertPeriode.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe true
         }
     }
 
@@ -364,7 +371,8 @@ class RapporteringRepositoryPostgresTest {
                 kanEndres shouldBe false
                 bruttoBelop shouldBe null
                 begrunnelseEndring shouldBe null
-                registrertArbeidssoker shouldBe null
+                sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+                sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
                 status shouldBe TilUtfylling
                 mottattDato shouldBe null
                 rapporteringstype shouldBe null
@@ -376,7 +384,8 @@ class RapporteringRepositoryPostgresTest {
                     kanEndres = true,
                     bruttoBelop = 100.0,
                     begrunnelseEndring = "Bla bla bla",
-                    registrertArbeidssoker = true,
+                    sporsmalOmRegistrertArbeidssoker =
+                        rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.copy(svarFraBruker = true),
                     status = Innsendt,
                     mottattDato = idag,
                     rapporteringstype = "harAktivitet",
@@ -400,7 +409,8 @@ class RapporteringRepositoryPostgresTest {
                 begrunnelseEndring shouldBe "Bla bla bla"
                 status shouldBe Innsendt
                 mottattDato shouldBe idag
-                registrertArbeidssoker shouldBe true
+                sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe true
+                sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe true
                 rapporteringstype shouldBe "harAktivitet"
             }
         }
@@ -599,8 +609,11 @@ fun getRapporteringsperiode(
     kanEndres = kanEndres,
     bruttoBelop = bruttoBelop,
     status = status,
-    registrertArbeidssoker = registrertArbeidssoker,
-    årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+    sporsmalOmRegistrertArbeidssoker =
+        SporsmalOmRegistrertArbeidssoker(
+            svarFraBruker = registrertArbeidssoker,
+            arsakBrukerHarIkkeSvart = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+        ),
     begrunnelseEndring = begrunnelseEndring,
     originalId = null,
     rapporteringstype = null,

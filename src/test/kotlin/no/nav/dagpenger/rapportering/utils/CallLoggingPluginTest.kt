@@ -17,6 +17,7 @@ import no.nav.dagpenger.rapportering.api.ApiTestSetup
 import no.nav.dagpenger.rapportering.api.doGet
 import no.nav.dagpenger.rapportering.api.doPost
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
+import no.nav.dagpenger.rapportering.api.toRapporteringsperiodeRequest
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
@@ -30,6 +31,9 @@ class CallLoggingPluginTest : ApiTestSetup() {
     private val ident = "0102031234"
     private val rapporteringsperiode = rapporteringsperiodeFor(id = "123", registrertArbeidssoker = true)
     private val rapporteringsperiodeString = defaultObjectMapper.writeValueAsString(rapporteringsperiode)
+    private val rapporteringsperioderResponseString = "[$rapporteringsperiodeString]"
+    private val rapporteringsperiodeRequestString =
+        defaultObjectMapper.writeValueAsString(rapporteringsperiode.toRapporteringsperiodeRequest())
     private val sendinnResponse =
         defaultObjectMapper.writeValueAsString(
             InnsendingResponse(id = "123", status = "OK", feil = emptyList()),
@@ -39,7 +43,6 @@ class CallLoggingPluginTest : ApiTestSetup() {
     @Test
     fun `Kan lagre get request og response`() =
         setUpTestApplication {
-            val ekstraBytesForNorskeTegn = 8
             externalServices {
                 meldepliktAdapter()
             }
@@ -70,9 +73,9 @@ class CallLoggingPluginTest : ApiTestSetup() {
                 """
                 HTTP/1.1 200 OK
                 Content-Type: application/json
-                Content-Length: ${rapporteringsperiodeString.length + ekstraBytesForNorskeTegn}
+                Content-Length: ${rapporteringsperioderResponseString.toByteArray(Charsets.UTF_8).size}
 
-                [$rapporteringsperiodeString]
+                $rapporteringsperioderResponseString
                 """.trimIndent()
             list[1].ident shouldBe ident
             list[1].logginfo shouldBe ""
@@ -97,7 +100,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
             client.doPost("/rapporteringsperiode/123/start", issueToken(ident))
 
             val path = "/rapporteringsperiode"
-            client.doPost(path, issueToken(ident), rapporteringsperiode)
+            client.doPost(path, issueToken(ident), rapporteringsperiode.toRapporteringsperiodeRequest())
 
             val list = getLogList()
 
@@ -108,7 +111,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[2].operation shouldBe path
             list[2].status shouldBe 200
             list[2].request shouldStartWith "POST localhost:80$path HTTP/1.1"
-            list[2].request shouldContain rapporteringsperiodeString
+            list[2].request shouldContain rapporteringsperiodeRequestString
             list[2].response shouldStartWith "200 OK"
             list[2].ident shouldBe ident
             list[2].logginfo shouldBe ""

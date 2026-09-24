@@ -6,6 +6,7 @@ import no.nav.dagpenger.rapportering.api.models.DagInnerResponse
 import no.nav.dagpenger.rapportering.api.models.PeriodeResponse
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeResponse
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse
+import no.nav.dagpenger.rapportering.api.models.SporsmalOmRegistrertArbeidssokerResponse
 import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
@@ -25,8 +26,7 @@ data class Rapporteringsperiode(
     val begrunnelseEndring: String?,
     val status: RapporteringsperiodeStatus,
     val mottattDato: LocalDate?,
-    val registrertArbeidssoker: Boolean?,
-    val årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus: ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus?,
+    val sporsmalOmRegistrertArbeidssoker: SporsmalOmRegistrertArbeidssoker,
     val originalId: String?,
     val rapporteringstype: String?,
     val html: String? = null,
@@ -100,10 +100,43 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
                 RapporteringsperiodeStatus.Midlertidig -> RapporteringsperiodeStatusResponse.Feilet // Midlertidig her? Det er en feil
             },
         mottattDato = this.mottattDato,
-        registrertArbeidssoker = this.registrertArbeidssoker,
+        registrertArbeidssoker = this.sporsmalOmRegistrertArbeidssoker.svarFraBruker,
+        sporsmalOmRegistrertArbeidssoker =
+            SporsmalOmRegistrertArbeidssokerResponse(
+                svarFraBruker = this.sporsmalOmRegistrertArbeidssoker.svarFraBruker,
+                arsakBrukerHarIkkeSvart =
+                    this.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart
+                        .toRegistrertArbeidssokerDetaljerAarsak(),
+            ),
         originalId = this.originalId,
         rapporteringstype = this.rapporteringstype,
     )
+
+private fun ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus?.toRegistrertArbeidssokerDetaljerAarsak():
+    SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart? =
+    when (this) {
+        ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.KORRIGERT_MELDEKORT -> {
+            SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart.KORRIGERT_MELDEKORT
+        }
+
+        ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.ETTERREGISTRERT_MELDEKORT -> {
+            SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart.ETTERREGISTRERT_MELDEKORT
+        }
+
+        ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS -> {
+            SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
+        }
+
+        ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.ARBEIDSSØKERPERIODEN_ER_I_FORTID -> {
+            SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart.ARBEIDSSØKERPERIODEN_ER_I_FORTID
+        }
+
+        ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+        null,
+        -> {
+            null
+        }
+    }
 
 fun Rapporteringsperiode.toPeriodeData(
     ident: String,
@@ -125,7 +158,9 @@ fun Rapporteringsperiode.toPeriodeData(
         originalMeldekortId = this.originalId,
         bruttoBelop = null,
         begrunnelse = this.begrunnelseEndring,
-        registrertArbeidssoker = this.registrertArbeidssoker,
+        registrertArbeidssoker = this.sporsmalOmRegistrertArbeidssoker.svarFraBruker,
+        årsakBrukerHarIkkeSvartOmArbeidssøkerstatus =
+            this.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart?.name,
     )
 
 fun List<Dag>.toPeriodeDager(): List<PeriodeDag> =

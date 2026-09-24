@@ -20,7 +20,10 @@ fun kontrollerRapporteringsperiode(periode: Rapporteringsperiode) {
         throw BadRequestException(
             "Rapporteringsperiode med id ${periode.id} kan ikke sendes før kan sendes fra dato (${periode.kanSendesFra})",
         )
-    } else if (periode.registrertArbeidssoker == null && meldekortetSendesInnFørMeldefristErBrutt(periode)) {
+    } else if (
+        periode.sporsmalOmRegistrertArbeidssoker.svarFraBruker == null &&
+        meldekortetSendesInnFørMeldefristErBrutt(periode)
+    ) {
         throw BadRequestException("Registrert arbeidssøker i rapporteringsperiode med id ${periode.id} kan ikke være null")
     } else {
         kontrollerAktiviteter(periode.dager)

@@ -14,6 +14,7 @@ import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
 import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -266,8 +267,11 @@ fun lagRapporteringsperiode(
     kanEndres = false,
     bruttoBelop = null,
     status = TilUtfylling,
-    registrertArbeidssoker = registrertArbeidssoker,
-    årsakBrukerHarIkkeSvartePåSpørsmålOmArbeidssøkerstatus = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+    sporsmalOmRegistrertArbeidssoker =
+        SporsmalOmRegistrertArbeidssoker(
+            svarFraBruker = registrertArbeidssoker,
+            arsakBrukerHarIkkeSvart = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+        ),
     begrunnelseEndring = null,
     originalId = null,
     rapporteringstype = null,
