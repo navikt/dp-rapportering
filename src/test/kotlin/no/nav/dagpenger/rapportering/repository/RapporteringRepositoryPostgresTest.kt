@@ -73,7 +73,6 @@ class RapporteringRepositoryPostgresTest {
             with(hentetRapporteringsperiode) {
                 id shouldBe id
                 this?.sporsmalOmRegistrertArbeidssoker?.svarFraBruker?.shouldBe(true)
-                this?.sporsmalOmRegistrertArbeidssoker?.svarFraBruker?.shouldBe(true)
             }
         }
     }

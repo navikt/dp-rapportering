@@ -281,6 +281,8 @@ class RapporteringRepositoryPostgres(
                     "registrert_arbeidssoker" to
                         if (rapporteringsperiode.type == KortType.Etterregistrert) {
                             true
+                        } else if (rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart != null) {
+                            null
                         } else {
                             rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.svarFraBruker
                         },

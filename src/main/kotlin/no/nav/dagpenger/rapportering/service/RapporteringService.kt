@@ -10,6 +10,7 @@ import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.KortType.Etterregistrert
 import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData
@@ -20,6 +21,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
 import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toKorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.model.toPeriodeData
@@ -194,10 +196,19 @@ class RapporteringService(
                 ?: throw RuntimeException("Fant ingen rapporteringsperiode med id $rapporteringsperiodeId")
 
         val årsak = utledÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus(rapporteringsperiode, ident, token)
+
+        val svar =
+            if (årsak == null) {
+                rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.svarFraBruker
+            } else {
+                null
+            }
+
         val rapporteringsperiodeMedÅrsakBrukerIkkeHarSvartPåSpørsmålOmArbeidssøkerstatus =
             rapporteringsperiode.copy(
                 sporsmalOmRegistrertArbeidssoker =
                     rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.copy(
+                        svarFraBruker = svar,
                         arsakBrukerHarIkkeSvart = årsak,
                     ),
             )
@@ -256,6 +267,7 @@ class RapporteringService(
                 lagreEllerOppdaterPeriode(
                     originalPeriode.copy(
                         id = lagMidlertidigEndringId(ident),
+                        type = KortType.Korrigert,
                         kanEndres = false,
                         kanSendes = true,
                         status = TilUtfylling,
@@ -269,6 +281,11 @@ class RapporteringService(
                                 )
                             },
                         originalId = rapporteringId,
+                        sporsmalOmRegistrertArbeidssoker =
+                            SporsmalOmRegistrertArbeidssoker(
+                                svarFraBruker = null,
+                                arsakBrukerHarIkkeSvart = KORRIGERT_MELDEKORT,
+                            ),
                     ),
                     ident,
                 )
