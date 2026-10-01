@@ -15,7 +15,7 @@ import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
-import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus
 import no.nav.dagpenger.rapportering.utils.RepositoryUtils.validateRowsAffected
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import java.time.LocalDate
@@ -51,11 +51,11 @@ class RapporteringRepositoryPostgres(
                 }
         }
 
-    override suspend fun oppdaterÅrsakBrukerHarIkkeSvartPåSpørsmålOmArbeidssøkerstatus(
+    override suspend fun oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
         rapporteringId: String,
         ident: String,
-        årsak: ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus?,
-    ) = actionTimer.timedAction("db-oppdaterÅrsakBrukerHarIkkeSvartPåSpørsmålOmArbeidssøkerstatus") {
+        årsak: ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus?,
+    ) = actionTimer.timedAction("db-oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus") {
         sessionOf(dataSource).use { session ->
             session.transaction { tx ->
                 tx
@@ -63,7 +63,7 @@ class RapporteringRepositoryPostgres(
                         queryOf(
                             """
                             UPDATE rapporteringsperiode
-                            SET arsak_bruker_har_ikke_svart_pa_sporsmal_om_arbeidssokerstatus = :arsak,
+                            SET årsak_bruker_har_ikke_svart_om_arbeidssøkerstatus = :arsak,
                                 registrert_arbeidssoker =
                                     CASE WHEN CAST(:arsak AS TEXT) IS NOT NULL THEN NULL ELSE registrert_arbeidssoker END
                             WHERE id = :id AND ident = :ident
@@ -265,8 +265,8 @@ class RapporteringRepositoryPostgres(
             queryOf(
                 """
                 INSERT INTO rapporteringsperiode
-                (id, type, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id, rapporteringstype, siste_frist_for_trekk, arsak_bruker_har_ikke_svart_pa_sporsmal_om_arbeidssokerstatus)
-                VALUES (:id, :type, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id, :rapporteringstype, :siste_frist_for_trekk, :arsak_bruker_har_ikke_svart_pa_sporsmal_om_arbeidssokerstatus)
+                (id, type, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id, rapporteringstype, siste_frist_for_trekk, årsak_bruker_har_ikke_svart_om_arbeidssøkerstatus)
+                VALUES (:id, :type, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id, :rapporteringstype, :siste_frist_for_trekk, :arsak_bruker_har_ikke_svart_om_arbeidssokerstatus)
                 ON CONFLICT DO NOTHING
                 """.trimIndent(),
                 mapOf(
@@ -289,7 +289,7 @@ class RapporteringRepositoryPostgres(
                     "original_id" to rapporteringsperiode.originalId,
                     "rapporteringstype" to rapporteringsperiode.rapporteringstype,
                     "siste_frist_for_trekk" to rapporteringsperiode.sisteFristForTrekk,
-                    "arsak_bruker_har_ikke_svart_pa_sporsmal_om_arbeidssokerstatus" to
+                    "arsak_bruker_har_ikke_svart_om_arbeidssokerstatus" to
                         rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart?.name,
                 ),
             ).asUpdate,
@@ -613,9 +613,9 @@ private fun Row.toRapporteringsperiode() =
             SporsmalOmRegistrertArbeidssoker(
                 svarFraBruker = stringOrNull("registrert_arbeidssoker").toBooleanOrNull(),
                 arsakBrukerHarIkkeSvart =
-                    stringOrNull("arsak_bruker_har_ikke_svart_pa_sporsmal_om_arbeidssokerstatus")
+                    stringOrNull("årsak_bruker_har_ikke_svart_om_arbeidssøkerstatus")
                         ?.let { årsak ->
-                            ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.entries
+                            ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.entries
                                 .firstOrNull { it.name == årsak }
                         },
             ),

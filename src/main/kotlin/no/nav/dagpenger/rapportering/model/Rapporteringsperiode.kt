@@ -112,26 +112,26 @@ fun Rapporteringsperiode.toResponse(): RapporteringsperiodeResponse =
         rapporteringstype = this.rapporteringstype,
     )
 
-private fun ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus?.toRegistrertArbeidssokerDetaljerAarsak():
+private fun ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus?.toRegistrertArbeidssokerDetaljerAarsak():
     SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart? =
     when (this) {
-        ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.KORRIGERT_MELDEKORT -> {
+        ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.KORRIGERT_MELDEKORT -> {
             SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart.KORRIGERT_MELDEKORT
         }
 
-        ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.ETTERREGISTRERT_MELDEKORT -> {
+        ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.ETTERREGISTRERT_MELDEKORT -> {
             SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart.ETTERREGISTRERT_MELDEKORT
         }
 
-        ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS -> {
+        ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS -> {
             SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
         }
 
-        ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.ARBEIDSSØKERPERIODEN_ER_I_FORTID -> {
+        ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.ARBEIDSSØKERPERIODEN_ER_I_FORTID -> {
             SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart.ARBEIDSSØKERPERIODEN_ER_I_FORTID
         }
 
-        ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+        ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
         null,
         -> {
             null
