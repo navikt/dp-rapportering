@@ -1,6 +1,6 @@
 package no.nav.dagpenger.rapportering.model
 
-enum class ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus {
+enum class ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus {
     KORRIGERT_MELDEKORT,
     ETTERREGISTRERT_MELDEKORT,
     DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS,

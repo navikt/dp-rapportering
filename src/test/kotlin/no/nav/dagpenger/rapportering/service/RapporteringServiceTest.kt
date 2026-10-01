@@ -50,11 +50,12 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
-import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.ARBEIDSSØKERPERIODEN_ER_I_FORTID
-import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
-import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.ETTERREGISTRERT_MELDEKORT
-import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.KORRIGERT_MELDEKORT
-import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.ARBEIDSSØKERPERIODEN_ER_I_FORTID
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.ETTERREGISTRERT_MELDEKORT
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.KORRIGERT_MELDEKORT
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.repository.TidspunktjusteringRepository
@@ -65,6 +66,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import tools.jackson.core.type.TypeReference
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.databind.ObjectReader
@@ -491,7 +493,7 @@ class RapporteringServiceTest {
                 ).copy(originalId = "original-id")
             coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
             coJustRun {
-                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartPåSpørsmålOmArbeidssøkerstatus(any(), any(), any())
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
             }
 
             val oppdatert =
@@ -506,7 +508,7 @@ class RapporteringServiceTest {
             oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe KORRIGERT_MELDEKORT
             oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
             coVerify(exactly = 1) {
-                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartPåSpørsmålOmArbeidssøkerstatus(
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
                     "1",
                     ident,
                     KORRIGERT_MELDEKORT,
@@ -525,7 +527,7 @@ class RapporteringServiceTest {
                 )
             coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
             coJustRun {
-                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartPåSpørsmålOmArbeidssøkerstatus(any(), any(), any())
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
             }
 
             val oppdatert =
@@ -540,7 +542,7 @@ class RapporteringServiceTest {
             oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe ETTERREGISTRERT_MELDEKORT
             oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
             coVerify(exactly = 1) {
-                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartPåSpørsmålOmArbeidssøkerstatus(
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
                     "1",
                     ident,
                     ETTERREGISTRERT_MELDEKORT,
@@ -559,7 +561,7 @@ class RapporteringServiceTest {
                 )
             coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
             coJustRun {
-                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartPåSpørsmålOmArbeidssøkerstatus(any(), any(), any())
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
             }
 
             val oppdatert =
@@ -589,7 +591,7 @@ class RapporteringServiceTest {
                 )
             coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
             coJustRun {
-                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartPåSpørsmålOmArbeidssøkerstatus(any(), any(), any())
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
             }
 
             val oppdatert =
@@ -605,7 +607,7 @@ class RapporteringServiceTest {
                 DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
             oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
             coVerify(exactly = 1) {
-                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartPåSpørsmålOmArbeidssøkerstatus(
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
                     "1",
                     ident,
                     DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS,
@@ -623,7 +625,7 @@ class RapporteringServiceTest {
             coEvery { personregisterService.hentPersonstatus(ident, token) } returns personstatusMedArena
             coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
             coJustRun {
-                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartPåSpørsmålOmArbeidssøkerstatus(any(), any(), any())
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
             }
 
             val oppdatert =
@@ -649,7 +651,7 @@ class RapporteringServiceTest {
             coEvery { personregisterService.hentPersonstatus(ident, token) } returns personstatusMedArena
             coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
             coJustRun {
-                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartPåSpørsmålOmArbeidssøkerstatus(any(), any(), any())
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
             }
 
             val oppdatert =
@@ -664,7 +666,7 @@ class RapporteringServiceTest {
             oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
             oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
             coVerify(exactly = 1) {
-                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartPåSpørsmålOmArbeidssøkerstatus("1", ident, null)
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus("1", ident, null)
             }
         }
     }
@@ -694,12 +696,41 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan oppdatere om bruker vil fortsette som registrert arbeidssoker`() {
-        coEvery { rapporteringRepository.hentKanSendes(eq("1")) } returns true
-        coJustRun { rapporteringRepository.oppdaterRegistrertArbeidssoker(eq("1"), eq("12345678910"), eq(true)) }
+        val id = "1"
+        val ident = "12345678910"
 
-        runBlocking { rapporteringService.oppdaterRegistrertArbeidssoker("1", "12345678910", true) }
+        coEvery { rapporteringRepository.hentRapporteringsperiode(eq(id), eq(ident)) } returns
+            lagRapporteringsperiode(
+                id = id,
+                periode = Periode(fraOgMed = 1.januar, tilOgMed = 14.januar),
+                arsakBrukerHarIkkeSvart = null,
+            )
+        coJustRun { rapporteringRepository.oppdaterRegistrertArbeidssoker(eq(id), eq(ident), eq(true)) }
 
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterRegistrertArbeidssoker("1", "12345678910", true) }
+        runBlocking { rapporteringService.oppdaterRegistrertArbeidssoker(id, ident, true) }
+
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterRegistrertArbeidssoker(id, ident, true) }
+    }
+
+    @Test
+    fun `kan ikke oppdatere om bruker vil fortsette som registrert arbeidssoker hvis årsak ikke er null`() {
+        val id = "1"
+        val ident = "12345678910"
+
+        coEvery { rapporteringRepository.hentRapporteringsperiode(eq(id), eq(ident)) } returns
+            lagRapporteringsperiode(
+                id = id,
+                periode = Periode(fraOgMed = 1.januar, tilOgMed = 14.januar),
+                arsakBrukerHarIkkeSvart = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+            )
+        coJustRun { rapporteringRepository.oppdaterRegistrertArbeidssoker(eq(id), eq(ident), eq(true)) }
+
+        val exception =
+            assertThrows<BadRequestException> {
+                runBlocking { rapporteringService.oppdaterRegistrertArbeidssoker(id, ident, true) }
+            }
+
+        exception.message shouldBe "Kan ikke oppdatere registrert arbeidssøker for periode med id $id (årsak er ikke null)"
     }
 
     @Test
@@ -1711,6 +1742,7 @@ fun lagRapporteringsperiode(
     status: RapporteringsperiodeStatus = TilUtfylling,
     type: KortType = KortType.Ordinaert,
     svarFraBruker: Boolean? = null,
+    arsakBrukerHarIkkeSvart: ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus? = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
 ) = Rapporteringsperiode(
     id = id,
     type = type,
@@ -1725,7 +1757,7 @@ fun lagRapporteringsperiode(
     sporsmalOmRegistrertArbeidssoker =
         SporsmalOmRegistrertArbeidssoker(
             svarFraBruker = svarFraBruker,
-            arsakBrukerHarIkkeSvart = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+            arsakBrukerHarIkkeSvart = arsakBrukerHarIkkeSvart,
         ),
     begrunnelseEndring = null,
     originalId = null,

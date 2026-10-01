@@ -24,11 +24,11 @@ import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toKorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.model.toPeriodeData
 import no.nav.dagpenger.rapportering.model.toRapporteringsperioder
-import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus
-import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.ARBEIDSSØKERPERIODEN_ER_I_FORTID
-import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
-import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.ETTERREGISTRERT_MELDEKORT
-import no.nav.dagpenger.rapportering.model.ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus.KORRIGERT_MELDEKORT
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.ARBEIDSSØKERPERIODEN_ER_I_FORTID
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.ETTERREGISTRERT_MELDEKORT
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.KORRIGERT_MELDEKORT
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.repository.TidspunktjusteringRepository
@@ -202,7 +202,7 @@ class RapporteringService(
                     ),
             )
 
-        rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartPåSpørsmålOmArbeidssøkerstatus(
+        rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
             rapporteringsperiodeMedÅrsakBrukerIkkeHarSvartPåSpørsmålOmArbeidssøkerstatus.id,
             ident,
             rapporteringsperiodeMedÅrsakBrukerIkkeHarSvartPåSpørsmålOmArbeidssøkerstatus
@@ -216,7 +216,7 @@ class RapporteringService(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
         token: String,
-    ): ÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus? =
+    ): ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus? =
         when {
             rapporteringsperiode.erEndring() -> {
                 KORRIGERT_MELDEKORT
@@ -434,13 +434,18 @@ class RapporteringService(
         ident: String,
         registrertArbeidssoker: Boolean,
     ) {
-        if (rapporteringRepository.hentKanSendes(rapporteringId) != true) {
+        val periode = rapporteringRepository.hentRapporteringsperiode(rapporteringId, ident)
+        if (periode == null || !periode.kanSendes) {
             throw BadRequestException(
                 "Kan ikke oppdatere registrert arbeidssøker for periode med id $rapporteringId (eksisterer ikke eller kan ikke sendes inn)",
             )
         }
 
-        // TODO: Kaste BadRequestException om utledÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus ikke er null
+        if (periode.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart != null) {
+            throw BadRequestException(
+                "Kan ikke oppdatere registrert arbeidssøker for periode med id $rapporteringId (årsak er ikke null)",
+            )
+        }
 
         rapporteringRepository.oppdaterRegistrertArbeidssoker(
             rapporteringId,
