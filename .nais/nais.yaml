@@ -36,8 +36,6 @@ spec:
       value: "{{gcp.sql.maximumPoolSizePerPod}}"
     - name: BEREGNINGSDATO_STRATEGI
       value: {{beregningsdato.strategi}}
-    - name: GRUPPER_SAKSBEHANDLER
-      value: {{azure.grupper.saksbehandler}}
     - name: MELDEPLIKT_ADAPTER_HOST
       value: {{MELDEPLIKT_ADAPTER_HOST}}
     - name: MELDEPLIKT_ADAPTER_AUDIENCE
@@ -99,9 +97,6 @@ spec:
       enabled: true
       tenant: {{azure.tenant}}
       claims:
-        groups:
-          - id: {{azure.grupper.saksbehandler}}
-          - id: {{azure.grupper.beslutter}}
         extra:
           - NAVident
   accessPolicy:
