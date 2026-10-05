@@ -1,14 +1,17 @@
 package no.nav.dagpenger.rapportering.service
 
+import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.api.objectMapper
+import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.connector.createMockClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.PeriodeData
@@ -16,6 +19,7 @@ import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
 import no.nav.dagpenger.rapportering.model.PeriodeData.Type
 import no.nav.dagpenger.rapportering.model.toKorrigerMeldekortHendelse
+import no.nav.dagpenger.rapportering.model.toPeriodeData
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import org.junit.jupiter.api.BeforeAll
@@ -155,33 +159,14 @@ class MeldekortregisterServiceTest {
         var meldekortregisterService = meldekortregisterService(HttpStatusCode.OK)
 
         val id = "123456789"
-        val periode = Periode(LocalDate.now(), LocalDate.now().plusDays(13))
 
         val periodeData =
-            PeriodeData(
+            rapporteringsperiodeFor(
                 id = id,
+            ).toPeriodeData(
                 ident = "01020312345",
-                periode = periode,
-                dager =
-                    (0..13)
-                        .map { i ->
-                            PeriodeDag(
-                                dato = LocalDate.now().plusDays(i.toLong()),
-                                aktiviteter = listOf(Aktivitet(UUIDv7.newUuid(), Aktivitet.AktivitetsType.Utdanning, "")),
-                                dagIndex = i,
-                            )
-                        },
-                kanSendesFra = periode.tilOgMed.minusDays(1),
-                sisteFristForTrekk = periode.tilOgMed.plusDays(8),
                 opprettetAv = OpprettetAv.Dagpenger,
-                kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312345"),
-                type = Type.Korrigert,
-                status = "TilInnsending",
-                innsendtTidspunkt = LocalDateTime.now(),
-                originalMeldekortId = "123456788",
-                bruttoBelop = null,
-                begrunnelse = "Begrunnelse",
-                registrertArbeidssoker = true,
+                nyStatus = "TilInnsending",
             )
 
         var response =
@@ -213,33 +198,17 @@ class MeldekortregisterServiceTest {
             )
 
         val originalId = "123456789"
-        val periode = Periode(LocalDate.now(), LocalDate.now().plusDays(13))
 
         val korrigertMeldekortHendelse =
-            PeriodeData(
+            rapporteringsperiodeFor(
                 id = "123456788",
+                type = KortType.Korrigert.code,
+                begrunnelseEndring = "Begrunnelse",
+                originalId = originalId,
+            ).toPeriodeData(
                 ident = "01020312345",
-                periode = periode,
-                dager =
-                    (0..13)
-                        .map { i ->
-                            PeriodeDag(
-                                dato = LocalDate.now().plusDays(i.toLong()),
-                                aktiviteter = listOf(Aktivitet(UUIDv7.newUuid(), Aktivitet.AktivitetsType.Utdanning, "")),
-                                dagIndex = i,
-                            )
-                        },
-                kanSendesFra = periode.tilOgMed.minusDays(1),
-                sisteFristForTrekk = periode.tilOgMed.plusDays(8),
                 opprettetAv = OpprettetAv.Dagpenger,
-                kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312345"),
-                type = Type.Korrigert,
-                status = "TilInnsending",
-                innsendtTidspunkt = LocalDateTime.now(),
-                originalMeldekortId = originalId,
-                bruttoBelop = null,
-                begrunnelse = "Begrunnelse",
-                registrertArbeidssoker = true,
+                nyStatus = "TilInnsending",
             ).toKorrigerMeldekortHendelse()
 
         var response =
@@ -258,5 +227,21 @@ class MeldekortregisterServiceTest {
             }
 
         response shouldBe InnsendingResponse(originalId, "FEIL", emptyList())
+    }
+
+    @Test
+    fun `kan sende arbeidssøkerdata`() {
+        val meldekortregisterService = meldekortregisterService(HttpStatusCode.OK)
+
+        val rapporteringsperiode =
+            rapporteringsperiodeFor(
+                registrertArbeidssoker = true,
+            )
+
+        shouldNotThrow<Exception> {
+            runBlocking {
+                meldekortregisterService.sendArbeidssøkerdata(rapporteringsperiode, token)
+            }
+        }
     }
 }

@@ -17,6 +17,7 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.ExternalServicesBuilder
 import io.ktor.server.testing.testApplication
 import io.mockk.coEvery
+import io.mockk.coJustRun
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -223,6 +224,8 @@ open class ApiTestSetup {
 
             coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
             coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
+
+            coJustRun { meldekortregisterService.sendArbeidssøkerdata(any(), any()) }
 
             val pdlService = mockk<PdlService>()
             coEvery { pdlService.hentNavn(any()) } returns "Test Testesen"

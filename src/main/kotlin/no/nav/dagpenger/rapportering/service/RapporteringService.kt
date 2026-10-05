@@ -702,6 +702,10 @@ class RapporteringService(
         token: String,
     ): InnsendingResponse =
         if (ansvarligSystem == AnsvarligSystem.ARENA) {
+            meldekortregisterService.sendArbeidssøkerdata(
+                periodeTilInnsending,
+                token,
+            )
             meldepliktService
                 .sendinnRapporteringsperiode(periodeTilInnsending.toAdapterRapporteringsperiode(), token)
         } else {

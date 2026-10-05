@@ -139,6 +139,7 @@ class RapporteringServiceTest {
         coEvery { personregisterService.hentPersonstatus(any(), any()) } returns personstatusMedArena
         coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
         coEvery { pdlService.hentNavn(any()) } returns "Test Testesen"
+        coJustRun { meldekortregisterService.sendArbeidssøkerdata(any(), any()) }
     }
 
     @Test
@@ -979,6 +980,8 @@ class RapporteringServiceTest {
             )
 
         sendInn(rapporteringsperiode)
+
+        coVerify(exactly = 1) { meldekortregisterService.sendArbeidssøkerdata(eq(rapporteringsperiode), eq(token)) }
     }
 
     @Test
@@ -999,6 +1002,7 @@ class RapporteringServiceTest {
 
         sendInn(rapporteringsperiode)
 
+        coVerify(exactly = 0) { meldekortregisterService.sendArbeidssøkerdata(any(), any()) }
         coVerify(exactly = 1) { meldekortregisterService.sendinnRapporteringsperiode(any(), token) }
         coVerify(exactly = 0) {
             bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any())
@@ -1035,6 +1039,7 @@ class RapporteringServiceTest {
 
         sendInn(rapporteringsperiode)
 
+        coVerify(exactly = 1) { meldekortregisterService.sendArbeidssøkerdata(eq(rapporteringsperiode), eq(token)) }
         coVerify(exactly = 0) {
             arbeidssøkerService.sendBekreftelse(any(), any(), any())
         }
@@ -1095,6 +1100,7 @@ class RapporteringServiceTest {
 
         sendInn(rapporteringsperiode)
 
+        coVerify(exactly = 1) { meldekortregisterService.sendArbeidssøkerdata(eq(rapporteringsperiode), eq(token)) }
         coVerify(exactly = 1) {
             bekreftelsesmeldingRepository.lagreBekreftelsesmelding(
                 eq(rapporteringsperiode.id),
@@ -1148,6 +1154,7 @@ class RapporteringServiceTest {
 
         sendInn(rapporteringsperiode)
 
+        coVerify(exactly = 1) { meldekortregisterService.sendArbeidssøkerdata(eq(rapporteringsperiode), eq(token)) }
         coVerify(exactly = 1) { arbeidssøkerService.sendBekreftelse(eq(ident), eq(rapporteringsperiode), eq(4)) }
         coVerify(exactly = 0) { bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any()) }
     }
@@ -1170,6 +1177,7 @@ class RapporteringServiceTest {
 
         sendInn(rapporteringsperiode)
 
+        coVerify(exactly = 1) { meldekortregisterService.sendArbeidssøkerdata(eq(rapporteringsperiode), eq(token)) }
         coVerify(exactly = 1) { arbeidssøkerService.sendBekreftelse(eq(ident), eq(rapporteringsperiode), eq(4)) }
         coVerify(exactly = 0) { bekreftelsesmeldingRepository.lagreBekreftelsesmelding(any(), any(), any()) }
     }
@@ -1223,6 +1231,8 @@ class RapporteringServiceTest {
         }
 
         sendtPeriode.captured.registrertArbeidssoker shouldBe true
+
+        coVerify(exactly = 1) { meldekortregisterService.sendArbeidssøkerdata(eq(rapporteringsperiode), eq(token)) }
     }
 
     @Test
@@ -1288,6 +1298,8 @@ class RapporteringServiceTest {
                 sporsmalOmRegistrertArbeidssoker =
                     originalPeriode.sporsmalOmRegistrertArbeidssoker.copy(svarFraBruker = true),
             )
+
+        coJustRun { meldekortregisterService.sendArbeidssøkerdata(any(), any()) }
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
         coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
@@ -1338,6 +1350,7 @@ class RapporteringServiceTest {
                 .oppdaterPeriodeEtterInnsending(originalPeriode.id, ident, false, false, Innsendt, false)
         }
         coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), ident) }
+        coVerify(exactly = 1) { meldekortregisterService.sendArbeidssøkerdata(eq(periode.captured), eq(token)) }
         periode.captured.id shouldBe endringId
         periode.captured.dager.forEachIndexed { dagIndex, dag ->
             dag.dato shouldBe rapporteringsperiode.dager[dagIndex].dato

@@ -14,6 +14,8 @@ import no.nav.dagpenger.rapportering.metrics.ActionTimer
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.KorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.model.PeriodeData
+import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus
 import no.nav.dagpenger.rapportering.utils.Sikkerlogg
 import tools.jackson.core.type.TypeReference
 
@@ -124,6 +126,34 @@ class MeldekortregisterService(
 
             InnsendingResponse(if (status == "OK") result.body<MeldekortIdResponse>().id else id, status, emptyList())
         }
+
+    suspend fun sendArbeidssøkerdata(
+        rapporteringsperiode: Rapporteringsperiode,
+        token: String,
+    ) = withContext(Dispatchers.IO) {
+        val arbeidssøkerdata =
+            Arbeidssøkerdata(
+                rapporteringsperiode.id,
+                rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.svarFraBruker,
+                rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart,
+            )
+
+        val result =
+            httpClientUtils
+                .post("/arbeidssøkerdata", token, "meldekortregister-arbeidssøkerdata", arbeidssøkerdata)
+                .also {
+                    logger.info {
+                        "Kall til meldekortregister for å sende arbeidssøkerdata for meldekortId ${rapporteringsperiode.id} ga status ${it.status}"
+                    }
+                    Sikkerlogg.info {
+                        "Kall til meldekortregister for å sende arbeidssøkerdata for meldekortId ${rapporteringsperiode.id} ga status ${it.status}"
+                    }
+                }
+
+        check(result.status == HttpStatusCode.OK) {
+            "Feil ved sending av arbeidssøkerdata for meldekortId ${rapporteringsperiode.id}. Status: ${result.status}, Body: ${result.bodyAsText()}"
+        }
+    }
 }
 
 data class MeldekortIdResponse(
@@ -134,3 +164,9 @@ enum class MeldekortStatus {
     TilUtfylling,
     Innsendt,
 }
+
+data class Arbeidssøkerdata(
+    val meldekortId: String,
+    val registrertArbeidssøker: Boolean? = null,
+    val årsakBrukerHarIkkeSvartOmArbeidssøkerstatus: ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus? = null,
+)
