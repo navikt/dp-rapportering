@@ -415,7 +415,14 @@ components:
         Rapporteringsperiode:
             required:
                 - id
+                - type
+                - periode
                 - dager
+                - sisteFristForTrekk
+                - kanSendesFra
+                - kanSendes
+                - kanEndres
+                - status
             type: object
             properties:
                 id:

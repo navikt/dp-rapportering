@@ -18,6 +18,11 @@ fun RapporteringsperiodeRequest.toRapporteringsperiode(periodeFraDb: Rapporterin
         rapporteringstype = rapporteringstype ?: periodeFraDb.rapporteringstype,
         sporsmalOmRegistrertArbeidssoker =
             periodeFraDb.sporsmalOmRegistrertArbeidssoker.copy(
-                svarFraBruker = registrertArbeidssoker ?: periodeFraDb.sporsmalOmRegistrertArbeidssoker.svarFraBruker,
+                svarFraBruker =
+                    if (periodeFraDb.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart == null) {
+                        registrertArbeidssoker ?: periodeFraDb.sporsmalOmRegistrertArbeidssoker.svarFraBruker
+                    } else {
+                        null
+                    },
             ),
     )

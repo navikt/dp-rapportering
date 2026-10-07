@@ -109,7 +109,14 @@ fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
         sporsmalOmRegistrertArbeidssoker =
             SporsmalOmRegistrertArbeidssoker(
                 svarFraBruker = if (KortType.fromCode(type) != KortType.Korrigert) this.registrertArbeidssoker else null,
-                arsakBrukerHarIkkeSvart = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+                arsakBrukerHarIkkeSvart =
+                    if (this.registrertArbeidssoker == null &&
+                        this.status != TilUtfylling
+                    ) {
+                        UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
+                    } else {
+                        null
+                    },
             ),
         originalId = null,
         rapporteringstype = if (this.dager.any { it.aktiviteter.isNotEmpty() }) "harAktivitet" else "harIngenAktivitet",

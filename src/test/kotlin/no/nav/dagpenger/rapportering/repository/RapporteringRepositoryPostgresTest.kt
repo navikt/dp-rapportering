@@ -17,6 +17,7 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus
 import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import no.nav.dagpenger.rapportering.repository.Postgres.withMigratedDb
@@ -377,7 +378,7 @@ class RapporteringRepositoryPostgresTest {
                 rapporteringstype shouldBe null
             }
 
-            rapporteringRepositoryPostgres.oppdaterRapporteringsperiodeFraArena(
+            rapporteringRepositoryPostgres.oppdaterRapporteringsperiode(
                 rapporteringsperiode.copy(
                     kanSendes = false,
                     kanEndres = true,
@@ -409,7 +410,7 @@ class RapporteringRepositoryPostgresTest {
                 status shouldBe Innsendt
                 mottattDato shouldBe idag
                 sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe true
-                sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe true
+                sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
                 rapporteringstype shouldBe "harAktivitet"
             }
         }
@@ -595,6 +596,7 @@ fun getRapporteringsperiode(
     bruttoBelop: Double? = null,
     status: RapporteringsperiodeStatus = TilUtfylling,
     registrertArbeidssoker: Boolean? = null,
+    årsakBrukerHarIkkeSvart: ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus? = null,
     begrunnelseEndring: String? = null,
     mottattDato: LocalDate? = null,
 ) = Rapporteringsperiode(
@@ -611,7 +613,7 @@ fun getRapporteringsperiode(
     sporsmalOmRegistrertArbeidssoker =
         SporsmalOmRegistrertArbeidssoker(
             svarFraBruker = registrertArbeidssoker,
-            arsakBrukerHarIkkeSvart = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+            arsakBrukerHarIkkeSvart = årsakBrukerHarIkkeSvart,
         ),
     begrunnelseEndring = begrunnelseEndring,
     originalId = null,

@@ -411,7 +411,7 @@ class RapporteringApiTest : ApiTestSetup() {
                             status = Endret,
                             begrunnelseEndring = "Endring",
                             originalId = endretPeriode.originalId,
-                            registrertArbeidssoker = true,
+                            registrertArbeidssoker = null,
                         ).toRapporteringsperiodeRequest(),
                     ),
                 ) {
@@ -590,7 +590,7 @@ class RapporteringApiTest : ApiTestSetup() {
                     meldepliktAdapter(
                         rapporteringsperioderResponse =
                             listOf(
-                                adapterRapporteringsperiode(registrertArbeidssoker = true),
+                                adapterRapporteringsperiode(),
                             ),
                     )
                 }
