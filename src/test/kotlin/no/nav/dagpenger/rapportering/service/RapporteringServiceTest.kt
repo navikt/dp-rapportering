@@ -580,7 +580,7 @@ class RapporteringServiceTest {
         }
 
         @Test
-        fun `dagpenger har ikke ansvar prioriteres foran arbeidssøkerperioden er i fortid`() {
+        fun `arbeidssøkerperioden er i fortid prioriteres foran dagpenger har ikke ansvar`() {
             val periode =
                 lagRapporteringsperiode(
                     id = "1",
@@ -604,14 +604,13 @@ class RapporteringServiceTest {
                     )
                 }
 
-            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe
-                DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe ARBEIDSSØKERPERIODEN_ER_I_FORTID
             oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
             coVerify(exactly = 1) {
                 rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
                     "1",
                     ident,
-                    DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS,
+                    ARBEIDSSØKERPERIODEN_ER_I_FORTID,
                 )
             }
         }
