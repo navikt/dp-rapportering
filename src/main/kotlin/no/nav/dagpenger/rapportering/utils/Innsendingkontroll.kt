@@ -24,6 +24,7 @@ fun kontrollerRapporteringsperiode(periode: Rapporteringsperiode) {
     } else if (
         periode.type == KortType.Ordinaert &&
         periode.sporsmalOmRegistrertArbeidssoker.svarFraBruker == null &&
+        periode.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart == null &&
         meldekortetSendesInnFørMeldefristErBrutt(periode)
     ) {
         throw BadRequestException("Registrert arbeidssøker i rapporteringsperiode med id ${periode.id} kan ikke være null")
