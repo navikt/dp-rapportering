@@ -458,11 +458,14 @@ class RapporteringService(
             )
         }
 
-        if (periode.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart != null) {
-            throw BadRequestException(
-                "Kan ikke oppdatere registrert arbeidssøker for periode med id $rapporteringId (årsak er ikke null)",
-            )
-        }
+        /*
+            TODO: Ta i bruk når frontend er klar
+            if (periode.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart != null) {
+                throw BadRequestException(
+                    "Kan ikke oppdatere registrert arbeidssøker for periode med id $rapporteringId (årsak er ikke null)",
+                )
+            }
+         */
 
         rapporteringRepository.oppdaterRegistrertArbeidssoker(
             rapporteringId,
