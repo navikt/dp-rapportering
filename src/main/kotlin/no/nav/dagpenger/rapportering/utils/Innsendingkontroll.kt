@@ -6,7 +6,6 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Fravaer
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
 import no.nav.dagpenger.rapportering.model.Dag
-import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.erEndring
 import java.time.LocalDate
@@ -21,6 +20,8 @@ fun kontrollerRapporteringsperiode(periode: Rapporteringsperiode) {
         throw BadRequestException(
             "Rapporteringsperiode med id ${periode.id} kan ikke sendes før kan sendes fra dato (${periode.kanSendesFra})",
         )
+    /*
+    TODO: Ta i bruk når frontend er klar
     } else if (
         periode.type == KortType.Ordinaert &&
         periode.sporsmalOmRegistrertArbeidssoker.svarFraBruker == null &&
@@ -28,6 +29,7 @@ fun kontrollerRapporteringsperiode(periode: Rapporteringsperiode) {
         meldekortetSendesInnFørMeldefristErBrutt(periode)
     ) {
         throw BadRequestException("Registrert arbeidssøker i rapporteringsperiode med id ${periode.id} kan ikke være null")
+     */
     } else {
         kontrollerAktiviteter(periode.dager)
     }
