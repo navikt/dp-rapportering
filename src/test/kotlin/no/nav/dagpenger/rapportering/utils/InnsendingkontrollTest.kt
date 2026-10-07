@@ -15,7 +15,7 @@ import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
-import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
@@ -255,6 +255,7 @@ fun lagRapporteringsperiode(
     kanSendes: Boolean = true,
     kanSendesFra: LocalDate = LocalDate.now().minusDays(1),
     registrertArbeidssoker: Boolean? = true,
+    årsakBrukerHarIkkeSvart: ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus? = null,
     dager: List<Dag> = getDager(startDato = kanSendesFra.minusDays(12)),
 ) = Rapporteringsperiode(
     id = "1",
@@ -270,7 +271,7 @@ fun lagRapporteringsperiode(
     sporsmalOmRegistrertArbeidssoker =
         SporsmalOmRegistrertArbeidssoker(
             svarFraBruker = registrertArbeidssoker,
-            arsakBrukerHarIkkeSvart = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+            arsakBrukerHarIkkeSvart = årsakBrukerHarIkkeSvart,
         ),
     begrunnelseEndring = null,
     originalId = null,
