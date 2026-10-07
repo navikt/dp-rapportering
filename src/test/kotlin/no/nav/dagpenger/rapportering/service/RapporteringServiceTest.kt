@@ -244,7 +244,7 @@ class RapporteringServiceTest {
         coEvery { meldepliktService.hentRapporteringsperioder(ident, token) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns rapporteringsperiodeFraDb
-        coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+        coJustRun { rapporteringRepository.oppdaterRapporteringsperiode(any(), any()) }
         coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
         coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
@@ -430,7 +430,7 @@ class RapporteringServiceTest {
             )
         coEvery { rapporteringRepository.hentRapporteringsperiode("2", ident) } returns null
         coEvery { rapporteringRepository.hentRapporteringsperiode("3", ident) } returns null
-        coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+        coJustRun { rapporteringRepository.oppdaterRapporteringsperiode(any(), any()) }
         coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
         coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
@@ -438,7 +438,7 @@ class RapporteringServiceTest {
             runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
         // Rapporteringsperiode med ID = 1 oppdateres siden meldepliktConnector returnerer data med høyere status (Innsendt)
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringsperiode(any(), any()) }
 
         rapporteringsperioder[0].id shouldBe "1"
         rapporteringsperioder[0]
@@ -1499,18 +1499,18 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `lagreEllerOppdaterPeriode oppdaterer perioden hvis den finnes i databasen fra før`() {
+    fun `lagreEllerOppdaterPeriode oppdaterer perioden hvis den finnes i databasen fra før med lavere status`() {
         coEvery {
             rapporteringRepository.hentRapporteringsperiode(
                 any(),
                 any(),
             )
         } returns rapporteringsperiodeListe.first()
-        coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+        coJustRun { rapporteringRepository.oppdaterRapporteringsperiode(any(), any()) }
 
-        runBlocking { rapporteringService.lagreEllerOppdaterPeriode(rapporteringsperiodeListe.first(), ident) }
+        runBlocking { rapporteringService.lagreEllerOppdaterPeriode(rapporteringsperiodeListe.first().copy(status = Innsendt), ident) }
 
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringsperiode(any(), any()) }
     }
 
     @Test
@@ -1520,7 +1520,7 @@ class RapporteringServiceTest {
 
         runBlocking { rapporteringService.lagreEllerOppdaterPeriode(rapporteringsperiodeListe.first(), ident) }
 
-        coVerify(exactly = 0) { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+        coVerify(exactly = 0) { rapporteringRepository.oppdaterRapporteringsperiode(any(), any()) }
     }
 
     @Test

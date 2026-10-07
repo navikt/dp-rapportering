@@ -100,7 +100,7 @@ class RapporteringService(
             ?.map { periode ->
                 val periodeFraDb = rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
                 if (periodeFraDb != null && periodeFraDb.status.ordinal < periode.status.ordinal) {
-                    rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
+                    rapporteringRepository.oppdaterRapporteringsperiode(periode, ident)
                     rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
                         ?: throw RuntimeException("Fant ikke rapporteringsperiode, selv om den er lagret")
                 } else {
@@ -403,8 +403,8 @@ class RapporteringService(
             rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeMedJustertSisteFristForTrekk, ident)
             periodeMedJustertSisteFristForTrekk
         } else {
-            if (periodeFraDb.status.ordinal <= periode.status.ordinal) {
-                rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
+            if (periodeFraDb.status.ordinal < periode.status.ordinal) {
+                rapporteringRepository.oppdaterRapporteringsperiode(periode, ident)
                 return rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
                     ?: throw RuntimeException("Fant ikke rapporteringsperiode, selv om den skal ha blitt lagret")
             }

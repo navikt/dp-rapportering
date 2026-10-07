@@ -375,10 +375,10 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    override suspend fun oppdaterRapporteringsperiodeFraArena(
+    override suspend fun oppdaterRapporteringsperiode(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
-    ) = actionTimer.timedAction("db-oppdaterRapporteringsperiodeFraArena") {
+    ) = actionTimer.timedAction("db-oppdaterRapporteringsperiode") {
         sessionOf(dataSource).use { session ->
             session.transaction { tx ->
                 tx
@@ -391,7 +391,9 @@ class RapporteringRepositoryPostgres(
                                 kan_endres = :kan_endres,
                                 brutto_belop = :brutto_belop,
                                 begrunnelse_endring = :begrunnelse_endring,
-                                registrert_arbeidssoker = :registrert_arbeidssoker,
+                                registrert_arbeidssoker =
+                                    CASE WHEN CAST(:arsak AS TEXT) IS NOT NULL THEN NULL ELSE CAST(:registrert_arbeidssoker AS BOOLEAN) END,
+                                årsak_bruker_har_ikke_svart_om_arbeidssøkerstatus = :arsak,
                                 status = :status,
                                 rapporteringstype = :rapporteringstype,
                                 mottatt_dato = :mottatt_dato
@@ -404,6 +406,7 @@ class RapporteringRepositoryPostgres(
                                 "brutto_belop" to rapporteringsperiode.bruttoBelop,
                                 "begrunnelse_endring" to rapporteringsperiode.begrunnelseEndring,
                                 "registrert_arbeidssoker" to rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.svarFraBruker,
+                                "arsak" to rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart?.name,
                                 "status" to rapporteringsperiode.status.name,
                                 "rapporteringstype" to rapporteringsperiode.rapporteringstype,
                                 "mottatt_dato" to rapporteringsperiode.mottattDato,

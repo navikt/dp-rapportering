@@ -6,6 +6,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Arbeid
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Fravaer
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType.Syk
 import no.nav.dagpenger.rapportering.model.Dag
+import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.erEndring
 import java.time.LocalDate
@@ -21,6 +22,7 @@ fun kontrollerRapporteringsperiode(periode: Rapporteringsperiode) {
             "Rapporteringsperiode med id ${periode.id} kan ikke sendes før kan sendes fra dato (${periode.kanSendesFra})",
         )
     } else if (
+        periode.type == KortType.Ordinaert &&
         periode.sporsmalOmRegistrertArbeidssoker.svarFraBruker == null &&
         meldekortetSendesInnFørMeldefristErBrutt(periode)
     ) {

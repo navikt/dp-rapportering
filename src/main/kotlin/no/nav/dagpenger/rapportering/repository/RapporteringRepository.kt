@@ -62,7 +62,7 @@ interface RapporteringRepository {
         årsak: ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus?,
     )
 
-    suspend fun oppdaterRapporteringsperiodeFraArena(
+    suspend fun oppdaterRapporteringsperiode(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
     )
