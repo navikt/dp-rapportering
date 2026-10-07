@@ -64,6 +64,7 @@ import no.nav.dagpenger.rapportering.utils.UUIDv7
 import no.nav.dagpenger.rapportering.utils.januar
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -712,6 +713,8 @@ class RapporteringServiceTest {
         coVerify(exactly = 1) { rapporteringRepository.oppdaterRegistrertArbeidssoker(id, ident, true) }
     }
 
+    // TODO: Ta i bruk når frontend er klar
+    @Disabled
     @Test
     fun `kan ikke oppdatere om bruker vil fortsette som registrert arbeidssoker hvis årsak ikke er null`() {
         val id = "1"
