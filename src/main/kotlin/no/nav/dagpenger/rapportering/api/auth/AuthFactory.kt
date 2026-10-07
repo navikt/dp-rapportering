@@ -10,6 +10,7 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.jackson3.jackson
 import io.ktor.server.auth.jwt.JWTAuthenticationProvider
 import io.ktor.server.auth.jwt.JWTPrincipal
@@ -36,12 +37,20 @@ object AuthFactory {
 
     private val azureAdConfiguration: OpenIdConfiguration by lazy {
         runBlocking {
-            httpClient.get(Configuration.properties[azure_app.well_known_url]).body()
+            val response = httpClient.get(Configuration.properties[azure_app.well_known_url])
+            check(response.status == HttpStatusCode.OK) {
+                "Uforventet status ved henting av Azure AD-konfigurasjon: ${response.status.value}"
+            }
+            response.body()
         }
     }
     private val tokenXConfiguration: OpenIdConfiguration by lazy {
         runBlocking {
-            httpClient.get(Configuration.properties[token_x.well_known_url]).body()
+            val response = httpClient.get(Configuration.properties[token_x.well_known_url])
+            check(response.status == HttpStatusCode.OK) {
+                "Uforventet status ved henting av TokenX-konfigurasjon: ${response.status.value}"
+            }
+            response.body()
         }
     }
 

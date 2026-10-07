@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KLogger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 
 fun isLeader(
@@ -21,7 +22,11 @@ fun isLeader(
 
         hostname ==
             runBlocking {
-                httpClient.get(electorUrl).body<Leader>().name
+                val response = httpClient.get(electorUrl)
+                check(response.status == HttpStatusCode.OK) {
+                    "Uforventet status ved sjekk av leader: ${response.status.value}"
+                }
+                response.body<Leader>().name
             }
     } catch (e: Exception) {
         logger.error(e) { "Kunne ikke sjekke leader" }
