@@ -16,6 +16,7 @@ import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
 import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
 import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
@@ -54,6 +55,8 @@ class InnsendingkontrollTest {
         kontrollerRapporteringsperiode(periode)
     }
 
+    // TODO: Ta i bruk når frontend er klar
+    @Disabled
     @Test
     fun `kontroll feiler hvis registrertArbeidssoker er null og sendt inn før MELDESYKLUS_DAGER utløper`() {
         val periode = lagRapporteringsperiode(registrertArbeidssoker = null)
@@ -62,6 +65,8 @@ class InnsendingkontrollTest {
         }
     }
 
+    // TODO: Ta i bruk når frontend er klar
+    @Disabled
     @Test
     fun `kontroll feiler hvis registrertArbeidssoker er null og sendt inn på grensen av MELDESYKLUS_DAGER`() {
         val kanSendesFra = LocalDate.now().minusDays(MELDESYKLUS_DAGER + 1)
