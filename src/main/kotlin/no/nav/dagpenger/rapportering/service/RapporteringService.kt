@@ -237,12 +237,12 @@ class RapporteringService(
                 ETTERREGISTRERT_MELDEKORT
             }
 
-            !personregisterService.hentPersonstatus(ident, token).erBekreftelseOvertatt() -> {
-                DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
-            }
-
             rapporteringsperiode.periode.tilOgMed.plusDays(14) < LocalDate.now() -> {
                 ARBEIDSSØKERPERIODEN_ER_I_FORTID
+            }
+
+            !personregisterService.hentPersonstatus(ident, token).erBekreftelseOvertatt() -> {
+                DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
             }
 
             else -> {

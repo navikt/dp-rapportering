@@ -123,12 +123,12 @@ private fun ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus?.toRegistrertArbeidsso
             SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart.ETTERREGISTRERT_MELDEKORT
         }
 
-        ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS -> {
-            SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
-        }
-
         ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.ARBEIDSSØKERPERIODEN_ER_I_FORTID -> {
             SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart.ARBEIDSSØKERPERIODEN_ER_I_FORTID
+        }
+
+        ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS -> {
+            SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
         }
 
         ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
