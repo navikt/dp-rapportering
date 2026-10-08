@@ -19,11 +19,13 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.runs
 import io.mockk.slot
+import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
+import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.Brukerstatus
@@ -62,6 +64,7 @@ import no.nav.dagpenger.rapportering.repository.TidspunktjusteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import no.nav.dagpenger.rapportering.utils.januar
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -135,11 +138,17 @@ class RapporteringServiceTest {
 
     @BeforeEach
     fun reset() {
+        mockkObject(unleash)
         testRapid.reset()
 
         coEvery { personregisterService.hentPersonstatus(any(), any()) } returns personstatusMedArena
         coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
         coEvery { pdlService.hentNavn(any()) } returns "Test Testesen"
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkObject(unleash)
     }
 
     @Test
@@ -482,9 +491,14 @@ class RapporteringServiceTest {
     }
 
     @Nested
-    inner class UtledningAvÅrsakTilArbeidssøkerstatusTest {
+    inner class UtledningAvÅrsakTilArbeidssøkerstatusMedFeatureTogglePåTest {
+        @BeforeEach
+        fun setUp() {
+            every { unleash.isEnabled("dp-rapportering-frontend-disableSpm5") } returns true
+        }
+
         @Test
-        fun `årsak settes til korrigert meldekort for meldekort som både er korrigert og etterregistrert`() {
+        fun `årsak settes til KORRIGERT_MELDEKORT for meldekort som både er korrigert og etterregistrert`() {
             val periode =
                 lagRapporteringsperiode(
                     id = "1",
@@ -519,7 +533,7 @@ class RapporteringServiceTest {
         }
 
         @Test
-        fun `årsak settes til etterregistrert meldekort når periode er etterregistrert og arbeidssøkerperioden er i fortid`() {
+        fun `årsak settes til ETTERREGISTRERT_MELDEKORT når periode er etterregistrert og arbeidssøkerperioden er i fortid`() {
             val periode =
                 lagRapporteringsperiode(
                     id = "1",
@@ -553,7 +567,8 @@ class RapporteringServiceTest {
         }
 
         @Test
-        fun `utleder årsak når dagpenger ikke har ansvar for arbeidssøkerstatus`() {
+        @Suppress("ktlint:standard:max-line-length")
+        fun `årsak settes til DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS når dagpenger ikke har ansvar for arbeidssøkerstatus`() {
             val periode =
                 lagRapporteringsperiode(id = "1", periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()))
             coEvery { personregisterService.hentPersonstatus(ident, token) } returns
@@ -577,10 +592,17 @@ class RapporteringServiceTest {
             oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe
                 DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
             oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS,
+                )
+            }
         }
 
         @Test
-        fun `arbeidssøkerperioden er i fortid prioriteres foran dagpenger har ikke ansvar`() {
+        fun `årsak settes til ARBEIDSSØKERPERIODEN_ER_I_FORTID når arbeidssøkerperioden er i fortid og dagpenger har ikke ansvar`() {
             val periode =
                 lagRapporteringsperiode(
                     id = "1",
@@ -616,7 +638,7 @@ class RapporteringServiceTest {
         }
 
         @Test
-        fun `utleder årsak når arbeidssøkerperioden er i fortid`() {
+        fun `årsak settes til ARBEIDSSØKERPERIODEN_ER_I_FORTID når arbeidssøkerperioden er i fortid`() {
             val periode =
                 lagRapporteringsperiode(
                     id = "1",
@@ -639,10 +661,218 @@ class RapporteringServiceTest {
 
             oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe ARBEIDSSØKERPERIODEN_ER_I_FORTID
             oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    ARBEIDSSØKERPERIODEN_ER_I_FORTID,
+                )
+            }
         }
 
         @Test
-        fun `lagrer ingen årsak når bruker skal svare på spørsmål om arbeidssøkerstatus`() {
+        fun `årsak settes til null når bruker skal svare på spørsmål om arbeidssøkerstatus`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(10), LocalDate.now().plusDays(3)),
+                )
+            coEvery { personregisterService.hentPersonstatus(ident, token) } returns personstatusMedArena
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus("1", ident, null)
+            }
+        }
+    }
+
+    @Nested
+    inner class UtledningAvÅrsakTilArbeidssøkerstatusMedFeatureToggleAvTest {
+        @BeforeEach
+        fun setUp() {
+            every { unleash.isEnabled("dp-rapportering-frontend-disableSpm5") } returns false
+        }
+
+        @Test
+        fun `årsak settes til null for meldekort som både er korrigert og etterregistrert`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()),
+                    type = KortType.Etterregistrert,
+                    status = TilUtfylling,
+                ).copy(originalId = "original-id")
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    null,
+                )
+            }
+            coVerify(exactly = 0) { personregisterService.hentPersonstatus(any(), any()) }
+        }
+
+        @Test
+        fun `årsak settes til null når periode er etterregistrert og arbeidssøkerperioden er i fortid`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(60), LocalDate.now().minusDays(47)),
+                    type = KortType.Etterregistrert,
+                )
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    null,
+                )
+            }
+            coVerify(exactly = 0) { personregisterService.hentPersonstatus(any(), any()) }
+        }
+
+        @Test
+        fun `årsak settes til null når dagpenger ikke har ansvar for arbeidssøkerstatus`() {
+            val periode =
+                lagRapporteringsperiode(id = "1", periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()))
+            coEvery { personregisterService.hentPersonstatus(ident, token) } returns
+                personstatusMedArena.copy(
+                    overtattBekreftelse = false,
+                )
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    null,
+                )
+            }
+        }
+
+        @Test
+        fun `årsak settes til null når arbeidssøkerperioden er i fortid og dagpenger har ikke ansvar for spørsmål om arbeidssøkerstatus`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(30), LocalDate.now().minusDays(17)),
+                )
+            coEvery { personregisterService.hentPersonstatus(ident, token) } returns
+                personstatusMedArena.copy(
+                    overtattBekreftelse = false,
+                )
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    null,
+                )
+            }
+        }
+
+        @Test
+        fun `årsak settes til null når arbeidssøkerperioden er i fortid`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(30), LocalDate.now().minusDays(17)),
+                )
+            coEvery { personregisterService.hentPersonstatus(ident, token) } returns personstatusMedArena
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+        }
+
+        @Test
+        fun `årsak settes til null når bruker skal svare på spørsmål om arbeidssøkerstatus`() {
             val periode =
                 lagRapporteringsperiode(
                     id = "1",
@@ -768,7 +998,7 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `kan endre rapporteringsperiode`() {
+    fun `startEndring kan endre rapporteringsperiode`() {
         coEvery { meldepliktService.hentInnsendteRapporteringsperioder(any(), any()) } returns
             listOf(rapporteringsperiodeListe.first().copy(id = "123", kanEndres = true).toAdapterRapporteringsperiode())
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
@@ -792,7 +1022,7 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `kan ikke endre rapporteringsperiode som ikke kan endres`() {
+    fun `startEndring kan ikke endre rapporteringsperiode som ikke kan endres`() {
         coEvery { meldepliktService.hentInnsendteRapporteringsperioder(any(), any()) } returns
             listOf(
                 rapporteringsperiodeListe.first().copy(id = "123", kanEndres = false).toAdapterRapporteringsperiode(),
@@ -805,13 +1035,55 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `kan ikke endre rapporteringsperiode hvis perioden ikke finnes`() {
+    fun `startEndring kan ikke endre rapporteringsperiode hvis perioden ikke finnes`() {
         coEvery { meldepliktService.hentInnsendteRapporteringsperioder(any(), any()) } returns null
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
 
         shouldThrow<RuntimeException> {
             runBlocking { rapporteringService.startEndring("123", ident, token) }
         }
+    }
+
+    @Test
+    fun `startEndring setter arsakBrukerHarIkkeSvart til KORRIGERT_MELDEKORT når feature toggle er skrudd på`() {
+        every { unleash.isEnabled(any()) } returns true
+        coEvery { meldepliktService.hentInnsendteRapporteringsperioder(any(), any()) } returns
+            listOf(rapporteringsperiodeListe.first().copy(id = "123", kanEndres = true).toAdapterRapporteringsperiode())
+        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(ident) } returns emptyList()
+        coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        coEvery {
+            rapporteringRepository.finnesRapporteringsperiode(
+                any(),
+                any(),
+            )
+        } returns true andThen true andThen false
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
+
+        val response = runBlocking { rapporteringService.startEndring("123", ident, token) }
+
+        response.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe KORRIGERT_MELDEKORT
+    }
+
+    @Test
+    fun `startEndring setter arsakBrukerHarIkkeSvart til null når feature toggle er skrudd av`() {
+        every { unleash.isEnabled(any()) } returns false
+        coEvery { meldepliktService.hentInnsendteRapporteringsperioder(any(), any()) } returns
+            listOf(rapporteringsperiodeListe.first().copy(id = "123", kanEndres = true).toAdapterRapporteringsperiode())
+        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(ident) } returns emptyList()
+        coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        coEvery {
+            rapporteringRepository.finnesRapporteringsperiode(
+                any(),
+                any(),
+            )
+        } returns true andThen true andThen false
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
+
+        val response = runBlocking { rapporteringService.startEndring("123", ident, token) }
+
+        response.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
     }
 
     @Test
