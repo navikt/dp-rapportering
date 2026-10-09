@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.service
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.Headers
 import io.ktor.server.plugins.BadRequestException
+import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.erBekreftelseOvertatt
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
@@ -10,6 +11,8 @@ import no.nav.dagpenger.rapportering.connector.toRapporteringsperioder
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
+import no.nav.dagpenger.rapportering.model.KortType
+import no.nav.dagpenger.rapportering.model.KortType.Etterregistrert
 import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.PeriodeData
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
@@ -19,10 +22,16 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
 import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toKorrigerMeldekortHendelse
 import no.nav.dagpenger.rapportering.model.toPeriodeData
 import no.nav.dagpenger.rapportering.model.toRapporteringsperioder
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.ARBEIDSSØKERPERIODEN_ER_I_FORTID
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.ETTERREGISTRERT_MELDEKORT
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.KORRIGERT_MELDEKORT
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.repository.TidspunktjusteringRepository
@@ -49,6 +58,11 @@ class RapporteringService(
     private val personregisterService: PersonregisterService,
     private val meldekortregisterService: MeldekortregisterService,
 ) {
+    suspend fun hentRapporteringsperiodeFraDb(
+        rapporteringId: String,
+        ident: String,
+    ): Rapporteringsperiode? = rapporteringRepository.hentRapporteringsperiode(rapporteringId, ident)
+
     suspend fun hentPeriode(
         rapporteringId: String,
         ident: String,
@@ -87,7 +101,7 @@ class RapporteringService(
             ?.map { periode ->
                 val periodeFraDb = rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
                 if (periodeFraDb != null && periodeFraDb.status.ordinal < periode.status.ordinal) {
-                    rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
+                    rapporteringRepository.oppdaterRapporteringsperiode(periode, ident)
                     rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
                         ?: throw RuntimeException("Fant ikke rapporteringsperiode, selv om den er lagret")
                 } else {
@@ -168,9 +182,79 @@ class RapporteringService(
         hentRapporteringsperioder(ident, token)
             ?.firstOrNull { it.id == rapporteringId }
             ?.let { lagreEllerOppdaterPeriode(it, ident) }
+            ?.let { utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(it.id, ident, token) }
             ?.also { if (!it.kanSendes) throw BadRequestException("Perioden med id $rapporteringId kan ikke sendes inn") }
             ?: throw RuntimeException("Fant ingen periode med id $rapporteringId")
     }
+
+    suspend fun utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+        rapporteringsperiodeId: String,
+        ident: String,
+        token: String,
+    ): Rapporteringsperiode {
+        val rapporteringsperiode =
+            rapporteringRepository.hentRapporteringsperiode(rapporteringsperiodeId, ident)
+                ?: throw RuntimeException("Fant ingen rapporteringsperiode med id $rapporteringsperiodeId")
+
+        val årsak =
+            if (unleash.isEnabled("dp-rapportering-frontend-disableSpm5")) {
+                utledÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus(rapporteringsperiode, ident, token)
+            } else {
+                null
+            }
+
+        val svar =
+            if (årsak == null) {
+                rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.svarFraBruker
+            } else {
+                null
+            }
+
+        val rapporteringsperiodeMedÅrsakBrukerIkkeHarSvartPåSpørsmålOmArbeidssøkerstatus =
+            rapporteringsperiode.copy(
+                sporsmalOmRegistrertArbeidssoker =
+                    rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.copy(
+                        svarFraBruker = svar,
+                        arsakBrukerHarIkkeSvart = årsak,
+                    ),
+            )
+
+        rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+            rapporteringsperiodeMedÅrsakBrukerIkkeHarSvartPåSpørsmålOmArbeidssøkerstatus.id,
+            ident,
+            rapporteringsperiodeMedÅrsakBrukerIkkeHarSvartPåSpørsmålOmArbeidssøkerstatus
+                .sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart,
+        )
+
+        return rapporteringsperiodeMedÅrsakBrukerIkkeHarSvartPåSpørsmålOmArbeidssøkerstatus
+    }
+
+    private suspend fun utledÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+        rapporteringsperiode: Rapporteringsperiode,
+        ident: String,
+        token: String,
+    ): ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus? =
+        when {
+            rapporteringsperiode.erEndring() -> {
+                KORRIGERT_MELDEKORT
+            }
+
+            rapporteringsperiode.type == Etterregistrert -> {
+                ETTERREGISTRERT_MELDEKORT
+            }
+
+            rapporteringsperiode.periode.tilOgMed.plusDays(14) < LocalDate.now() -> {
+                ARBEIDSSØKERPERIODEN_ER_I_FORTID
+            }
+
+            !personregisterService.hentPersonstatus(ident, token).erBekreftelseOvertatt() -> {
+                DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
+            }
+
+            else -> {
+                null
+            }
+        }
 
     suspend fun startEndring(
         rapporteringId: String,
@@ -189,6 +273,7 @@ class RapporteringService(
                 lagreEllerOppdaterPeriode(
                     originalPeriode.copy(
                         id = lagMidlertidigEndringId(ident),
+                        type = KortType.Korrigert,
                         kanEndres = false,
                         kanSendes = true,
                         status = TilUtfylling,
@@ -202,6 +287,19 @@ class RapporteringService(
                                 )
                             },
                         originalId = rapporteringId,
+                        sporsmalOmRegistrertArbeidssoker =
+                            SporsmalOmRegistrertArbeidssoker(
+                                svarFraBruker = null,
+                                arsakBrukerHarIkkeSvart =
+                                    if (unleash.isEnabled(
+                                            "dp-rapportering-frontend-disableSpm5",
+                                        )
+                                    ) {
+                                        KORRIGERT_MELDEKORT
+                                    } else {
+                                        null
+                                    },
+                            ),
                     ),
                     ident,
                 )
@@ -319,9 +417,9 @@ class RapporteringService(
             rapporteringRepository.lagreRapporteringsperiodeOgDager(periodeMedJustertSisteFristForTrekk, ident)
             periodeMedJustertSisteFristForTrekk
         } else {
-            if (periodeFraDb.status.ordinal <= periode.status.ordinal) {
-                rapporteringRepository.oppdaterRapporteringsperiodeFraArena(periode, ident)
-                rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
+            if (periodeFraDb.status.ordinal < periode.status.ordinal) {
+                rapporteringRepository.oppdaterRapporteringsperiode(periode, ident)
+                return rapporteringRepository.hentRapporteringsperiode(periode.id, ident)
                     ?: throw RuntimeException("Fant ikke rapporteringsperiode, selv om den skal ha blitt lagret")
             }
             periodeFraDb
@@ -367,11 +465,21 @@ class RapporteringService(
         ident: String,
         registrertArbeidssoker: Boolean,
     ) {
-        if (rapporteringRepository.hentKanSendes(rapporteringId) != true) {
+        val periode = rapporteringRepository.hentRapporteringsperiode(rapporteringId, ident)
+        if (periode == null || !periode.kanSendes) {
             throw BadRequestException(
                 "Kan ikke oppdatere registrert arbeidssøker for periode med id $rapporteringId (eksisterer ikke eller kan ikke sendes inn)",
             )
         }
+
+        /*
+            TODO: Ta i bruk når frontend er klar
+            if (periode.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart != null) {
+                throw BadRequestException(
+                    "Kan ikke oppdatere registrert arbeidssøker for periode med id $rapporteringId (årsak er ikke null)",
+                )
+            }
+         */
 
         rapporteringRepository.oppdaterRegistrertArbeidssoker(
             rapporteringId,
@@ -527,7 +635,7 @@ class RapporteringService(
                         if (ansvarligSystem == AnsvarligSystem.ARENA) {
                             val bekreftelseSkalSendesFra = periodeTilInnsending.periode.tilOgMed.plusDays(1)
                             if (
-                                periodeTilInnsending.registrertArbeidssoker == false &&
+                                periodeTilInnsending.sporsmalOmRegistrertArbeidssoker.svarFraBruker == false &&
                                 LocalDate.now() < bekreftelseSkalSendesFra
                             ) {
                                 bekreftelsesmeldingRepository.lagreBekreftelsesmelding(

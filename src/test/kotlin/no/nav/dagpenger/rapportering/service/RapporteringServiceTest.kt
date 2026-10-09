@@ -19,11 +19,13 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.runs
 import io.mockk.slot
+import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
+import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.Brukerstatus
@@ -49,15 +51,26 @@ import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Ferdig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Innsendt
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Midlertidig
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.ARBEIDSSØKERPERIODEN_ER_I_FORTID
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.ETTERREGISTRERT_MELDEKORT
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.KORRIGERT_MELDEKORT
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.repository.TidspunktjusteringRepository
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.finnPeriodeKode
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import no.nav.dagpenger.rapportering.utils.januar
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import tools.jackson.core.type.TypeReference
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.databind.ObjectReader
@@ -125,11 +138,17 @@ class RapporteringServiceTest {
 
     @BeforeEach
     fun reset() {
+        mockkObject(unleash)
         testRapid.reset()
 
         coEvery { personregisterService.hentPersonstatus(any(), any()) } returns personstatusMedArena
         coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.ARENA
         coEvery { pdlService.hentNavn(any()) } returns "Test Testesen"
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkObject(unleash)
     }
 
     @Test
@@ -155,7 +174,8 @@ class RapporteringServiceTest {
             kanEndres shouldBe false
             bruttoBelop shouldBe null
             status shouldBe TilUtfylling
-            registrertArbeidssoker shouldBe null
+            sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
         }
     }
 
@@ -179,7 +199,7 @@ class RapporteringServiceTest {
             kanEndres shouldBe false
             bruttoBelop shouldBe null
             status shouldBe Innsendt
-            registrertArbeidssoker shouldBe null
+            sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
         }
 
         val periode1 = runBlocking { rapporteringService.hentPeriode("1", ident, token, hentOriginal = true) }
@@ -195,7 +215,8 @@ class RapporteringServiceTest {
             kanEndres shouldBe false
             bruttoBelop shouldBe null
             status shouldBe Innsendt
-            registrertArbeidssoker shouldBe true
+            sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe true
+            sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe true
         }
 
         val periode2 = runBlocking { rapporteringService.hentPeriode("2", ident, token, hentOriginal = true) }
@@ -211,7 +232,7 @@ class RapporteringServiceTest {
             kanEndres shouldBe false
             bruttoBelop shouldBe null
             status shouldBe Innsendt
-            registrertArbeidssoker shouldBe null
+            sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
         }
     }
 
@@ -233,7 +254,7 @@ class RapporteringServiceTest {
         coEvery { meldepliktService.hentRapporteringsperioder(ident, token) } returns
             rapporteringsperiodeListe.toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns rapporteringsperiodeFraDb
-        coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+        coJustRun { rapporteringRepository.oppdaterRapporteringsperiode(any(), any()) }
         coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
         coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
@@ -251,7 +272,7 @@ class RapporteringServiceTest {
             kanEndres shouldBe false
             bruttoBelop shouldBe null
             status shouldBe TilUtfylling
-            registrertArbeidssoker shouldBe null
+            sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
         }
     }
 
@@ -279,7 +300,7 @@ class RapporteringServiceTest {
             kanEndres shouldBe false
             bruttoBelop shouldBe null
             status shouldBe TilUtfylling
-            registrertArbeidssoker shouldBe null
+            sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
         }
     }
 
@@ -316,7 +337,7 @@ class RapporteringServiceTest {
             kanEndres shouldBe false
             bruttoBelop shouldBe null
             status shouldBe TilUtfylling
-            registrertArbeidssoker shouldBe null
+            sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
         }
     }
 
@@ -328,7 +349,8 @@ class RapporteringServiceTest {
         coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
         coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
-        val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
+        val rapporteringsperioder =
+            runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
         rapporteringsperioder.size shouldBe 4
         rapporteringsperioder[0].id shouldBe "0"
@@ -354,7 +376,8 @@ class RapporteringServiceTest {
         coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(finnPeriodeKode(fom3)) } returns -14
         coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
-        val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
+        val rapporteringsperioder =
+            runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
         rapporteringsperioder.size shouldBe 4
         rapporteringsperioder[0].id shouldBe "0"
@@ -378,13 +401,20 @@ class RapporteringServiceTest {
     @Test
     fun `hent alle rapporteringsperioder kan hente perioder fra dp-meldekortregister`() {
         coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.DP
-        coEvery { meldekortregisterService.hentRapporteringsperioder(any(), any(), MeldekortStatus.TilUtfylling) } returns
+        coEvery {
+            meldekortregisterService.hentRapporteringsperioder(
+                any(),
+                any(),
+                MeldekortStatus.TilUtfylling,
+            )
+        } returns
             meldekortregisterRapporteringsperiodeListe
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), ident) } returns null
         coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
         coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
-        val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
+        val rapporteringsperioder =
+            runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
         rapporteringsperioder[0].id shouldBe "3"
         rapporteringsperioder[1].id shouldBe "2"
@@ -401,17 +431,24 @@ class RapporteringServiceTest {
             lagRapporteringsperiode(
                 id = "1",
                 periode = Periode(fraOgMed = 1.januar, tilOgMed = 14.januar),
-            ).copy(dager = getDager(startDato = 1.januar, aktivitet = Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null)))
+            ).copy(
+                dager =
+                    getDager(
+                        startDato = 1.januar,
+                        aktivitet = Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null),
+                    ),
+            )
         coEvery { rapporteringRepository.hentRapporteringsperiode("2", ident) } returns null
         coEvery { rapporteringRepository.hentRapporteringsperiode("3", ident) } returns null
-        coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+        coJustRun { rapporteringRepository.oppdaterRapporteringsperiode(any(), any()) }
         coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns null
         coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
-        val rapporteringsperioder = runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
+        val rapporteringsperioder =
+            runBlocking { rapporteringService.hentOgOppdaterRapporteringsperioder(ident, token)!! }
 
         // Rapporteringsperiode med ID = 1 oppdateres siden meldepliktConnector returnerer data med høyere status (Innsendt)
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringsperiode(any(), any()) }
 
         rapporteringsperioder[0].id shouldBe "1"
         rapporteringsperioder[0]
@@ -453,6 +490,417 @@ class RapporteringServiceTest {
         throwable.message shouldBe "Fant ingen periode med id 4"
     }
 
+    @Nested
+    inner class UtledningAvÅrsakTilArbeidssøkerstatusMedFeatureTogglePåTest {
+        @BeforeEach
+        fun setUp() {
+            every { unleash.isEnabled("dp-rapportering-frontend-disableSpm5") } returns true
+        }
+
+        @Test
+        fun `årsak settes til KORRIGERT_MELDEKORT for meldekort som både er korrigert og etterregistrert`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()),
+                    type = KortType.Etterregistrert,
+                    status = TilUtfylling,
+                ).copy(originalId = "original-id")
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe KORRIGERT_MELDEKORT
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    KORRIGERT_MELDEKORT,
+                )
+            }
+            coVerify(exactly = 0) { personregisterService.hentPersonstatus(any(), any()) }
+        }
+
+        @Test
+        fun `årsak settes til ETTERREGISTRERT_MELDEKORT når periode er etterregistrert og arbeidssøkerperioden er i fortid`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(60), LocalDate.now().minusDays(47)),
+                    type = KortType.Etterregistrert,
+                )
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe ETTERREGISTRERT_MELDEKORT
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    ETTERREGISTRERT_MELDEKORT,
+                )
+            }
+            coVerify(exactly = 0) { personregisterService.hentPersonstatus(any(), any()) }
+        }
+
+        @Test
+        @Suppress("ktlint:standard:max-line-length")
+        fun `årsak settes til DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS når dagpenger ikke har ansvar for arbeidssøkerstatus`() {
+            val periode =
+                lagRapporteringsperiode(id = "1", periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()))
+            coEvery { personregisterService.hentPersonstatus(ident, token) } returns
+                personstatusMedArena.copy(
+                    overtattBekreftelse = false,
+                )
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe
+                DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS,
+                )
+            }
+        }
+
+        @Test
+        fun `årsak settes til ARBEIDSSØKERPERIODEN_ER_I_FORTID når arbeidssøkerperioden er i fortid og dagpenger har ikke ansvar`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(30), LocalDate.now().minusDays(17)),
+                )
+            coEvery { personregisterService.hentPersonstatus(ident, token) } returns
+                personstatusMedArena.copy(
+                    overtattBekreftelse = false,
+                )
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe ARBEIDSSØKERPERIODEN_ER_I_FORTID
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    ARBEIDSSØKERPERIODEN_ER_I_FORTID,
+                )
+            }
+        }
+
+        @Test
+        fun `årsak settes til ARBEIDSSØKERPERIODEN_ER_I_FORTID når arbeidssøkerperioden er i fortid`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(30), LocalDate.now().minusDays(17)),
+                )
+            coEvery { personregisterService.hentPersonstatus(ident, token) } returns personstatusMedArena
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe ARBEIDSSØKERPERIODEN_ER_I_FORTID
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    ARBEIDSSØKERPERIODEN_ER_I_FORTID,
+                )
+            }
+        }
+
+        @Test
+        fun `årsak settes til null når bruker skal svare på spørsmål om arbeidssøkerstatus`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(10), LocalDate.now().plusDays(3)),
+                )
+            coEvery { personregisterService.hentPersonstatus(ident, token) } returns personstatusMedArena
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus("1", ident, null)
+            }
+        }
+    }
+
+    @Nested
+    inner class UtledningAvÅrsakTilArbeidssøkerstatusMedFeatureToggleAvTest {
+        @BeforeEach
+        fun setUp() {
+            every { unleash.isEnabled("dp-rapportering-frontend-disableSpm5") } returns false
+        }
+
+        @Test
+        fun `årsak settes til null for meldekort som både er korrigert og etterregistrert`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()),
+                    type = KortType.Etterregistrert,
+                    status = TilUtfylling,
+                ).copy(originalId = "original-id")
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    null,
+                )
+            }
+            coVerify(exactly = 0) { personregisterService.hentPersonstatus(any(), any()) }
+        }
+
+        @Test
+        fun `årsak settes til null når periode er etterregistrert og arbeidssøkerperioden er i fortid`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(60), LocalDate.now().minusDays(47)),
+                    type = KortType.Etterregistrert,
+                )
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    null,
+                )
+            }
+            coVerify(exactly = 0) { personregisterService.hentPersonstatus(any(), any()) }
+        }
+
+        @Test
+        fun `årsak settes til null når dagpenger ikke har ansvar for arbeidssøkerstatus`() {
+            val periode =
+                lagRapporteringsperiode(id = "1", periode = Periode(LocalDate.now().minusDays(13), LocalDate.now()))
+            coEvery { personregisterService.hentPersonstatus(ident, token) } returns
+                personstatusMedArena.copy(
+                    overtattBekreftelse = false,
+                )
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    null,
+                )
+            }
+        }
+
+        @Test
+        fun `årsak settes til null når arbeidssøkerperioden er i fortid og dagpenger har ikke ansvar for spørsmål om arbeidssøkerstatus`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(30), LocalDate.now().minusDays(17)),
+                )
+            coEvery { personregisterService.hentPersonstatus(ident, token) } returns
+                personstatusMedArena.copy(
+                    overtattBekreftelse = false,
+                )
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+                    "1",
+                    ident,
+                    null,
+                )
+            }
+        }
+
+        @Test
+        fun `årsak settes til null når arbeidssøkerperioden er i fortid`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(30), LocalDate.now().minusDays(17)),
+                )
+            coEvery { personregisterService.hentPersonstatus(ident, token) } returns personstatusMedArena
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+        }
+
+        @Test
+        fun `årsak settes til null når bruker skal svare på spørsmål om arbeidssøkerstatus`() {
+            val periode =
+                lagRapporteringsperiode(
+                    id = "1",
+                    periode = Periode(LocalDate.now().minusDays(10), LocalDate.now().plusDays(3)),
+                )
+            coEvery { personregisterService.hentPersonstatus(ident, token) } returns personstatusMedArena
+            coEvery { rapporteringRepository.hentRapporteringsperiode("1", ident) } returns periode
+            coJustRun {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(any(), any(), any())
+            }
+
+            val oppdatert =
+                runBlocking {
+                    rapporteringService.utledOgLagreOmBrukerSkalSvarePåSpørsmålOmArbeidssøkerstatus(
+                        "1",
+                        ident,
+                        token,
+                    )
+                }
+
+            oppdatert.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
+            oppdatert.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+            coVerify(exactly = 1) {
+                rapporteringRepository.oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus("1", ident, null)
+            }
+        }
+    }
+
     @Test
     fun `kan lagre aktivitet på eksisterende rapporteringsperiode`() {
         val aktiviteter = listOf(Aktivitet(id = UUIDv7.newUuid(), type = Utdanning, timer = null))
@@ -478,12 +926,43 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan oppdatere om bruker vil fortsette som registrert arbeidssoker`() {
-        coEvery { rapporteringRepository.hentKanSendes(eq("1")) } returns true
-        coJustRun { rapporteringRepository.oppdaterRegistrertArbeidssoker(eq("1"), eq("12345678910"), eq(true)) }
+        val id = "1"
+        val ident = "12345678910"
 
-        runBlocking { rapporteringService.oppdaterRegistrertArbeidssoker("1", "12345678910", true) }
+        coEvery { rapporteringRepository.hentRapporteringsperiode(eq(id), eq(ident)) } returns
+            lagRapporteringsperiode(
+                id = id,
+                periode = Periode(fraOgMed = 1.januar, tilOgMed = 14.januar),
+                arsakBrukerHarIkkeSvart = null,
+            )
+        coJustRun { rapporteringRepository.oppdaterRegistrertArbeidssoker(eq(id), eq(ident), eq(true)) }
 
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterRegistrertArbeidssoker("1", "12345678910", true) }
+        runBlocking { rapporteringService.oppdaterRegistrertArbeidssoker(id, ident, true) }
+
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterRegistrertArbeidssoker(id, ident, true) }
+    }
+
+    // TODO: Ta i bruk når frontend er klar
+    @Disabled
+    @Test
+    fun `kan ikke oppdatere om bruker vil fortsette som registrert arbeidssoker hvis årsak ikke er null`() {
+        val id = "1"
+        val ident = "12345678910"
+
+        coEvery { rapporteringRepository.hentRapporteringsperiode(eq(id), eq(ident)) } returns
+            lagRapporteringsperiode(
+                id = id,
+                periode = Periode(fraOgMed = 1.januar, tilOgMed = 14.januar),
+                arsakBrukerHarIkkeSvart = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+            )
+        coJustRun { rapporteringRepository.oppdaterRegistrertArbeidssoker(eq(id), eq(ident), eq(true)) }
+
+        val exception =
+            assertThrows<BadRequestException> {
+                runBlocking { rapporteringService.oppdaterRegistrertArbeidssoker(id, ident, true) }
+            }
+
+        exception.message shouldBe "Kan ikke oppdatere registrert arbeidssøker for periode med id $id (årsak er ikke null)"
     }
 
     @Test
@@ -499,21 +978,38 @@ class RapporteringServiceTest {
     @Test
     fun `kan oppdatere rapporteringstype`() {
         coEvery { rapporteringRepository.hentKanSendes(eq("1")) } returns true
-        coJustRun { rapporteringRepository.oppdaterRapporteringstype(eq("1"), eq("12345678910"), eq("harIngenAktivitet")) }
+        coJustRun {
+            rapporteringRepository.oppdaterRapporteringstype(
+                eq("1"),
+                eq("12345678910"),
+                eq("harIngenAktivitet"),
+            )
+        }
 
         runBlocking { rapporteringService.oppdaterRapporteringstype("1", "12345678910", "harIngenAktivitet") }
 
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringstype("1", "12345678910", "harIngenAktivitet") }
+        coVerify(exactly = 1) {
+            rapporteringRepository.oppdaterRapporteringstype(
+                "1",
+                "12345678910",
+                "harIngenAktivitet",
+            )
+        }
     }
 
     @Test
-    fun `kan endre rapporteringsperiode`() {
+    fun `startEndring kan endre rapporteringsperiode`() {
         coEvery { meldepliktService.hentInnsendteRapporteringsperioder(any(), any()) } returns
             listOf(rapporteringsperiodeListe.first().copy(id = "123", kanEndres = true).toAdapterRapporteringsperiode())
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(ident) } returns emptyList()
         coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
-        coEvery { rapporteringRepository.finnesRapporteringsperiode(any(), any()) } returns true andThen true andThen false
+        coEvery {
+            rapporteringRepository.finnesRapporteringsperiode(
+                any(),
+                any(),
+            )
+        } returns true andThen true andThen false
         coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
 
         val response = runBlocking { rapporteringService.startEndring("123", ident, token) }
@@ -526,9 +1022,11 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `kan ikke endre rapporteringsperiode som ikke kan endres`() {
+    fun `startEndring kan ikke endre rapporteringsperiode som ikke kan endres`() {
         coEvery { meldepliktService.hentInnsendteRapporteringsperioder(any(), any()) } returns
-            listOf(rapporteringsperiodeListe.first().copy(id = "123", kanEndres = false).toAdapterRapporteringsperiode())
+            listOf(
+                rapporteringsperiodeListe.first().copy(id = "123", kanEndres = false).toAdapterRapporteringsperiode(),
+            )
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
         shouldThrow<IllegalArgumentException> {
@@ -537,7 +1035,7 @@ class RapporteringServiceTest {
     }
 
     @Test
-    fun `kan ikke endre rapporteringsperiode hvis perioden ikke finnes`() {
+    fun `startEndring kan ikke endre rapporteringsperiode hvis perioden ikke finnes`() {
         coEvery { meldepliktService.hentInnsendteRapporteringsperioder(any(), any()) } returns null
         coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
 
@@ -547,13 +1045,56 @@ class RapporteringServiceTest {
     }
 
     @Test
+    fun `startEndring setter arsakBrukerHarIkkeSvart til KORRIGERT_MELDEKORT når feature toggle er skrudd på`() {
+        every { unleash.isEnabled(any()) } returns true
+        coEvery { meldepliktService.hentInnsendteRapporteringsperioder(any(), any()) } returns
+            listOf(rapporteringsperiodeListe.first().copy(id = "123", kanEndres = true).toAdapterRapporteringsperiode())
+        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(ident) } returns emptyList()
+        coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        coEvery {
+            rapporteringRepository.finnesRapporteringsperiode(
+                any(),
+                any(),
+            )
+        } returns true andThen true andThen false
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
+
+        val response = runBlocking { rapporteringService.startEndring("123", ident, token) }
+
+        response.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe KORRIGERT_MELDEKORT
+    }
+
+    @Test
+    fun `startEndring setter arsakBrukerHarIkkeSvart til null når feature toggle er skrudd av`() {
+        every { unleash.isEnabled(any()) } returns false
+        coEvery { meldepliktService.hentInnsendteRapporteringsperioder(any(), any()) } returns
+            listOf(rapporteringsperiodeListe.first().copy(id = "123", kanEndres = true).toAdapterRapporteringsperiode())
+        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns null
+        coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(ident) } returns emptyList()
+        coJustRun { rapporteringRepository.lagreRapporteringsperiodeOgDager(any(), any()) }
+        coEvery {
+            rapporteringRepository.finnesRapporteringsperiode(
+                any(),
+                any(),
+            )
+        } returns true andThen true andThen false
+        coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns null
+
+        val response = runBlocking { rapporteringService.startEndring("123", ident, token) }
+
+        response.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe null
+    }
+
+    @Test
     fun `kan hente innsendte rapporteringsperioder fra dp-meldekortregister`() {
         coEvery { personregisterService.hentAnsvarligSystem(any(), any()) } returns AnsvarligSystem.DP
         coEvery { meldekortregisterService.hentRapporteringsperioder(any(), any(), MeldekortStatus.Innsendt) } returns
             meldekortregisterRapporteringsperiodeListe
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
-        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
+        val innsendteRapporteringsperioder =
+            runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
         innsendteRapporteringsperioder.size shouldBe 3
         innsendteRapporteringsperioder[0].id shouldBe "1"
@@ -571,7 +1112,8 @@ class RapporteringServiceTest {
                 .toAdapterRapporteringsperioder()
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns emptyList()
 
-        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
+        val innsendteRapporteringsperioder =
+            runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
         innsendteRapporteringsperioder.size shouldBe 4
         innsendteRapporteringsperioder[0].id shouldBe "3"
@@ -593,7 +1135,8 @@ class RapporteringServiceTest {
                 lagRapporteringsperiode("5", Periode(15.januar, 28.januar)),
             )
 
-        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
+        val innsendteRapporteringsperioder =
+            runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
         innsendteRapporteringsperioder.size shouldBe 5
         innsendteRapporteringsperioder[0].id shouldBe "3"
@@ -612,11 +1155,22 @@ class RapporteringServiceTest {
         coEvery { meldepliktService.hentInnsendteRapporteringsperioder(any(), any()) } returns perioderFraArena
         coEvery { rapporteringRepository.hentLagredeRapporteringsperioder(any()) } returns
             listOf(
-                lagRapporteringsperiode("1", Periode(fom1, fom1.plusDays(13)), status = Ferdig, registrertArbeidssoker = true),
-                lagRapporteringsperiode("2", Periode(fom2, fom2.plusDays(13)), status = Innsendt, registrertArbeidssoker = true),
+                lagRapporteringsperiode(
+                    "1",
+                    Periode(fom1, fom1.plusDays(13)),
+                    status = Ferdig,
+                    svarFraBruker = true,
+                ),
+                lagRapporteringsperiode(
+                    "2",
+                    Periode(fom2, fom2.plusDays(13)),
+                    status = Innsendt,
+                    svarFraBruker = true,
+                ),
             )
 
-        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
+        val innsendteRapporteringsperioder =
+            runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
         // Perioden med ID = 3 finnes ikke i databasen og skal ikke endres
         // Perioden med ID = 2 har lavere status (Innsendt) i databasen enn i Arena (Ferdig) og skal ikke endres
@@ -624,13 +1178,17 @@ class RapporteringServiceTest {
         // Perioden med ID = 0 er korrigert og må ha registrertArbeidssoker = null
         innsendteRapporteringsperioder.size shouldBe 4
         innsendteRapporteringsperioder[0].id shouldBe "3"
-        innsendteRapporteringsperioder[0].registrertArbeidssoker shouldBe false
+        innsendteRapporteringsperioder[0].sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe false
+        innsendteRapporteringsperioder[0].sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe false
         innsendteRapporteringsperioder[1].id shouldBe "2"
-        innsendteRapporteringsperioder[1].registrertArbeidssoker shouldBe null
+        innsendteRapporteringsperioder[1].sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+        innsendteRapporteringsperioder[1].sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
         innsendteRapporteringsperioder[2].id shouldBe "1"
-        innsendteRapporteringsperioder[2].registrertArbeidssoker shouldBe true
+        innsendteRapporteringsperioder[2].sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe true
+        innsendteRapporteringsperioder[2].sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe true
         innsendteRapporteringsperioder[3].id shouldBe "0"
-        innsendteRapporteringsperioder[3].registrertArbeidssoker shouldBe null
+        innsendteRapporteringsperioder[3].sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+        innsendteRapporteringsperioder[3].sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
     }
 
     @Test
@@ -666,7 +1224,8 @@ class RapporteringServiceTest {
                 lagRapporteringsperiode("5", Periode(15.januar, 28.januar)),
             )
 
-        val innsendteRapporteringsperioder = runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
+        val innsendteRapporteringsperioder =
+            runBlocking { rapporteringService.hentInnsendteRapporteringsperioder(ident, token)!! }
 
         innsendteRapporteringsperioder.size shouldBe 6
         innsendteRapporteringsperioder[0].id shouldBe "10"
@@ -680,7 +1239,11 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan sende inn rapporteringsperiode`() {
-        val rapporteringsperiode = rapporteringsperiodeListe.last().copy(registrertArbeidssoker = true)
+        val rapporteringsperiode =
+            rapporteringsperiodeListe.last().copy(
+                sporsmalOmRegistrertArbeidssoker =
+                    rapporteringsperiodeListe.last().sporsmalOmRegistrertArbeidssoker.copy(svarFraBruker = true),
+            )
 
         coEvery { meldepliktService.sendinnRapporteringsperiode(any(), token) } returns
             InnsendingResponse(
@@ -694,7 +1257,11 @@ class RapporteringServiceTest {
 
     @Test
     fun `kan sende inn rapporteringsperiode til dp-meldekortregister`() {
-        val rapporteringsperiode = rapporteringsperiodeListe.last().copy(registrertArbeidssoker = true)
+        val rapporteringsperiode =
+            rapporteringsperiodeListe.last().copy(
+                sporsmalOmRegistrertArbeidssoker =
+                    rapporteringsperiodeListe.last().sporsmalOmRegistrertArbeidssoker.copy(svarFraBruker = true),
+            )
 
         coEvery { personregisterService.hentPersonstatus(eq(ident), any()) } returns personstatusMedDp
         coEvery { meldekortregisterService.sendinnRapporteringsperiode(any(), token) } returns
@@ -722,7 +1289,7 @@ class RapporteringServiceTest {
             lagRapporteringsperiode(
                 id = "2",
                 periode = Periode(fraOgMed = tom.minusDays(13), tilOgMed = tom),
-                registrertArbeidssoker = true,
+                svarFraBruker = true,
             )
 
         coEvery { personregisterService.hentPersonstatus(eq(ident), any()) } returns
@@ -754,7 +1321,7 @@ class RapporteringServiceTest {
             lagRapporteringsperiode(
                 id = "2",
                 periode = Periode(fraOgMed = tom.minusDays(13), tilOgMed = tom),
-                registrertArbeidssoker = false,
+                svarFraBruker = false,
             )
 
         coEvery { personregisterService.hentPersonstatus(eq(ident), any()) } returns personstatusMedDp
@@ -783,7 +1350,7 @@ class RapporteringServiceTest {
             lagRapporteringsperiode(
                 id = "2",
                 periode = Periode(fraOgMed = tom.minusDays(13), tilOgMed = tom),
-                registrertArbeidssoker = false,
+                svarFraBruker = false,
             )
 
         coEvery { meldepliktService.sendinnRapporteringsperiode(any(), token) } returns
@@ -792,7 +1359,13 @@ class RapporteringServiceTest {
                 status = "OK",
                 feil = listOf(),
             )
-        coJustRun { bekreftelsesmeldingRepository.lagreBekreftelsesmelding(eq(rapporteringsperiode.id), eq(ident), eq(skalSendes)) }
+        coJustRun {
+            bekreftelsesmeldingRepository.lagreBekreftelsesmelding(
+                eq(rapporteringsperiode.id),
+                eq(ident),
+                eq(skalSendes),
+            )
+        }
 
         sendInn(rapporteringsperiode)
 
@@ -814,7 +1387,7 @@ class RapporteringServiceTest {
             lagRapporteringsperiode(
                 id = "2",
                 periode = Periode(fraOgMed = LocalDate.now().minusDays(14), tilOgMed = LocalDate.now().minusDays(1)),
-                registrertArbeidssoker = false,
+                svarFraBruker = false,
             )
 
         coEvery { personregisterService.hentPersonstatus(eq(ident), any()) } returns personstatusMedDp
@@ -837,7 +1410,7 @@ class RapporteringServiceTest {
             lagRapporteringsperiode(
                 id = "2",
                 periode = Periode(fraOgMed = LocalDate.now().minusDays(14), tilOgMed = LocalDate.now().minusDays(1)),
-                registrertArbeidssoker = false,
+                svarFraBruker = false,
             )
 
         coEvery { meldepliktService.sendinnRapporteringsperiode(any(), token) } returns
@@ -859,7 +1432,7 @@ class RapporteringServiceTest {
             lagRapporteringsperiode(
                 id = "2",
                 periode = Periode(fraOgMed = LocalDate.now().minusDays(14), tilOgMed = LocalDate.now().minusDays(1)),
-                registrertArbeidssoker = true,
+                svarFraBruker = true,
             )
 
         coEvery { meldepliktService.sendinnRapporteringsperiode(any(), token) } returns
@@ -881,14 +1454,31 @@ class RapporteringServiceTest {
             lagRapporteringsperiode(
                 id = "2",
                 periode = Periode(fraOgMed = fom1, tilOgMed = fom1.plusDays(13)),
-                registrertArbeidssoker = false,
+                svarFraBruker = false,
             )
 
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
         coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
-        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, any(), false, any(), false) }
-        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, true, false, Innsendt) }
+        coJustRun {
+            rapporteringRepository.oppdaterPeriodeEtterInnsending(
+                rapporteringsperiode.id,
+                ident,
+                any(),
+                false,
+                any(),
+                false,
+            )
+        }
+        coJustRun {
+            rapporteringRepository.oppdaterPeriodeEtterInnsending(
+                rapporteringsperiode.id,
+                ident,
+                true,
+                false,
+                Innsendt,
+            )
+        }
         coEvery { meldepliktService.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
         val sendtPeriode = slot<AdapterRapporteringsperiode>()
         coEvery { meldepliktService.sendinnRapporteringsperiode(capture(sendtPeriode), token) } returns
@@ -969,7 +1559,8 @@ class RapporteringServiceTest {
                 status = TilUtfylling,
                 begrunnelseEndring = "Endring",
                 originalId = originalPeriode.id,
-                registrertArbeidssoker = true,
+                sporsmalOmRegistrertArbeidssoker =
+                    originalPeriode.sporsmalOmRegistrertArbeidssoker.copy(svarFraBruker = true),
             )
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
@@ -1042,7 +1633,8 @@ class RapporteringServiceTest {
                 status = TilUtfylling,
                 begrunnelseEndring = "Endring",
                 originalId = originalPeriode.id,
-                registrertArbeidssoker = true,
+                sporsmalOmRegistrertArbeidssoker =
+                    originalPeriode.sporsmalOmRegistrertArbeidssoker.copy(svarFraBruker = true),
             )
         coEvery { personregisterService.hentPersonstatus(eq(ident), any()) } returns personstatusMedDp
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), AnsvarligSystem.DP) } returns mockk()
@@ -1113,7 +1705,9 @@ class RapporteringServiceTest {
         shouldThrow<BadRequestException> {
             runBlocking {
                 rapporteringService.sendRapporteringsperiode(
-                    rapporteringsperiodeListe.first().copy(status = TilUtfylling, begrunnelseEndring = null, originalId = "125"),
+                    rapporteringsperiodeListe
+                        .first()
+                        .copy(status = TilUtfylling, begrunnelseEndring = null, originalId = "125"),
                     token,
                     ident,
                     loginLevel,
@@ -1134,7 +1728,12 @@ class RapporteringServiceTest {
 
         runBlocking { rapporteringService.lagreEllerOppdaterPeriode(rapporteringsperiode, ident) }
 
-        coVerify(exactly = 1) { rapporteringRepository.lagreRapporteringsperiodeOgDager(eq(rapporteringsperiode), eq(ident)) }
+        coVerify(exactly = 1) {
+            rapporteringRepository.lagreRapporteringsperiodeOgDager(
+                eq(rapporteringsperiode),
+                eq(ident),
+            )
+        }
     }
 
     @Test
@@ -1164,20 +1763,28 @@ class RapporteringServiceTest {
         lagretRapporteringsperiode.begrunnelseEndring shouldBe rapporteringsperiode.begrunnelseEndring
         lagretRapporteringsperiode.status shouldBe rapporteringsperiode.status
         lagretRapporteringsperiode.mottattDato shouldBe rapporteringsperiode.mottattDato
-        lagretRapporteringsperiode.registrertArbeidssoker shouldBe rapporteringsperiode.registrertArbeidssoker
+        lagretRapporteringsperiode.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe
+            rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.svarFraBruker
+        lagretRapporteringsperiode.sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe
+            rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.svarFraBruker
         lagretRapporteringsperiode.originalId shouldBe rapporteringsperiode.originalId
         lagretRapporteringsperiode.rapporteringstype shouldBe rapporteringsperiode.rapporteringstype
         lagretRapporteringsperiode.html shouldBe rapporteringsperiode.html
     }
 
     @Test
-    fun `lagreEllerOppdaterPeriode oppdaterer perioden hvis den finnes i databasen fra før`() {
-        coEvery { rapporteringRepository.hentRapporteringsperiode(any(), any()) } returns rapporteringsperiodeListe.first()
-        coJustRun { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+    fun `lagreEllerOppdaterPeriode oppdaterer perioden hvis den finnes i databasen fra før med lavere status`() {
+        coEvery {
+            rapporteringRepository.hentRapporteringsperiode(
+                any(),
+                any(),
+            )
+        } returns rapporteringsperiodeListe.first()
+        coJustRun { rapporteringRepository.oppdaterRapporteringsperiode(any(), any()) }
 
-        runBlocking { rapporteringService.lagreEllerOppdaterPeriode(rapporteringsperiodeListe.first(), ident) }
+        runBlocking { rapporteringService.lagreEllerOppdaterPeriode(rapporteringsperiodeListe.first().copy(status = Innsendt), ident) }
 
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+        coVerify(exactly = 1) { rapporteringRepository.oppdaterRapporteringsperiode(any(), any()) }
     }
 
     @Test
@@ -1187,7 +1794,7 @@ class RapporteringServiceTest {
 
         runBlocking { rapporteringService.lagreEllerOppdaterPeriode(rapporteringsperiodeListe.first(), ident) }
 
-        coVerify(exactly = 0) { rapporteringRepository.oppdaterRapporteringsperiodeFraArena(any(), any()) }
+        coVerify(exactly = 0) { rapporteringRepository.oppdaterRapporteringsperiode(any(), any()) }
     }
 
     @Test
@@ -1260,8 +1867,25 @@ class RapporteringServiceTest {
         coEvery { journalfoeringService.journalfoer(any(), any(), any(), any(), any()) } returns mockk()
         coEvery { rapporteringRepository.hentKanSendes(any()) } returns true
         coJustRun { rapporteringRepository.settKanSendes(rapporteringsperiode.id, ident, false) }
-        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, any(), false, any(), false) }
-        coJustRun { rapporteringRepository.oppdaterPeriodeEtterInnsending(rapporteringsperiode.id, ident, true, false, Innsendt) }
+        coJustRun {
+            rapporteringRepository.oppdaterPeriodeEtterInnsending(
+                rapporteringsperiode.id,
+                ident,
+                any(),
+                false,
+                any(),
+                false,
+            )
+        }
+        coJustRun {
+            rapporteringRepository.oppdaterPeriodeEtterInnsending(
+                rapporteringsperiode.id,
+                ident,
+                true,
+                false,
+                Innsendt,
+            )
+        }
         coEvery { meldepliktService.hentPerson(any(), any()) } returns Person(1L, "TESTESSEN", "TEST", "NO", "EMELD")
         coEvery { kallLoggService.lagreKafkaUtKallLogg(eq(ident)) } returns 1
         coEvery { kallLoggService.lagreRequest(eq(1), any()) } just runs
@@ -1281,7 +1905,15 @@ class RapporteringServiceTest {
                 journalfoeringService.journalfoer(any(), any(), any(), any(), any())
             }
         }
-        coVerify(exactly = 1) { rapporteringRepository.oppdaterPeriodeEtterInnsending(any(), any(), any(), any(), any()) }
+        coVerify(exactly = 1) {
+            rapporteringRepository.oppdaterPeriodeEtterInnsending(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        }
     }
 
     private fun checkRapid(
@@ -1350,24 +1982,24 @@ val rapporteringsperiodeListe =
         lagRapporteringsperiode(
             id = "3",
             periode = Periode(fraOgMed = fom3, tilOgMed = fom3.plusDays(13)),
-            registrertArbeidssoker = false,
+            svarFraBruker = false,
         ),
         lagRapporteringsperiode(
             id = "0",
             periode = Periode(fraOgMed = fom0, tilOgMed = fom0.plusDays(13)),
-            registrertArbeidssoker = true,
+            svarFraBruker = true,
             type = KortType.Korrigert,
         ),
         lagRapporteringsperiode(
             id = "1",
             periode = Periode(fraOgMed = fom1, fom1.plusDays(13)),
             status = Innsendt,
-            registrertArbeidssoker = true,
+            svarFraBruker = true,
         ),
         lagRapporteringsperiode(
             id = "2",
             periode = Periode(fraOgMed = fom2, tilOgMed = fom2.plusDays(13)),
-            registrertArbeidssoker = null,
+            svarFraBruker = null,
         ),
     )
 
@@ -1383,7 +2015,8 @@ fun lagRapporteringsperiode(
     periode: Periode,
     status: RapporteringsperiodeStatus = TilUtfylling,
     type: KortType = KortType.Ordinaert,
-    registrertArbeidssoker: Boolean? = null,
+    svarFraBruker: Boolean? = null,
+    arsakBrukerHarIkkeSvart: ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus? = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
 ) = Rapporteringsperiode(
     id = id,
     type = type,
@@ -1395,7 +2028,11 @@ fun lagRapporteringsperiode(
     kanEndres = false,
     bruttoBelop = null,
     status = status,
-    registrertArbeidssoker = registrertArbeidssoker,
+    sporsmalOmRegistrertArbeidssoker =
+        SporsmalOmRegistrertArbeidssoker(
+            svarFraBruker = svarFraBruker,
+            arsakBrukerHarIkkeSvart = arsakBrukerHarIkkeSvart,
+        ),
     begrunnelseEndring = null,
     originalId = null,
     rapporteringstype = null,

@@ -19,6 +19,7 @@ import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
 import tools.jackson.core.type.TypeReference
 import java.time.LocalDate
 
@@ -128,10 +129,23 @@ fun rapporteringsperiodeFor(
     kanEndres = kanEndres,
     status = status,
     bruttoBelop = bruttoBelop?.toDouble(),
-    registrertArbeidssoker = registrertArbeidssoker,
+    sporsmalOmRegistrertArbeidssoker =
+        SporsmalOmRegistrertArbeidssoker(
+            svarFraBruker = registrertArbeidssoker,
+            arsakBrukerHarIkkeSvart = null,
+        ),
     begrunnelseEndring = begrunnelseEndring,
     originalId = originalId,
     rapporteringstype = rapporteringstype,
     mottattDato = mottattDato,
     opprettetAv = OpprettetAv.Dagpenger,
 )
+
+fun Rapporteringsperiode.toRapporteringsperiodeRequest() =
+    RapporteringsperiodeRequest(
+        id = id,
+        dager = dager,
+        begrunnelseEndring = begrunnelseEndring,
+        registrertArbeidssoker = sporsmalOmRegistrertArbeidssoker.svarFraBruker,
+        rapporteringstype = rapporteringstype,
+    )
