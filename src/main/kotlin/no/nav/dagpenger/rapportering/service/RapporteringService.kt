@@ -3,6 +3,7 @@ package no.nav.dagpenger.rapportering.service
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.Headers
 import io.ktor.server.plugins.BadRequestException
+import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.erBekreftelseOvertatt
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
@@ -195,7 +196,12 @@ class RapporteringService(
             rapporteringRepository.hentRapporteringsperiode(rapporteringsperiodeId, ident)
                 ?: throw RuntimeException("Fant ingen rapporteringsperiode med id $rapporteringsperiodeId")
 
-        val årsak = utledÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus(rapporteringsperiode, ident, token)
+        val årsak =
+            if (unleash.isEnabled("dp-rapportering-frontend-disableSpm5")) {
+                utledÅrsakTilAtBrukerIkkeSkalSvarePåSpørsmålOmArbeidssøkerstatus(rapporteringsperiode, ident, token)
+            } else {
+                null
+            }
 
         val svar =
             if (årsak == null) {
@@ -284,7 +290,15 @@ class RapporteringService(
                         sporsmalOmRegistrertArbeidssoker =
                             SporsmalOmRegistrertArbeidssoker(
                                 svarFraBruker = null,
-                                arsakBrukerHarIkkeSvart = KORRIGERT_MELDEKORT,
+                                arsakBrukerHarIkkeSvart =
+                                    if (unleash.isEnabled(
+                                            "dp-rapportering-frontend-disableSpm5",
+                                        )
+                                    ) {
+                                        KORRIGERT_MELDEKORT
+                                    } else {
+                                        null
+                                    },
                             ),
                     ),
                     ident,

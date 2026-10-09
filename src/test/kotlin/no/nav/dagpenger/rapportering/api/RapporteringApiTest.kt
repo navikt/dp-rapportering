@@ -15,6 +15,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.ExternalServicesBuilder
+import io.mockk.every
 import io.mockk.mockkObject
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeResponse
@@ -408,6 +409,9 @@ class RapporteringApiTest : ApiTestSetup() {
         @Test
         fun `start av etterregistrert periode gir rapporteringsperiode med årsak ETTERREGISTRERT_MELDEKORT`() =
             setUpTestApplication {
+                mockkObject(unleash)
+                every { unleash.isEnabled(any()) } returns true
+
                 externalServices {
                     meldepliktAdapter(
                         rapporteringsperioderResponse =
