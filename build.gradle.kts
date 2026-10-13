@@ -84,8 +84,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.1")
     implementation("io.getunleash:unleash-client-java:12.3.0")
     implementation("com.github.ben-manes.caffeine:caffeine:3.3.1")
-    implementation("no.nav.dagpenger:pdl-klient:2026.10.09-12.23.1525536141d8")
-    implementation("com.github.navikt.tbd-libs:naisful-app:20261005.1432")
+    implementation("no.nav.dagpenger:pdl-klient:2026.10.13-12.23.8d41639f42c9")
+    implementation("com.github.navikt.tbd-libs:naisful-app:20261013.1613")
 
     implementation("io.opentelemetry:opentelemetry-api:1.67.0")
 
