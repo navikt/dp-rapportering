@@ -14,6 +14,8 @@ import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus
 import no.nav.dagpenger.rapportering.utils.RepositoryUtils.validateRowsAffected
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import java.time.LocalDate
@@ -48,6 +50,34 @@ class RapporteringRepositoryPostgres(
                     )
                 }
         }
+
+    override suspend fun oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+        rapporteringId: String,
+        ident: String,
+        årsak: ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus?,
+    ) = actionTimer.timedAction("db-oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus") {
+        sessionOf(dataSource).use { session ->
+            session.transaction { tx ->
+                tx
+                    .run(
+                        queryOf(
+                            """
+                            UPDATE rapporteringsperiode
+                            SET årsak_bruker_har_ikke_svart_om_arbeidssøkerstatus = :arsak,
+                                registrert_arbeidssoker =
+                                    CASE WHEN CAST(:arsak AS TEXT) IS NOT NULL THEN NULL ELSE registrert_arbeidssoker END
+                            WHERE id = :id AND ident = :ident
+                            """.trimIndent(),
+                            mapOf(
+                                "arsak" to årsak?.name,
+                                "id" to rapporteringId,
+                                "ident" to ident,
+                            ),
+                        ).asUpdate,
+                    ).validateRowsAffected()
+            }
+        }
+    }
 
     override suspend fun finnesRapporteringsperiode(
         id: String,
@@ -234,9 +264,9 @@ class RapporteringRepositoryPostgres(
         this.run(
             queryOf(
                 """
-                INSERT INTO rapporteringsperiode 
-                (id, type, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id, rapporteringstype, siste_frist_for_trekk) 
-                VALUES (:id, :type, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id, :rapporteringstype, :siste_frist_for_trekk)
+                INSERT INTO rapporteringsperiode
+                (id, type, ident, kan_sendes, kan_sendes_fra, kan_endres, brutto_belop, status, registrert_arbeidssoker, fom, tom, original_id, rapporteringstype, siste_frist_for_trekk, årsak_bruker_har_ikke_svart_om_arbeidssøkerstatus)
+                VALUES (:id, :type, :ident, :kan_sendes, :kan_sendes_fra, :kan_endres, :brutto_belop, :status, :registrert_arbeidssoker, :fom, :tom, :original_id, :rapporteringstype, :siste_frist_for_trekk, :arsak_bruker_har_ikke_svart_om_arbeidssokerstatus)
                 ON CONFLICT DO NOTHING
                 """.trimIndent(),
                 mapOf(
@@ -251,14 +281,18 @@ class RapporteringRepositoryPostgres(
                     "registrert_arbeidssoker" to
                         if (rapporteringsperiode.type == KortType.Etterregistrert) {
                             true
+                        } else if (rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart != null) {
+                            null
                         } else {
-                            rapporteringsperiode.registrertArbeidssoker
+                            rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.svarFraBruker
                         },
                     "fom" to rapporteringsperiode.periode.fraOgMed,
                     "tom" to rapporteringsperiode.periode.tilOgMed,
                     "original_id" to rapporteringsperiode.originalId,
                     "rapporteringstype" to rapporteringsperiode.rapporteringstype,
                     "siste_frist_for_trekk" to rapporteringsperiode.sisteFristForTrekk,
+                    "arsak_bruker_har_ikke_svart_om_arbeidssokerstatus" to
+                        rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart?.name,
                 ),
             ).asUpdate,
         )
@@ -341,10 +375,10 @@ class RapporteringRepositoryPostgres(
         }
     }
 
-    override suspend fun oppdaterRapporteringsperiodeFraArena(
+    override suspend fun oppdaterRapporteringsperiode(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
-    ) = actionTimer.timedAction("db-oppdaterRapporteringsperiodeFraArena") {
+    ) = actionTimer.timedAction("db-oppdaterRapporteringsperiode") {
         sessionOf(dataSource).use { session ->
             session.transaction { tx ->
                 tx
@@ -357,7 +391,9 @@ class RapporteringRepositoryPostgres(
                                 kan_endres = :kan_endres,
                                 brutto_belop = :brutto_belop,
                                 begrunnelse_endring = :begrunnelse_endring,
-                                registrert_arbeidssoker = :registrert_arbeidssoker,
+                                registrert_arbeidssoker =
+                                    CASE WHEN CAST(:arsak AS TEXT) IS NOT NULL THEN NULL ELSE CAST(:registrert_arbeidssoker AS BOOLEAN) END,
+                                årsak_bruker_har_ikke_svart_om_arbeidssøkerstatus = :arsak,
                                 status = :status,
                                 rapporteringstype = :rapporteringstype,
                                 mottatt_dato = :mottatt_dato
@@ -369,7 +405,8 @@ class RapporteringRepositoryPostgres(
                                 "kan_endres" to rapporteringsperiode.kanEndres,
                                 "brutto_belop" to rapporteringsperiode.bruttoBelop,
                                 "begrunnelse_endring" to rapporteringsperiode.begrunnelseEndring,
-                                "registrert_arbeidssoker" to rapporteringsperiode.registrertArbeidssoker,
+                                "registrert_arbeidssoker" to rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.svarFraBruker,
+                                "arsak" to rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart?.name,
                                 "status" to rapporteringsperiode.status.name,
                                 "rapporteringstype" to rapporteringsperiode.rapporteringstype,
                                 "mottatt_dato" to rapporteringsperiode.mottattDato,
@@ -577,7 +614,16 @@ private fun Row.toRapporteringsperiode() =
         kanEndres = boolean("kan_endres"),
         bruttoBelop = doubleOrNull("brutto_belop"),
         status = RapporteringsperiodeStatus.valueOf(string("status")),
-        registrertArbeidssoker = stringOrNull("registrert_arbeidssoker").toBooleanOrNull(),
+        sporsmalOmRegistrertArbeidssoker =
+            SporsmalOmRegistrertArbeidssoker(
+                svarFraBruker = stringOrNull("registrert_arbeidssoker").toBooleanOrNull(),
+                arsakBrukerHarIkkeSvart =
+                    stringOrNull("årsak_bruker_har_ikke_svart_om_arbeidssøkerstatus")
+                        ?.let { årsak ->
+                            ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.entries
+                                .firstOrNull { it.name == årsak }
+                        },
+            ),
         dager = emptyList(),
         periode =
             Periode(
