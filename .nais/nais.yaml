@@ -8,6 +8,9 @@ metadata:
     team: "teamdagpenger"
     app: "dp-rapportering"
     subteam: "ramp"
+    fagsystem: "DAGPENGER"
+    domene: "meldekort"
+    okonomisystem: "true"
 
 spec:
   image: {{ image }}
