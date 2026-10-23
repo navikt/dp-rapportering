@@ -41,21 +41,28 @@ class MeldekortregisterService(
                         Sikkerlogg.info { "Kall til meldekortregister for å hente perioder for ident $ident ga status ${it.status}" }
                     }
 
-            if (result.status == HttpStatusCode.NoContent) {
-                null
-            } else {
-                result
-                    .bodyAsText()
-                    .let {
+            when (result.status) {
+                HttpStatusCode.NoContent -> null
+                HttpStatusCode.OK -> {
+                    result.bodyAsText().let {
                         val perioder =
                             defaultObjectMapper.readValue(
                                 it,
                                 object : TypeReference<List<PeriodeData>>() {},
                             )
-                        perioder.ifEmpty {
-                            null
-                        }
+                        perioder.ifEmpty { null }
                     }
+                }
+
+                else -> {
+                    val melding = result.bodyAsText()
+                    Sikkerlogg.error {
+                        "Uforventet status ved henting av perioder fra meldekortregister for $ident: ${result.status.value} - $melding"
+                    }
+                    throw RuntimeException(
+                        "Uforventet status ved henting av perioder fra meldekortregister: ${result.status.value}",
+                    )
+                }
             }
         }
 
@@ -72,7 +79,17 @@ class MeldekortregisterService(
                         Sikkerlogg.info { "Kall til meldekortregister for å hente endringId for periode $id ga status ${it.status}" }
                     }
 
-            result.bodyAsText()
+            if (result.status == HttpStatusCode.OK) {
+                result.bodyAsText()
+            } else {
+                val melding = result.bodyAsText()
+                Sikkerlogg.error {
+                    "Uforventet status ved henting av endringId fra meldekortregister for periode $id: ${result.status.value} - $melding"
+                }
+                throw RuntimeException(
+                    "Uforventet status ved henting av endringId fra meldekortregister: ${result.status.value}",
+                )
+            }
         }
 
     suspend fun sendinnRapporteringsperiode(

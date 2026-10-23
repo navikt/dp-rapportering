@@ -19,17 +19,8 @@ internal fun ApplicationCall.ident(): String = requireNotNull(this.authenticatio
 
 internal val JWTPrincipal.fnr get(): String = requirePid(this)
 
-internal fun ApplicationCall.saksbehandlerId() =
-    requireNotNull(this.authentication.principal<JWTPrincipal>()) { "Ikke autentisert" }.saksbehandlerId()
-
 private fun requirePid(credential: JWTPayloadHolder): String =
     requireNotNull(credential.payload.claims["pid"]?.asString()) { "Token må inneholde fødselsnummer for personen i claim 'pid'" }
-
-private fun JWTPrincipal.saksbehandlerId(): String = requireNotNull(this.payload.claims["NAVident"]?.asString())
-
-private fun JWTPrincipal.saksbehandlerApp(): String = requireNotNull(this.payload.claims["azp_name"]?.asString())
-
-private fun JWTPrincipal.saksbehandlerEpostAdresse(): String = requireNotNull(this.payload.claims["preferred_username"]?.asString())
 
 internal fun ApplicationRequest.jwt(): String =
     this.parseAuthorizationHeader().let { authHeader ->
@@ -60,6 +51,8 @@ internal fun ApplicationCall.loginLevel(): Int {
             4
         }
 
-        else -> 0
+        else -> {
+            0
+        }
     }
 }

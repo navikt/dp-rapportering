@@ -1,5 +1,6 @@
 package no.nav.dagpenger.rapportering.service
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
@@ -138,6 +139,17 @@ class MeldekortregisterServiceTest {
     }
 
     @Test
+    fun `feiler ved uventet status ved henting av meldekort`() {
+        val service = meldekortregisterService(HttpStatusCode.InternalServerError, "ikke JSON")
+
+        shouldThrow<RuntimeException> {
+            runBlocking {
+                service.hentRapporteringsperioder(ident, token, MeldekortStatus.TilUtfylling)
+            }
+        }
+    }
+
+    @Test
     fun `kan hente endringId`() {
         val meldekortregisterService = meldekortregisterService(HttpStatusCode.OK, "124")
 
@@ -147,6 +159,17 @@ class MeldekortregisterServiceTest {
             }
 
         response shouldBe "124"
+    }
+
+    @Test
+    fun `feiler ved uventet status ved henting av endringId`() {
+        val service = meldekortregisterService(HttpStatusCode.InternalServerError, "ikke en endringId")
+
+        shouldThrow<RuntimeException> {
+            runBlocking {
+                service.hentEndringId("123", token)
+            }
+        }
     }
 
     @Test

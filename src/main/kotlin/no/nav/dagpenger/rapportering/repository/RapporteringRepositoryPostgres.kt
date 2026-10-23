@@ -182,7 +182,7 @@ class RapporteringRepositoryPostgres(
         sessionOf(dataSource).use { session ->
             session.run(
                 queryOf(
-                    "SELECT * FROM dag WHERE rapportering_id = ?",
+                    "SELECT * FROM dag WHERE rapportering_id = ? ORDER BY dag_index",
                     rapporteringId,
                 ).map { it.toDagPair() }.asList,
             )

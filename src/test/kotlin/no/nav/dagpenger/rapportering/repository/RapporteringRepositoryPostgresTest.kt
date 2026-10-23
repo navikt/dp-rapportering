@@ -582,6 +582,21 @@ class RapporteringRepositoryPostgresTest {
             rapporteringRepositoryPostgres.hentRapporteringsperiode(id, ident)!!.opprettetAv shouldBe OpprettetAv.Arena
         }
     }
+
+    @Test
+    fun `hentDagerUtenAktivitet returnerer dager sortert stigende på dag_index`() {
+        withMigratedDb {
+            val rapporteringsperiodeMedDagerITilfeldigRekkefølge = getRapporteringsperiode().copy(dager = getDager().shuffled())
+            rapporteringRepositoryPostgres.lagreRapporteringsperiodeOgDager(rapporteringsperiodeMedDagerITilfeldigRekkefølge, ident)
+
+            with(rapporteringRepositoryPostgres.hentDagerUtenAktivitet(rapporteringsperiodeMedDagerITilfeldigRekkefølge.id)) {
+                size shouldBe 14
+                first().second.dagIndex shouldBe 0
+                last().second.dagIndex shouldBe 13
+                isSortedBy { (_, dag) -> dag.dagIndex } shouldBe true
+            }
+        }
+    }
 }
 
 fun getRapporteringsperiode(
