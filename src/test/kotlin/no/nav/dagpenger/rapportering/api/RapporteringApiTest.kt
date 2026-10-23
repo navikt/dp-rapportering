@@ -16,8 +16,12 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.ExternalServicesBuilder
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockkObject
 import no.nav.dagpenger.rapportering.ApplicationBuilder
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeResponse
+import no.nav.dagpenger.rapportering.api.models.RapporteringsperiodeStatusResponse
+import no.nav.dagpenger.rapportering.api.models.SporsmalOmRegistrertArbeidssokerResponse
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.config.Configuration.dpRapporteringFrontendUrl
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
@@ -110,10 +114,16 @@ class RapporteringApiTest : ApiTestSetup() {
                 meldekortStatusData.meldekortTilUtfylling.size shouldBe 2
                 meldekortStatusData.meldekortTilUtfylling[0].kanSendesFra shouldBe fom1.plusDays(12).atStartOfDay()
                 meldekortStatusData.meldekortTilUtfylling[0].kanFyllesUtFra shouldBe fom1.atStartOfDay()
-                meldekortStatusData.meldekortTilUtfylling[0].fristForInnsending shouldBe fom1.plusDays(21).atTime(23, 59, 59)
+                meldekortStatusData.meldekortTilUtfylling[0].fristForInnsending shouldBe
+                    fom1
+                        .plusDays(21)
+                        .atTime(23, 59, 59)
                 meldekortStatusData.meldekortTilUtfylling[1].kanSendesFra shouldBe fom2.plusDays(12).atStartOfDay()
                 meldekortStatusData.meldekortTilUtfylling[1].kanFyllesUtFra shouldBe fom2.atStartOfDay()
-                meldekortStatusData.meldekortTilUtfylling[1].fristForInnsending shouldBe fom2.plusDays(21).atTime(23, 59, 59)
+                meldekortStatusData.meldekortTilUtfylling[1].fristForInnsending shouldBe
+                    fom2
+                        .plusDays(21)
+                        .atTime(23, 59, 59)
                 meldekortStatusData.redirectUrl shouldBe dpRapporteringFrontendUrl
             }
 
@@ -197,7 +207,12 @@ class RapporteringApiTest : ApiTestSetup() {
                 meldekortStatusData.meldekortTilUtfylling.size shouldBe 1
                 meldekortStatusData.meldekortTilUtfylling[0].kanSendesFra shouldBe kanSendesFra.atStartOfDay()
                 meldekortStatusData.meldekortTilUtfylling[0].kanFyllesUtFra shouldBe fom.atStartOfDay()
-                meldekortStatusData.meldekortTilUtfylling[0].fristForInnsending shouldBe sisteFristForTrekk.atTime(23, 59, 59)
+                meldekortStatusData.meldekortTilUtfylling[0].fristForInnsending shouldBe
+                    sisteFristForTrekk.atTime(
+                        23,
+                        59,
+                        59,
+                    )
             }
     }
 
@@ -216,7 +231,13 @@ class RapporteringApiTest : ApiTestSetup() {
                 // Lagrer perioden i databasen
                 client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
 
-                with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(registrertArbeidssoker = true))) {
+                with(
+                    client.doPost(
+                        "/rapporteringsperiode",
+                        issueToken(fnr),
+                        rapporteringsperiodeFor(registrertArbeidssoker = true).toRapporteringsperiodeRequest(),
+                    ),
+                ) {
                     status shouldBe OK
                 }
             }
@@ -224,7 +245,7 @@ class RapporteringApiTest : ApiTestSetup() {
         @Test
         fun `innsending av rapporteringsperiode uten token gir unauthorized`() =
             setUpTestApplication {
-                with(client.doPost("/rapporteringsperiode", null, rapporteringsperiodeFor())) {
+                with(client.doPost("/rapporteringsperiode", null, rapporteringsperiodeFor().toRapporteringsperiodeRequest())) {
                     status shouldBe Unauthorized
                 }
             }
@@ -234,8 +255,14 @@ class RapporteringApiTest : ApiTestSetup() {
             setUpTestApplication {
                 mockkObject(ApplicationBuilder.Companion)
                 mockkObject(unleash)
-                with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(kanSendes = false))) {
-                    status shouldBe HttpStatusCode.BadRequest
+                with(
+                    client.doPost(
+                        "/rapporteringsperiode",
+                        issueToken(fnr),
+                        rapporteringsperiodeFor(kanSendes = false).toRapporteringsperiodeRequest(),
+                    ),
+                ) {
+                    status shouldBe HttpStatusCode.NotFound
                 }
             }
 
@@ -259,7 +286,13 @@ class RapporteringApiTest : ApiTestSetup() {
                 client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
 
                 // Sender inn
-                with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiode.copy(dager = dager))) {
+                with(
+                    client.doPost(
+                        "/rapporteringsperiode",
+                        issueToken(fnr),
+                        rapporteringsperiode.copy(dager = dager).toRapporteringsperiodeRequest(),
+                    ),
+                ) {
                     status shouldBe HttpStatusCode.BadRequest
                 }
 
@@ -300,7 +333,13 @@ class RapporteringApiTest : ApiTestSetup() {
                 // Lagrer perioden i databasen
                 client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
 
-                with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(registrertArbeidssoker = true))) {
+                with(
+                    client.doPost(
+                        "/rapporteringsperiode",
+                        issueToken(fnr),
+                        rapporteringsperiodeFor(registrertArbeidssoker = true).toRapporteringsperiodeRequest(),
+                    ),
+                ) {
                     status shouldBe HttpStatusCode.BadRequest
                     val innsendingResponse = defaultObjectMapper.readValue<InnsendingResponse>(bodyAsText())
                     innsendingResponse.id shouldBe "123"
@@ -338,7 +377,13 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
 
-                with(client.doPost("/rapporteringsperiode", issueToken(fnr), rapporteringsperiodeFor(registrertArbeidssoker = true))) {
+                with(
+                    client.doPost(
+                        "/rapporteringsperiode",
+                        issueToken(fnr),
+                        rapporteringsperiodeFor(registrertArbeidssoker = true).toRapporteringsperiodeRequest(),
+                    ),
+                ) {
                     status shouldBe HttpStatusCode.InternalServerError
                 }
             }
@@ -355,7 +400,8 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
                 endreResponse.status shouldBe OK
-                val endretPeriode = defaultObjectMapper.readValue(endreResponse.bodyAsText(), Rapporteringsperiode::class.java)
+                val endretPeriode =
+                    defaultObjectMapper.readValue(endreResponse.bodyAsText(), Rapporteringsperiode::class.java)
 
                 with(
                     client.doPost(
@@ -366,8 +412,8 @@ class RapporteringApiTest : ApiTestSetup() {
                             status = Endret,
                             begrunnelseEndring = "Endring",
                             originalId = endretPeriode.originalId,
-                            registrertArbeidssoker = true,
-                        ),
+                            registrertArbeidssoker = null,
+                        ).toRapporteringsperiodeRequest(),
                     ),
                 ) {
                     status shouldBe OK
@@ -386,13 +432,19 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val endreResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
                 endreResponse.status shouldBe OK
-                val nyId = defaultObjectMapper.readValue(endreResponse.bodyAsText(), Rapporteringsperiode::class.java).id
+                val nyId =
+                    defaultObjectMapper.readValue(endreResponse.bodyAsText(), Rapporteringsperiode::class.java).id
 
                 with(
                     client.doPost(
                         "/rapporteringsperiode",
                         issueToken(fnr),
-                        rapporteringsperiodeFor(id = nyId, status = TilUtfylling, begrunnelseEndring = null, originalId = "125"),
+                        rapporteringsperiodeFor(
+                            id = nyId,
+                            status = TilUtfylling,
+                            begrunnelseEndring = null,
+                            originalId = "125",
+                        ).toRapporteringsperiodeRequest(),
                     ),
                 ) {
                     status shouldBe HttpStatusCode.BadRequest
@@ -409,7 +461,8 @@ class RapporteringApiTest : ApiTestSetup() {
                     meldepliktAdapter(sendteRapporteringsperioderResponse = emptyList())
                 }
 
-                val response = client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
+                val response =
+                    client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
 
                 response.httpResponse.status shouldBe OK
                 response.body.id shouldBe "123"
@@ -422,7 +475,8 @@ class RapporteringApiTest : ApiTestSetup() {
                     meldepliktAdapter(rapporteringsperioderResponse = emptyList())
                 }
 
-                val response = client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/126", issueToken(fnr))
+                val response =
+                    client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/126", issueToken(fnr))
 
                 response.httpResponse.status shouldBe OK
                 response.body.id shouldBe "126"
@@ -479,13 +533,44 @@ class RapporteringApiTest : ApiTestSetup() {
                 startResponse.status shouldBe OK
 
                 val periodeResponse =
-                    client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
+                    client.doGetAndReceive<RapporteringsperiodeResponse>("/rapporteringsperiode/123", issueToken(fnr))
                 with(periodeResponse.body) {
                     id shouldBe "123"
-                    status shouldBe TilUtfylling
+                    status shouldBe RapporteringsperiodeStatusResponse.TilUtfylling
                     bruttoBelop shouldBe null
-                    registrertArbeidssoker shouldBe null
+                    sporsmalOmRegistrertArbeidssoker?.svarFraBruker shouldBe null
+                    sporsmalOmRegistrertArbeidssoker shouldBe
+                        SporsmalOmRegistrertArbeidssokerResponse(
+                            svarFraBruker = null,
+                            arsakBrukerHarIkkeSvart = null,
+                        )
                 }
+            }
+
+        @Test
+        fun `start av etterregistrert periode gir rapporteringsperiode med årsak ETTERREGISTRERT_MELDEKORT`() =
+            setUpTestApplication {
+                mockkObject(unleash)
+                every { unleash.isEnabled(any()) } returns true
+
+                externalServices {
+                    meldepliktAdapter(
+                        rapporteringsperioderResponse =
+                            listOf(
+                                adapterRapporteringsperiode(id = 123L, type = "09"),
+                            ),
+                    )
+                }
+
+                client.doPost("/rapporteringsperiode/123/start", issueToken(fnr)).status shouldBe OK
+
+                val periodeResponse =
+                    client.doGetAndReceive<RapporteringsperiodeResponse>("/rapporteringsperiode/123", issueToken(fnr))
+                val sporsmalOmRegistrertArbeidssoker =
+                    requireNotNull(periodeResponse.body.sporsmalOmRegistrertArbeidssoker)
+                sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+                sporsmalOmRegistrertArbeidssoker.arsakBrukerHarIkkeSvart shouldBe
+                    SporsmalOmRegistrertArbeidssokerResponse.ArsakBrukerHarIkkeSvart.ETTERREGISTRERT_MELDEKORT
             }
 
         @Test
@@ -506,7 +591,12 @@ class RapporteringApiTest : ApiTestSetup() {
         fun `kan lagre om bruker ønsker å stå som arbeidssøker`() =
             setUpTestApplication {
                 externalServices {
-                    meldepliktAdapter()
+                    meldepliktAdapter(
+                        rapporteringsperioderResponse =
+                            listOf(
+                                adapterRapporteringsperiode(),
+                            ),
+                    )
                 }
 
                 client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
@@ -516,13 +606,15 @@ class RapporteringApiTest : ApiTestSetup() {
                 response.status shouldBe HttpStatusCode.NoContent
 
                 val periodeResponse =
-                    client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
+                    client.doGetAndReceive<RapporteringsperiodeResponse>("/rapporteringsperiode/123", issueToken(fnr))
                 periodeResponse.httpResponse.status shouldBe OK
                 with(periodeResponse.body) {
                     id shouldBe "123"
-                    status shouldBe TilUtfylling
+                    status shouldBe RapporteringsperiodeStatusResponse.TilUtfylling
                     bruttoBelop shouldBe null
                     registrertArbeidssoker shouldBe true
+                    sporsmalOmRegistrertArbeidssoker?.svarFraBruker shouldBe true
+                    sporsmalOmRegistrertArbeidssoker?.arsakBrukerHarIkkeSvart shouldBe null
                 }
             }
 
@@ -578,7 +670,8 @@ class RapporteringApiTest : ApiTestSetup() {
                     id shouldBe "123"
                     status shouldBe TilUtfylling
                     bruttoBelop shouldBe null
-                    registrertArbeidssoker shouldBe null
+                    sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
+                    sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
                     dager.first().aktiviteter.first() shouldBe aktivitet
                 }
             }
@@ -619,7 +712,11 @@ class RapporteringApiTest : ApiTestSetup() {
                     dager.first().aktiviteter.first() shouldBe aktivitet
                 }
 
-                client.doDelete("/rapporteringsperiode/123/aktiviteter", issueToken(fnr)).status shouldBe HttpStatusCode.NoContent
+                client
+                    .doDelete(
+                        "/rapporteringsperiode/123/aktiviteter",
+                        issueToken(fnr),
+                    ).status shouldBe HttpStatusCode.NoContent
 
                 val periodeResponseAfterDelete =
                     client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/123", issueToken(fnr))
@@ -643,7 +740,8 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val endringResponse = client.doPost("/rapporteringsperiode/125/endre", issueToken(fnr))
                 endringResponse.status shouldBe OK
-                val endretPeriode = defaultObjectMapper.readValue(endringResponse.bodyAsText(), Rapporteringsperiode::class.java)
+                val endretPeriode =
+                    defaultObjectMapper.readValue(endringResponse.bodyAsText(), Rapporteringsperiode::class.java)
 
                 val response =
                     client.doPost(
@@ -654,13 +752,16 @@ class RapporteringApiTest : ApiTestSetup() {
                 response.status shouldBe HttpStatusCode.NoContent
 
                 val periodeResponse =
-                    client.doGetAndReceive<Rapporteringsperiode>("/rapporteringsperiode/${endretPeriode.id}", issueToken(fnr))
+                    client.doGetAndReceive<Rapporteringsperiode>(
+                        "/rapporteringsperiode/${endretPeriode.id}",
+                        issueToken(fnr),
+                    )
                 periodeResponse.httpResponse.status shouldBe OK
                 with(periodeResponse.body) {
                     id shouldBe endretPeriode.id
                     status shouldBe TilUtfylling
                     bruttoBelop shouldBe null
-                    registrertArbeidssoker shouldBe null
+                    sporsmalOmRegistrertArbeidssoker.svarFraBruker shouldBe null
                     begrunnelseEndring shouldBe "Dette er en begrunnelse"
                     originalId shouldBe endretPeriode.originalId
                 }
@@ -674,13 +775,23 @@ class RapporteringApiTest : ApiTestSetup() {
         fun `kan oppdatere rapporteringstype`() =
             setUpTestApplication {
                 externalServices {
-                    meldepliktAdapter()
+                    meldepliktAdapter(
+                        rapporteringsperioderResponse =
+                            listOf(
+                                adapterRapporteringsperiode(aktivitet = defaultAdapterAktivitet),
+                                adapterRapporteringsperiode(id = 124L, fraOgMed = LocalDate.now().plusDays(1)),
+                            ),
+                    )
                 }
 
                 client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
 
                 val response =
-                    client.doPost("/rapporteringsperiode/123/rapporteringstype", issueToken(fnr), RapporteringstypeRequest("harAktivitet"))
+                    client.doPost(
+                        "/rapporteringsperiode/123/rapporteringstype",
+                        issueToken(fnr),
+                        RapporteringstypeRequest("harAktivitet"),
+                    )
                 response.status shouldBe HttpStatusCode.NoContent
 
                 val periodeResponse =
@@ -719,7 +830,11 @@ class RapporteringApiTest : ApiTestSetup() {
                 client.doPost("/rapporteringsperiode/123/start", issueToken(fnr))
 
                 val response =
-                    client.doPost("/rapporteringsperiode/123/rapporteringstype", issueToken(fnr), RapporteringstypeRequest(""))
+                    client.doPost(
+                        "/rapporteringsperiode/123/rapporteringstype",
+                        issueToken(fnr),
+                        RapporteringstypeRequest(""),
+                    )
                 response.status shouldBe HttpStatusCode.BadRequest
             }
     }
@@ -945,7 +1060,10 @@ class RapporteringApiTest : ApiTestSetup() {
 
                 val response =
                     client
-                        .doGetAndReceive<List<Rapporteringsperiode>>("/rapporteringsperioder/innsendte", issueToken(fnr))
+                        .doGetAndReceive<List<Rapporteringsperiode>>(
+                            "/rapporteringsperioder/innsendte",
+                            issueToken(fnr),
+                        )
 
                 println(response.body)
 

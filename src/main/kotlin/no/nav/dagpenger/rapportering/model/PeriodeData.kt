@@ -2,6 +2,11 @@ package no.nav.dagpenger.rapportering.model
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.dagpenger.rapportering.model.PeriodeData.PeriodeDag
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.ARBEIDSSØKERPERIODEN_ER_I_FORTID
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.ETTERREGISTRERT_MELDEKORT
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.KORRIGERT_MELDEKORT
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
 import no.nav.dagpenger.rapportering.utils.PeriodeUtils.kanSendesInn
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -25,6 +30,7 @@ data class PeriodeData(
     val bruttoBelop: Double? = null,
     val begrunnelse: String? = null,
     val registrertArbeidssoker: Boolean? = null,
+    val årsakBrukerHarIkkeSvartOmArbeidssøkerstatus: String? = null,
     val meldedato: LocalDate? = null,
 ) {
     data class Kilde(
@@ -48,6 +54,14 @@ data class PeriodeData(
         val aktiviteter: List<Aktivitet> = emptyList(),
         val dagIndex: Int,
     )
+
+    enum class ArsakBrukerHarIkkeSvartOmArbeidssokerstatus {
+        KORRIGERT_MELDEKORT,
+        ETTERREGISTRERT_MELDEKORT,
+        ARBEIDSSØKERPERIODEN_ER_I_FORTID,
+        DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS,
+        UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+    }
 }
 
 fun List<PeriodeData>?.toRapporteringsperioder(): List<Rapporteringsperiode> =
@@ -71,6 +85,17 @@ fun PeriodeData.toRapporteringsperiode(): Rapporteringsperiode {
             else -> throw IllegalStateException("Ukjent status '$status'")
         }
 
+    val årsak =
+        when (this.årsakBrukerHarIkkeSvartOmArbeidssøkerstatus) {
+            "KORRIGERT_MELDEKORT" -> KORRIGERT_MELDEKORT
+            "ETTERREGISTRERT_MELDEKORT" -> ETTERREGISTRERT_MELDEKORT
+            "ARBEIDSSØKERPERIODEN_ER_I_FORTID" -> ARBEIDSSØKERPERIODEN_ER_I_FORTID
+            "DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS" -> DAGPENGER_HAR_IKKE_ANSVAR_FOR_SPØRSMÅL_OM_ARBEIDSSØKERSTATUS
+            "UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA" -> UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
+            null -> null
+            else -> error("Ukjent årsakBrukerHarIkkeSvartOmArbeidssøkerstatus '${this.årsakBrukerHarIkkeSvartOmArbeidssøkerstatus}'")
+        }
+
     return Rapporteringsperiode(
         id = this.id,
         type = KortType.valueOf(type.name),
@@ -84,7 +109,11 @@ fun PeriodeData.toRapporteringsperiode(): Rapporteringsperiode {
         status = status,
         mottattDato = this.innsendtTidspunkt?.toLocalDate(),
         begrunnelseEndring = if (this.begrunnelse.isNullOrBlank()) null else this.begrunnelse,
-        registrertArbeidssoker = this.registrertArbeidssoker,
+        sporsmalOmRegistrertArbeidssoker =
+            SporsmalOmRegistrertArbeidssoker(
+                svarFraBruker = this.registrertArbeidssoker,
+                arsakBrukerHarIkkeSvart = årsak,
+            ),
         originalId = this.originalMeldekortId,
         rapporteringstype = if (this.dager.any { it.aktiviteter.isNotEmpty() }) "harAktivitet" else "harIngenAktivitet",
         opprettetAv = OpprettetAv.Dagpenger,
