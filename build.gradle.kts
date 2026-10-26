@@ -89,7 +89,7 @@ dependencies {
 
     implementation("io.opentelemetry:opentelemetry-api:1.67.0")
 
-    implementation("io.confluent:kafka-streams-avro-serde:8.3.2")
+    implementation("io.confluent:kafka-streams-avro-serde:8.4.0")
     implementation("org.apache.avro:avro:1.12.1")
     schema("no.nav.paw.arbeidssokerregisteret.api:bekreftelsesmelding-schema:1.26.05.04.35-1")
 
