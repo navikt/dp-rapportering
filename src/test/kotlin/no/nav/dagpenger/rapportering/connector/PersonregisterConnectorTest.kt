@@ -7,7 +7,6 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.utils.MetricsTestUtil.actionTimer
-import no.nav.dagpenger.rapportering.utils.UUIDv7
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -15,7 +14,6 @@ import org.junit.jupiter.params.provider.CsvSource
 
 class PersonregisterConnectorTest {
     private val testTokenXProvider: (token: String) -> String = { _ -> "testToken" }
-    private val testAzureTokenProvider: () -> String = { "testToken" }
     private val personregisterUrl = "http://personregisterUrl"
     private val subjectToken = "gylidg_token"
     private val ident = "12345678903"
@@ -34,7 +32,6 @@ class PersonregisterConnectorTest {
     ) = PersonregisterConnector(
         personregisterUrl = personregisterUrl,
         tokenXProvider = testTokenXProvider,
-        azureTokenProvider = testAzureTokenProvider,
         httpClient = createMockClient(statusCode, responseBody),
         actionTimer = actionTimer,
     )
@@ -157,27 +154,5 @@ class PersonregisterConnectorTest {
             }
 
         response shouldBe Brukerstatus.DAGPENGERBRUKER
-    }
-
-    @Test
-    fun `hentSisteSakId returnerer sakId`() {
-        val sakId = UUIDv7.newUuid().toString()
-
-        val connector =
-            personregisterConnector(
-                HttpStatusCode.OK,
-                """
-                {
-                  "sakId": "$sakId"
-                }
-                """.trimIndent(),
-            )
-
-        val response =
-            runBlocking {
-                connector.hentSisteSakId(ident)
-            }
-
-        response shouldBe sakId
     }
 }

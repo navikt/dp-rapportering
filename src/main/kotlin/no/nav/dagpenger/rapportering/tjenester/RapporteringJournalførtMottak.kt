@@ -9,7 +9,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.withLoggingContext
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
-import no.nav.dagpenger.rapportering.model.MineBehov
+import no.nav.dagpenger.rapportering.config.Configuration.journalføringBehov
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import no.nav.dagpenger.rapportering.utils.Sikkerlogg
@@ -21,24 +21,22 @@ internal class RapporteringJournalførtMottak(
 ) : River.PacketListener {
     private val logger = KotlinLogging.logger {}
 
-    private val behov = MineBehov.JournalføreRapportering.name
-
     init {
         River(rapidsConnection)
             .apply {
                 precondition { it.requireValue("@event_name", "behov") }
-                precondition { it.requireAll("@behov", listOf(behov)) }
+                precondition { it.requireAll("@behov", listOf(journalføringBehov)) }
                 validate { it.requireKey("@løsning") }
                 validate { it.requireValue("@final", true) }
                 validate {
-                    it.require(behov) { behov ->
+                    it.require(journalføringBehov) { behov ->
                         behov.required("periodeId")
                         behov.required("kallLoggId")
                     }
                 }
                 validate {
                     it.require("@løsning") { løsning ->
-                        løsning.required(behov)
+                        løsning.required(journalføringBehov)
                     }
                 }
                 validate { it.interestedIn("@id", "@opprettet", "@behovId") }
@@ -52,11 +50,11 @@ internal class RapporteringJournalførtMottak(
         meterRegistry: MeterRegistry,
     ) {
         val behovId = packet["@behovId"].asString()
-        val periodeId = packet[behov]["periodeId"].asString()
-        val kallLoggId = packet[behov]["kallLoggId"].asLong()
-        val journalpostId = packet["@løsning"][behov].asLong()
+        val periodeId = packet[journalføringBehov]["periodeId"].asString()
+        val kallLoggId = packet[journalføringBehov]["kallLoggId"].asLong()
+        val journalpostId = packet["@løsning"][journalføringBehov].asLong()
 
-        packet[behov] = "SE TILSVARENDE REQUEST" // Bare for å spare litt plass i vår DB
+        packet[journalføringBehov] = "SE TILSVARENDE REQUEST" // Bare for å spare litt plass i vår DB
 
         withLoggingContext(
             "behovId" to behovId,
