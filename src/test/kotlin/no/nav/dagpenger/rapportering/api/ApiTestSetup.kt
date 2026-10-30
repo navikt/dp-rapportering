@@ -232,7 +232,6 @@ open class ApiTestSetup {
                     journalfoeringRepository,
                     kallLoggService,
                     pdlService,
-                    personregisterService,
                     httpClient,
                 )
 
@@ -313,7 +312,7 @@ open class ApiTestSetup {
     fun ExternalServicesBuilder.pdfGenerator() {
         hosts("https://pdf-generator") {
             routing {
-                post("/convert-html-to-pdf/meldekort") {
+                post("/convert-html-to-pdf/dagpengemeldekort") {
                     call.response.header(HttpHeaders.ContentType, ContentType.Application.Pdf.toString())
                     call.respond("PDF")
                 }

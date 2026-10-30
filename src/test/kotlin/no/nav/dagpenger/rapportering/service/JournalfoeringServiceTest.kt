@@ -28,13 +28,13 @@ import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.config.Configuration.journalføringBehov
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.connector.createHttpClient
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.KortType
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
-import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
@@ -124,14 +124,11 @@ class JournalfoeringServiceTest {
         val pdlService = mockk<PdlService>()
         coEvery { pdlService.hentNavn(any()) } returns navn
 
-        val personregisterService = mockk<PersonregisterService>()
-
         val journalfoeringService =
             JournalfoeringService(
                 journalfoeringRepository,
                 kallLoggService,
                 pdlService,
-                personregisterService,
                 createHttpClient(mockPdfGeneratorEngine),
             )
 
@@ -210,15 +207,11 @@ class JournalfoeringServiceTest {
         val pdlService = mockk<PdlService>()
         coEvery { pdlService.hentNavn(any()) } returns navn
 
-        val personregisterService = mockk<PersonregisterService>()
-        coEvery { personregisterService.hentSisteSakId(eq(ident)) } returns "12345"
-
         val journalfoeringService =
             JournalfoeringService(
                 journalfoeringRepository,
                 kallLoggService,
                 pdlService,
-                personregisterService,
                 createHttpClient(mockPdfGeneratorEngine),
             )
 
@@ -279,7 +272,7 @@ class JournalfoeringServiceTest {
 
         // Sjekk
         coVerify(exactly = 1) { journalfoeringRepository.sletteMidlertidigLagretData("1") }
-        checkMessage(false, message.captured, rapporteringsperiode, AnsvarligSystem.DP)
+        checkMessage(false, message.captured, rapporteringsperiode)
     }
 
     @Test
@@ -295,14 +288,12 @@ class JournalfoeringServiceTest {
 
         val kallLoggService = mockk<KallLoggService>()
         val pdlService = mockk<PdlService>()
-        val personregisterService = mockk<PersonregisterService>()
 
         val journalfoeringService =
             JournalfoeringService(
                 journalfoeringRepository,
                 kallLoggService,
                 pdlService,
-                personregisterService,
                 createHttpClient(MockEngine { _ -> respond("", HttpStatusCode.OK) }),
             )
 
@@ -346,9 +337,6 @@ class JournalfoeringServiceTest {
         val pdlService = mockk<PdlService>()
         coEvery { pdlService.hentNavn(any()) } returns navn
 
-        val personregisterService = mockk<PersonregisterService>()
-        coEvery { personregisterService.hentSisteSakId(eq(ident)) } returns "saKId1"
-
         // Mock svar fra PDFgenerator
         val pdf =
             if (endring) {
@@ -372,7 +360,6 @@ class JournalfoeringServiceTest {
                 journalfoeringRepository,
                 kallLoggService,
                 pdlService,
-                personregisterService,
                 createHttpClient(mockPdfGeneratorEngine),
             )
 
@@ -393,7 +380,7 @@ class JournalfoeringServiceTest {
             }
 
             // Sjekk
-            checkMessage(endring, message.captured, rapporteringsperiode, ansvarligSystem)
+            checkMessage(endring, message.captured, rapporteringsperiode)
         }
     }
 
@@ -452,15 +439,7 @@ class JournalfoeringServiceTest {
         endring: Boolean,
         message: String,
         rapporteringsperiode: Rapporteringsperiode,
-        ansvarligSystem: AnsvarligSystem,
     ) {
-        val behovNavn =
-            if (ansvarligSystem == AnsvarligSystem.ARENA) {
-                MineBehov.JournalføreRapportering.name
-            } else {
-                MineBehov.JournalføreMeldekort.name
-            }
-
         val jsonNode = objectMapper.readTree(message)
 
         jsonNode.get("@event_name").asString() shouldBe "behov"
@@ -469,15 +448,10 @@ class JournalfoeringServiceTest {
             .asIterable()
             .iterator()
             .next()
-            .asString() shouldBe behovNavn
+            .asString() shouldBe journalføringBehov
 
-        val behov = jsonNode.get(behovNavn)
-
-        if (ansvarligSystem == AnsvarligSystem.ARENA) {
-            behov.get("periodeId").asInt() shouldBe 1
-        } else {
-            behov.get("meldekortId").asInt() shouldBe 1
-        }
+        val behov = jsonNode.get(journalføringBehov)
+        behov.get("periodeId").asInt() shouldBe 1
 
         if (endring) {
             behov.get("brevkode").asString() shouldBe "NAV 00-10.03"

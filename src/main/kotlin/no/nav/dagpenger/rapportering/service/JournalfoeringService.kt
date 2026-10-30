@@ -18,10 +18,10 @@ import io.ktor.util.toMap
 import no.nav.dagpenger.rapportering.ApplicationBuilder.Companion.getRapidsConnection
 import no.nav.dagpenger.rapportering.config.Configuration
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.config.Configuration.journalføringBehov
 import no.nav.dagpenger.rapportering.config.Configuration.properties
 import no.nav.dagpenger.rapportering.connector.AnsvarligSystem
 import no.nav.dagpenger.rapportering.model.MidlertidigLagretData
-import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
@@ -35,7 +35,6 @@ class JournalfoeringService(
     private val journalfoeringRepository: JournalfoeringRepository,
     private val kallLoggService: KallLoggService,
     private val pdlService: PdlService,
-    private val personregisterService: PersonregisterService,
     private val httpClient: HttpClient,
 ) {
     private val logger = KotlinLogging.logger {}
@@ -138,14 +137,9 @@ class JournalfoeringService(
         val json = defaultObjectMapper.writeValueAsString(rapporteringsperiode)
 
         // Kall dp-behov-pdf-generator
-        var sakId = "meldekort" // Vi bruker "meldekort" istedenfor sakId med Arena-meldekort
-        if (ansvarligSystem == AnsvarligSystem.DP) {
-            sakId = personregisterService.hentSisteSakId(ident) ?: throw Exception("Kunne ikke hente sakId ved journalføring")
-        }
-
         logger.info { "Oppretter PDF for rapporteringsperiode ${rapporteringsperiode.id}" }
         val pdfGeneratorResponse =
-            httpClient.post(Configuration.pdfGeneratorUrl + "/convert-html-to-pdf/" + sakId) {
+            httpClient.post(Configuration.pdfGeneratorUrl + "/convert-html-to-pdf/dagpengemeldekort") {
                 accept(ContentType.Application.Pdf)
                 contentType(ContentType.Text.Plain)
                 setBody(htmlMal)
@@ -170,39 +164,21 @@ class JournalfoeringService(
         // Oppretter kallLogg for å få kallLoggId slik at vi kan sende den med Behov
         val kallLoggId = kallLoggService.lagreKafkaUtKallLogg(ident)
 
-        var behovNavn = MineBehov.JournalføreRapportering.name
-        var behovParams =
-            mapOf(
-                "periodeId" to rapporteringsperiode.id,
-                "brevkode" to brevkode,
-                "tittel" to tittel,
-                "json" to json,
-                "pdf" to pdf,
-                "tilleggsopplysninger" to tilleggsopplysninger,
-                "kallLoggId" to kallLoggId,
-            )
-
-        if (ansvarligSystem == AnsvarligSystem.DP) {
-            behovNavn = MineBehov.JournalføreMeldekort.name
-            behovParams =
-                mapOf(
-                    "meldekortId" to rapporteringsperiode.id,
-                    "sakId" to sakId,
-                    "brevkode" to brevkode,
-                    "tittel" to tittel,
-                    "json" to json,
-                    "pdf" to pdf,
-                    "tilleggsopplysninger" to tilleggsopplysninger,
-                    "kallLoggId" to kallLoggId,
-                )
-        }
-
         val behov =
             JsonMessage.newNeed(
-                listOf(behovNavn),
+                listOf(journalføringBehov),
                 mapOf(
                     "ident" to ident,
-                    behovNavn to behovParams,
+                    journalføringBehov to
+                        mapOf(
+                            "periodeId" to rapporteringsperiode.id,
+                            "brevkode" to brevkode,
+                            "tittel" to tittel,
+                            "json" to json,
+                            "pdf" to pdf,
+                            "tilleggsopplysninger" to tilleggsopplysninger,
+                            "kallLoggId" to kallLoggId,
+                        ),
                 ),
             )
 

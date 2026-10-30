@@ -8,6 +8,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.slot
+import no.nav.dagpenger.rapportering.api.ApiTestSetup
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.KallLoggRepository
 import org.intellij.lang.annotations.Language
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import tools.jackson.databind.ObjectMapper
 
-class RapporteringJournalførtMottakTest {
+class RapporteringJournalførtMottakTest : ApiTestSetup() {
     private val testRapid = TestRapid()
     private val mockJournalfoeringRepository = mockk<JournalfoeringRepository>()
     private val mockKallLoggRepository = mockk<KallLoggRepository>()
