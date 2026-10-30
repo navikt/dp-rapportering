@@ -85,7 +85,7 @@ dependencies {
     implementation("io.getunleash:unleash-client-java:12.3.1")
     implementation("com.github.ben-manes.caffeine:caffeine:3.3.1")
     implementation("no.nav.dagpenger:pdl-klient:2026.10.22-06.22.e2d33d69479c")
-    implementation("com.github.navikt.tbd-libs:naisful-app:20261013.1613")
+    implementation("com.github.navikt.tbd-libs:naisful-app:20261029.1843")
 
     implementation("io.opentelemetry:opentelemetry-api:1.67.0")
 
