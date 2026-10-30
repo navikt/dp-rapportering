@@ -18,10 +18,10 @@ import no.nav.dagpenger.rapportering.api.doGet
 import no.nav.dagpenger.rapportering.api.doPost
 import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
+import no.nav.dagpenger.rapportering.config.Configuration.journalføringBehov
 import no.nav.dagpenger.rapportering.connector.toAdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
 import no.nav.dagpenger.rapportering.model.KallLogg
-import no.nav.dagpenger.rapportering.model.MineBehov
 import no.nav.dagpenger.rapportering.model.Person
 import no.nav.dagpenger.rapportering.repository.Postgres.dataSource
 import org.junit.jupiter.api.Test
@@ -133,9 +133,9 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[4].type shouldBe "REST"
             list[4].kallRetning shouldBe "UT"
             list[4].method shouldBe "POST"
-            list[4].operation shouldBe "/convert-html-to-pdf/meldekort"
+            list[4].operation shouldBe "/convert-html-to-pdf/dagpengemeldekort"
             list[4].status shouldBe 200
-            list[4].request shouldStartWith "POST https://pdf-generator:443/convert-html-to-pdf/meldekort"
+            list[4].request shouldStartWith "POST https://pdf-generator:443/convert-html-to-pdf/dagpengemeldekort"
             list[4].request shouldContain "Navn: Test Testesen"
             list[4].request shouldContain "Fødselsnummer: $ident"
             list[4].request shouldContain "Meldekort: ${rapporteringsperiode.id}"
@@ -155,7 +155,7 @@ class CallLoggingPluginTest : ApiTestSetup() {
             list[5].method shouldBe "PUBLISH"
             list[5].operation shouldBe "teamdagpenger.rapid.v1"
             list[5].status shouldBe 200
-            list[5].request shouldContain MineBehov.JournalføreRapportering.name
+            list[5].request shouldContain journalføringBehov
             list[5].response shouldBe ""
             list[5].ident shouldBe ident
             list[5].logginfo shouldBe ""

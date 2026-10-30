@@ -214,4 +214,6 @@ internal object Configuration {
             ).configure(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .build()
+
+    val journalføringBehov = "JournalføreRapportering"
 }
