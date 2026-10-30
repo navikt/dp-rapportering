@@ -50,7 +50,6 @@ import no.nav.dagpenger.rapportering.service.MeldepliktService
 import no.nav.dagpenger.rapportering.service.PdlService
 import no.nav.dagpenger.rapportering.service.PersonregisterService
 import no.nav.dagpenger.rapportering.service.RapporteringService
-import no.nav.dagpenger.rapportering.tjenester.MeldekortJournalførtMottak
 import no.nav.dagpenger.rapportering.tjenester.RapporteringJournalførtMottak
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.paw.bekreftelse.melding.v1.Bekreftelse
@@ -105,7 +104,6 @@ class ApplicationBuilder(
             journalfoeringRepository,
             kallLoggService,
             pdlService,
-            personregisterService,
             httpClient,
         )
 
@@ -204,7 +202,6 @@ class ApplicationBuilder(
                 }
         rapidsConnection.register(this)
         RapporteringJournalførtMottak(rapidsConnection, journalfoeringRepository, kallLoggRepository)
-        MeldekortJournalførtMottak(rapidsConnection, journalfoeringRepository, kallLoggRepository)
     }
 
     internal fun start() {

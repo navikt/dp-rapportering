@@ -2,14 +2,8 @@ package no.nav.dagpenger.rapportering.connector
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.bearerAuth
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import no.nav.dagpenger.rapportering.config.Configuration
@@ -20,7 +14,6 @@ import no.nav.dagpenger.rapportering.utils.Sikkerlogg
 class PersonregisterConnector(
     val personregisterUrl: String = Configuration.personregisterUrl,
     val tokenXProvider: (String) -> String? = Configuration.tokenXClient(Configuration.personregisterAudience),
-    val azureTokenProvider: () -> String = Configuration.personregisterTokenProvider,
     val httpClient: HttpClient,
     actionTimer: ActionTimer,
 ) {
@@ -75,46 +68,6 @@ class PersonregisterConnector(
 
             personstatus?.status ?: Brukerstatus.IKKE_DAGPENGERBRUKER
         }
-
-    suspend fun hentSisteSakId(ident: String): String? =
-        withContext(Dispatchers.IO) {
-            try {
-                logger.info { "Henter siste sakId fra personregister" }
-                Sikkerlogg.info { "Henter siste sakId fra personregister for ident $ident" }
-
-                val response =
-                    httpClient
-                        .post("$personregisterUrl/hentSisteSakId") {
-                            bearerAuth(
-                                azureTokenProvider.invoke(),
-                            )
-                            contentType(ContentType.Application.Json)
-                            setBody(defaultObjectMapper.writeValueAsString(IdentBody(ident)))
-                        }.also {
-                            Sikkerlogg.info {
-                                "Kall til personregister for å hente siste sakId for $ident ga status ${it.status}"
-                            }
-                        }
-
-                if (response.status != HttpStatusCode.OK) {
-                    val body = response.bodyAsText()
-                    logger.error { "Klarte ikke å hente siste sakId fra personregister, status: ${response.status}, melding: $body" }
-                    Sikkerlogg.error { "Klarte ikke å hente siste sakId for ident $ident, status: ${response.status}, melding: $body" }
-                    return@withContext null
-                }
-
-                response
-                    .body<SakIdBody>()
-                    .sakId
-                    .also {
-                        logger.info { "Hentet siste sakId fra personregister" }
-                        Sikkerlogg.info { "Hentet siste sakId $it for ident $ident fra personregister" }
-                    }
-            } catch (e: Exception) {
-                logger.error(e) { "Kunne ikke hente siste sakId" }
-                throw RuntimeException(e)
-            }
-        }
 }
 
 data class Personstatus(
@@ -126,14 +79,6 @@ data class Personstatus(
 )
 
 fun Personstatus?.erBekreftelseOvertatt(): Boolean = this?.overtattBekreftelse ?: false
-
-data class IdentBody(
-    val ident: String,
-)
-
-data class SakIdBody(
-    val sakId: String,
-)
 
 enum class Brukerstatus {
     DAGPENGERBRUKER,

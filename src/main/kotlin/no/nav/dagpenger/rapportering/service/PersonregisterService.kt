@@ -19,6 +19,4 @@ class PersonregisterService(
         ident: String,
         token: String,
     ) = personregisterConnector.hentPersonstatus(ident, token)
-
-    suspend fun hentSisteSakId(ident: String) = personregisterConnector.hentSisteSakId(ident)
 }
