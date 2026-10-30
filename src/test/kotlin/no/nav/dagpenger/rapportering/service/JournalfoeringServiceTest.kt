@@ -39,6 +39,8 @@ import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
+import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
 import no.nav.dagpenger.rapportering.repository.JournalfoeringRepository
 import no.nav.dagpenger.rapportering.repository.Postgres.database
 import no.nav.dagpenger.rapportering.utils.UUIDv7
@@ -440,7 +442,11 @@ class JournalfoeringServiceTest {
             begrunnelseEndring = if (endring) "Begrunnelse" else null,
             status = TilUtfylling,
             mottattDato = LocalDate.now(),
-            registrertArbeidssoker = true,
+            sporsmalOmRegistrertArbeidssoker =
+                SporsmalOmRegistrertArbeidssoker(
+                    svarFraBruker = true,
+                    arsakBrukerHarIkkeSvart = UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA,
+                ),
             originalId = if (endring) "123" else null,
             rapporteringstype = null,
             html = html,
