@@ -166,7 +166,6 @@ open class ApiTestSetup {
             System.setProperty("GITHUB_SHA", "some_sha")
             System.setProperty("UNLEASH_SERVER_API_URL", "http://localhost")
             System.setProperty("UNLEASH_SERVER_API_TOKEN", "token")
-            System.setProperty("DP_RAPPORTERING_FRONTEND_URL", "https://dp-rapportering-frontend.dagpenger")
         }
     }
 
@@ -262,7 +261,7 @@ open class ApiTestSetup {
                     statusPagesConfig(meldepliktMetrikker)
                 }
                 pluginConfiguration(kallLoggRepository)
-                rapporteringApi(rapporteringService, meldepliktService, journalfoeringService, meldepliktMetrikker)
+                rapporteringApi(rapporteringService, journalfoeringService, meldepliktMetrikker)
             }
 
             block()

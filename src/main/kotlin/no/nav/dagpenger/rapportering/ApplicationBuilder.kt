@@ -190,7 +190,6 @@ class ApplicationBuilder(
                                 pluginConfiguration(kallLoggRepository)
                                 rapporteringApi(
                                     rapporteringService,
-                                    meldepliktService,
                                     journalfoeringService,
                                     meldepliktMetrikker,
                                 )
