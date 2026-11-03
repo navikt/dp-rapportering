@@ -497,6 +497,7 @@ components:
                 - harInnsendteMeldekort
                 - meldekortTilUtfylling
                 - redirectUrl
+                - redirectUrlTilInnsendteMeldekort
             properties:
                 harInnsendteMeldekort:
                     type: boolean
@@ -505,6 +506,8 @@ components:
                     items:
                         $ref: '#/components/schemas/MeldekortTilUtfylling'
                 redirectUrl:
+                    type: string
+                redirectUrlTilInnsendteMeldekort:
                     type: string
         MeldekortTilUtfylling:
             type: object
