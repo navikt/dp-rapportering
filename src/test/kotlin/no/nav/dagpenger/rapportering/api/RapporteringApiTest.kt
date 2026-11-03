@@ -115,6 +115,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 meldekortStatusData.meldekortTilUtfylling[1].kanFyllesUtFra shouldBe fom2.atStartOfDay()
                 meldekortStatusData.meldekortTilUtfylling[1].fristForInnsending shouldBe fom2.plusDays(21).atTime(23, 59, 59)
                 meldekortStatusData.redirectUrl shouldBe dpRapporteringFrontendUrl
+                meldekortStatusData.redirectUrlTilInnsendteMeldekort shouldBe "$dpRapporteringFrontendUrl/innsendt"
             }
 
         @Test
@@ -135,6 +136,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 meldekortStatusData.harInnsendteMeldekort shouldBe false
                 meldekortStatusData.meldekortTilUtfylling.size shouldBe 0
                 meldekortStatusData.redirectUrl shouldBe dpRapporteringFrontendUrl
+                meldekortStatusData.redirectUrlTilInnsendteMeldekort shouldBe "$dpRapporteringFrontendUrl/innsendt"
             }
 
         @Test
@@ -198,6 +200,7 @@ class RapporteringApiTest : ApiTestSetup() {
                 meldekortStatusData.meldekortTilUtfylling[0].kanSendesFra shouldBe kanSendesFra.atStartOfDay()
                 meldekortStatusData.meldekortTilUtfylling[0].kanFyllesUtFra shouldBe fom.atStartOfDay()
                 meldekortStatusData.meldekortTilUtfylling[0].fristForInnsending shouldBe sisteFristForTrekk.atTime(23, 59, 59)
+                meldekortStatusData.redirectUrlTilInnsendteMeldekort shouldBe "$dpRapporteringFrontendUrl/innsendt"
             }
     }
 

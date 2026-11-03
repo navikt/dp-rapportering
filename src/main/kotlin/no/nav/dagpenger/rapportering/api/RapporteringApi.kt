@@ -76,6 +76,7 @@ internal fun Application.rapporteringApi(
                                     )
                                 } ?: emptyList(),
                             redirectUrl = dpRapporteringFrontendUrl,
+                            redirectUrlTilInnsendteMeldekort = "$dpRapporteringFrontendUrl/innsendt",
                         )
 
                     call.respond(HttpStatusCode.OK, meldekortStatusData)
@@ -291,6 +292,7 @@ data class MeldekortStatusData(
     val harInnsendteMeldekort: Boolean,
     val meldekortTilUtfylling: List<MeldekortTilUtfylling>,
     val redirectUrl: String,
+    val redirectUrlTilInnsendteMeldekort: String,
 )
 
 data class MeldekortTilUtfylling(

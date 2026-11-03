@@ -69,19 +69,6 @@ internal object Configuration {
 
     val personregisterAudience by lazy { properties[Key("PERSONREGISTER_AUDIENCE", stringType)] }
 
-    val personregisterTokenProvider: () -> String by lazy {
-        {
-            runBlocking {
-                azureAdClient
-                    .clientCredentials(
-                        "api://" +
-                            properties[Key("PERSONREGISTER_AUDIENCE", stringType)].replace(":", ".") +
-                            "/.default",
-                    ).access_token ?: throw RuntimeException("Failed to get Personregister Azure token")
-            }
-        }
-    }
-
     val meldekortregisterUrl by lazy {
         properties[Key("MELDEKORTREGISTER_HOST", stringType)].let {
             "https://$it"
