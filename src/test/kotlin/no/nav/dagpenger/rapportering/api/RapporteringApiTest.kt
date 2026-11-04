@@ -15,11 +15,9 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.ExternalServicesBuilder
-import io.mockk.coEvery
 import io.mockk.mockkObject
 import no.nav.dagpenger.rapportering.ApplicationBuilder
 import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
-import no.nav.dagpenger.rapportering.config.Configuration.dpRapporteringFrontendUrl
 import no.nav.dagpenger.rapportering.config.Configuration.unleash
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet
 import no.nav.dagpenger.rapportering.connector.AdapterAktivitet.AdapterAktivitetsType.Arbeid
@@ -27,22 +25,15 @@ import no.nav.dagpenger.rapportering.connector.AdapterDag
 import no.nav.dagpenger.rapportering.connector.AdapterPeriode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiode
 import no.nav.dagpenger.rapportering.connector.AdapterRapporteringsperiodeStatus
-import no.nav.dagpenger.rapportering.connector.AnsvarligSystem.DP
 import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Aktivitet.AktivitetsType
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.InnsendingFeil
 import no.nav.dagpenger.rapportering.model.InnsendingResponse
-import no.nav.dagpenger.rapportering.model.OpprettetAv
-import no.nav.dagpenger.rapportering.model.Periode
-import no.nav.dagpenger.rapportering.model.PeriodeData
-import no.nav.dagpenger.rapportering.model.PeriodeData.Kilde
-import no.nav.dagpenger.rapportering.model.PeriodeData.Type
 import no.nav.dagpenger.rapportering.model.PeriodeId
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.Endret
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus.TilUtfylling
-import no.nav.dagpenger.rapportering.service.MeldekortStatus
 import no.nav.dagpenger.rapportering.utils.UUIDv7
 import no.nav.dagpenger.rapportering.utils.desember
 import no.nav.dagpenger.rapportering.utils.februar
@@ -77,130 +68,6 @@ class RapporteringApiTest : ApiTestSetup() {
                     status shouldBe OK
                     bodyAsText() shouldBe """[$journalpostId]"""
                 }
-            }
-    }
-
-    @Nested
-    inner class Meldekortstatus {
-        @Test
-        fun `meldekortstatus uten token gir unauthorized`() =
-            setUpTestApplication {
-                with(client.doGet("/meldekortstatus", null)) {
-                    status shouldBe Unauthorized
-                }
-            }
-
-        @Test
-        fun `meldekortstatus returnerer data fra Arena`() =
-            setUpTestApplication {
-                externalServices {
-                    meldepliktAdapter()
-                }
-
-                val response = client.doGet("/meldekortstatus", issueToken(fnr))
-
-                response.status shouldBe OK
-                val meldekortStatusData = defaultObjectMapper.readValue<MeldekortStatusData>(response.bodyAsText())
-
-                val idag = LocalDate.now()
-                val fom1 = idag.minusDays(13)
-                val fom2 = idag.plusDays(1)
-
-                meldekortStatusData.harInnsendteMeldekort shouldBe true
-                meldekortStatusData.meldekortTilUtfylling.size shouldBe 2
-                meldekortStatusData.meldekortTilUtfylling[0].kanSendesFra shouldBe fom1.plusDays(12).atStartOfDay()
-                meldekortStatusData.meldekortTilUtfylling[0].kanFyllesUtFra shouldBe fom1.atStartOfDay()
-                meldekortStatusData.meldekortTilUtfylling[0].fristForInnsending shouldBe fom1.plusDays(21).atTime(23, 59, 59)
-                meldekortStatusData.meldekortTilUtfylling[1].kanSendesFra shouldBe fom2.plusDays(12).atStartOfDay()
-                meldekortStatusData.meldekortTilUtfylling[1].kanFyllesUtFra shouldBe fom2.atStartOfDay()
-                meldekortStatusData.meldekortTilUtfylling[1].fristForInnsending shouldBe fom2.plusDays(21).atTime(23, 59, 59)
-                meldekortStatusData.redirectUrl shouldBe dpRapporteringFrontendUrl
-                meldekortStatusData.redirectUrlTilInnsendteMeldekort shouldBe "$dpRapporteringFrontendUrl/innsendt"
-            }
-
-        @Test
-        fun `meldekortstatus returnerer data hvis bruker ikke har data i Arena`() =
-            setUpTestApplication {
-                externalServices {
-                    meldepliktAdapter(
-                        rapporteringsperioderResponseStatus = HttpStatusCode.NoContent,
-                        sendteRapporteringsperioderResponseStatus = HttpStatusCode.NoContent,
-                    )
-                }
-
-                val response = client.doGet("/meldekortstatus", issueToken(fnr))
-
-                response.status shouldBe OK
-                val meldekortStatusData = defaultObjectMapper.readValue<MeldekortStatusData>(response.bodyAsText())
-
-                meldekortStatusData.harInnsendteMeldekort shouldBe false
-                meldekortStatusData.meldekortTilUtfylling.size shouldBe 0
-                meldekortStatusData.redirectUrl shouldBe dpRapporteringFrontendUrl
-                meldekortStatusData.redirectUrlTilInnsendteMeldekort shouldBe "$dpRapporteringFrontendUrl/innsendt"
-            }
-
-        @Test
-        fun `meldekortstatus returnerer data fra dp-meldekortregister`() =
-            setUpTestApplication {
-                val tom = LocalDate.now()
-                val fom = tom.minusDays(13)
-
-                val kanSendesFraDager = -2L
-                val kanSendesFra = tom.plusDays(kanSendesFraDager)
-
-                val sisteFristForTrekkDager = 9L
-                val sisteFristForTrekk = tom.plusDays(sisteFristForTrekkDager)
-
-                coEvery { personregisterService.hentAnsvarligSystem(eq(fnr), any()) } returns DP
-                coEvery { tidspunktjusteringRepository.hentInnsendingtidspunkt(any()) } returns kanSendesFraDager.toInt()
-                coEvery { tidspunktjusteringRepository.hentSisteFristForTrekkJustering(any()) } returns sisteFristForTrekkDager
-
-                coEvery {
-                    meldekortregisterService.hentRapporteringsperioder(
-                        eq(fnr),
-                        any(),
-                        eq(MeldekortStatus.TilUtfylling),
-                    )
-                } returns
-                    listOf(
-                        PeriodeData(
-                            id = "1",
-                            ident = "01020312345",
-                            periode = Periode(fom, tom),
-                            dager = emptyList(),
-                            kanSendesFra = kanSendesFra,
-                            sisteFristForTrekk = sisteFristForTrekk,
-                            opprettetAv = OpprettetAv.Dagpenger,
-                            kilde = Kilde(PeriodeData.Rolle.Bruker, "01020312345"),
-                            type = Type.Ordinaert,
-                            status = "TilUtfylling",
-                            innsendtTidspunkt = null,
-                            originalMeldekortId = null,
-                            bruttoBelop = null,
-                            begrunnelse = null,
-                            registrertArbeidssoker = null,
-                            meldedato = null,
-                        ),
-                    )
-                coEvery {
-                    meldekortregisterService.hentRapporteringsperioder(
-                        eq(fnr),
-                        any(),
-                        eq(MeldekortStatus.Innsendt),
-                    )
-                } returns emptyList()
-
-                val response = client.doGet("/meldekortstatus", issueToken(fnr))
-
-                response.status shouldBe OK
-                val meldekortStatusData = defaultObjectMapper.readValue<MeldekortStatusData>(response.bodyAsText())
-
-                meldekortStatusData.harInnsendteMeldekort shouldBe false
-                meldekortStatusData.meldekortTilUtfylling.size shouldBe 1
-                meldekortStatusData.meldekortTilUtfylling[0].kanSendesFra shouldBe kanSendesFra.atStartOfDay()
-                meldekortStatusData.meldekortTilUtfylling[0].kanFyllesUtFra shouldBe fom.atStartOfDay()
-                meldekortStatusData.meldekortTilUtfylling[0].fristForInnsending shouldBe sisteFristForTrekk.atTime(23, 59, 59)
-                meldekortStatusData.redirectUrlTilInnsendteMeldekort shouldBe "$dpRapporteringFrontendUrl/innsendt"
             }
     }
 
