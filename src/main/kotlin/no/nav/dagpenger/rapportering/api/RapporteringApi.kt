@@ -58,15 +58,16 @@ internal fun Application.rapporteringApi(
                     val jwtToken = call.request.jwt()
                     val headers = call.request.headers
 
-                    val request = call.receive<RapporteringsperiodeRequest>()
-                    val rapporteringsperiodeFraDb =
-                        rapporteringService.hentRapporteringsperiodeFraDb(request.id, ident)
-                            ?: throw RapporteringsperiodeNotFoundException(
-                                "Rapportering med id ${request.id} ikke funnet",
-                            )
-                    val rapporteringsperiode = request.toRapporteringsperiode(rapporteringsperiodeFraDb)
+                    val rapporteringsperiodeRequest = call.receive<RapporteringsperiodeRequest>()
 
-                    logger.info { "Rapporteringsperiode: $rapporteringsperiode" }
+                    logger.info { "Mottok innsending av rapporteringsperiode med id ${rapporteringsperiodeRequest.id}" }
+
+                    val rapporteringsperiodeFraDb =
+                        rapporteringService.hentRapporteringsperiodeFraDb(rapporteringsperiodeRequest.id, ident)
+                            ?: throw RapporteringsperiodeNotFoundException(
+                                "Rapportering med id ${rapporteringsperiodeRequest.id} ikke funnet",
+                            )
+                    val rapporteringsperiode = rapporteringsperiodeRequest.toRapporteringsperiode(rapporteringsperiodeFraDb)
 
                     try {
                         val response =
@@ -93,7 +94,7 @@ internal fun Application.rapporteringApi(
                         }
                     } catch (e: Exception) {
                         meldepliktMetrikker.innsendteMeldekortFeil.increment()
-                        logger.error(e) { "Feil ved innsending" }
+                        logger.error(e) { "Feil ved innsending av rapporteringsperiode med id ${rapporteringsperiodeRequest.id}" }
                         throw e
                     }
                 }

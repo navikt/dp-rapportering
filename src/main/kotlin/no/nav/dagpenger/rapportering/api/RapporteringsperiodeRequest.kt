@@ -9,6 +9,7 @@ data class RapporteringsperiodeRequest(
     val begrunnelseEndring: String? = null,
     val registrertArbeidssoker: Boolean? = null,
     val rapporteringstype: String? = null,
+    val html: String? = null,
 )
 
 fun RapporteringsperiodeRequest.toRapporteringsperiode(periodeFraDb: Rapporteringsperiode): Rapporteringsperiode =
@@ -25,4 +26,5 @@ fun RapporteringsperiodeRequest.toRapporteringsperiode(periodeFraDb: Rapporterin
                         null
                     },
             ),
+        html = html,
     )
