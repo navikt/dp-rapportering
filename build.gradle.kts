@@ -87,7 +87,7 @@ dependencies {
     implementation("no.nav.dagpenger:pdl-klient:2026.10.30-06.16.f1d0628bf128")
     implementation("com.github.navikt.tbd-libs:naisful-app:20261029.1843")
 
-    implementation("io.opentelemetry:opentelemetry-api:1.67.0")
+    implementation("io.opentelemetry:opentelemetry-api:1.68.0")
 
     implementation("io.confluent:kafka-streams-avro-serde:8.4.0")
     implementation("org.apache.avro:avro:1.12.1")
@@ -106,5 +106,5 @@ dependencies {
     testImplementation(libs.mock.oauth2.server)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.mock)
-    testImplementation("de.redsix:pdfcompare:1.2.11")
+    testImplementation("de.redsix:pdfcompare:1.2.13")
 }
