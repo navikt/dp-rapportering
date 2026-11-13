@@ -4,6 +4,7 @@ import no.nav.dagpenger.rapportering.model.Aktivitet
 import no.nav.dagpenger.rapportering.model.Dag
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus
 import java.util.UUID
 
 interface RapporteringRepository {
@@ -55,7 +56,13 @@ interface RapporteringRepository {
         registrertArbeidssoker: Boolean,
     )
 
-    suspend fun oppdaterRapporteringsperiodeFraArena(
+    suspend fun oppdaterÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus(
+        rapporteringId: String,
+        ident: String,
+        årsak: ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus?,
+    )
+
+    suspend fun oppdaterRapporteringsperiode(
         rapporteringsperiode: Rapporteringsperiode,
         ident: String,
     )
