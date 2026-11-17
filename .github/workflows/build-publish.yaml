@@ -39,7 +39,7 @@ jobs:
               run: ./gradlew --configuration-cache build installDist
 
             - name: docker-build-push
-              uses: nais/docker-build-push@v0
+              uses: nais/docker-build-push@v1
               if: inputs.push_image
               id: docker-build-push
               with:
