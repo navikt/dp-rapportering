@@ -21,7 +21,6 @@ import no.nav.dagpenger.rapportering.config.Configuration.defaultObjectMapper
 import no.nav.dagpenger.rapportering.exceptions.RapporteringsperiodeNotFoundException
 import no.nav.dagpenger.rapportering.metrics.MeldepliktMetrikker
 import no.nav.dagpenger.rapportering.model.Dag
-import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.erEndring
 import no.nav.dagpenger.rapportering.model.toResponse
 import no.nav.dagpenger.rapportering.service.JournalfoeringService
@@ -59,9 +58,16 @@ internal fun Application.rapporteringApi(
                     val jwtToken = call.request.jwt()
                     val headers = call.request.headers
 
-                    val rapporteringsperiode = call.receive(Rapporteringsperiode::class)
+                    val rapporteringsperiodeRequest = call.receive<RapporteringsperiodeRequest>()
 
-                    logger.info { "Rapporteringsperiode: $rapporteringsperiode" }
+                    logger.info { "Mottok innsending av rapporteringsperiode med id ${rapporteringsperiodeRequest.id}" }
+
+                    val rapporteringsperiodeFraDb =
+                        rapporteringService.hentRapporteringsperiodeFraDb(rapporteringsperiodeRequest.id, ident)
+                            ?: throw RapporteringsperiodeNotFoundException(
+                                "Rapportering med id ${rapporteringsperiodeRequest.id} ikke funnet",
+                            )
+                    val rapporteringsperiode = rapporteringsperiodeRequest.toRapporteringsperiode(rapporteringsperiodeFraDb)
 
                     try {
                         val response =
@@ -88,7 +94,7 @@ internal fun Application.rapporteringApi(
                         }
                     } catch (e: Exception) {
                         meldepliktMetrikker.innsendteMeldekortFeil.increment()
-                        logger.error(e) { "Feil ved innsending" }
+                        logger.error(e) { "Feil ved innsending av rapporteringsperiode med id ${rapporteringsperiodeRequest.id}" }
                         throw e
                     }
                 }
