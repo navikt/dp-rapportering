@@ -18,6 +18,8 @@ import no.nav.dagpenger.rapportering.model.OpprettetAv
 import no.nav.dagpenger.rapportering.model.Periode
 import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
 import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
+import no.nav.dagpenger.rapportering.model.SporsmalOmRegistrertArbeidssoker
+import no.nav.dagpenger.rapportering.model.ÅrsakBrukerHarIkkeSvartOmArbeidssøkerstatus.UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.time.Duration
@@ -104,7 +106,18 @@ fun AdapterRapporteringsperiode.toRapporteringsperiode(): Rapporteringsperiode =
             },
         mottattDato = this.mottattDato,
         begrunnelseEndring = if (this.begrunnelseEndring.isNullOrBlank()) null else this.begrunnelseEndring,
-        registrertArbeidssoker = if (KortType.fromCode(type) != KortType.Korrigert) this.registrertArbeidssoker else null,
+        sporsmalOmRegistrertArbeidssoker =
+            SporsmalOmRegistrertArbeidssoker(
+                svarFraBruker = if (KortType.fromCode(type) != KortType.Korrigert) this.registrertArbeidssoker else null,
+                arsakBrukerHarIkkeSvart =
+                    if (this.registrertArbeidssoker == null &&
+                        this.status != TilUtfylling
+                    ) {
+                        UKJENT_ÅRSAK_MELDEKORTET_ER_MIGRERT_FRA_ARENA
+                    } else {
+                        null
+                    },
+            ),
         originalId = null,
         rapporteringstype = if (this.dager.any { it.aktiviteter.isNotEmpty() }) "harAktivitet" else "harIngenAktivitet",
         opprettetAv = OpprettetAv.Arena,
@@ -154,7 +167,7 @@ fun Rapporteringsperiode.toAdapterRapporteringsperiode(overrideRegistrertArbeids
             if (overrideRegistrertArbeidssoker) {
                 true
             } else {
-                this.registrertArbeidssoker
+                this.sporsmalOmRegistrertArbeidssoker.svarFraBruker
             },
     )
 

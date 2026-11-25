@@ -85,7 +85,7 @@ class ArbeidssøkerService(
         rapporteringsperiode: Rapporteringsperiode,
         loginLevel: Int? = null,
     ): UUID? {
-        if (rapporteringsperiode.registrertArbeidssoker == null) {
+        if (rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.svarFraBruker == null) {
             logger.info {
                 "Rapporteringsperiode med id {${rapporteringsperiode.id}} har registrertArbeidssoker = null. Sender ikke sp.5 til PAW."
             }
@@ -127,7 +127,7 @@ class ArbeidssøkerService(
                         .atZone(ZONE_ID)
                         .toInstant(),
                     rapporteringsperiode.arbeidet(),
-                    rapporteringsperiode.registrertArbeidssoker == true,
+                    rapporteringsperiode.sporsmalOmRegistrertArbeidssoker.svarFraBruker == true,
                 ),
             )
 
