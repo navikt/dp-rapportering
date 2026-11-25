@@ -60,8 +60,13 @@ internal class SendBekreftelsesmeldingerJob(
 
                             lagretData.forEach { (id, rapporteringId, ident) ->
                                 try {
+                                    // Vi lagrer og denne jobben sender bekreftelsesmeldinger kun for rapporteringsperioder som registrertArbeidssøker = false
+                                    // Men rapporteringsperioden kan ha blitt oppdatert fra Arena etter at bekreftelsesmelding-data ble lagret i databasen.
+                                    // Og Arena har alltid registrertArbeidssøker = true, da setter vi registrertArbeidssøker = false for å sende riktig data
                                     val rapporteringsperiode =
-                                        rapporteringRepository.hentRapporteringsperiode(rapporteringId, ident)
+                                        rapporteringRepository.hentRapporteringsperiode(rapporteringId, ident)?.copy(
+                                            registrertArbeidssoker = false,
+                                        )
                                     if (rapporteringsperiode == null) {
                                         logger.error { "Fant ikke rapporteringsperiode med id $rapporteringId" }
                                         return@forEach
@@ -78,9 +83,9 @@ internal class SendBekreftelsesmeldingerJob(
                                         )
                                     } else {
                                         logger.warn {
-                                            "sendBekreftelse returnerte null for bekreftelsesmeldingId=$id, " +
-                                                "rapporteringId=$rapporteringId. Meldingen vil bli forsøkt sendt på nytt så lenge " +
-                                                "denne tilstanden vedvarer."
+                                            "sendBekreftelse returnerte null for " +
+                                                "bekreftelsesmeldingId=$id, rapporteringId=${rapporteringsperiode.id}. " +
+                                                "Meldingen vil bli forsøkt sendt på nytt så lenge denne tilstanden vedvarer."
                                         }
                                     }
                                 } catch (e: Exception) {
