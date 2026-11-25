@@ -6,14 +6,9 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.verify
 import no.nav.dagpenger.rapportering.api.ApiTestSetup.Companion.setEnvConfig
+import no.nav.dagpenger.rapportering.api.rapporteringsperiodeFor
 import no.nav.dagpenger.rapportering.connector.createMockClient
 import no.nav.dagpenger.rapportering.metrics.JobbkjøringMetrikker
-import no.nav.dagpenger.rapportering.model.Dag
-import no.nav.dagpenger.rapportering.model.KortType
-import no.nav.dagpenger.rapportering.model.OpprettetAv
-import no.nav.dagpenger.rapportering.model.Periode
-import no.nav.dagpenger.rapportering.model.Rapporteringsperiode
-import no.nav.dagpenger.rapportering.model.RapporteringsperiodeStatus
 import no.nav.dagpenger.rapportering.repository.BekreftelsesmeldingRepository
 import no.nav.dagpenger.rapportering.repository.RapporteringRepository
 import no.nav.dagpenger.rapportering.service.ArbeidssøkerService
@@ -45,24 +40,13 @@ class SendBekreftelsesmeldingerJobTest {
         val fom = LocalDate.now().minusDays(13)
         val tom = LocalDate.now()
         val rapporteringsperiode2 =
-            Rapporteringsperiode(
+            rapporteringsperiodeFor(
                 id = rapporteringsperiodeId2,
-                type = KortType.Ordinaert,
-                periode = Periode(fom, tom),
-                dager = (0..13).map { Dag(fom.plusDays(it.toLong()), emptyList(), it) },
-                kanSendesFra = tom.minusDays(1),
-                sisteFristForTrekk = tom.plusWeeks(1),
-                kanSendes = true,
-                kanEndres = true,
-                bruttoBelop = 0.0,
-                begrunnelseEndring = null,
-                status = RapporteringsperiodeStatus.TilUtfylling,
-                mottattDato = tom,
-                registrertArbeidssoker = false,
-                originalId = null,
-                rapporteringstype = null,
-                opprettetAv = OpprettetAv.Dagpenger,
+                fraOgMed = fom,
+                tilOgMed = tom,
+                registrertArbeidssoker = true,
             )
+        val oppdatertRapporteringsperiode2 = rapporteringsperiode2.copy(registrertArbeidssoker = false)
 
         val sendtBekreftelseId = UUIDv7.newUuid()
 
@@ -100,7 +84,7 @@ class SendBekreftelsesmeldingerJobTest {
         } returns rapporteringsperiode2
 
         val arbeidssøkerService = mockk<ArbeidssøkerService>()
-        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), eq(rapporteringsperiode2)) } returns sendtBekreftelseId
+        coEvery { arbeidssøkerService.sendBekreftelse(eq(ident), eq(oppdatertRapporteringsperiode2)) } returns sendtBekreftelseId
 
         val sendBekreftelsesmeldingerJob =
             SendBekreftelsesmeldingerJob(
@@ -113,30 +97,29 @@ class SendBekreftelsesmeldingerJobTest {
 
         sendBekreftelsesmeldingerJob.start(0)
 
+        verify(exactly = 1, timeout = 1000) { jobbkjøringMetrikker.jobbSjekketOmDenSkulleKjøre() }
+        verify(exactly = 1) { jobbkjøringMetrikker.jobbFullfort(duration = any(), affectedRows = 2) }
+        verify(exactly = 0) { jobbkjøringMetrikker.jobbFeilet() }
+
         // sendBekreftelse og oppdaterBekreftelsesmelding må kalles for rapporteringsperiodeId2
-        coVerify(exactly = 1, timeout = 5000) {
+        coVerify(exactly = 1) {
             arbeidssøkerService.sendBekreftelse(
                 eq(ident),
-                eq(rapporteringsperiode2),
+                eq(oppdatertRapporteringsperiode2),
             )
-        }
-        coVerify(exactly = 1, timeout = 5000) {
             bekreftelsesmeldingRepository.oppdaterBekreftelsesmelding(
                 eq(uuid2),
                 eq(sendtBekreftelseId),
                 any(),
             )
         }
-
-        verify(exactly = 1, timeout = 5000) { jobbkjøringMetrikker.jobbSjekketOmDenSkulleKjøre() }
-        verify(exactly = 1, timeout = 5000) { jobbkjøringMetrikker.jobbFullfort(duration = any(), affectedRows = 2) }
-        verify(exactly = 0, timeout = 5000) { jobbkjøringMetrikker.jobbFeilet() }
     }
 
     @Test
     fun `start inkrementerer metrikker hvis jobben feiler`() {
         val bekreftelsesmeldingRepository = mockk<BekreftelsesmeldingRepository>()
         coEvery { bekreftelsesmeldingRepository.hentBekreftelsesmeldingerSomSkalSendes(any()) } throws RuntimeException()
+
         val sendBekreftelsesmeldingerJob =
             SendBekreftelsesmeldingerJob(
                 httpClient = createMockClient(HttpStatusCode.InternalServerError, ""),
@@ -148,8 +131,8 @@ class SendBekreftelsesmeldingerJobTest {
 
         sendBekreftelsesmeldingerJob.start(0)
 
-        verify(exactly = 1, timeout = 5000) { jobbkjøringMetrikker.jobbSjekketOmDenSkulleKjøre() }
-        verify(exactly = 0, timeout = 5000) { jobbkjøringMetrikker.jobbFullfort(duration = any(), affectedRows = any()) }
-        verify(exactly = 1, timeout = 5000) { jobbkjøringMetrikker.jobbFeilet() }
+        verify(exactly = 1, timeout = 1000) { jobbkjøringMetrikker.jobbSjekketOmDenSkulleKjøre() }
+        verify(exactly = 0) { jobbkjøringMetrikker.jobbFullfort(duration = any(), affectedRows = any()) }
+        verify(exactly = 1) { jobbkjøringMetrikker.jobbFeilet() }
     }
 }
